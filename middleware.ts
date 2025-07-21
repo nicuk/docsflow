@@ -41,7 +41,7 @@ function extractSubdomain(request: NextRequest): string | null {
 }
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, search, hash } = request.nextUrl;
   const subdomain = extractSubdomain(request);
 
   if (subdomain) {
@@ -50,9 +50,40 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/', request.url));
     }
 
-    // For the root path on a subdomain, rewrite to the subdomain page
+    // Rewrite subdomain root to tenant dashboard
     if (pathname === '/') {
-      return NextResponse.rewrite(new URL(`/s/${subdomain}`, request.url));
+      return NextResponse.rewrite(
+        new URL(`/app/${subdomain}${search}${hash}`, request.url)
+      );
+    }
+
+    // Rewrite leads list
+    if (pathname === '/leads') {
+      return NextResponse.rewrite(
+        new URL(`/app/${subdomain}/leads${search}${hash}`, request.url)
+      );
+    }
+
+    // Rewrite individual lead pages
+    if (pathname.startsWith('/leads/')) {
+      const rest = pathname.substring('/leads'.length);
+      return NextResponse.rewrite(
+        new URL(`/app/${subdomain}/leads${rest}${search}${hash}`, request.url)
+      );
+    }
+
+    // Rewrite analytics page
+    if (pathname === '/analytics') {
+      return NextResponse.rewrite(
+        new URL(`/app/${subdomain}/analytics${search}${hash}`, request.url)
+      );
+    }
+
+    // Rewrite settings page
+    if (pathname === '/settings') {
+      return NextResponse.rewrite(
+        new URL(`/app/${subdomain}/settings${search}${hash}`, request.url)
+      );
     }
   }
 

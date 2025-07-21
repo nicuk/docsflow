@@ -89,7 +89,11 @@ function TenantGrid({
             <div className="flex items-center justify-between">
               <div className="text-4xl">{tenant.emoji}</div>
               <div className="text-sm text-gray-500">
-                Created: {new Date(tenant.createdAt).toLocaleDateString()}
+                Created: {new Date(tenant.createdAt).toLocaleDateString('en-US', { 
+                  year: 'numeric', 
+                  month: 'short', 
+                  day: 'numeric' 
+                })}
               </div>
             </div>
             <div className="mt-4">

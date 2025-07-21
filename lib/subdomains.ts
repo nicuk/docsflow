@@ -29,14 +29,56 @@ export function isValidIcon(str: string) {
 type SubdomainData = {
   emoji: string;
   createdAt: number;
+  leadCount: number;
+  lastActivity: number;
+  aiEnabled: boolean;
+  subscriptionTier: string;
+  settings: Record<string, any>;
+  contactEmail?: string;
+  displayName?: string;
 };
 
-export async function getSubdomainData(subdomain: string) {
-  const sanitizedSubdomain = subdomain.toLowerCase().replace(/[^a-z0-9-]/g, '');
-  const data = await redis.get<SubdomainData>(
-    `subdomain:${sanitizedSubdomain}`
-  );
-  return data;
+function sanitizeSubdomain(subdomain: string) {
+  return subdomain.toLowerCase().replace(/[^a-z0-9-]/g, '');
+}
+
+export async function getSubdomainData(
+  subdomain: string
+): Promise<SubdomainData | null> {
+  const sanitized = sanitizeSubdomain(subdomain);
+  const data = await redis.get<any>(`subdomain:${sanitized}`);
+  if (!data) {
+    return null;
+  }
+
+  return {
+    emoji: data.emoji,
+    createdAt: data.createdAt,
+    leadCount:
+      typeof data.leadCount === 'number' ? data.leadCount : 0,
+    lastActivity:
+      typeof data.lastActivity === 'number'
+        ? data.lastActivity
+        : data.createdAt,
+    aiEnabled:
+      typeof data.aiEnabled === 'boolean' ? data.aiEnabled : false,
+    subscriptionTier:
+      typeof data.subscriptionTier === 'string'
+        ? data.subscriptionTier
+        : 'free',
+    settings:
+      typeof data.settings === 'object' && data.settings !== null
+        ? data.settings
+        : {},
+    contactEmail:
+      typeof data.contactEmail === 'string'
+        ? data.contactEmail
+        : undefined,
+    displayName:
+      typeof data.displayName === 'string'
+        ? data.displayName
+        : undefined
+  };
 }
 
 export async function getAllSubdomains() {
@@ -46,16 +88,62 @@ export async function getAllSubdomains() {
     return [];
   }
 
-  const values = await redis.mget<SubdomainData[]>(...keys);
+  const values = await redis.mget<any[]>(...keys);
 
   return keys.map((key, index) => {
     const subdomain = key.replace('subdomain:', '');
-    const data = values[index];
+    const data = values[index] || {};
 
     return {
       subdomain,
-      emoji: data?.emoji || '❓',
-      createdAt: data?.createdAt || Date.now()
+      emoji: data.emoji || '❓',
+      createdAt: data.createdAt || Date.now()
     };
   });
+}
+
+export async function updateTenantMetadata(
+  subdomain: string,
+  updates: Partial<SubdomainData>
+): Promise<SubdomainData> {
+  const existing = await getSubdomainData(subdomain);
+  if (!existing) {
+    throw new Error(`Tenant "${subdomain}" not found`);
+  }
+
+  const merged: SubdomainData = {
+    ...existing,
+    ...updates
+  };
+
+  const sanitized = sanitizeSubdomain(subdomain);
+  await redis.set(`subdomain:${sanitized}`, merged);
+
+  return merged;
+}
+
+export async function incrementLeadCount(
+  subdomain: string
+): Promise<number> {
+  const existing = await getSubdomainData(subdomain);
+  if (!existing) {
+    throw new Error(`Tenant "${subdomain}" not found`);
+  }
+
+  const newCount = existing.leadCount + 1;
+  await updateTenantMetadata(subdomain, { leadCount: newCount });
+  return newCount;
+}
+
+export async function updateLastActivity(
+  subdomain: string
+): Promise<number> {
+  const existing = await getSubdomainData(subdomain);
+  if (!existing) {
+    throw new Error(`Tenant "${subdomain}" not found`);
+  }
+
+  const timestamp = Date.now();
+  await updateTenantMetadata(subdomain, { lastActivity: timestamp });
+  return timestamp;
 }
