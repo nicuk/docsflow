@@ -7,15 +7,33 @@ import mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize services
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Initialize services - only when environment variables are available
+const genAI = process.env.GOOGLE_AI_API_KEY ? new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY) : null;
+
+function getSupabaseClient() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('Supabase configuration not available');
+  }
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}
 
 export async function POST(request: NextRequest) {
+  // Skip processing during build time
+  if (process.env.NODE_ENV !== 'production' && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    return NextResponse.json({ error: 'Service not available during build' }, { status: 503 });
+  }
+
   try {
+    // Check if services are available
+    if (!genAI) {
+      return NextResponse.json({ error: 'AI service not configured' }, { status: 500 });
+    }
+
+    const supabase = getSupabaseClient();
+    
     // Get tenant from subdomain or auth
     const url = new URL(request.url);
     const subdomain = url.hostname.split('.')[0];
@@ -123,7 +141,7 @@ export async function POST(request: NextRequest) {
     // Process document in background (chunk and embed)
     // For MVP, we'll do this synchronously, but in production this should be queued
     try {
-      await processDocumentContent(document.id, textContent, tenantId);
+      await processDocumentContent(document.id, textContent, tenantId, genAI, supabase);
       
       // Update status to completed
       await supabase
@@ -160,7 +178,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function processDocumentContent(documentId: string, textContent: string, tenantId: string) {
+async function processDocumentContent(documentId: string, textContent: string, tenantId: string, genAI: any, supabase: any) {
   // Chunk the document content (simple implementation)
   const chunkSize = 1000; // characters
   const chunks = [];

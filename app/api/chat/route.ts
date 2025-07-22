@@ -2,15 +2,28 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize services
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Initialize services - only when environment variables are available
+const genAI = process.env.GOOGLE_AI_API_KEY ? new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY) : null;
+
+function getSupabaseClient() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('Supabase configuration not available');
+  }
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if services are available
+    if (!genAI) {
+      return NextResponse.json({ error: 'AI service not configured' }, { status: 500 });
+    }
+
+    const supabase = getSupabaseClient();
+    
     // Get tenant from subdomain or auth
     const url = new URL(request.url);
     const subdomain = url.hostname.split('.')[0];

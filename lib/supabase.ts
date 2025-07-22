@@ -1,9 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Only create client if environment variables are available
+export const supabase = supabaseUrl && supabaseAnonKey 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null
 
 // Types for our database
 export type Tenant = {
@@ -62,7 +65,11 @@ export type LeadInteraction = {
 
 // Helper functions for tenant-aware queries
 export async function getTenantBySubdomain(subdomain: string): Promise<Tenant | null> {
-  const { data, error } = await supabase
+  if (!supabase) {
+    throw new Error('Supabase client not initialized');
+  }
+  
+  const { data, error } = await supabase!
     .from('tenants')
     .select('*')
     .eq('subdomain', subdomain)
@@ -74,7 +81,11 @@ export async function getTenantBySubdomain(subdomain: string): Promise<Tenant | 
 }
 
 export async function getTenantLeads(tenantId: string, limit = 50) {
-  const { data, error } = await supabase
+  if (!supabase) {
+    throw new Error('Supabase client not initialized');
+  }
+  
+  const { data, error } = await supabase!
     .from('leads')
     .select(`
       *,
@@ -95,7 +106,11 @@ export async function getTenantLeads(tenantId: string, limit = 50) {
 }
 
 export async function getTenantStats(tenantId: string) {
-  const { data, error } = await supabase
+  if (!supabase) {
+    throw new Error('Supabase client not initialized');
+  }
+  
+  const { data, error } = await supabase!
     .rpc('get_tenant_stats', { tenant_uuid: tenantId })
 
   if (error) throw error
@@ -104,7 +119,11 @@ export async function getTenantStats(tenantId: string) {
 
 // Real-time subscriptions
 export function subscribeToTenantLeads(tenantId: string, callback: (payload: any) => void) {
-  return supabase
+  if (!supabase) {
+    throw new Error('Supabase client not initialized');
+  }
+  
+  return supabase!
     .channel(`tenant-${tenantId}-leads`)
     .on(
       'postgres_changes',
