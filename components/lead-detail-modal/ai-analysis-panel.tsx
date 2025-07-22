@@ -9,12 +9,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 
 interface AIAnalysisPanelProps {
-  leadId: string;
-  onStatusChange?: (status: string) => void;
+  leadDetail: any;
+  industry: "motorcycle" | "warehouse";
+  onSendResponse: (content: string, template?: any) => void;
   onAssign?: (userId: string, reason: string) => void;
+  onStatusChange?: (status: string) => void;
 }
 
-export const AIAnalysisPanel = ({ leadId, onStatusChange, onAssign }: AIAnalysisPanelProps) => {
+export const AIAnalysisPanel = ({ leadDetail, industry, onSendResponse, onStatusChange, onAssign }: AIAnalysisPanelProps) => {
   const [responseMode, setResponseMode] = useState<"template" | "custom">("template");
   const [selectedTemplate, setSelectedTemplate] = useState("follow-up");
   const [customMessage, setCustomMessage] = useState("");
