@@ -165,7 +165,7 @@ export function FilterBar({ filters, onFiltersChange, onClearFilters, industry }
             <div className="space-y-2">
               <label className="text-sm font-medium">Date Range</label>
               <Select
-                onValueChange={(value) => {
+                onValueChange={(value: string) => {
                   const now = new Date()
                   let from: Date | undefined
 
