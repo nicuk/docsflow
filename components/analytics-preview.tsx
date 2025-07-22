@@ -16,7 +16,7 @@ export function AnalyticsPreview() {
   // Mock analytics data
   const analyticsData = {
     weeklyTrend: { value: 23, change: 15, trend: "up" as const },
-    conversionRate: { value: 12.5, change: -2.1, trend: "down" as const },
+    conversionRate: { value: 12.5, change: -2.1, trend: "down" as "up" | "down" },
     topChannel: currentTenant.industry === "motorcycle_dealer" ? "WhatsApp" : "Email",
     teamPerformance: { active: 5, total: 8 },
   }
