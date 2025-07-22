@@ -3,6 +3,7 @@
 
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "vector";
 
 -- Tenants table (replaces Redis subdomain storage)
 CREATE TABLE tenants (
@@ -21,6 +22,24 @@ CREATE TABLE tenants (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Documents table for SME Data Intelligence Platform
+CREATE TABLE documents (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+  file_name TEXT NOT NULL,
+  file_uri TEXT NOT NULL, -- Gemini File API URI
+  file_type TEXT NOT NULL,
+  file_size INTEGER,
+  document_category TEXT CHECK (document_category IN ('invoice', 'contract', 'inventory', 'communication', 'financial', 'other')),
+  content_preview TEXT, -- First 500 chars of text content
+  metadata JSONB DEFAULT '{}', -- extracted metadata (dates, amounts, contacts, etc.)
+  processing_status TEXT DEFAULT 'pending' CHECK (processing_status IN ('pending', 'processing', 'completed', 'failed')),
+  embedding vector(1536), -- for semantic search when needed
+  uploaded_by UUID REFERENCES users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Users table (tenant-isolated)
 CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -32,6 +51,28 @@ CREATE TABLE users (
   last_login_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(tenant_id, email)
+);
+
+-- Chat conversations for SME intelligence
+CREATE TABLE chat_conversations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id),
+  title TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Chat messages with document references
+CREATE TABLE chat_messages (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  conversation_id UUID REFERENCES chat_conversations(id) ON DELETE CASCADE,
+  tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+  role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
+  content TEXT NOT NULL,
+  document_references UUID[] DEFAULT '{}', -- array of document IDs used in response
+  metadata JSONB DEFAULT '{}', -- token count, model used, processing time
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Leads table (main business data)
@@ -91,7 +132,7 @@ CREATE TABLE analytics_events (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- File uploads (tenant-isolated)
+-- File uploads (tenant-isolated) - keeping for backward compatibility
 CREATE TABLE file_uploads (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
@@ -106,6 +147,11 @@ CREATE TABLE file_uploads (
 
 -- Indexes for performance
 CREATE INDEX idx_tenants_subdomain ON tenants(subdomain);
+CREATE INDEX idx_documents_tenant_id ON documents(tenant_id);
+CREATE INDEX idx_documents_category ON documents(document_category);
+CREATE INDEX idx_documents_status ON documents(processing_status);
+CREATE INDEX idx_chat_conversations_tenant_id ON chat_conversations(tenant_id);
+CREATE INDEX idx_chat_messages_conversation_id ON chat_messages(conversation_id);
 CREATE INDEX idx_leads_tenant_id ON leads(tenant_id);
 CREATE INDEX idx_leads_status ON leads(status);
 CREATE INDEX idx_leads_created_at ON leads(created_at);
@@ -116,6 +162,9 @@ CREATE INDEX idx_analytics_event_type ON analytics_events(event_type);
 
 -- Row Level Security (RLS) for tenant isolation
 ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lead_interactions ENABLE ROW LEVEL SECURITY;
@@ -127,6 +176,18 @@ ALTER TABLE file_uploads ENABLE ROW LEVEL SECURITY;
 -- Tenants can only see their own data
 CREATE POLICY "Tenants can view own data" ON tenants
   FOR ALL USING (id = auth.jwt() ->> 'tenant_id'::uuid);
+
+-- Documents tenant isolation
+CREATE POLICY "Documents tenant isolation" ON documents
+  FOR ALL USING (tenant_id = auth.jwt() ->> 'tenant_id'::uuid);
+
+-- Chat conversations tenant isolation  
+CREATE POLICY "Chat conversations tenant isolation" ON chat_conversations
+  FOR ALL USING (tenant_id = auth.jwt() ->> 'tenant_id'::uuid);
+
+-- Chat messages tenant isolation
+CREATE POLICY "Chat messages tenant isolation" ON chat_messages
+  FOR ALL USING (tenant_id = auth.jwt() ->> 'tenant_id'::uuid);
 
 -- Users can only see data from their tenant
 CREATE POLICY "Users can view tenant data" ON users
@@ -147,14 +208,17 @@ CREATE POLICY "Analytics tenant isolation" ON analytics_events
 CREATE POLICY "File uploads tenant isolation" ON file_uploads
   FOR ALL USING (tenant_id = auth.jwt() ->> 'tenant_id'::uuid);
 
--- Sample data for testing
+-- Sample data for testing SME Data Intelligence Platform
 INSERT INTO tenants (subdomain, name, industry, theme, settings) VALUES 
 ('mrtee', 'Mr. Tee Motorcycles', 'motorcycle_dealer', 
  '{"primary": "orange", "secondary": "blue", "accent": "yellow"}',
  '{"businessHours": "9AM-6PM", "timezone": "UTC", "slaTarget": 30}'),
 ('apexdist', 'Apex Distribution', 'warehouse_distribution',
  '{"primary": "blue", "secondary": "gray", "accent": "green"}',
- '{"businessHours": "8AM-5PM", "timezone": "UTC", "slaTarget": 60}');
+ '{"businessHours": "8AM-5PM", "timezone": "UTC", "slaTarget": 60}'),
+('sme-demo', 'SME Demo Company', 'general',
+ '{"primary": "green", "secondary": "gray", "accent": "blue"}',
+ '{"businessHours": "9AM-5PM", "timezone": "UTC", "aiEnabled": true}');
 
 -- Sample leads data
 INSERT INTO leads (tenant_id, contact_name, contact_email, contact_phone, source_channel, status, priority, industry_specific_data) 
@@ -191,5 +255,33 @@ BEGIN
   FROM leads l
   LEFT JOIN lead_interactions li ON l.id = li.lead_id AND li.direction = 'outbound'
   WHERE l.tenant_id = tenant_uuid;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to get document statistics for SME platform
+CREATE OR REPLACE FUNCTION get_document_stats(tenant_uuid UUID)
+RETURNS TABLE (
+  total_documents INTEGER,
+  documents_by_category JSONB,
+  processing_status_counts JSONB,
+  total_storage_mb NUMERIC
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    COUNT(*)::INTEGER as total_documents,
+    jsonb_object_agg(COALESCE(document_category, 'uncategorized'), category_count) as documents_by_category,
+    jsonb_object_agg(processing_status, status_count) as processing_status_counts,
+    ROUND(SUM(COALESCE(file_size, 0))::NUMERIC / 1048576, 2) as total_storage_mb
+  FROM (
+    SELECT 
+      document_category,
+      processing_status,
+      file_size,
+      COUNT(*) OVER (PARTITION BY document_category) as category_count,
+      COUNT(*) OVER (PARTITION BY processing_status) as status_count
+    FROM documents 
+    WHERE tenant_id = tenant_uuid
+  ) d;
 END;
 $$ LANGUAGE plpgsql; 
