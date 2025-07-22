@@ -23,21 +23,41 @@ CREATE TABLE tenants (
 );
 
 -- Documents table for SME Data Intelligence Platform
-CREATE TABLE documents (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
-  file_name TEXT NOT NULL,
-  file_uri TEXT NOT NULL, -- Gemini File API URI
-  file_type TEXT NOT NULL,
-  file_size INTEGER,
-  document_category TEXT CHECK (document_category IN ('invoice', 'contract', 'inventory', 'communication', 'financial', 'other')),
-  content_preview TEXT, -- First 500 chars of text content
-  metadata JSONB DEFAULT '{}', -- extracted metadata (dates, amounts, contacts, etc.)
-  processing_status TEXT DEFAULT 'pending' CHECK (processing_status IN ('pending', 'processing', 'completed', 'failed')),
-  embedding vector(1536), -- for semantic search when needed
-  uploaded_by UUID REFERENCES users(id),
+CREATE TABLE IF NOT EXISTS documents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id TEXT NOT NULL,
+  filename TEXT NOT NULL,
+  file_size BIGINT NOT NULL,
+  mime_type TEXT NOT NULL,
+  processing_status TEXT DEFAULT 'pending' CHECK (processing_status IN ('pending', 'processing', 'completed', 'error')),
+  processing_progress INTEGER DEFAULT 0,
+  error_message TEXT,
+  metadata JSONB DEFAULT '{}',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Document chunks table for RAG functionality
+CREATE TABLE IF NOT EXISTS document_chunks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+  chunk_index INTEGER NOT NULL,
+  content TEXT NOT NULL,
+  embedding vector(768), -- Google's text-embedding-004 produces 768-dimensional vectors
+  metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Search history for analytics
+CREATE TABLE IF NOT EXISTS search_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id TEXT NOT NULL,
+  query TEXT NOT NULL,
+  response TEXT,
+  document_ids UUID[],
+  confidence_score DECIMAL,
+  response_time_ms INTEGER,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Users table (tenant-isolated)
