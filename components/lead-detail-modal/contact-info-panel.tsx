@@ -215,7 +215,7 @@ export function ContactInfoPanel({ leadDetail, onAddNote, onPinNote }: ContactIn
                         <AvatarFallback>{note.author.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <span className="text-sm font-medium">{note.author.name}</span>
-                      <Badge variant={note.visibility === "team" ? "default" : "secondary"} size="sm">
+                      <Badge variant={note.visibility === "team" ? "default" : "secondary"}>
                         {note.visibility}
                       </Badge>
                     </div>
