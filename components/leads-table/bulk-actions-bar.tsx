@@ -30,7 +30,7 @@ export function BulkActionsBar({ selectedCount, onClearSelection, onBulkUpdate }
           <div className="flex items-center gap-2">
             {/* Assign User */}
             <Select
-              onValueChange={(userId) => {
+              onValueChange={(userId: string) => {
                 const user = mockUsers.find((u) => u.id === userId)
                 if (user) {
                   onBulkUpdate({ assignedTo: user })
@@ -54,7 +54,7 @@ export function BulkActionsBar({ selectedCount, onClearSelection, onBulkUpdate }
 
             {/* Change Status */}
             <Select
-              onValueChange={(status) => {
+              onValueChange={(status: string) => {
                 onBulkUpdate({ status: status as Lead["status"] })
               }}
             >
