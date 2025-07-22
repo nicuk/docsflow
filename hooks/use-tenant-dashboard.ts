@@ -16,7 +16,7 @@ export const useTenantDashboard = (tenantId?: string) => {
 
       try {
         // Get the tenant from URL params (our current routing system)
-        const currentTenant = params?.tenant as string || tenantId || "mrtee"
+        const currentTenant = (typeof params?.tenant === 'string' ? params.tenant : undefined) || tenantId || "mrtee"
         
         // Fetch tenant data from our existing API
         const response = await fetch(`/api/tenant/${currentTenant}`)

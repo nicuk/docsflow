@@ -34,7 +34,7 @@ export function useTenant(): UseTenantReturn {
         setLoading(true);
         setError(null);
         
-        const tenantSlug = params?.tenant as string;
+        const tenantSlug = typeof params?.tenant === 'string' ? params.tenant : undefined;
         if (!tenantSlug) {
           setError('No tenant specified');
           return;

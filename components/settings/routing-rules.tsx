@@ -212,7 +212,7 @@ export function RoutingRules({ rules, onUpdate }: RoutingRulesProps) {
                   <div className="px-3">
                     <Slider
                       value={[editingRule.conditions.urgencyThreshold || 0]}
-                      onValueChange={([value]) =>
+                      onValueChange={([value]: [number]) =>
                         setEditingRule({
                           ...editingRule,
                           conditions: { ...editingRule.conditions, urgencyThreshold: value },
@@ -277,10 +277,10 @@ export function RoutingRules({ rules, onUpdate }: RoutingRulesProps) {
                     <Label>Type</Label>
                     <Select
                       value={editingRule.destination.type}
-                      onValueChange={(value) =>
+                      onValueChange={(value: string) =>
                         setEditingRule({
                           ...editingRule,
-                          destination: { ...editingRule.destination, type: value as any },
+                          destination: { ...editingRule.destination, type: value as "user" | "email" | "webhook" | "department" },
                         })
                       }
                     >
@@ -301,7 +301,7 @@ export function RoutingRules({ rules, onUpdate }: RoutingRulesProps) {
                     {editingRule.destination.type === "user" ? (
                       <Select
                         value={editingRule.destination.value}
-                        onValueChange={(value) =>
+                        onValueChange={(value: string) =>
                           setEditingRule({
                             ...editingRule,
                             destination: { ...editingRule.destination, value },
@@ -322,7 +322,7 @@ export function RoutingRules({ rules, onUpdate }: RoutingRulesProps) {
                     ) : editingRule.destination.type === "department" ? (
                       <Select
                         value={editingRule.destination.value}
-                        onValueChange={(value) =>
+                        onValueChange={(value: string) =>
                           setEditingRule({
                             ...editingRule,
                             destination: { ...editingRule.destination, value },

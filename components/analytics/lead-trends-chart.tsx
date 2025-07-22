@@ -26,7 +26,7 @@ export function LeadTrendsChart({ data }: LeadTrendsChartProps) {
             <XAxis dataKey="date" tickFormatter={formatDate} />
             <YAxis />
             <Tooltip
-              labelFormatter={(value) => formatDate(value as string)}
+              labelFormatter={(value) => formatDate(typeof value === 'string' ? value : String(value))}
               formatter={(value: number, name: string) => [value, name.charAt(0).toUpperCase() + name.slice(1)]}
             />
             <Legend />

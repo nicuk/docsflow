@@ -277,7 +277,7 @@ export function ChannelConfiguration({ settings, onUpdate }: ChannelConfiguratio
                   <div className="flex items-center space-x-2">
                     <Switch
                       checked={settings.email.outbound.trackDelivery}
-                      onCheckedChange={(checked) =>
+                      onCheckedChange={(checked: boolean) =>
                         onUpdate({
                           email: {
                             ...settings.email,

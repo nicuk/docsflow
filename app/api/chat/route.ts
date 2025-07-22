@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     // Step 3: Prepare context from relevant chunks
     const context = relevantChunks.map(chunk => ({
       content: chunk.content,
-      source: `${(chunk.documents as any).filename} (chunk ${chunk.chunk_index + 1})`,
+      source: `${chunk.documents && typeof chunk.documents === 'object' && 'filename' in chunk.documents ? chunk.documents.filename : 'unknown'} (chunk ${chunk.chunk_index + 1})`,
       document_id: chunk.document_id
     }));
 

@@ -6,12 +6,31 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { rootDomain, protocol } from '@/lib/utils';
 
+interface CreateSubdomainState {
+  subdomain?: string;
+  icon?: string;
+  success?: boolean;
+  error?: string;
+}
+
+interface DeleteSubdomainState {
+  success?: string;
+  error?: string;
+}
+
 export async function createSubdomainAction(
-  prevState: any,
+  prevState: CreateSubdomainState,
   formData: FormData
-) {
-  const subdomain = formData.get('subdomain') as string;
-  const icon = formData.get('icon') as string;
+): Promise<CreateSubdomainState> {
+  const subdomainValue = formData.get('subdomain');
+  const iconValue = formData.get('icon');
+
+  if (typeof subdomainValue !== 'string' || typeof iconValue !== 'string') {
+    return { success: false, error: 'Invalid form data' };
+  }
+
+  const subdomain = subdomainValue;
+  const icon = iconValue;
 
   if (!subdomain || !icon) {
     return { success: false, error: 'Subdomain and icon are required' };
@@ -59,11 +78,16 @@ export async function createSubdomainAction(
 }
 
 export async function deleteSubdomainAction(
-  prevState: any,
+  prevState: DeleteSubdomainState,
   formData: FormData
-) {
-  const subdomain = formData.get('subdomain');
-  await redis.del(`subdomain:${subdomain}`);
+): Promise<DeleteSubdomainState> {
+  const subdomainValue = formData.get('subdomain');
+  
+  if (typeof subdomainValue !== 'string') {
+    return { error: 'Invalid subdomain' };
+  }
+
+  await redis.del(`subdomain:${subdomainValue}`);
   revalidatePath('/admin');
   return { success: 'Domain deleted successfully' };
 }

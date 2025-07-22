@@ -12,11 +12,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Upload, Clock, MapPin, Phone, Mail } from "lucide-react"
 import { useState } from "react"
-import type { CompanySettingsType } from "@/types/settings"
+import type { CompanySettings } from "@/types/settings"
 
 interface CompanySettingsProps {
-  settings: CompanySettingsType
-  onUpdate: (data: Partial<CompanySettingsType>) => void
+  settings: CompanySettings
+  onUpdate: (data: Partial<CompanySettings>) => void
 }
 
 export function CompanySettings({ settings, onUpdate }: CompanySettingsProps) {
@@ -67,12 +67,12 @@ export function CompanySettings({ settings, onUpdate }: CompanySettingsProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="company-name">Company Name</Label>
-              <Input id="company-name" value={settings.name} onChange={(e) => onUpdate({ name: e.target.value })} />
+              <Input id="company-name" value={settings.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onUpdate({ name: e.target.value })} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="industry">Industry</Label>
-              <Select value={settings.industry} onValueChange={(value) => onUpdate({ industry: value as any })}>
+              <Select value={settings.industry} onValueChange={(value: string) => onUpdate({ industry: value as "motorcycle_dealer" | "warehouse_distribution" | "other" })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -94,7 +94,7 @@ export function CompanySettings({ settings, onUpdate }: CompanySettingsProps) {
                   id="phone"
                   className="pl-10"
                   value={settings.contactInfo.phone}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     onUpdate({
                       contactInfo: { ...settings.contactInfo, phone: e.target.value },
                     })
@@ -111,7 +111,7 @@ export function CompanySettings({ settings, onUpdate }: CompanySettingsProps) {
                   id="email"
                   className="pl-10"
                   value={settings.contactInfo.email}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     onUpdate({
                       contactInfo: { ...settings.contactInfo, email: e.target.value },
                     })
@@ -126,7 +126,7 @@ export function CompanySettings({ settings, onUpdate }: CompanySettingsProps) {
             <Textarea
               id="address"
               value={`${settings.address.street}\n${settings.address.city}, ${settings.address.state} ${settings.address.zipCode}\n${settings.address.country}`}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                 const lines = e.target.value.split("\n")
                 const cityStateZip = lines[1]?.split(", ") || []
                 const stateZip = cityStateZip[1]?.split(" ") || []
@@ -147,7 +147,7 @@ export function CompanySettings({ settings, onUpdate }: CompanySettingsProps) {
 
           <div className="space-y-2">
             <Label htmlFor="timezone">Timezone</Label>
-            <Select value={settings.timezone} onValueChange={(value) => onUpdate({ timezone: value })}>
+            <Select value={settings.timezone} onValueChange={(value: string) => onUpdate({ timezone: value })}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -202,7 +202,7 @@ export function CompanySettings({ settings, onUpdate }: CompanySettingsProps) {
                 <div className="flex items-center gap-3">
                   <Switch
                     checked={daySettings.isOpen}
-                    onCheckedChange={(checked) => updateBusinessHours(day.key, "isOpen", checked)}
+                                          onCheckedChange={(checked: boolean) => updateBusinessHours(day.key, "isOpen", checked)}
                   />
                   <span className="font-medium w-20">{day.label}</span>
                 </div>
@@ -212,14 +212,14 @@ export function CompanySettings({ settings, onUpdate }: CompanySettingsProps) {
                     <Input
                       type="time"
                       value={daySettings.openTime}
-                      onChange={(e) => updateBusinessHours(day.key, "openTime", e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateBusinessHours(day.key, "openTime", e.target.value)}
                       className="w-32"
                     />
                     <span className="text-gray-500">to</span>
                     <Input
                       type="time"
                       value={daySettings.closeTime}
-                      onChange={(e) => updateBusinessHours(day.key, "closeTime", e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateBusinessHours(day.key, "closeTime", e.target.value)}
                       className="w-32"
                     />
                   </div>
