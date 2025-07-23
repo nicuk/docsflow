@@ -48,6 +48,7 @@
     "embla-carousel-react": "^8.6.0",
     "formidable": "^3.5.4",
     "frimousse": "^0.2.0",
+    "googleapis": "^153.0.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.510.0",
     "mammoth": "^1.9.1",

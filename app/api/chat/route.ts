@@ -15,6 +15,19 @@ function getSupabaseClient() {
   );
 }
 
+interface Chunk {
+  content: string;
+  documents: { filename: string } | null;
+  chunk_index: number;
+  document_id: string;
+}
+
+interface Context {
+  content: string;
+  source: string;
+  document_id: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Check if services are available
@@ -43,70 +56,30 @@ export async function POST(request: NextRequest) {
 
     // Step 1: Generate embedding for the user's query
     const embeddingModel = genAI.getGenerativeModel({ model: 'text-embedding-004' });
-    const queryEmbedding = await embeddingModel.embedContent(message);
+    const embeddingResult = await embeddingModel.embedContent(message);
+    const queryEmbedding = embeddingResult.embedding.values;
 
     // Step 2: Perform semantic search to find relevant document chunks
-    let relevantChunks = [];
-    
-    if (documentIds && documentIds.length > 0) {
-      // Search within specific documents
-      const { data: chunks, error } = await supabase
-        .from('document_chunks')
-        .select(`
-          id,
-          content,
-          chunk_index,
-          document_id,
-          documents!inner(filename, tenant_id)
-        `)
-        .in('document_id', documentIds)
-        .eq('documents.tenant_id', tenantId)
-        .limit(10);
+    const { data: chunks, error } = await supabase.rpc('similarity_search', {
+      query_embedding: queryEmbedding, // Pass the embedding array directly
+      match_threshold: 0.75, // Higher threshold for better accuracy
+      match_count: 10, // Retrieve more chunks for better context
+      tenant_id: tenantId,
+      access_level: 1 // TODO: Replace with actual user access level
+    });
 
-      if (error) {
-        console.error('Database search error:', error);
-        return NextResponse.json(
-          { error: 'Failed to search documents' },
-          { status: 500 }
-        );
-      }
-
-      relevantChunks = chunks || [];
-    } else {
-      // Search across all tenant documents using vector similarity
-      // Note: This is a simplified approach. In production, use pgvector similarity search
-      const { data: chunks, error } = await supabase
-        .from('document_chunks')
-        .select(`
-          id,
-          content,
-          chunk_index,
-          document_id,
-          documents!inner(filename, tenant_id)
-        `)
-        .eq('documents.tenant_id', tenantId)
-        .limit(20);
-
-      if (error) {
-        console.error('Database search error:', error);
-        return NextResponse.json(
-          { error: 'Failed to search documents' },
-          { status: 500 }
-        );
-      }
-
-      // For MVP, we'll use simple text matching
-      // In production, this should use vector similarity
-      relevantChunks = (chunks || []).filter(chunk => 
-        chunk.content.toLowerCase().includes(message.toLowerCase()) ||
-        message.toLowerCase().split(' ').some((word: string) => 
-          word.length > 3 && chunk.content.toLowerCase().includes(word)
-        )
-      ).slice(0, 5);
+    if (error) {
+      console.error('Vector search error:', error);
+      return NextResponse.json(
+        { error: 'Failed to perform vector search' },
+        { status: 500 }
+      );
     }
 
+    const relevantChunks: Chunk[] = chunks || [];
+
     // Step 3: Prepare context from relevant chunks
-    const context = relevantChunks.map(chunk => ({
+    const context: Context[] = relevantChunks.map((chunk: Chunk) => ({
       content: chunk.content,
       source: `${chunk.documents && typeof chunk.documents === 'object' && 'filename' in chunk.documents ? chunk.documents.filename : 'unknown'} (chunk ${chunk.chunk_index + 1})`,
       document_id: chunk.document_id
@@ -119,7 +92,7 @@ export async function POST(request: NextRequest) {
 Based on the following document context, answer the user's question accurately and professionally.
 
 CONTEXT FROM DOCUMENTS:
-${context.map((ctx, idx) => `
+${context.map((ctx: Context, idx: number) => `
 Source ${idx + 1}: ${ctx.source}
 Content: ${ctx.content}
 ---`).join('\n')}
@@ -153,7 +126,7 @@ ANSWER:`;
           tenant_id: tenantId,
           query: message,
           response: answerText,
-          document_ids: relevantChunks.map(chunk => chunk.document_id),
+          document_ids: relevantChunks.map((chunk: Chunk) => chunk.document_id),
           confidence_score: confidence,
           response_time_ms: responseTime
         });
@@ -165,7 +138,7 @@ ANSWER:`;
     // Step 7: Return structured response
     return NextResponse.json({
       answer: answerText,
-      sources: context.map(ctx => ({
+      sources: context.map((ctx: Context) => ({
         filename: ctx.source.split(' (chunk')[0],
         content: ctx.content.substring(0, 200) + '...',
         document_id: ctx.document_id
