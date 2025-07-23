@@ -35,7 +35,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'AI service not configured' }, { status: 500 });
     }
 
-    const supabase = getSupabaseClient();
+    let supabase;
+    try {
+      supabase = getSupabaseClient();
+    } catch (error: any) {
+      console.error('Supabase initialization error:', error);
+      return NextResponse.json({ 
+        error: 'Database service not available',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      }, { status: 500 });
+    }
     
     // Get tenant from subdomain or auth
     const url = new URL(request.url);
@@ -55,25 +64,54 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now();
 
     // Step 1: Generate embedding for the user's query
-    const embeddingModel = genAI.getGenerativeModel({ model: 'text-embedding-004' });
-    const embeddingResult = await embeddingModel.embedContent(message);
-    const queryEmbedding = embeddingResult.embedding.values;
+    let queryEmbedding;
+    try {
+      const embeddingModel = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+      const embeddingResult = await embeddingModel.embedContent(message);
+      queryEmbedding = embeddingResult.embedding.values;
+    } catch (error: any) {
+      console.error('Embedding generation error:', error);
+      return NextResponse.json({ 
+        error: 'Failed to process query',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      }, { status: 500 });
+    }
 
     // Step 2: Perform semantic search to find relevant document chunks
-    const { data: chunks, error } = await supabase.rpc('similarity_search', {
-      query_embedding: queryEmbedding, // Pass the embedding array directly
-      match_threshold: 0.75, // Higher threshold for better accuracy
-      match_count: 10, // Retrieve more chunks for better context
-      tenant_id: tenantId,
-      access_level: 1 // TODO: Replace with actual user access level
-    });
+    let chunks;
+    try {
+      const { data, error } = await supabase.rpc('similarity_search', {
+        query_embedding: queryEmbedding,
+        match_threshold: 0.75,
+        match_count: 10,
+        tenant_id: tenantId,
+        access_level: 1
+      });
 
-    if (error) {
-      console.error('Vector search error:', error);
-      return NextResponse.json(
-        { error: 'Failed to perform vector search' },
-        { status: 500 }
-      );
+      if (error) {
+        console.error('Vector search error:', error);
+        // Fallback to simple text search if vector search fails
+        const { data: fallbackChunks, error: fallbackError } = await supabase
+          .from('document_chunks')
+          .select('id, content, chunk_index, document_id')
+          .ilike('content', `%${message}%`)
+          .limit(5);
+        
+        if (fallbackError) {
+          throw fallbackError;
+        }
+        
+        chunks = fallbackChunks || [];
+        console.log('Using fallback text search');
+      } else {
+        chunks = data || [];
+      }
+    } catch (error: any) {
+      console.error('Search error:', error);
+      return NextResponse.json({ 
+        error: 'Search service unavailable',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      }, { status: 500 });
     }
 
     const relevantChunks: Chunk[] = chunks || [];
@@ -151,7 +189,7 @@ ANSWER:`;
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Chat API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
