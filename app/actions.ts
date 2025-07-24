@@ -78,7 +78,8 @@ export async function createSubdomainAction(
     undefined
   );
 
-  redirect(`${protocol}://${sanitizedSubdomain}.${rootDomain}`);
+  // Redirect to main domain with subdomain parameter instead of subdomain URL
+  redirect(`${protocol}://${rootDomain}/s/${sanitizedSubdomain}`);
 }
 
 export async function deleteSubdomainAction(
