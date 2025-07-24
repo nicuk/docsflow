@@ -5,6 +5,7 @@ import { getTenantPrompt, calculateTenantConfidence } from '@/lib/tenant-prompts
 import { getUserAccessLevel, extractTenantFromRequest } from '@/lib/auth-helpers';
 import { performDeepSearch, buildSynthesizedContext } from '@/lib/deep-search';
 import { ConfidenceScoring } from '@/lib/confidence-scoring';
+import { HybridSearch } from '@/lib/hybrid-search';
 
 // CORS headers for frontend integration
 const corsHeaders = {
@@ -100,42 +101,68 @@ export async function POST(request: NextRequest) {
     const userAccessLevel = await getUserAccessLevel(request, tenantId);
 
     let relevantChunks: Chunk[] = [];
-    let deepSearchResult;
-    let crossReferences: any[] = [];
+    let searchResult: any;
+    let searchStrategy = 'hybrid';
 
     try {
-      // 🚀 DEEP SEARCH: Multi-pass search with cross-document synthesis
-      deepSearchResult = await performDeepSearch(message, tenantId, userAccessLevel, genAI);
-      relevantChunks = deepSearchResult.chunks;
-      crossReferences = deepSearchResult.crossReferences;
-      
-      console.log(`Deep search found ${relevantChunks.length} chunks with ${crossReferences.length} cross-references`);
-      
-    } catch (error: any) {
-      console.error('Deep search error, falling back to basic search:', error);
-      
-      // Fallback to basic vector search
-      try {
-        const { data, error } = await supabase.rpc('similarity_search', {
-          query_embedding: queryEmbedding,
-          match_threshold: 0.85,
-          match_count: 15,
-          tenant_filter: tenantId,
-          access_level_filter: userAccessLevel
-        });
-
-        if (error) {
-          throw error;
+      // 🚀 ENHANCED HYBRID SEARCH: Combines vector + keyword for maximum coverage
+      const hybridSearch = new HybridSearch();
+      searchResult = await hybridSearch.performHybridSearch(
+        message,
+        tenantId,
+        userAccessLevel,
+        {
+          vectorThreshold: 0.75,
+          maxResults: 15,
+          includeKeywordSearch: true,
+          fusionStrategy: 'rrf' // Reciprocal Rank Fusion
         }
+      );
+      
+      relevantChunks = searchResult.chunks;
+      searchStrategy = searchResult.searchStrategy;
+      
+      console.log(`Hybrid search: ${searchResult.vectorResults} vector + ${searchResult.keywordResults} keyword = ${searchResult.fusedResults} fused results`);
+      
+    } catch (hybridError: any) {
+      console.error('Hybrid search error, falling back to deep search:', hybridError);
+      
+      // Fallback to deep search
+      try {
+        const deepSearchResult = await performDeepSearch(message, tenantId, userAccessLevel, genAI);
+        relevantChunks = deepSearchResult.chunks;
+        searchStrategy = 'deep_search_fallback';
         
-        relevantChunks = data || [];
-             } catch (fallbackError: any) {
-         console.error('Fallback search also failed:', fallbackError);
-         return NextResponse.json({ 
-           error: 'Search service unavailable',
-           details: process.env.NODE_ENV === 'development' ? fallbackError.message : undefined
-         }, { status: 500 });
-       }
+        console.log(`Deep search fallback found ${relevantChunks.length} chunks`);
+        
+      } catch (deepError: any) {
+        console.error('Deep search also failed, using basic vector search:', deepError);
+        
+        // Final fallback to basic vector search
+        try {
+          const { data, error } = await supabase.rpc('similarity_search', {
+            query_embedding: queryEmbedding,
+            match_threshold: 0.85,
+            match_count: 15,
+            tenant_filter: tenantId,
+            access_level_filter: userAccessLevel
+          });
+
+          if (error) {
+            throw error;
+          }
+          
+          relevantChunks = data || [];
+          searchStrategy = 'basic_vector_fallback';
+          
+        } catch (fallbackError: any) {
+          console.error('All search methods failed:', fallbackError);
+          return NextResponse.json({ 
+            error: 'Search service unavailable',
+            details: process.env.NODE_ENV === 'development' ? fallbackError.message : undefined
+          }, { status: 500 });
+        }
+      }
     }
 
     // 🔧 CRITICAL FIX: Prevent hallucination with empty context
@@ -178,10 +205,8 @@ export async function POST(request: NextRequest) {
 
     const promptConfig = getTenantPrompt(tenantId, tenant?.industry);
     
-    // Build synthesized context with deep search results
-    const contextString = deepSearchResult ? 
-      buildSynthesizedContext(deepSearchResult) :
-      context.map((ctx: Context, idx: number) => `
+    // Build context string from search results
+    const contextString = context.map((ctx: Context, idx: number) => `
 Source ${idx + 1}: ${ctx.source}
 Content: ${ctx.content}
 ---`).join('\n');
@@ -206,7 +231,7 @@ Content: ${ctx.content}
       relevantChunks,
       message,
       answerText,
-      crossReferences
+      [] // No cross-references in hybrid search for now
     );
     
     console.log(`Enhanced confidence: ${enhancedConfidence.score.toFixed(2)} (${enhancedConfidence.level}) - ${enhancedConfidence.explanation}`);
@@ -244,23 +269,17 @@ Content: ${ctx.content}
       confidence_factors: enhancedConfidence.factors,
       recommendations: enhancedConfidence.recommendations,
       responseTime,
-      metadata: {
-        chunksFound: relevantChunks.length,
-        searchStrategy: documentIds ? 'specific_documents' : 'all_documents',
-        // 🚀 ENHANCED: Deep search metadata
-        deep_search: {
-          total_chunks: relevantChunks.length,
-          high_precision_chunks: relevantChunks.filter((c: any) => c.precision === 'high').length,
-          cross_references: crossReferences.length,
-          synthesis_applied: deepSearchResult ? true : false
+              metadata: {
+          chunksFound: relevantChunks.length,
+          searchStrategy: searchStrategy,
+          // 🚀 ENHANCED: Hybrid search metadata
+          hybrid_search: {
+            total_chunks: relevantChunks.length,
+            vector_results: searchResult?.vectorResults || 0,
+            keyword_results: searchResult?.keywordResults || 0,
+            fusion_applied: searchStrategy === 'hybrid_fusion'
+          }
         }
-      },
-      // 🚀 NEW: Cross-document relationships
-      cross_references: crossReferences.map(ref => ({
-        relationship: ref.relationship,
-        strength: Math.round(ref.strength * 100),
-        evidence: ref.evidence[0] || 'Cross-document relationship detected'
-      }))
     }, { headers: corsHeaders });
 
   } catch (error: any) {

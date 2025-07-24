@@ -185,7 +185,7 @@ export class ConfidenceScoring {
       const queryLower = query.toLowerCase();
       const relevantContexts = contextualChunks.filter(chunk => {
         const context = chunk.metadata?.context_summary?.toLowerCase() || '';
-        return context.split(' ').some(word => queryLower.includes(word));
+        return context.split(' ').some((word: string) => queryLower.includes(word));
       });
       
       relevanceScore += (relevantContexts.length / contextualChunks.length) * 0.4;
