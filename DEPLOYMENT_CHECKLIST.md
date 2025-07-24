@@ -1,148 +1,100 @@
-# Deployment Checklist - Backend Supabase Integration
+# DEPLOYMENT CHECKLIST - AI Lead Router SaaS
 
-## ✅ CRITICAL: Backend Environment Variables (Vercel Dashboard)
+## ✅ Pre-Deployment Requirements
 
-**Go to Vercel Project → Settings → Environment Variables**
+### 1. Environment Variables (Vercel Dashboard)
+**Critical**: Verify these environment variables are set in your Vercel project settings:
 
-### Required Variables:
+#### **Required - Core Functionality**
 ```bash
+# Database (Supabase)
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
-GOOGLE_AI_API_KEY=AIzaSyC...
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+
+# AI Provider (Google Gemini)
+GOOGLE_AI_API_KEY=AIza...
+
+# Multi-tenant routing
+NEXT_PUBLIC_ROOT_DOMAIN=ai-lead-router-saas.vercel.app
 ```
 
-### How to Find These Values:
+#### **Optional - Enhanced Features**
+```bash
+# Redis (for tenant metadata)
+KV_REST_API_URL=redis://...
+KV_REST_API_TOKEN=xxx
 
-1. **NEXT_PUBLIC_SUPABASE_URL**: 
-   - Go to Supabase Dashboard → Project Settings → API
-   - Copy "Project URL"
+# Email notifications
+RESEND_API_KEY=re_xxx
 
-2. **SUPABASE_SERVICE_ROLE_KEY**:
-   - Go to Supabase Dashboard → Project Settings → API
-   - Copy "service_role" key (NOT the anon key)
-   - ⚠️ CRITICAL: This gives admin access - keep secret!
+# Google Drive integration
+GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=xxx
+GOOGLE_REDIRECT_URI=https://ai-lead-router-saas.vercel.app/api/auth/callback
+```
 
-3. **NEXT_PUBLIC_SUPABASE_ANON_KEY**:
-   - Go to Supabase Dashboard → Project Settings → API  
-   - Copy "anon public" key
+### 2. Database Setup (Supabase)
+Run these SQL migrations in your Supabase SQL Editor:
 
-4. **GOOGLE_AI_API_KEY**:
-   - Go to Google AI Studio → Get API Key
-   - Or Google Cloud Console → APIs & Services → Credentials
+1. **Basic Schema**: `SUPABASE_IMPLEMENTATION.sql`
+2. **Vector Search**: `migrations/001_similarity_search.sql`
+3. **Security**: `migrations/002_security_hardening.sql`
+4. **Vector Migration**: `migrations/003_complete_vector_migration.sql`
 
-## ✅ Database Setup (Supabase SQL Editor)
+### 3. Domain Configuration
+- Set up custom domain in Vercel (if using)
+- Configure DNS records for subdomain routing
+- Update CORS origins in API routes
 
-**Run this migration in Supabase SQL Editor:**
+## 🚨 Current Deployment Error
 
+**Error**: `Application error: a server-side exception has occurred while loading ai-lead-router-saas.vercel.app`
+
+**Most Likely Causes**:
+1. **Missing Environment Variables** - Check Vercel dashboard
+2. **Database Connection** - Verify Supabase credentials
+3. **Missing Vector Extension** - Ensure `pgvector` is enabled
+
+## 🔧 Quick Fixes
+
+### Fix 1: Verify Environment Variables
+```bash
+# Check if all required env vars are set in Vercel:
+vercel env ls
+```
+
+### Fix 2: Test Database Connection
 ```sql
--- Enable pgvector extension
-CREATE EXTENSION IF NOT EXISTS vector;
-
--- Create similarity_search function
-CREATE OR REPLACE FUNCTION similarity_search(
-  query_embedding vector(768),
-  match_threshold float DEFAULT 0.7,
-  match_count int DEFAULT 5,
-  tenant_id text DEFAULT NULL,
-  access_level int DEFAULT 1
-)
-RETURNS TABLE (
-  id uuid,
-  content text,
-  similarity float,
-  document_id uuid,
-  chunk_index int
-)
-LANGUAGE sql STABLE
-AS $$
-  SELECT
-    dc.id,
-    dc.content,
-    1 - (dc.embedding <=> query_embedding) as similarity,
-    dc.document_id,
-    dc.chunk_index
-  FROM document_chunks as dc
-  WHERE 
-    (similarity_search.tenant_id IS NULL OR dc.metadata->>'tenant_id' = similarity_search.tenant_id)
-    AND (dc.access_level IS NULL OR dc.access_level <= similarity_search.access_level)
-    AND 1 - (dc.embedding <=> query_embedding) > match_threshold
-  ORDER BY dc.embedding <=> query_embedding
-  LIMIT match_count;
-$$;
-
--- Add access_level column if missing
-ALTER TABLE document_chunks
-ADD COLUMN IF NOT EXISTS access_level INTEGER DEFAULT 1 CHECK (access_level BETWEEN 1 AND 5);
+-- Run in Supabase SQL Editor to test:
+SELECT current_database(), current_user;
+SELECT * FROM pg_extension WHERE extname = 'vector';
 ```
 
-## ✅ Verification Steps
+### Fix 3: Check Function Availability
+```sql
+-- Verify similarity_search function exists:
+SELECT routine_name FROM information_schema.routines 
+WHERE routine_name = 'similarity_search';
+```
 
-1. **Check Health Endpoint**:
-   ```
-   GET https://your-app.vercel.app/api/health
-   ```
-   Should return:
-   ```json
-   {
-     "status": "ok",
-     "services": {
-       "supabase": "ok",
-       "google_ai": "configured"
-     }
-   }
-   ```
+## 🎯 Success Criteria
 
-2. **Test Subdomain Routing**:
-   ```
-   https://demo.your-app.vercel.app
-   ```
-   Should show your app interface, not "Subdomain Not Found"
+- [ ] Build completes successfully (`npm run build`)
+- [ ] All environment variables configured in Vercel
+- [ ] Database schema and functions deployed
+- [ ] Chat API returns 200 status (`/api/chat`)
+- [ ] Subdomain routing works (`app.your-domain.com`)
 
-3. **Verify Database Connection**:
-   - Go to Supabase → Table Editor
-   - Check that tables exist: `documents`, `document_chunks`, `search_history`
+## 📞 Support
 
-## ✅ Common Issues & Fixes
-
-### Issue: "Subdomain Not Found"
-**Cause**: Backend can't connect to database to check tenant
-**Fix**: Add environment variables above
-
-### Issue: Health check 404
-**Cause**: API routes not deploying
-**Fix**: Redeploy after adding environment variables
-
-### Issue: "Database service not available"  
-**Cause**: Wrong Supabase URL or missing service role key
-**Fix**: Double-check environment variables
-
-## ✅ Frontend Integration (Secondary Priority)
-
-**Only after backend works:**
-
-1. **Frontend Environment Variables** (if using client-side Supabase):
-   ```bash
-   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
-   ```
-
-2. **API Client Configuration**:
-   ```typescript
-   // Frontend calls backend APIs
-   const response = await fetch('/api/chat', {
-     method: 'POST',
-     body: JSON.stringify({ message: 'Hello' })
-   });
-   ```
-
-## 🚨 Security Notes
-
-- **NEVER** put service_role key in frontend code
-- **ALWAYS** use anon key for frontend
-- **Backend APIs** handle all database operations
-- **Row Level Security** protects tenant data
+If deployment still fails:
+1. Check Vercel function logs
+2. Verify Supabase query logs  
+3. Test API endpoints individually
+4. Enable debug logging (`LOG_LEVEL=debug`)
 
 ---
 
-**Priority Order: Backend → Database → Frontend → UI Polish** 
+**Last Updated**: After Next.js 15 compatibility fixes
+**Status**: Ready for deployment ✅ 

@@ -1,0 +1,34 @@
+# Exclude from Vercel builds to speed up deployment
+docs/
+*.md
+README.md
+dataintelligence/
+test/
+migrations/
+*.sql
+.git
+.gitignore
+.env.example
+DEPLOYMENT_CHECKLIST.md
+DEMO_DEPLOYMENT.md
+EDGE_FUNCTIONS_ANALYSIS.md
+INTEGRATION_PLAN.md
+INTEGRATION_WORKFLOW.md
+INVITATION_SYSTEM.md
+SCHEMA_FIXES*.sql
+SUPABASE_IMPLEMENTATION.sql
+supabase-schema.sql
+Supabase*.md
+
+# Development files
+.vscode/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test files
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx 

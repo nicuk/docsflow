@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import formidable from 'formidable';
 import { promises as fs } from 'fs';
-import pdfParse from 'pdf-parse';
-import mammoth from 'mammoth';
-import * as XLSX from 'xlsx';
+// Dynamic imports to prevent build hangs
+const loadPdfParse = () => import('pdf-parse');
+const loadMammoth = () => import('mammoth'); 
+const loadXLSX = () => import('xlsx');
 import { createClient } from '@supabase/supabase-js';
 import { getUserAccessLevel, extractTenantFromRequest } from '@/lib/auth-helpers';
 import { EnhancedChunking } from '@/lib/enhanced-chunking';
@@ -87,17 +88,20 @@ export async function POST(request: NextRequest) {
     
     try {
       if (file.type === 'application/pdf') {
+        const pdfParse = (await loadPdfParse()).default;
         const pdfData = await pdfParse(buffer);
         textContent = pdfData.text;
       } else if (file.type === 'application/msword' || 
                  file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        const mammoth = await loadMammoth();
         const docData = await mammoth.extractRawText({ buffer });
         textContent = docData.value;
       } else if (file.type === 'application/vnd.ms-excel' || 
                  file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+        const XLSX = await loadXLSX();
         const workbook = XLSX.read(buffer, { type: 'buffer' });
         const sheetNames = workbook.SheetNames;
-        textContent = sheetNames.map(name => {
+        textContent = sheetNames.map((name: string) => {
           const sheet = workbook.Sheets[name];
           return XLSX.utils.sheet_to_csv(sheet);
         }).join('\n\n');
