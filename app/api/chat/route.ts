@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createClient } from '@supabase/supabase-js';
 import { getTenantPrompt, calculateTenantConfidence } from '@/lib/tenant-prompts';
 import { getUserAccessLevel, extractTenantFromRequest } from '@/lib/auth-helpers';
+import { performDeepSearch, buildSynthesizedContext } from '@/lib/deep-search';
 
 // CORS headers for frontend integration
 const corsHeaders = {
@@ -94,46 +95,65 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Step 2: Get user access level and perform semantic search
+    // Step 2: Get user access level and perform DEEP SEARCH with cross synthesis
     const userAccessLevel = await getUserAccessLevel(request, tenantId);
 
-    let chunks;
-    try {
-      const { data, error } = await supabase.rpc('similarity_search', {
-        query_embedding: queryEmbedding,
-        match_threshold: 0.75,
-        match_count: 10,
-        tenant_filter: tenantId,
-        access_level_filter: userAccessLevel
-      });
+    let relevantChunks: Chunk[] = [];
+    let deepSearchResult;
+    let crossReferences: any[] = [];
 
-      if (error) {
-        console.error('Vector search error:', error);
-        // Fallback to simple text search if vector search fails
-        const { data: fallbackChunks, error: fallbackError } = await supabase
-          .from('document_chunks')
-          .select('id, content, chunk_index, document_id')
-          .ilike('content', `%${message}%`)
-          .limit(5);
-        
-        if (fallbackError) {
-          throw fallbackError;
+    try {
+      // 🚀 DEEP SEARCH: Multi-pass search with cross-document synthesis
+      deepSearchResult = await performDeepSearch(message, tenantId, userAccessLevel, genAI);
+      relevantChunks = deepSearchResult.chunks;
+      crossReferences = deepSearchResult.crossReferences;
+      
+      console.log(`Deep search found ${relevantChunks.length} chunks with ${crossReferences.length} cross-references`);
+      
+    } catch (error: any) {
+      console.error('Deep search error, falling back to basic search:', error);
+      
+      // Fallback to basic vector search
+      try {
+        const { data, error } = await supabase.rpc('similarity_search', {
+          query_embedding: queryEmbedding,
+          match_threshold: 0.85,
+          match_count: 15,
+          tenant_filter: tenantId,
+          access_level_filter: userAccessLevel
+        });
+
+        if (error) {
+          throw error;
         }
         
-        chunks = fallbackChunks || [];
-        console.log('Using fallback text search');
-      } else {
-        chunks = data || [];
-      }
-    } catch (error: any) {
-      console.error('Search error:', error);
-      return NextResponse.json({ 
-        error: 'Search service unavailable',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      }, { status: 500 });
+        relevantChunks = data || [];
+             } catch (fallbackError: any) {
+         console.error('Fallback search also failed:', fallbackError);
+         return NextResponse.json({ 
+           error: 'Search service unavailable',
+           details: process.env.NODE_ENV === 'development' ? fallbackError.message : undefined
+         }, { status: 500 });
+       }
     }
 
-    const relevantChunks: Chunk[] = chunks || [];
+    // 🔧 CRITICAL FIX: Prevent hallucination with empty context
+    if (relevantChunks.length === 0) {
+      return NextResponse.json({
+        message: "I don't have any documents that contain information about your question. Please upload relevant documents or try rephrasing your query with more specific terms.",
+        sources: [],
+        confidence: 0,
+        error: "no_relevant_context",
+        suggestions: [
+          "Upload documents related to your query",
+          "Try using more specific keywords",
+          "Check if you have the right access level for this information"
+        ]
+      }, { 
+        status: 200,
+        headers: corsHeaders 
+      });
+    }
 
     // Step 3: Prepare context from relevant chunks
     const context: Context[] = relevantChunks.map((chunk: Chunk) => ({
@@ -157,13 +177,15 @@ export async function POST(request: NextRequest) {
 
     const promptConfig = getTenantPrompt(tenantId, tenant?.industry);
     
-    // Build context string
-    const contextString = context.map((ctx: Context, idx: number) => `
+    // Build synthesized context with deep search results
+    const contextString = deepSearchResult ? 
+      buildSynthesizedContext(deepSearchResult) :
+      context.map((ctx: Context, idx: number) => `
 Source ${idx + 1}: ${ctx.source}
 Content: ${ctx.content}
 ---`).join('\n');
 
-    // Use tenant-specific prompt template
+    // Use tenant-specific prompt template with enhanced context
     const prompt = promptConfig.contextTemplate
       .replace('{context}', contextString)
       .replace('{query}', message);
@@ -178,18 +200,25 @@ Content: ${ctx.content}
     const response = result.response;
     const answerText = response.text();
 
-    // Step 5: Calculate tenant-specific confidence score
-    const avgSimilarity = relevantChunks.length > 0 ? 
-      relevantChunks.reduce((sum: number, chunk: any) => sum + (chunk.similarity || 0.5), 0) / relevantChunks.length : 0.3;
+    // Step 5: Calculate enhanced confidence score with deep search bonuses
+    const baseConfidence = deepSearchResult ? deepSearchResult.confidence : 
+      (relevantChunks.length > 0 ? 
+        relevantChunks.reduce((sum: number, chunk: any) => sum + (chunk.similarity || 0.5), 0) / relevantChunks.length : 0.3);
     
     const confidenceLevel = calculateTenantConfidence(
-      avgSimilarity, 
+      baseConfidence, 
       tenant?.industry || 'general', 
       relevantChunks.length
     );
     
-    const confidence = confidenceLevel === 'high' ? 0.9 : 
-                     confidenceLevel === 'medium' ? 0.7 : 0.4;
+    // Enhanced confidence with deep search bonuses
+    const crossRefBonus = crossReferences.length > 0 ? 0.1 : 0;
+    const precisionBonus = relevantChunks.filter((c: any) => c.precision === 'high').length > 0 ? 0.05 : 0;
+    
+    const confidence = Math.min(0.99, 
+      (confidenceLevel === 'high' ? 0.9 : 
+       confidenceLevel === 'medium' ? 0.7 : 0.4) + crossRefBonus + precisionBonus
+    );
 
     // Step 6: Store search in history
     const responseTime = Date.now() - startTime;
@@ -210,7 +239,7 @@ Content: ${ctx.content}
       // Don't fail the request if history storage fails
     }
 
-    // Step 7: Return structured response
+    // Step 7: Return enhanced structured response with deep search data
     return NextResponse.json({
       answer: answerText,
       sources: context.map((ctx: Context) => ({
@@ -222,8 +251,21 @@ Content: ${ctx.content}
       responseTime,
       metadata: {
         chunksFound: relevantChunks.length,
-        searchStrategy: documentIds ? 'specific_documents' : 'all_documents'
-      }
+        searchStrategy: documentIds ? 'specific_documents' : 'all_documents',
+        // 🚀 ENHANCED: Deep search metadata
+        deep_search: {
+          total_chunks: relevantChunks.length,
+          high_precision_chunks: relevantChunks.filter((c: any) => c.precision === 'high').length,
+          cross_references: crossReferences.length,
+          synthesis_applied: deepSearchResult ? true : false
+        }
+      },
+      // 🚀 NEW: Cross-document relationships
+      cross_references: crossReferences.map(ref => ({
+        relationship: ref.relationship,
+        strength: Math.round(ref.strength * 100),
+        evidence: ref.evidence[0] || 'Cross-document relationship detected'
+      }))
     }, { headers: corsHeaders });
 
   } catch (error: any) {

@@ -16,10 +16,17 @@ const TENANT_PROMPTS: Record<string, TenantPromptConfig> = {
     systemPrompt: `You are a specialized business intelligence assistant for motorcycle dealerships. 
     You have deep knowledge of motorcycle specifications, service procedures, parts catalogs, and dealer operations.
     Always provide accurate, specific information with model numbers, part numbers, and safety considerations.`,
-    contextTemplate: `Based on these motorcycle dealership documents:
+    contextTemplate: `Based STRICTLY on these motorcycle dealership documents:
 {context}
 
 User Question: {query}
+
+🚨 CRITICAL INSTRUCTIONS:
+- ONLY use information explicitly stated in the documents above
+- If the documents don't contain the answer, say "I don't have that information in the available documents"
+- Do NOT make up specifications, procedures, part numbers, or any technical details
+- If unsure about any detail, ask the user to provide more specific documents
+- When synthesizing information from multiple sources, clearly indicate which document each fact comes from
 
 Provide accurate information about:
 - Motorcycle specifications and features (include model year, engine size, horsepower)
@@ -45,10 +52,17 @@ Always specify motorcycle model and year when relevant. Include part numbers and
     systemPrompt: `You are a specialized business intelligence assistant for warehouse and distribution operations.
     You have deep knowledge of inventory management, logistics, compliance requirements, and operational procedures.
     Always emphasize safety, compliance, and operational efficiency.`,
-    contextTemplate: `Based on these warehouse/distribution documents:
+    contextTemplate: `Based STRICTLY on these warehouse/distribution documents:
 {context}
 
 User Question: {query}
+
+🚨 CRITICAL INSTRUCTIONS:
+- ONLY use information explicitly stated in the documents above
+- If the documents don't contain the answer, say "I don't have that information in the available documents"
+- Do NOT make up SKUs, safety procedures, compliance standards, or operational details
+- If unsure about any detail, ask the user to provide more specific documents
+- When synthesizing information from multiple sources, clearly indicate which document each fact comes from
 
 Provide accurate information about:
 - Product specifications and inventory (include SKUs, dimensions, weight)
