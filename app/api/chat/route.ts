@@ -5,6 +5,7 @@ import { getTenantPrompt, calculateTenantConfidence } from '@/lib/tenant-prompts
 import { getUserAccessLevel, extractTenantFromRequest } from '@/lib/auth-helpers';
 import { performDeepSearch, buildSynthesizedContext } from '@/lib/deep-search';
 import { ConfidenceScoring } from '@/lib/confidence-scoring';
+import { redis, safeRedisOperation } from '@/lib/redis';
 
 // Dynamic import to prevent build issues
 const loadHybridSearch = () => import('@/lib/hybrid-search');
@@ -30,6 +31,17 @@ function getSupabaseClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
+}
+
+// SIMPLE CACHE HELPERS (3 lines of optimization)
+async function getCachedEmbedding(message: string): Promise<number[] | null> {
+  const cacheKey = `embedding:${Buffer.from(message).toString('base64').slice(0, 50)}`;
+  return await safeRedisOperation(() => redis!.get(cacheKey), null);
+}
+
+async function setCachedEmbedding(message: string, embedding: number[]): Promise<void> {
+  const cacheKey = `embedding:${Buffer.from(message).toString('base64').slice(0, 50)}`;
+  await safeRedisOperation(() => redis!.set(cacheKey, embedding, { ex: 3600 }), undefined); // Cache for 1 hour
 }
 
 interface Chunk {
@@ -85,18 +97,25 @@ export async function POST(request: NextRequest) {
 
     const startTime = Date.now();
 
-    // Step 1: Generate embedding for the user's query
-    let queryEmbedding;
-    try {
-      const embeddingModel = genAI.getGenerativeModel({ model: 'text-embedding-004' });
-      const embeddingResult = await embeddingModel.embedContent(message);
-      queryEmbedding = embeddingResult.embedding.values;
-    } catch (error: any) {
-      console.error('Embedding generation error:', error);
-      return NextResponse.json({ 
-        error: 'Failed to process query',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      }, { status: 500 });
+    // SPEED OPTIMIZATION: Check cached embedding first
+    let queryEmbedding = await getCachedEmbedding(message);
+    
+    if (!queryEmbedding) {
+      // Generate embedding only if not cached
+      try {
+        const embeddingModel = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+        const embeddingResult = await embeddingModel.embedContent(message);
+        queryEmbedding = embeddingResult.embedding.values;
+        
+        // Cache the embedding for future use
+        await setCachedEmbedding(message, queryEmbedding);
+      } catch (error: any) {
+        console.error('Embedding generation error:', error);
+        return NextResponse.json({ 
+          error: 'Failed to process query',
+          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        }, { status: 500 });
+      }
     }
 
     // Step 2: Get user access level and perform DEEP SEARCH with cross synthesis
