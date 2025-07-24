@@ -1,4 +1,4 @@
-import { redis } from '@/lib/redis';
+import { redis, safeRedisOperation } from '@/lib/redis';
 
 export function isValidIcon(str: string) {
   if (str.length > 10) {
@@ -46,7 +46,10 @@ export async function getSubdomainData(
   subdomain: string
 ): Promise<SubdomainData | null> {
   const sanitized = sanitizeSubdomain(subdomain);
-  const data = await redis.get<any>(`subdomain:${sanitized}`);
+  const data = await safeRedisOperation(
+    () => redis!.get<any>(`subdomain:${sanitized}`),
+    null
+  );
   if (!data) {
     return null;
   }
@@ -82,13 +85,19 @@ export async function getSubdomainData(
 }
 
 export async function getAllSubdomains() {
-  const keys = await redis.keys('subdomain:*');
+  const keys = await safeRedisOperation(
+    () => redis!.keys('subdomain:*'),
+    []
+  );
 
   if (!keys.length) {
     return [];
   }
 
-  const values = await redis.mget<any[]>(...keys);
+  const values = await safeRedisOperation(
+    () => redis!.mget<any[]>(...keys),
+    []
+  );
 
   return keys.map((key, index) => {
     const subdomain = key.replace('subdomain:', '');
@@ -117,7 +126,10 @@ export async function updateTenantMetadata(
   };
 
   const sanitized = sanitizeSubdomain(subdomain);
-  await redis.set(`subdomain:${sanitized}`, merged);
+  await safeRedisOperation(
+    () => redis!.set(`subdomain:${sanitized}`, merged),
+    undefined
+  );
 
   return merged;
 }

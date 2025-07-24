@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Optimize builds for faster deployment
-  swcMinify: true,
+  // swcMinify is deprecated in Next.js 15
   
   // Reduce memory usage during build
   experimental: {

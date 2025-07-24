@@ -1,6 +1,6 @@
 'use server';
 
-import { redis } from '@/lib/redis';
+import { redis, safeRedisOperation } from '@/lib/redis';
 import { isValidIcon } from '@/lib/subdomains';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -57,8 +57,9 @@ export async function createSubdomainAction(
     };
   }
 
-  const subdomainAlreadyExists = await redis.get(
-    `subdomain:${sanitizedSubdomain}`
+  const subdomainAlreadyExists = await safeRedisOperation(
+    () => redis!.get(`subdomain:${sanitizedSubdomain}`),
+    null
   );
   if (subdomainAlreadyExists) {
     return {
@@ -69,10 +70,13 @@ export async function createSubdomainAction(
     };
   }
 
-  await redis.set(`subdomain:${sanitizedSubdomain}`, {
-    emoji: icon,
-    createdAt: Date.now()
-  });
+  await safeRedisOperation(
+    () => redis!.set(`subdomain:${sanitizedSubdomain}`, {
+      emoji: icon,
+      createdAt: Date.now()
+    }),
+    undefined
+  );
 
   redirect(`${protocol}://${sanitizedSubdomain}.${rootDomain}`);
 }
@@ -87,7 +91,10 @@ export async function deleteSubdomainAction(
     return { error: 'Invalid subdomain' };
   }
 
-  await redis.del(`subdomain:${subdomainValue}`);
+  await safeRedisOperation(
+    () => redis!.del(`subdomain:${subdomainValue}`),
+    undefined
+  );
   revalidatePath('/admin');
   return { success: 'Domain deleted successfully' };
 }
