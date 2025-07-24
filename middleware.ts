@@ -1,5 +1,28 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
+// TEMPORARY: Middleware disabled for debugging
+export async function middleware(request: NextRequest) {
+  console.log('Middleware bypassed for debugging');
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
+}
+
+/*
+// ORIGINAL MIDDLEWARE - DISABLED FOR DEBUGGING
+import { type NextRequest, NextResponse } from 'next/server';
+
 // Inline configuration to avoid import issues in edge runtime
 const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
 const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'ai-lead-router-saas.vercel.app';
@@ -8,39 +31,28 @@ function extractSubdomain(request: NextRequest): string | null {
   try {
     const url = request.url;
     const host = request.headers.get('host') || '';
-    const hostname = host.split(':')[0];
-
-    // Local development environment
-    if (url.includes('localhost') || url.includes('127.0.0.1')) {
-      // Try to extract subdomain from the full URL
-      const fullUrlMatch = url.match(/http:\/\/([^.]+)\.localhost/);
-      if (fullUrlMatch && fullUrlMatch[1]) {
-        return fullUrlMatch[1];
-      }
-
-      // Fallback to host header approach
-      if (hostname.includes('.localhost')) {
-        return hostname.split('.')[0];
-      }
-
-      return null;
-    }
-
-    // Production environment
+    
+    console.log('Extracting subdomain from:', { url, host });
+    
+    // Parse the hostname from the request
+    const hostname = new URL(url).hostname;
+    
+    // Remove 'www.' if present
+    const normalizedHostname = hostname.replace(/^www\./, '');
+    
+    // Format root domain for comparison (remove port if present)
     const rootDomainFormatted = rootDomain.split(':')[0];
-
-    // Handle preview deployment URLs (tenant---branch-name.vercel.app)
-    if (hostname.includes('---') && hostname.endsWith('.vercel.app')) {
-      const parts = hostname.split('---');
-      return parts.length > 0 ? parts[0] : null;
-    }
-
-    // Regular subdomain detection
-    const isSubdomain =
-      hostname !== rootDomainFormatted &&
-      hostname !== `www.${rootDomainFormatted}` &&
-      hostname.endsWith(`.${rootDomainFormatted}`);
-
+    
+    // Check if this is a subdomain
+    const isSubdomain = normalizedHostname !== rootDomainFormatted && 
+                       normalizedHostname.endsWith(`.${rootDomainFormatted}`);
+    
+    console.log('Subdomain check:', { 
+      normalizedHostname, 
+      rootDomainFormatted, 
+      isSubdomain 
+    });
+    
     return isSubdomain ? hostname.replace(`.${rootDomainFormatted}`, '') : null;
   } catch (error) {
     console.error('Error in extractSubdomain:', error);
@@ -61,45 +73,26 @@ export async function middleware(request: NextRequest) {
     });
 
     if (subdomain) {
-      // Block access to admin page from subdomains
+      console.log(`Processing subdomain: ${subdomain}`);
+      
+      // Handle admin routes on subdomains
       if (pathname.startsWith('/admin')) {
-        return NextResponse.redirect(new URL('/', request.url));
+        console.log('Admin route on subdomain, allowing through');
+        return NextResponse.next();
       }
-
+      
       // Rewrite subdomain root to tenant dashboard
       if (pathname === '/') {
         const rewriteUrl = new URL(`/app/${subdomain}${search}${hash}`, request.url);
         console.log('Rewriting to:', rewriteUrl.toString());
         return NextResponse.rewrite(rewriteUrl);
       }
-
-      // Rewrite leads list
-      if (pathname === '/leads') {
-        return NextResponse.rewrite(
-          new URL(`/app/${subdomain}/leads${search}${hash}`, request.url)
-        );
-      }
-
-      // Rewrite individual lead pages
-      if (pathname.startsWith('/leads/')) {
-        const rest = pathname.substring('/leads'.length);
-        return NextResponse.rewrite(
-          new URL(`/app/${subdomain}/leads${rest}${search}${hash}`, request.url)
-        );
-      }
-
-      // Rewrite analytics page
-      if (pathname === '/analytics') {
-        return NextResponse.rewrite(
-          new URL(`/app/${subdomain}/analytics${search}${hash}`, request.url)
-        );
-      }
-
-      // Rewrite settings page
-      if (pathname === '/settings') {
-        return NextResponse.rewrite(
-          new URL(`/app/${subdomain}/settings${search}${hash}`, request.url)
-        );
+      
+      // Handle other subdomain routes
+      if (!pathname.startsWith('/app/')) {
+        const rewriteUrl = new URL(`/app/${subdomain}${pathname}${search}${hash}`, request.url);
+        console.log('Rewriting subdomain route to:', rewriteUrl.toString());
+        return NextResponse.rewrite(rewriteUrl);
       }
     }
 
@@ -119,12 +112,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all paths except for:
-     * 1. /api routes
-     * 2. /_next (Next.js internals)
-     * 3. all root files inside /public (e.g. /favicon.ico)
-     */
-    '/((?!api|_next|[\\w-]+\\.\\w+).*)'
-  ]
-};
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
+}
+*/
