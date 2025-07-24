@@ -18,6 +18,7 @@ CREATE TABLE tenants (
   email_config JSONB,
   subscription_status TEXT DEFAULT 'active',
   plan_type TEXT DEFAULT 'starter',
+  user_limit INTEGER DEFAULT 5, -- Number of users allowed per plan
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -67,10 +68,28 @@ CREATE TABLE users (
   email TEXT NOT NULL,
   name TEXT NOT NULL,
   role TEXT DEFAULT 'user' CHECK (role IN ('admin', 'user', 'viewer')),
+  access_level INTEGER DEFAULT 1 CHECK (access_level BETWEEN 1 AND 5), -- Document access level (1=public, 5=executive)
   avatar_url TEXT,
   last_login_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(tenant_id, email)
+);
+
+-- User invitations table
+CREATE TABLE user_invitations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+  email TEXT NOT NULL,
+  invited_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  role TEXT DEFAULT 'user' CHECK (role IN ('admin', 'user', 'viewer')),
+  access_level INTEGER DEFAULT 1 CHECK (access_level BETWEEN 1 AND 5),
+  token TEXT UNIQUE NOT NULL, -- Secure invitation token
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  accepted_at TIMESTAMP WITH TIME ZONE,
+  accepted_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'expired', 'revoked')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(tenant_id, email, status) -- Prevent duplicate pending invitations for same email
 );
 
 -- Chat conversations for SME intelligence
@@ -170,6 +189,13 @@ CREATE INDEX idx_tenants_subdomain ON tenants(subdomain);
 CREATE INDEX idx_documents_tenant_id ON documents(tenant_id);
 CREATE INDEX idx_documents_category ON documents(document_category);
 CREATE INDEX idx_documents_status ON documents(processing_status);
+CREATE INDEX idx_users_tenant_id ON users(tenant_id);
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_user_invitations_tenant_id ON user_invitations(tenant_id);
+CREATE INDEX idx_user_invitations_token ON user_invitations(token);
+CREATE INDEX idx_user_invitations_email ON user_invitations(email);
+CREATE INDEX idx_user_invitations_status ON user_invitations(status);
+CREATE INDEX idx_user_invitations_expires_at ON user_invitations(expires_at);
 CREATE INDEX idx_chat_conversations_tenant_id ON chat_conversations(tenant_id);
 CREATE INDEX idx_chat_messages_conversation_id ON chat_messages(conversation_id);
 CREATE INDEX idx_leads_tenant_id ON leads(tenant_id);
@@ -186,6 +212,7 @@ ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_invitations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lead_interactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE routing_rules ENABLE ROW LEVEL SECURITY;
@@ -213,6 +240,10 @@ CREATE POLICY "Chat messages tenant isolation" ON chat_messages
 CREATE POLICY "Users can view tenant data" ON users
   FOR ALL USING (tenant_id = auth.jwt() ->> 'tenant_id'::uuid);
 
+-- User invitations tenant isolation
+CREATE POLICY "User invitations tenant isolation" ON user_invitations
+  FOR ALL USING (tenant_id = auth.jwt() ->> 'tenant_id'::uuid);
+
 CREATE POLICY "Leads tenant isolation" ON leads
   FOR ALL USING (tenant_id = auth.jwt() ->> 'tenant_id'::uuid);
 
@@ -229,16 +260,16 @@ CREATE POLICY "File uploads tenant isolation" ON file_uploads
   FOR ALL USING (tenant_id = auth.jwt() ->> 'tenant_id'::uuid);
 
 -- Sample data for testing SME Data Intelligence Platform
-INSERT INTO tenants (subdomain, name, industry, theme, settings) VALUES 
+INSERT INTO tenants (subdomain, name, industry, theme, settings, user_limit) VALUES 
 ('mrtee', 'Mr. Tee Motorcycles', 'motorcycle_dealer', 
  '{"primary": "orange", "secondary": "blue", "accent": "yellow"}',
- '{"businessHours": "9AM-6PM", "timezone": "UTC", "slaTarget": 30}'),
+ '{"businessHours": "9AM-6PM", "timezone": "UTC", "slaTarget": 30}', 10),
 ('apexdist', 'Apex Distribution', 'warehouse_distribution',
  '{"primary": "blue", "secondary": "gray", "accent": "green"}',
- '{"businessHours": "8AM-5PM", "timezone": "UTC", "slaTarget": 60}'),
+ '{"businessHours": "8AM-5PM", "timezone": "UTC", "slaTarget": 60}', 25),
 ('sme-demo', 'SME Demo Company', 'general',
  '{"primary": "green", "secondary": "gray", "accent": "blue"}',
- '{"businessHours": "9AM-5PM", "timezone": "UTC", "aiEnabled": true}');
+ '{"businessHours": "9AM-5PM", "timezone": "UTC", "aiEnabled": true}', 5);
 
 -- Sample leads data
 INSERT INTO leads (tenant_id, contact_name, contact_email, contact_phone, source_channel, status, priority, industry_specific_data) 
@@ -343,4 +374,48 @@ $$;
 
 -- Add access_level to document_chunks if it doesn't exist
 ALTER TABLE document_chunks
-ADD COLUMN IF NOT EXISTS access_level INTEGER NOT NULL DEFAULT 1 CHECK (access_level BETWEEN 1 AND 5); 
+ADD COLUMN IF NOT EXISTS access_level INTEGER NOT NULL DEFAULT 1 CHECK (access_level BETWEEN 1 AND 5);
+
+-- Function to check tenant user limits
+CREATE OR REPLACE FUNCTION check_user_limit(tenant_uuid UUID)
+RETURNS TABLE (
+  current_users INTEGER,
+  user_limit INTEGER,
+  can_add_user BOOLEAN
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    COUNT(u.id)::INTEGER as current_users,
+    t.user_limit,
+    (COUNT(u.id) < t.user_limit) as can_add_user
+  FROM tenants t
+  LEFT JOIN users u ON t.id = u.tenant_id
+  WHERE t.id = tenant_uuid
+  GROUP BY t.id, t.user_limit;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to create invitation token
+CREATE OR REPLACE FUNCTION generate_invitation_token()
+RETURNS TEXT AS $$
+BEGIN
+  RETURN encode(gen_random_bytes(32), 'base64url');
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to cleanup expired invitations
+CREATE OR REPLACE FUNCTION cleanup_expired_invitations()
+RETURNS INTEGER AS $$
+DECLARE
+  deleted_count INTEGER;
+BEGIN
+  UPDATE user_invitations 
+  SET status = 'expired'
+  WHERE status = 'pending' 
+    AND expires_at < NOW();
+    
+  GET DIAGNOSTICS deleted_count = ROW_COUNT;
+  RETURN deleted_count;
+END;
+$$ LANGUAGE plpgsql; 
