@@ -27,7 +27,9 @@ export function isValidIcon(str: string) {
 }
 
 type SubdomainData = {
-  emoji: string;
+  emoji?: string; // Made optional since we're moving away from emojis
+  organizationName?: string;
+  industry?: string;
   createdAt: number;
   leadCount: number;
   lastActivity: number;

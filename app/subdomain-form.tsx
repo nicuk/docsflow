@@ -8,18 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover';
-import { Smile } from 'lucide-react';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
-import {
-  EmojiPicker,
-  EmojiPickerContent,
-  EmojiPickerSearch,
-  EmojiPickerFooter
-} from '@/components/ui/emoji-picker';
 import { createSubdomainAction } from '@/app/actions';
 import { rootDomain } from '@/lib/utils';
 
@@ -27,8 +22,22 @@ type CreateState = {
   error?: string;
   success?: boolean;
   subdomain?: string;
-  icon?: string;
+  organizationName?: string;
+  industry?: string;
 };
+
+const INDUSTRIES = [
+  { value: 'general', label: 'General Business' },
+  { value: 'motorcycle_dealer', label: 'Motorcycle Dealership' },
+  { value: 'warehouse_distribution', label: 'Warehouse & Distribution' },
+  { value: 'manufacturing', label: 'Manufacturing' },
+  { value: 'retail', label: 'Retail' },
+  { value: 'professional_services', label: 'Professional Services' },
+  { value: 'healthcare', label: 'Healthcare' },
+  { value: 'finance', label: 'Financial Services' },
+  { value: 'technology', label: 'Technology' },
+  { value: 'education', label: 'Education' }
+];
 
 function SubdomainInput({ defaultValue }: { defaultValue?: string }) {
   return (
@@ -39,7 +48,7 @@ function SubdomainInput({ defaultValue }: { defaultValue?: string }) {
           <Input
             id="subdomain"
             name="subdomain"
-            placeholder="your-subdomain"
+            placeholder="your-company"
             defaultValue={defaultValue}
             className="w-full rounded-r-none focus:z-10"
             required
@@ -49,83 +58,72 @@ function SubdomainInput({ defaultValue }: { defaultValue?: string }) {
           .{rootDomain}
         </span>
       </div>
+      <p className="text-xs text-gray-500">
+        Choose a unique subdomain for your organization
+      </p>
     </div>
   );
 }
 
-function IconPicker({
-  icon,
-  setIcon,
-  defaultValue
-}: {
-  icon: string;
-  setIcon: (icon: string) => void;
-  defaultValue?: string;
-}) {
-  const [isPickerOpen, setIsPickerOpen] = useState(false);
-
-  const handleEmojiSelect = ({ emoji }: { emoji: string }) => {
-    setIcon(emoji);
-    setIsPickerOpen(false);
-  };
-
+function OrganizationNameInput({ defaultValue }: { defaultValue?: string }) {
   return (
     <div className="space-y-2">
-      <Label htmlFor="icon">Icon</Label>
-      <div className="flex flex-col gap-2">
-        <input type="hidden" name="icon" value={icon} required />
-        <div className="flex items-center gap-2">
-          <Card className="flex-1 flex flex-row items-center justify-between p-2 border border-input rounded-md">
-            <div className="min-w-[40px] min-h-[40px] flex items-center pl-[14px] select-none">
-              {icon ? (
-                <span className="text-3xl">{icon}</span>
-              ) : (
-                <span className="text-gray-400 text-sm font-normal">
-                  No icon selected
-                </span>
-              )}
-            </div>
-            <Popover open={isPickerOpen} onOpenChange={setIsPickerOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="ml-auto rounded-sm"
-                  onClick={() => setIsPickerOpen(!isPickerOpen)}
-                >
-                  <Smile className="h-4 w-4 mr-2" />
-                  Select Emoji
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                className="p-0 w-[256px]"
-                align="end"
-                sideOffset={5}
-              >
-                <EmojiPicker
-                  className="h-[300px] w-[256px]"
-                  defaultValue={defaultValue}
-                  onEmojiSelect={handleEmojiSelect}
-                >
-                  <EmojiPickerSearch />
-                  <EmojiPickerContent />
-                  <EmojiPickerFooter />
-                </EmojiPicker>
-              </PopoverContent>
-            </Popover>
-          </Card>
-        </div>
-        <p className="text-xs text-gray-500">
-          Select an emoji to represent your subdomain
-        </p>
-      </div>
+      <Label htmlFor="organizationName">Organization Name</Label>
+      <Input
+        id="organizationName"
+        name="organizationName"
+        placeholder="Acme Corporation"
+        defaultValue={defaultValue}
+        className="w-full"
+        required
+      />
+      <p className="text-xs text-gray-500">
+        The full name of your organization
+      </p>
+    </div>
+  );
+}
+
+function IndustrySelector({
+  industry,
+  setIndustry,
+  defaultValue
+}: {
+  industry: string;
+  setIndustry: (industry: string) => void;
+  defaultValue?: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="industry">Industry</Label>
+      <input type="hidden" name="industry" value={industry} required />
+      
+      <Select value={industry} onValueChange={setIndustry}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select your industry">
+            {industry && (
+              <span>{INDUSTRIES.find(ind => ind.value === industry)?.label}</span>
+            )}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {INDUSTRIES.map((ind) => (
+            <SelectItem key={ind.value} value={ind.value}>
+              {ind.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      
+      <p className="text-xs text-gray-500">
+        This customizes your AI assistant for your specific industry
+      </p>
     </div>
   );
 }
 
 export function SubdomainForm() {
-  const [icon, setIcon] = useState('');
+  const [industry, setIndustry] = useState('');
 
   const [state, action, isPending] = useActionState<CreateState, FormData>(
     createSubdomainAction,
@@ -133,18 +131,39 @@ export function SubdomainForm() {
   );
 
   return (
-    <form action={action} className="space-y-4">
-      <SubdomainInput defaultValue={state?.subdomain} />
+    <div className="space-y-6">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Create Your AI Document Intelligence Platform
+        </h2>
+        <p className="text-gray-600">
+          Set up enterprise-grade AI document analysis for your organization
+        </p>
+      </div>
 
-      <IconPicker icon={icon} setIcon={setIcon} defaultValue={state?.icon} />
+      <Card className="p-6">
+        <form action={action} className="space-y-4">
+          <OrganizationNameInput defaultValue={state?.organizationName} />
+          
+          <SubdomainInput defaultValue={state?.subdomain} />
 
-      {state?.error && (
-        <div className="text-sm text-red-500">{state.error}</div>
-      )}
+          <IndustrySelector industry={industry} setIndustry={setIndustry} defaultValue={state?.industry} />
 
-      <Button type="submit" className="w-full" disabled={isPending || !icon}>
-        {isPending ? 'Creating...' : 'Create Subdomain'}
-      </Button>
-    </form>
+          {state?.error && (
+            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
+              {state.error}
+            </div>
+          )}
+
+          <Button type="submit" className="w-full" disabled={isPending || !industry}>
+            {isPending ? 'Creating Platform...' : 'Create AI Platform'}
+          </Button>
+        </form>
+      </Card>
+
+      <div className="text-center text-sm text-gray-500">
+        <p>By creating an account, you agree to our Terms of Service and Privacy Policy</p>
+      </div>
+    </div>
   );
 }

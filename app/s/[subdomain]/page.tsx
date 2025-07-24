@@ -5,7 +5,7 @@ import { getSubdomainData } from '@/lib/subdomains';
 import { protocol, rootDomain } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, MessageSquare, BarChart3, Settings, Users, CheckCircle } from 'lucide-react';
+import { FileText, MessageSquare, Users, CheckCircle, Building2 } from 'lucide-react';
 
 export async function generateMetadata({
   params
@@ -21,9 +21,11 @@ export async function generateMetadata({
     };
   }
 
+  const orgName = subdomainData.organizationName || `${subdomain} Organization`;
+
   return {
-    title: `${subdomain}.${rootDomain}`,
-    description: `Enterprise AI Document Intelligence for ${subdomain}`
+    title: `${orgName} - AI Document Intelligence`,
+    description: `Enterprise AI Document Intelligence Platform for ${orgName}`
   };
 }
 
@@ -39,80 +41,94 @@ export default async function SubdomainPage({
     notFound();
   }
 
+  const organizationName = subdomainData.organizationName || `${subdomain} Organization`;
+  const industry = subdomainData.industry || 'General Business';
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Header */}
-      <div className="flex justify-between items-center p-4">
-        <div className="flex items-center gap-3">
-          <span className="text-3xl">{subdomainData.emoji}</span>
+      <div className="flex justify-between items-center p-6 border-b bg-white">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+            <Building2 className="w-6 h-6 text-white" />
+          </div>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">{subdomain}</h1>
-            <p className="text-sm text-gray-500">Enterprise AI Platform</p>
+            <h1 className="text-xl font-semibold text-gray-900">
+              {organizationName}
+            </h1>
+            <p className="text-sm text-gray-500">{industry} • AI Document Intelligence</p>
           </div>
         </div>
         <Link
           href={`${protocol}://${rootDomain}`}
-          className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          className="text-sm text-gray-500 hover:text-gray-700 transition-colors px-3 py-1 rounded-md hover:bg-gray-100"
         >
           ← Back to {rootDomain}
         </Link>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-6 py-12">
         {/* Success Message */}
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full mb-4">
+        <div className="mb-12 text-center">
+          <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full mb-6">
             <CheckCircle className="w-5 h-5" />
-            <span className="font-medium">Your Enterprise AI Assistant is Ready!</span>
+            <span className="font-medium">Platform Successfully Created</span>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Welcome to {subdomain} Organization
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            Welcome to {organizationName}
           </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Your multi-tenant AI document intelligence platform has been created with sample documents 
-            and enterprise-grade security. Start exploring your AI assistant capabilities.
+          <p className="text-gray-600 max-w-2xl mx-auto text-lg">
+            Your enterprise AI document intelligence platform is ready. Start asking questions about your business documents with industry-specific AI assistance.
           </p>
         </div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid md:grid-cols-3 gap-8 mb-12">
           <Card className="border-2 border-blue-200 bg-blue-50/50">
             <CardHeader>
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-6 h-6 text-blue-600" />
-                <CardTitle className="text-lg">AI Chat Assistant</CardTitle>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">AI Chat Assistant</CardTitle>
+                  <CardDescription className="text-sm">
+                    Industry-specific AI responses
+                  </CardDescription>
+                </div>
               </div>
-              <CardDescription>
-                Ask questions about your business documents with enterprise-grade AI
-              </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full">
-                Try Chat Assistant
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                Start Conversation
               </Button>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-2">
-                <FileText className="w-6 h-6 text-green-600" />
-                <CardTitle className="text-lg">Sample Documents</CardTitle>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Sample Documents</CardTitle>
+                  <CardDescription className="text-sm">
+                    Pre-loaded for immediate testing
+                  </CardDescription>
+                </div>
               </div>
-              <CardDescription>
-                Pre-loaded with Company Handbook and Technical Manual
-              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2 text-sm text-gray-600">
+              <div className="space-y-3 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-green-500" />
                   <span>Company Handbook.pdf</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Technical Manual.pdf</span>
+                  <span>Operations Manual.pdf</span>
                 </div>
               </div>
             </CardContent>
@@ -120,57 +136,65 @@ export default async function SubdomainPage({
 
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-2">
-                <Users className="w-6 h-6 text-purple-600" />
-                <CardTitle className="text-lg">Access Control</CardTitle>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                  <Users className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Access Control</CardTitle>
+                  <CardDescription className="text-sm">
+                    Enterprise-grade security
+                  </CardDescription>
+                </div>
               </div>
-              <CardDescription>
-                5-level enterprise security with user-controlled document access
-              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-sm text-gray-600">
-                <div>Demo Access: Level 3 (Technician)</div>
+                <div className="font-medium">Demo Access: Level 3</div>
                 <div className="text-xs text-gray-500 mt-1">
-                  Access to technical docs and procedures
+                  Technical documentation access
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Quick Actions */}
-        <div className="bg-white rounded-lg border p-6">
-          <h3 className="text-lg font-semibold mb-4">Quick Start Options</h3>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-3">
+        {/* Quick Start */}
+        <div className="bg-white rounded-xl border shadow-sm p-8">
+          <h3 className="text-xl font-semibold mb-6 text-center">Quick Start Guide</h3>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="space-y-4">
               <h4 className="font-medium text-gray-900">Try Sample Queries:</h4>
-              <div className="space-y-2">
-                <div className="bg-gray-50 p-3 rounded text-sm">
+              <div className="space-y-3">
+                <div className="bg-gray-50 p-4 rounded-lg text-sm border-l-4 border-blue-500">
                   "What are our company policies?"
                 </div>
-                <div className="bg-gray-50 p-3 rounded text-sm">
-                  "Show me the technical procedures"
+                <div className="bg-gray-50 p-4 rounded-lg text-sm border-l-4 border-blue-500">
+                  "Show me the operations procedures"
                 </div>
-                <div className="bg-gray-50 p-3 rounded text-sm">
+                <div className="bg-gray-50 p-4 rounded-lg text-sm border-l-4 border-blue-500">
                   "What safety guidelines should I follow?"
                 </div>
               </div>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <h4 className="font-medium text-gray-900">Next Steps:</h4>
-              <div className="space-y-2 text-sm text-gray-600">
-                <div className="flex items-center gap-2">
+              <div className="space-y-3 text-sm text-gray-600">
+                <div className="flex items-center gap-3">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span>Upload your own documents</span>
+                  <span>Upload your organization's documents</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span>Invite team members</span>
+                  <span>Invite team members with appropriate access levels</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                   <span>Configure industry-specific settings</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span>Set up document access levels for security</span>
                 </div>
               </div>
             </div>
@@ -178,15 +202,15 @@ export default async function SubdomainPage({
         </div>
 
         {/* Call to Action */}
-        <div className="text-center mt-8">
-          <p className="text-gray-600 mb-4">
-            Ready to experience enterprise AI document intelligence?
+        <div className="text-center mt-12">
+          <p className="text-gray-600 mb-6 text-lg">
+            Ready to transform how your organization accesses information?
           </p>
           <div className="flex gap-4 justify-center">
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+            <Button size="lg" className="bg-blue-600 hover:bg-blue-700 px-8">
               Launch AI Assistant
             </Button>
-            <Button size="lg" variant="outline">
+            <Button size="lg" variant="outline" className="px-8">
               View Documentation
             </Button>
           </div>
