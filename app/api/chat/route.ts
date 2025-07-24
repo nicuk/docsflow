@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createClient } from '@supabase/supabase-js';
+import { getTenantPrompt, calculateTenantConfidence } from '@/lib/tenant-prompts';
+import { getUserAccessLevel, extractTenantFromRequest } from '@/lib/auth-helpers';
+
+// CORS headers for frontend integration
+const corsHeaders = {
+  'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' 
+    ? 'https://v0-ai-saas-landing-page-lw.vercel.app' 
+    : '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  'Access-Control-Allow-Credentials': 'true',
+};
 
 // Initialize services - only when environment variables are available
 const genAI = process.env.GOOGLE_AI_API_KEY ? new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY) : null;
@@ -28,6 +40,13 @@ interface Context {
   document_id: string;
 }
 
+export async function OPTIONS(request: NextRequest) {
+  return new Response(null, {
+    status: 200,
+    headers: corsHeaders,
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Check if services are available
@@ -46,10 +65,8 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
     
-    // Get tenant from subdomain or auth
-    const url = new URL(request.url);
-    const subdomain = url.hostname.split('.')[0];
-    const tenantId = subdomain === 'localhost' ? 'demo' : subdomain;
+    // Get tenant from subdomain
+    const tenantId = extractTenantFromRequest(request);
 
     // Parse request body
     const { message, documentIds } = await request.json();
@@ -77,15 +94,17 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Step 2: Perform semantic search to find relevant document chunks
+    // Step 2: Get user access level and perform semantic search
+    const userAccessLevel = await getUserAccessLevel(request, tenantId);
+
     let chunks;
     try {
       const { data, error } = await supabase.rpc('similarity_search', {
         query_embedding: queryEmbedding,
         match_threshold: 0.75,
         match_count: 10,
-        tenant_id: tenantId,
-        access_level: 1
+        tenant_filter: tenantId,
+        access_level_filter: userAccessLevel
       });
 
       if (error) {
@@ -123,36 +142,54 @@ export async function POST(request: NextRequest) {
       document_id: chunk.document_id
     }));
 
-    // Step 4: Generate response using Google Gemini
-    const chatModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-    
-    const prompt = `You are a business intelligence assistant helping analyze business documents. 
-Based on the following document context, answer the user's question accurately and professionally.
+    // Step 4: Get tenant configuration and generate response using Google Gemini
+    let tenant;
+    try {
+      const { data: tenantData } = await supabase
+        .from('tenants')
+        .select('industry')
+        .eq('subdomain', tenantId)
+        .single();
+      tenant = tenantData;
+    } catch (error) {
+      console.log('Tenant not found, using general prompts');
+    }
 
-CONTEXT FROM DOCUMENTS:
-${context.map((ctx: Context, idx: number) => `
+    const promptConfig = getTenantPrompt(tenantId, tenant?.industry);
+    
+    // Build context string
+    const contextString = context.map((ctx: Context, idx: number) => `
 Source ${idx + 1}: ${ctx.source}
 Content: ${ctx.content}
----`).join('\n')}
+---`).join('\n');
 
-USER QUESTION: ${message}
+    // Use tenant-specific prompt template
+    const prompt = promptConfig.contextTemplate
+      .replace('{context}', contextString)
+      .replace('{query}', message);
 
-INSTRUCTIONS:
-- Provide a clear, professional answer based on the document context
-- If the context doesn't contain enough information, say so honestly
-- Always cite your sources using the format "According to [filename]..."
-- Focus on business insights and actionable information
-- Be concise but thorough
-
-ANSWER:`;
+    // Initialize chat model with tenant-specific system prompt
+    const chatModel = genAI.getGenerativeModel({ 
+      model: 'gemini-1.5-flash',
+      systemInstruction: promptConfig.systemPrompt
+    });
 
     const result = await chatModel.generateContent(prompt);
     const response = result.response;
     const answerText = response.text();
 
-    // Step 5: Calculate confidence score based on context relevance
-    const confidence = relevantChunks.length > 0 ? 
-      Math.min(0.9, 0.5 + (relevantChunks.length * 0.1)) : 0.3;
+    // Step 5: Calculate tenant-specific confidence score
+    const avgSimilarity = relevantChunks.length > 0 ? 
+      relevantChunks.reduce((sum: number, chunk: any) => sum + (chunk.similarity || 0.5), 0) / relevantChunks.length : 0.3;
+    
+    const confidenceLevel = calculateTenantConfidence(
+      avgSimilarity, 
+      tenant?.industry || 'general', 
+      relevantChunks.length
+    );
+    
+    const confidence = confidenceLevel === 'high' ? 0.9 : 
+                     confidenceLevel === 'medium' ? 0.7 : 0.4;
 
     // Step 6: Store search in history
     const responseTime = Date.now() - startTime;
@@ -187,13 +224,13 @@ ANSWER:`;
         chunksFound: relevantChunks.length,
         searchStrategy: documentIds ? 'specific_documents' : 'all_documents'
       }
-    });
+    }, { headers: corsHeaders });
 
   } catch (error: any) {
     console.error('Chat API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
@@ -205,5 +242,5 @@ export async function GET(request: NextRequest) {
     status: 'ok',
     service: 'SME Intelligence Chat API',
     timestamp: new Date().toISOString()
-  });
+  }, { headers: corsHeaders });
 } 

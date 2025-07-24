@@ -1,6 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// CORS headers for frontend integration
+const corsHeaders = {
+  'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' 
+    ? 'https://v0-ai-saas-landing-page-lw.vercel.app' 
+    : '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  'Access-Control-Allow-Credentials': 'true',
+};
+
+export async function OPTIONS(request: NextRequest) {
+  return new Response(null, {
+    status: 200,
+    headers: corsHeaders,
+  });
+}
+
 export async function GET(request: NextRequest) {
   const health = {
     status: 'ok',
@@ -44,5 +61,8 @@ export async function GET(request: NextRequest) {
   const hasErrors = Object.values(health.services).some(status => status === 'error');
   const statusCode = hasErrors ? 503 : 200;
 
-  return NextResponse.json(health, { status: statusCode });
+  return NextResponse.json(health, { 
+    status: statusCode,
+    headers: corsHeaders
+  });
 } 

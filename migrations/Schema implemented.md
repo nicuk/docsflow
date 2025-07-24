@@ -1,0 +1,323 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.ai_models (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text NOT NULL,
+  version text NOT NULL,
+  provider text NOT NULL,
+  model_type text CHECK (model_type = ANY (ARRAY['chat'::text, 'embedding'::text, 'completion'::text, 'analysis'::text])),
+  configuration jsonb NOT NULL,
+  cost_per_token_input numeric,
+  cost_per_token_output numeric,
+  max_tokens integer,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT ai_models_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.analytics_aggregations (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  tenant_id uuid,
+  metric_name text NOT NULL,
+  aggregation_type text CHECK (aggregation_type = ANY (ARRAY['daily'::text, 'weekly'::text, 'monthly'::text])),
+  period_start timestamp with time zone NOT NULL,
+  period_end timestamp with time zone NOT NULL,
+  value numeric,
+  count integer,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT analytics_aggregations_pkey PRIMARY KEY (id),
+  CONSTRAINT analytics_aggregations_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
+);
+CREATE TABLE public.analytics_events (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  tenant_id uuid,
+  event_type text NOT NULL,
+  event_data jsonb NOT NULL,
+  user_id uuid,
+  lead_id uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT analytics_events_pkey PRIMARY KEY (id),
+  CONSTRAINT analytics_events_lead_id_fkey FOREIGN KEY (lead_id) REFERENCES public.leads(id),
+  CONSTRAINT analytics_events_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT analytics_events_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
+);
+CREATE TABLE public.api_usage (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  tenant_id uuid,
+  user_id uuid,
+  endpoint text NOT NULL,
+  method text NOT NULL,
+  status_code integer,
+  response_time_ms integer,
+  tokens_used integer DEFAULT 0,
+  cost_cents integer DEFAULT 0,
+  ip_address inet,
+  user_agent text,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT api_usage_pkey PRIMARY KEY (id),
+  CONSTRAINT api_usage_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id),
+  CONSTRAINT api_usage_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.chat_conversations (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  tenant_id uuid,
+  user_id uuid,
+  title text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT chat_conversations_pkey PRIMARY KEY (id),
+  CONSTRAINT chat_conversations_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id),
+  CONSTRAINT chat_conversations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.chat_messages (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  conversation_id uuid,
+  tenant_id uuid,
+  role text NOT NULL CHECK (role = ANY (ARRAY['user'::text, 'assistant'::text])),
+  content text NOT NULL,
+  document_references ARRAY DEFAULT '{}'::uuid[],
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT chat_messages_pkey PRIMARY KEY (id),
+  CONSTRAINT chat_messages_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id),
+  CONSTRAINT chat_messages_conversation_id_fkey FOREIGN KEY (conversation_id) REFERENCES public.chat_conversations(id)
+);
+CREATE TABLE public.document_chunks (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  document_id uuid,
+  chunk_index integer NOT NULL,
+  content text NOT NULL,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  access_level integer NOT NULL DEFAULT 1 CHECK (access_level >= 1 AND access_level <= 5),
+  created_at timestamp with time zone DEFAULT now(),
+  embedding USER-DEFINED,
+  tenant_id uuid,
+  CONSTRAINT document_chunks_pkey PRIMARY KEY (id),
+  CONSTRAINT document_chunks_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id),
+  CONSTRAINT document_chunks_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
+);
+CREATE TABLE public.document_processing_jobs (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  document_id uuid,
+  tenant_id uuid,
+  job_type text CHECK (job_type = ANY (ARRAY['extraction'::text, 'chunking'::text, 'embedding'::text, 'analysis'::text])),
+  status text CHECK (status = ANY (ARRAY['queued'::text, 'processing'::text, 'completed'::text, 'failed'::text, 'retrying'::text])),
+  progress_percentage integer DEFAULT 0,
+  started_at timestamp with time zone,
+  completed_at timestamp with time zone,
+  error_message text,
+  retry_count integer DEFAULT 0,
+  max_retries integer DEFAULT 3,
+  processor_version text,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT document_processing_jobs_pkey PRIMARY KEY (id),
+  CONSTRAINT document_processing_jobs_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id),
+  CONSTRAINT document_processing_jobs_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
+);
+CREATE TABLE public.documents (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  tenant_id uuid NOT NULL,
+  filename text NOT NULL,
+  file_size bigint NOT NULL,
+  mime_type text NOT NULL,
+  processing_status text DEFAULT 'pending'::text CHECK (processing_status = ANY (ARRAY['pending'::text, 'processing'::text, 'completed'::text, 'error'::text])),
+  processing_progress integer DEFAULT 0,
+  error_message text,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT documents_pkey PRIMARY KEY (id),
+  CONSTRAINT documents_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
+);
+CREATE TABLE public.file_uploads (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  tenant_id uuid,
+  lead_id uuid,
+  file_name text NOT NULL,
+  file_url text NOT NULL,
+  file_type text NOT NULL,
+  file_size integer,
+  uploaded_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT file_uploads_pkey PRIMARY KEY (id),
+  CONSTRAINT file_uploads_lead_id_fkey FOREIGN KEY (lead_id) REFERENCES public.leads(id),
+  CONSTRAINT file_uploads_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id),
+  CONSTRAINT file_uploads_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.lead_interactions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  lead_id uuid,
+  tenant_id uuid,
+  interaction_type text NOT NULL CHECK (interaction_type = ANY (ARRAY['message'::text, 'call'::text, 'email'::text, 'meeting'::text, 'note'::text])),
+  direction text NOT NULL CHECK (direction = ANY (ARRAY['inbound'::text, 'outbound'::text])),
+  content text NOT NULL,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  ai_response jsonb DEFAULT '{}'::jsonb,
+  responded_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT lead_interactions_pkey PRIMARY KEY (id),
+  CONSTRAINT lead_interactions_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id),
+  CONSTRAINT lead_interactions_lead_id_fkey FOREIGN KEY (lead_id) REFERENCES public.leads(id)
+);
+CREATE TABLE public.leads (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  tenant_id uuid,
+  contact_name text NOT NULL,
+  contact_email text,
+  contact_phone text,
+  source_channel text NOT NULL CHECK (source_channel = ANY (ARRAY['whatsapp'::text, 'email'::text, 'phone'::text, 'web'::text, 'walk_in'::text])),
+  status text DEFAULT 'new'::text CHECK (status = ANY (ARRAY['new'::text, 'contacted'::text, 'qualified'::text, 'converted'::text, 'lost'::text])),
+  priority text DEFAULT 'medium'::text CHECK (priority = ANY (ARRAY['low'::text, 'medium'::text, 'high'::text, 'urgent'::text])),
+  industry_specific_data jsonb DEFAULT '{}'::jsonb,
+  ai_analysis jsonb DEFAULT '{}'::jsonb,
+  assigned_to uuid,
+  last_interaction_at timestamp with time zone DEFAULT now(),
+  conversion_value numeric,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT leads_pkey PRIMARY KEY (id),
+  CONSTRAINT leads_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id),
+  CONSTRAINT leads_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES public.users(id)
+);
+CREATE TABLE public.notifications (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  tenant_id uuid,
+  user_id uuid,
+  lead_id uuid,
+  type text NOT NULL,
+  title text NOT NULL,
+  message text NOT NULL,
+  priority text CHECK (priority = ANY (ARRAY['low'::text, 'medium'::text, 'high'::text, 'urgent'::text])),
+  status text CHECK (status = ANY (ARRAY['unread'::text, 'read'::text, 'archived'::text])),
+  delivery_method ARRAY DEFAULT ARRAY['in_app'::text],
+  scheduled_for timestamp with time zone,
+  sent_at timestamp with time zone,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT notifications_pkey PRIMARY KEY (id),
+  CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT notifications_lead_id_fkey FOREIGN KEY (lead_id) REFERENCES public.leads(id),
+  CONSTRAINT notifications_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
+);
+CREATE TABLE public.routing_rules (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  tenant_id uuid,
+  name text NOT NULL,
+  conditions jsonb NOT NULL,
+  actions jsonb NOT NULL,
+  priority integer DEFAULT 0,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT routing_rules_pkey PRIMARY KEY (id),
+  CONSTRAINT routing_rules_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
+);
+CREATE TABLE public.search_history (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  tenant_id uuid NOT NULL,
+  query text NOT NULL,
+  response text,
+  document_ids ARRAY,
+  confidence_score numeric,
+  response_time_ms integer,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT search_history_pkey PRIMARY KEY (id),
+  CONSTRAINT search_history_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
+);
+CREATE TABLE public.subscriptions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  tenant_id uuid,
+  plan_name text NOT NULL,
+  billing_cycle text CHECK (billing_cycle = ANY (ARRAY['monthly'::text, 'yearly'::text, 'lifetime'::text])),
+  price_cents integer NOT NULL,
+  currency text DEFAULT 'USD'::text,
+  status text CHECK (status = ANY (ARRAY['active'::text, 'canceled'::text, 'past_due'::text, 'trialing'::text])),
+  current_period_start timestamp with time zone,
+  current_period_end timestamp with time zone,
+  trial_end timestamp with time zone,
+  stripe_subscription_id text UNIQUE,
+  stripe_customer_id text,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT subscriptions_pkey PRIMARY KEY (id),
+  CONSTRAINT subscriptions_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
+);
+CREATE TABLE public.tenants (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  subdomain text NOT NULL UNIQUE,
+  name text NOT NULL,
+  industry text NOT NULL CHECK (industry = ANY (ARRAY['motorcycle_dealer'::text, 'warehouse_distribution'::text, 'general'::text])),
+  logo_url text,
+  theme jsonb DEFAULT '{}'::jsonb,
+  settings jsonb DEFAULT '{}'::jsonb,
+  whatsapp_config jsonb,
+  email_config jsonb,
+  subscription_status text DEFAULT 'active'::text,
+  plan_type text DEFAULT 'starter'::text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT tenants_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.user_sessions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  tenant_id uuid,
+  session_token text NOT NULL UNIQUE,
+  refresh_token text,
+  expires_at timestamp with time zone NOT NULL,
+  device_info jsonb DEFAULT '{}'::jsonb,
+  ip_address inet,
+  user_agent text,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT user_sessions_pkey PRIMARY KEY (id),
+  CONSTRAINT user_sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT user_sessions_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
+);
+CREATE TABLE public.users (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  tenant_id uuid,
+  email text NOT NULL,
+  name text NOT NULL,
+  role text DEFAULT 'user'::text CHECK (role = ANY (ARRAY['admin'::text, 'user'::text, 'viewer'::text])),
+  avatar_url text,
+  last_login_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  access_level integer NOT NULL DEFAULT 1 CHECK (access_level >= 1 AND access_level <= 5),
+  CONSTRAINT users_pkey PRIMARY KEY (id),
+  CONSTRAINT users_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
+);
+CREATE TABLE public.webhook_deliveries (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  webhook_endpoint_id uuid,
+  event_type text NOT NULL,
+  payload jsonb NOT NULL,
+  response_status integer,
+  response_body text,
+  response_time_ms integer,
+  attempt_number integer DEFAULT 1,
+  delivered_at timestamp with time zone,
+  next_retry_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT webhook_deliveries_pkey PRIMARY KEY (id),
+  CONSTRAINT webhook_deliveries_webhook_endpoint_id_fkey FOREIGN KEY (webhook_endpoint_id) REFERENCES public.webhook_endpoints(id)
+);
+CREATE TABLE public.webhook_endpoints (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  tenant_id uuid,
+  name text NOT NULL,
+  url text NOT NULL,
+  events ARRAY NOT NULL,
+  secret text NOT NULL,
+  is_active boolean DEFAULT true,
+  retry_policy jsonb DEFAULT '{"max_retries": 3, "backoff_seconds": [1, 5, 25]}'::jsonb,
+  headers jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT webhook_endpoints_pkey PRIMARY KEY (id),
+  CONSTRAINT webhook_endpoints_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
+);

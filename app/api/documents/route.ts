@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getUserAccessLevel, extractTenantFromRequest } from '@/lib/auth-helpers';
+
+// CORS headers for frontend integration
+const corsHeaders = {
+  'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' 
+    ? 'https://v0-ai-saas-landing-page-lw.vercel.app' 
+    : '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  'Access-Control-Allow-Credentials': 'true',
+};
 
 function getSupabaseClient() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -11,27 +22,35 @@ function getSupabaseClient() {
   );
 }
 
+export async function OPTIONS(request: NextRequest) {
+  return new Response(null, {
+    status: 200,
+    headers: corsHeaders,
+  });
+}
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = getSupabaseClient();
     
-    // Get tenant from subdomain
-    const url = new URL(request.url);
-    const subdomain = url.hostname.split('.')[0];
-    const tenantId = subdomain === 'localhost' ? 'demo' : subdomain;
+    // Get tenant from subdomain and user access level
+    const tenantId = extractTenantFromRequest(request);
+    const userAccessLevel = await getUserAccessLevel(request, tenantId);
 
     // Parse query parameters
+    const url = new URL(request.url);
     const searchParams = url.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') || '';
 
-    // Build query
+    // Build query with access level filtering
     let query = supabase
       .from('documents')
       .select('*', { count: 'exact' })
       .eq('tenant_id', tenantId)
+      .lte('access_level', userAccessLevel) // Only show documents user has access to
       .order('created_at', { ascending: false });
 
     // Apply filters
@@ -76,13 +95,13 @@ export async function GET(request: NextRequest) {
         search,
         status
       }
-    });
+    }, { headers: corsHeaders });
 
   } catch (error) {
     console.error('Documents API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
@@ -116,20 +135,20 @@ export async function DELETE(request: NextRequest) {
       console.error('Delete error:', error);
       return NextResponse.json(
         { error: 'Failed to delete document' },
-        { status: 500 }
+        { status: 500, headers: corsHeaders }
       );
     }
 
     return NextResponse.json({
       message: 'Document deleted successfully',
       documentId
-    });
+    }, { headers: corsHeaders });
 
   } catch (error) {
     console.error('Delete API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 } 

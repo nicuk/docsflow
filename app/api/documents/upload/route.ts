@@ -6,6 +6,7 @@ import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
 import { createClient } from '@supabase/supabase-js';
+import { getUserAccessLevel, extractTenantFromRequest } from '@/lib/auth-helpers';
 
 // Initialize services - only when environment variables are available
 const genAI = process.env.GOOGLE_AI_API_KEY ? new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY) : null;
@@ -34,10 +35,9 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseClient();
     
-    // Get tenant from subdomain or auth
-    const url = new URL(request.url);
-    const subdomain = url.hostname.split('.')[0];
-    const tenantId = subdomain === 'localhost' ? 'demo' : subdomain;
+    // Get tenant from subdomain and user access level
+    const tenantId = extractTenantFromRequest(request);
+    const userAccessLevel = await getUserAccessLevel(request, tenantId);
 
     // Parse multipart form data
     const formData = await request.formData();
@@ -117,6 +117,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Store document metadata in Supabase
+    // Determine access level for the document (default to user's level, can be overridden)
+    const documentAccessLevel = userAccessLevel; // Users can only upload at their access level or lower
+    
     const { data: document, error: dbError } = await supabase
       .from('documents')
       .insert({
@@ -124,6 +127,7 @@ export async function POST(request: NextRequest) {
         filename: file.name,
         file_size: file.size,
         mime_type: file.type,
+        access_level: documentAccessLevel,
         processing_status: 'processing',
         created_at: new Date().toISOString()
       })
@@ -141,7 +145,7 @@ export async function POST(request: NextRequest) {
     // Process document in background (chunk and embed)
     // For MVP, we'll do this synchronously, but in production this should be queued
     try {
-      await processDocumentContent(document.id, textContent, tenantId, genAI, supabase);
+      await processDocumentContent(document.id, textContent, tenantId, genAI, supabase, documentAccessLevel);
       
       // Update status to completed
       await supabase
@@ -178,7 +182,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function processDocumentContent(documentId: string, textContent: string, tenantId: string, genAI: any, supabase: any) {
+async function processDocumentContent(documentId: string, textContent: string, tenantId: string, genAI: any, supabase: any, accessLevel: number = 1) {
   // Chunk the document content (simple implementation)
   const chunkSize = 1000; // characters
   const chunks = [];
@@ -199,14 +203,16 @@ async function processDocumentContent(documentId: string, textContent: string, t
       const result = await model.embedContent(chunk.content);
       const embedding = result.embedding;
       
-      // Store chunk in database with embedding
+      // Store chunk in database with embedding and access level
       await supabase
         .from('document_chunks')
         .insert({
           document_id: documentId,
+          tenant_id: tenantId,
           chunk_index: chunk.chunk_index,
           content: chunk.content,
           embedding: embedding.values, // Store as JSONB array
+          access_level: accessLevel,
           metadata: {
             tenant_id: tenantId,
             chunk_length: chunk.content.length
