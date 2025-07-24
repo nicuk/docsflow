@@ -85,26 +85,28 @@ export default async function SubdomainPage({
 
         {/* Features Grid */}
         <div className="grid md:grid-cols-3 gap-8 mb-12">
-          <Card className="border-2 border-blue-200 bg-blue-50/50">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <MessageSquare className="w-5 h-5 text-white" />
+                      <Card className="border-2 border-blue-200 bg-blue-50/50">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <MessageSquare className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">AI Chat Assistant</CardTitle>
+                    <CardDescription className="text-sm">
+                      Industry-specific AI responses
+                    </CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-lg">AI Chat Assistant</CardTitle>
-                  <CardDescription className="text-sm">
-                    Industry-specific AI responses
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                Start Conversation
-              </Button>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent>
+                <Link href="https://v0-ai-saas-landing-page-lw.vercel.app/dashboard/chat" target="_blank">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                    Start Conversation
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
 
           <Card>
             <CardHeader>
@@ -207,12 +209,16 @@ export default async function SubdomainPage({
             Ready to transform how your organization accesses information?
           </p>
           <div className="flex gap-4 justify-center">
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-700 px-8">
-              Launch AI Assistant
-            </Button>
-            <Button size="lg" variant="outline" className="px-8">
-              View Documentation
-            </Button>
+            <Link href="https://v0-ai-saas-landing-page-lw.vercel.app/dashboard" target="_blank">
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 px-8">
+                Launch AI Assistant
+              </Button>
+            </Link>
+            <Link href="https://v0-ai-saas-landing-page-lw.vercel.app" target="_blank">
+              <Button size="lg" variant="outline" className="px-8">
+                View Documentation
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

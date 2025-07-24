@@ -143,19 +143,12 @@ export async function createSubdomainAction(
       }
     }
 
-    return {
-      success: true,
-      subdomain: sanitizedSubdomain,
-      organizationName,
-      industry
-    };
+    // Redirect to the new subdomain on success
+    redirect(`${protocol}://${rootDomain}/s/${sanitizedSubdomain}`);
   } catch (error) {
     console.error('Error creating tenant:', error);
     return { error: 'Failed to create organization. Please try again.' };
   }
-
-  // Redirect to the new subdomain
-  redirect(`${protocol}://${rootDomain}/s/${sanitizedSubdomain}`);
 }
 
 export async function deleteSubdomainAction(
