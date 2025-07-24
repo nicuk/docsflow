@@ -108,8 +108,8 @@ export async function POST(request: NextRequest) {
 
     try {
       // 🚀 ENHANCED HYBRID SEARCH: Combines vector + keyword for maximum coverage
-      const { HybridSearch } = await loadHybridSearch();
-      const hybridSearch = new HybridSearch();
+      const HybridSearchModule = await loadHybridSearch();
+      const hybridSearch = new HybridSearchModule.HybridSearch();
       searchResult = await hybridSearch.performHybridSearch(
         message,
         tenantId,
