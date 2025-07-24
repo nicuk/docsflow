@@ -5,7 +5,9 @@ import { getTenantPrompt, calculateTenantConfidence } from '@/lib/tenant-prompts
 import { getUserAccessLevel, extractTenantFromRequest } from '@/lib/auth-helpers';
 import { performDeepSearch, buildSynthesizedContext } from '@/lib/deep-search';
 import { ConfidenceScoring } from '@/lib/confidence-scoring';
-import { HybridSearch } from '@/lib/hybrid-search';
+
+// Dynamic import to prevent build issues
+const loadHybridSearch = () => import('@/lib/hybrid-search');
 
 // CORS headers for frontend integration
 const corsHeaders = {
@@ -106,6 +108,7 @@ export async function POST(request: NextRequest) {
 
     try {
       // 🚀 ENHANCED HYBRID SEARCH: Combines vector + keyword for maximum coverage
+      const { HybridSearch } = await loadHybridSearch();
       const hybridSearch = new HybridSearch();
       searchResult = await hybridSearch.performHybridSearch(
         message,
