@@ -75,5 +75,11 @@ export async function getTenantFromSubdomain(subdomain: string) {
 export function extractTenantFromRequest(request: NextRequest): string {
   const url = new URL(request.url);
   const subdomain = url.hostname.split('.')[0];
-  return subdomain === 'localhost' ? 'demo' : subdomain;
+  
+  // Handle various deployment scenarios
+  if (subdomain === 'localhost' || subdomain.includes('ai-lead-router-saas')) {
+    return 'demo'; // Default tenant for testing
+  }
+  
+  return subdomain;
 } 

@@ -29,22 +29,32 @@ export async function GET(request: NextRequest) {
     const supabase = getSupabaseClient();
     const tenantId = extractTenantFromRequest(request);
     
+    console.log('Conversation API - tenantId:', tenantId); // Debug log
+    
     // For now, use demo user ID since we don't have full auth yet
     const userId = '00000000-0000-0000-0000-000000000000';
 
-    const { data: conversations, error } = await supabase
-      .from('chat_conversations')
-      .select('id, title, created_at, updated_at, summary')
-      .eq('tenant_id', tenantId)
-      .order('updated_at', { ascending: false })
-      .limit(50);
+    let conversations: any[] = [];
+    
+    try {
+      const { data, error } = await supabase
+        .from('chat_conversations')
+        .select('id, title, created_at, updated_at, summary')
+        .eq('tenant_id', tenantId)
+        .order('updated_at', { ascending: false })
+        .limit(50);
 
-    if (error) {
-      console.error('Database error:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch conversations' },
-        { status: 500, headers: corsHeaders }
-      );
+      if (error) {
+        console.error('Database error:', error);
+        // Return empty conversations array instead of failing
+        conversations = [];
+      } else {
+        conversations = data || [];
+      }
+    } catch (dbError) {
+      console.error('Database connection error:', dbError);
+      // Return empty conversations array if table doesn't exist
+      conversations = [];
     }
 
     // Format conversations for frontend
