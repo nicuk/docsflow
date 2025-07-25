@@ -18,13 +18,31 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// CORS headers for consistent frontend integration
-export const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' 
-    ? 'https://v0-ai-saas-s-landing-page-1w.vercel.app,https://*.vercel.app,https://docsflow.app,https://*.docsflow.app' 
-    : '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Tenant-ID, X-Requested-With, Accept',
-  'Access-Control-Allow-Credentials': 'true',
-  'Access-Control-Max-Age': '86400', // 24 hours
-};
+// CORS configuration for proper single-origin handling
+const ALLOWED_ORIGINS = [
+  'https://v0-ai-saas-s-landing-page-1w.vercel.app',
+  'https://v0-ai-saa-s-landing-page-lqwq5hx4s-nics-projects-4e604dbf.vercel.app', // Current Vercel preview URL
+  'https://docsflow.app',
+  'https://www.docsflow.app',
+  'http://localhost:3000',
+  'http://localhost:3001'
+];
+
+// Dynamic CORS headers that comply with browser standards
+export function getCORSHeaders(origin?: string | null): Record<string, string> {
+  const isAllowedOrigin = origin && ALLOWED_ORIGINS.includes(origin);
+  const allowedOrigin = isAllowedOrigin ? origin : (process.env.NODE_ENV === 'production' ? 'https://www.docsflow.app' : '*');
+  
+  console.log('CORS Origin Check:', { origin, isAllowedOrigin, allowedOrigin }); // Debug logging
+  
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Tenant-ID, X-Requested-With, Accept',
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Max-Age': '86400',
+  };
+}
+
+// Legacy export for backward compatibility (deprecated)
+export const CORS_HEADERS = getCORSHeaders();

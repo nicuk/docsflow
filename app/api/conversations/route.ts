@@ -1,81 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { extractTenantFromRequest, getUserAccessLevel } from '@/lib/auth-helpers';
-
-// CORS headers for frontend integration
-const corsHeaders = {
-  'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' 
-    ? 'https://v0-ai-saas-s-landing-page-1w.vercel.app,https://*.vercel.app,https://docsflow.app,https://*.docsflow.app' 
-    : '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Tenant-ID, X-Requested-With, Accept',
-  'Access-Control-Allow-Credentials': 'true',
-  'Access-Control-Max-Age': '86400', // 24 hours
-};
+import { getCORSHeaders } from '@/lib/utils';
 
 function getSupabaseClient() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('Supabase configuration missing');
+  }
+  
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 }
 
-export async function OPTIONS() {
-  return new Response(null, { status: 200, headers: corsHeaders });
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  return new NextResponse(null, { status: 200, headers: getCORSHeaders(origin) });
 }
 
-// GET /api/conversations - List user's conversations
 export async function GET(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  const corsHeaders = getCORSHeaders(origin);
+  
   try {
     const supabase = getSupabaseClient();
-    const tenantId = extractTenantFromRequest(request);
     
-    console.log('Conversation API - tenantId:', tenantId); // Debug log
+    // Get tenant from subdomain or demo mode
+    const tenantId = request.headers.get('X-Tenant-ID') || 'demo-warehouse-dist';
     
-    // For now, use demo user ID since we don't have full auth yet
-    const userId = '00000000-0000-0000-0000-000000000000';
+    console.log('Fetching conversations for tenant:', tenantId);
+    
+    // Get conversations for this tenant
+    const { data: conversations, error } = await supabase
+      .from('conversations')
+      .select(`
+        id,
+        title,
+        created_at,
+        updated_at,
+        tenant_id
+      `)
+      .eq('tenant_id', tenantId)
+      .order('updated_at', { ascending: false })
+      .limit(50);
 
-    let conversations: any[] = [];
-    
-    try {
-      const { data, error } = await supabase
-        .from('chat_conversations')
-        .select('id, title, created_at, updated_at, summary')
-        .eq('tenant_id', tenantId)
-        .order('updated_at', { ascending: false })
-        .limit(50);
-
-      if (error) {
-        console.error('Database error:', error);
-        // Return empty conversations array instead of failing
-        conversations = [];
-      } else {
-        conversations = data || [];
-      }
-    } catch (dbError) {
-      console.error('Database connection error:', dbError);
-      // Return empty conversations array if table doesn't exist
-      conversations = [];
+    if (error) {
+      console.error('Conversations fetch error:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch conversations' }, 
+        { status: 500, headers: corsHeaders }
+      );
     }
 
-    // Format conversations for frontend
-    const formattedConversations = conversations?.map(conv => ({
-      id: conv.id,
-      title: conv.title,
-      summary: conv.summary,
-      messageCount: 0, // We'll get this from frontend when needed
-      lastActivity: conv.updated_at,
-      createdAt: conv.created_at
-    })) || [];
-
-    return NextResponse.json({
-      conversations: formattedConversations
-    }, { headers: corsHeaders });
-
-  } catch (error: any) {
-    console.error('Get conversations error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch conversations' },
+      { conversations: conversations || [] },
+      { headers: corsHeaders }
+    );
+    
+  } catch (error) {
+    console.error('Conversations API error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' }, 
       { status: 500, headers: corsHeaders }
     );
   }
@@ -83,29 +68,33 @@ export async function GET(request: NextRequest) {
 
 // POST /api/conversations - Create new conversation
 export async function POST(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  const corsHeaders = getCORSHeaders(origin);
+  
   try {
     const supabase = getSupabaseClient();
-    const tenantId = extractTenantFromRequest(request);
+    
+    const tenantId = request.headers.get('X-Tenant-ID') || 'demo-warehouse-dist';
     
     // For now, use demo user ID since we don't have full auth yet
     const userId = '00000000-0000-0000-0000-000000000000';
     
     const { title } = await request.json();
-
+    
+    // Create new conversation
     const { data: conversation, error } = await supabase
       .from('chat_conversations')
       .insert({
+        title: title || 'New Conversation',
         tenant_id: tenantId,
         user_id: userId,
-        title: title || 'New Conversation',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        status: 'active'
       })
       .select()
       .single();
 
     if (error) {
-      console.error('Database error:', error);
+      console.error('Create conversation error:', error);
       return NextResponse.json(
         { error: 'Failed to create conversation' },
         { status: 500, headers: corsHeaders }

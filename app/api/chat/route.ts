@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createClient } from '@supabase/supabase-js';
+import { getCORSHeaders } from '@/lib/utils';
 import { getTenantPrompt, calculateTenantConfidence } from '@/lib/tenant-prompts';
 import { getUserAccessLevel, extractTenantFromRequest } from '@/lib/auth-helpers';
 import { performDeepSearch, buildSynthesizedContext } from '@/lib/deep-search';
@@ -10,24 +11,16 @@ import { redis, safeRedisOperation } from '@/lib/redis';
 // Dynamic import to prevent build issues
 const loadHybridSearch = () => import('@/lib/hybrid-search');
 
-// CORS headers for frontend integration
-const corsHeaders = {
-  'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' 
-    ? 'https://v0-ai-saas-s-landing-page-1w.vercel.app,https://*.vercel.app,https://docsflow.app,https://*.docsflow.app' 
-    : '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Tenant-ID, X-Requested-With, Accept',
-  'Access-Control-Allow-Credentials': 'true',
-  'Access-Control-Max-Age': '86400', // 24 hours
-};
-
-// Initialize services - only when environment variables are available
-const genAI = process.env.GOOGLE_AI_API_KEY ? new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY) : null;
+// Initialize Gemini AI
+const genAI = process.env.GOOGLE_AI_API_KEY 
+  ? new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY)
+  : null;
 
 function getSupabaseClient() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('Supabase configuration not available');
+    throw new Error('Supabase configuration missing');
   }
+  
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -109,14 +102,32 @@ interface Context {
 }
 
 export async function OPTIONS(request: NextRequest) {
-  return new Response(null, {
-    status: 200,
-    headers: corsHeaders,
-  });
+  const origin = request.headers.get('origin');
+  return new NextResponse(null, { status: 200, headers: getCORSHeaders(origin) });
 }
 
 export async function POST(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  const corsHeaders = getCORSHeaders(origin);
+  
   try {
+    // Check if in demo mode
+    const isDemoMode = request.headers.get('X-Demo-Mode') === 'true';
+    const tenantSubdomain = request.headers.get('X-Tenant-Subdomain') || 'demo';
+    
+    console.log('Chat API - Demo mode:', isDemoMode, 'Subdomain:', tenantSubdomain);
+    
+    // Initialize demo tenant if needed
+    if (isDemoMode) {
+      const demoSetup = await fetch(`${request.url.replace('/chat', '/demo')}`, {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+      console.log('Demo setup response:', demoSetup.status);
+    }
+
     // Check if services are available
     if (!genAI) {
       return NextResponse.json({ error: 'AI service not configured' }, { status: 500 });
@@ -263,12 +274,12 @@ export async function POST(request: NextRequest) {
       document_id: chunk.document_id
     }));
 
-    // Step 4: Get tenant configuration and generate response using Google Gemini
+    // Step 4: Get tenant configuration with custom persona and generate response using Google Gemini
     let tenant;
     try {
       const { data: tenantData } = await supabase
         .from('tenants')
-        .select('industry')
+        .select('industry, custom_persona, name')
         .eq('subdomain', tenantId)
         .single();
       tenant = tenantData;
@@ -276,7 +287,25 @@ export async function POST(request: NextRequest) {
       console.log('Tenant not found, using general prompts');
     }
 
-    const promptConfig = getTenantPrompt(tenantId, tenant?.industry);
+    // 🚀 USE CUSTOM PERSONA if available (from 5-question onboarding)
+    let promptConfig;
+    if (tenant?.custom_persona?.prompt_template) {
+      // Custom persona created from onboarding answers
+      promptConfig = {
+        systemPrompt: tenant.custom_persona.prompt_template,
+        contextTemplate: `
+{context}
+
+User Question: {query}
+
+Instructions: Answer based on the context above using your custom expertise in ${tenant.custom_persona.business_context}. Include source citations and confidence level.`
+      };
+      console.log(`Using custom persona for ${tenant.name}: ${tenant.custom_persona.role}`);
+    } else {
+      // Fallback to industry-based prompts
+      promptConfig = getTenantPrompt(tenantId, tenant?.industry);
+      console.log(`Using industry-based prompt for tenant: ${tenantId}`);
+    }
     
     // Build context string from search results
     const contextString = context.map((ctx: Context, idx: number) => `
@@ -387,5 +416,5 @@ export async function GET(request: NextRequest) {
     status: 'ok',
     service: 'SME Intelligence Chat API',
     timestamp: new Date().toISOString()
-  }, { headers: corsHeaders });
+  }, { headers: getCORSHeaders(request.headers.get('origin')) });
 } 

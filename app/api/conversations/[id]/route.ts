@@ -1,16 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { extractTenantFromRequest } from '@/lib/auth-helpers';
-
-// CORS headers for frontend integration
-const corsHeaders = {
-  'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' 
-    ? 'https://docsflow.app,https://*.docsflow.app' 
-    : '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Tenant-ID, X-Requested-With',
-  'Access-Control-Allow-Credentials': 'true',
-};
+import { getCORSHeaders } from '@/lib/utils';
 
 function getSupabaseClient() {
   return createClient(
@@ -19,8 +10,9 @@ function getSupabaseClient() {
   );
 }
 
-export async function OPTIONS() {
-  return new Response(null, { status: 200, headers: corsHeaders });
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  return new Response(null, { status: 200, headers: getCORSHeaders(origin) });
 }
 
 // GET /api/conversations/[id] - Get conversation messages
@@ -28,6 +20,8 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
+  const origin = request.headers.get('origin');
+  const corsHeaders = getCORSHeaders(origin);
   const params = await context.params;
   try {
     const supabase = getSupabaseClient();

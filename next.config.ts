@@ -4,22 +4,8 @@ const nextConfig: NextConfig = {
   // Optimize builds for faster deployment
   // swcMinify is deprecated in Next.js 15
   
-  // CORS headers for API routes
-  async headers() {
-    return [
-      {
-        source: "/api/:path*",
-        headers: [
-          { key: "Access-Control-Allow-Credentials", value: "true" },
-          { key: "Access-Control-Allow-Origin", value: process.env.NODE_ENV === 'production' 
-            ? "https://v0-ai-saas-s-landing-page-1w.vercel.app,https://*.vercel.app" 
-            : "*" },
-          { key: "Access-Control-Allow-Methods", value: "GET,DELETE,PATCH,POST,PUT,OPTIONS" },
-          { key: "Access-Control-Allow-Headers", value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, X-Tenant-ID" },
-        ]
-      }
-    ]
-  },
+  // CORS headers removed - handled by individual API routes to prevent conflicts
+  // Individual routes use getCORSHeaders() from lib/utils.ts for proper single-origin handling
   
   // Reduce memory usage during build
   experimental: {

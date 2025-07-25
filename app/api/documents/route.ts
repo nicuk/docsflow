@@ -1,22 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUserAccessLevel, extractTenantFromRequest } from '@/lib/auth-helpers';
-
-// CORS headers for frontend integration
-const corsHeaders = {
-  'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' 
-    ? 'https://v0-ai-saas-s-landing-page-1w.vercel.app,https://*.vercel.app,https://docsflow.app,https://*.docsflow.app' 
-    : '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Tenant-ID, X-Requested-With, Accept',
-  'Access-Control-Allow-Credentials': 'true',
-  'Access-Control-Max-Age': '86400', // 24 hours
-};
+import { getCORSHeaders } from '@/lib/utils';
 
 function getSupabaseClient() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('Supabase configuration not available');
+    throw new Error('Supabase configuration missing');
   }
+  
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -24,104 +14,77 @@ function getSupabaseClient() {
 }
 
 export async function OPTIONS(request: NextRequest) {
-  return new Response(null, {
-    status: 200,
-    headers: corsHeaders,
-  });
+  const origin = request.headers.get('origin');
+  return new NextResponse(null, { status: 200, headers: getCORSHeaders(origin) });
 }
 
 export async function GET(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  const corsHeaders = getCORSHeaders(origin);
+  
   try {
     const supabase = getSupabaseClient();
     
-    // Get tenant from subdomain and user access level
-    const tenantId = extractTenantFromRequest(request);
-    const userAccessLevel = await getUserAccessLevel(request, tenantId);
-
-    // Parse query parameters
-    const url = new URL(request.url);
-    const searchParams = url.searchParams;
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const search = searchParams.get('search') || '';
-    const status = searchParams.get('status') || '';
-
-    // Build query with access level filtering
-    let query = supabase
+    // Get tenant from subdomain or demo mode
+    const tenantId = request.headers.get('X-Tenant-ID') || 'demo-warehouse-dist';
+    
+    console.log('Fetching documents for tenant:', tenantId);
+    
+    // Get documents for this tenant
+    const { data: documents, error } = await supabase
       .from('documents')
-      .select('*', { count: 'exact' })
+      .select(`
+        id,
+        filename,
+        file_type,
+        file_size,
+        processing_status,
+        access_level,
+        created_at,
+        tenant_id
+      `)
       .eq('tenant_id', tenantId)
-      .lte('access_level', userAccessLevel) // Only show documents user has access to
-      .order('created_at', { ascending: false });
-
-    // Apply filters
-    if (search) {
-      query = query.ilike('filename', `%${search}%`);
-    }
-
-    if (status && status !== 'all') {
-      query = query.eq('processing_status', status);
-    }
-
-    // Apply pagination
-    const offset = (page - 1) * limit;
-    query = query.range(offset, offset + limit - 1);
-
-    const { data: documents, error, count } = await query;
+      .order('created_at', { ascending: false })
+      .limit(100);
 
     if (error) {
-      console.error('Database error:', error);
+      console.error('Documents fetch error:', error);
       return NextResponse.json(
-        { error: 'Failed to fetch documents' },
-        { status: 500 }
+        { error: 'Failed to fetch documents' }, 
+        { status: 500, headers: corsHeaders }
       );
     }
 
-    // Calculate pagination info
-    const totalPages = Math.ceil((count || 0) / limit);
-    const hasNext = page < totalPages;
-    const hasPrev = page > 1;
-
-    return NextResponse.json({
-      documents: documents || [],
-      pagination: {
-        page,
-        limit,
-        total: count || 0,
-        totalPages,
-        hasNext,
-        hasPrev
-      },
-      filters: {
-        search,
-        status
-      }
-    }, { headers: corsHeaders });
-
+    return NextResponse.json(
+      { documents: documents || [] },
+      { headers: corsHeaders }
+    );
+    
   } catch (error) {
     console.error('Documents API error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error' }, 
       { status: 500, headers: corsHeaders }
     );
   }
 }
 
 export async function DELETE(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  const corsHeaders = getCORSHeaders(origin);
+  
   try {
     const supabase = getSupabaseClient();
     
-    // Get tenant from subdomain
-    const url = new URL(request.url);
-    const subdomain = url.hostname.split('.')[0];
-    const tenantId = subdomain === 'localhost' ? 'demo' : subdomain;
+    // Get tenant from headers (consistent with other routes)
+    const tenantId = request.headers.get('X-Tenant-ID') || 'demo-warehouse-dist';
 
     const { documentId } = await request.json();
 
     if (!documentId) {
       return NextResponse.json(
         { error: 'Document ID is required' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 

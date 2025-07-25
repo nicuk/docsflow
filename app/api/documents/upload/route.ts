@@ -9,17 +9,7 @@ const loadXLSX = () => import('xlsx');
 import { createClient } from '@supabase/supabase-js';
 import { getUserAccessLevel, extractTenantFromRequest } from '@/lib/auth-helpers';
 import { EnhancedChunking } from '@/lib/enhanced-chunking';
-
-// CORS headers for frontend integration
-const corsHeaders = {
-  'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' 
-    ? 'https://v0-ai-saas-s-landing-page-1w.vercel.app,https://*.vercel.app,https://docsflow.app,https://*.docsflow.app' 
-    : '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Tenant-ID, X-Requested-With, Accept',
-  'Access-Control-Allow-Credentials': 'true',
-  'Access-Control-Max-Age': '86400', // 24 hours
-};
+import { getCORSHeaders } from '@/lib/utils';
 
 // Initialize services - only when environment variables are available
 const genAI = process.env.GOOGLE_AI_API_KEY ? new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY) : null;
@@ -35,22 +25,25 @@ function getSupabaseClient() {
 }
 
 export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin');
   return new Response(null, {
     status: 200,
-    headers: corsHeaders,
+    headers: getCORSHeaders(origin),
   });
 }
 
 export async function POST(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  
   // Skip processing during build time
   if (process.env.NODE_ENV !== 'production' && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    return NextResponse.json({ error: 'Service not available during build' }, { status: 503, headers: corsHeaders });
+    return NextResponse.json({ error: 'Service not available during build' }, { status: 503, headers: getCORSHeaders(origin) });
   }
 
   try {
     // Check if services are available
     if (!genAI) {
-      return NextResponse.json({ error: 'AI service not configured' }, { status: 500, headers: corsHeaders });
+      return NextResponse.json({ error: 'AI service not configured' }, { status: 500, headers: getCORSHeaders(origin) });
     }
 
     let supabase;
@@ -58,7 +51,7 @@ export async function POST(request: NextRequest) {
       supabase = getSupabaseClient();
     } catch (error) {
       console.error('Supabase initialization error:', error);
-      return NextResponse.json({ error: 'Database service not available' }, { status: 500, headers: corsHeaders });
+      return NextResponse.json({ error: 'Database service not available' }, { status: 500, headers: getCORSHeaders(origin) });
     }
     
     // Get tenant from subdomain and user access level
@@ -80,14 +73,14 @@ export async function POST(request: NextRequest) {
       console.error('FormData parsing error:', error);
       return NextResponse.json(
         { error: 'Failed to parse form data' },
-        { status: 400, headers: corsHeaders }
+        { status: 400, headers: getCORSHeaders(origin) }
       );
     }
     
     if (!file) {
       return NextResponse.json(
         { error: 'No file provided' },
-        { status: 400, headers: corsHeaders }
+        { status: 400, headers: getCORSHeaders(origin) }
       );
     }
 
@@ -224,13 +217,13 @@ export async function POST(request: NextRequest) {
       filename: file.name,
       status: 'processing',
       message: 'Document uploaded successfully and processing started'
-    }, { headers: corsHeaders });
+    }, { headers: getCORSHeaders(origin) });
 
   } catch (error) {
     console.error('Upload error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500, headers: corsHeaders }
+      { status: 500, headers: getCORSHeaders(origin) }
     );
   }
 }
