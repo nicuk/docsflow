@@ -147,40 +147,19 @@ export function SubdomainForm() {
         const subdomain = formData.get('subdomain') as string;
         const organizationName = formData.get('organizationName') as string;
         
-        try {
-          const response = await fetch('/api/tenant/create', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              responses: {
-                business_overview: `Organization: ${organizationName}`,
-                daily_challenges: 'Standard business operations',
-                key_decisions: 'Operational decisions',
-                success_metrics: 'Business growth and efficiency',
-                information_needs: 'Document intelligence and insights'
-              },
-              tenantAssignment: {
-                businessType: organizationName,
-                industry: industry,
-                subdomain: subdomain,
-                accessLevel: 3,
-                onboardingComplete: true
-              }
-            })
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            window.location.href = data.redirect_url;
-          } else {
-            const error = await response.json();
-            setState({ error: error.error || 'Failed to create platform' });
-          }
-        } catch (error) {
-          setState({ error: 'Network error. Please try again.' });
-        } finally {
-          setIsPending(false);
-        }
+        // Store basic info for onboarding
+        const onboardingData = {
+          organizationName,
+          subdomain,
+          industry,
+          timestamp: new Date().toISOString()
+        };
+        
+        // Store in localStorage for onboarding flow
+        localStorage.setItem('onboarding-data', JSON.stringify(onboardingData));
+        
+        // Redirect to onboarding flow
+        window.location.href = 'https://docsflow.app/onboarding';
       }} className="space-y-3">
         <OrganizationNameInput defaultValue={state?.organizationName} />
         
