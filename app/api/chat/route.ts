@@ -13,10 +13,10 @@ const loadHybridSearch = () => import('@/lib/hybrid-search');
 // CORS headers for frontend integration
 const corsHeaders = {
   'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' 
-    ? 'https://v0-ai-saas-landing-page-lw.vercel.app' 
+    ? 'https://docsflow.app,https://*.docsflow.app' 
     : '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Tenant-ID, X-Requested-With',
   'Access-Control-Allow-Credentials': 'true',
 };
 
@@ -42,6 +42,56 @@ async function getCachedEmbedding(message: string): Promise<number[] | null> {
 async function setCachedEmbedding(message: string, embedding: number[]): Promise<void> {
   const cacheKey = `embedding:${Buffer.from(message).toString('base64').slice(0, 50)}`;
   await safeRedisOperation(() => redis!.set(cacheKey, embedding, { ex: 3600 }), undefined); // Cache for 1 hour
+}
+
+// CONVERSATION PERSISTENCE HELPER
+async function saveMessageToConversation(
+  supabase: any,
+  conversationId: string,
+  userMessage: string,
+  aiResponse: string,
+  sources: any[],
+  confidence: number
+) {
+  try {
+    // Save user message
+    await supabase
+      .from('chat_messages')
+      .insert({
+        conversation_id: conversationId,
+        role: 'user',
+        content: userMessage,
+        created_at: new Date().toISOString()
+      });
+
+    // Save AI response
+    await supabase
+      .from('chat_messages')
+      .insert({
+        conversation_id: conversationId,
+        role: 'assistant',
+        content: aiResponse,
+        metadata: {
+          sources,
+          confidence,
+          timestamp: new Date().toISOString()
+        },
+        created_at: new Date().toISOString()
+      });
+
+    // Update conversation timestamp and auto-generate title from first message
+    await supabase
+      .from('chat_conversations')
+      .update({ 
+        updated_at: new Date().toISOString(),
+        title: userMessage.length > 50 ? userMessage.substring(0, 50) + '...' : userMessage
+      })
+      .eq('id', conversationId);
+
+  } catch (error) {
+    console.error('Failed to save conversation:', error);
+    // Don't fail the request if conversation saving fails
+  }
 }
 
 interface Chunk {
@@ -86,7 +136,7 @@ export async function POST(request: NextRequest) {
     const tenantId = extractTenantFromRequest(request);
 
     // Parse request body
-    const { message, documentIds } = await request.json();
+    const { message, documentIds, conversationId } = await request.json();
     
     if (!message) {
       return NextResponse.json(
@@ -275,6 +325,22 @@ Content: ${ctx.content}
     } catch (historyError) {
       console.error('Failed to store search history:', historyError);
       // Don't fail the request if history storage fails
+    }
+
+    // Step 6.5: Save conversation if conversationId provided
+    if (conversationId) {
+      await saveMessageToConversation(
+        supabase,
+        conversationId,
+        message,
+        answerText,
+        context.map((ctx: Context) => ({
+          filename: ctx.source.split(' (chunk')[0],
+          content: ctx.content.substring(0, 200) + '...',
+          document_id: ctx.document_id
+        })),
+        enhancedConfidence.score
+      );
     }
 
     // Step 7: Return enhanced structured response with deep search data

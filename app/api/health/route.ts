@@ -4,10 +4,10 @@ import { createClient } from '@supabase/supabase-js';
 // CORS headers for frontend integration
 const corsHeaders = {
   'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' 
-    ? 'https://v0-ai-saas-landing-page-lw.vercel.app' 
+    ? 'https://docsflow.app,https://*.docsflow.app' 
     : '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Tenant-ID, X-Requested-With',
   'Access-Control-Allow-Credentials': 'true',
 };
 

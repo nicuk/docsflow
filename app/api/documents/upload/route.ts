@@ -10,6 +10,16 @@ import { createClient } from '@supabase/supabase-js';
 import { getUserAccessLevel, extractTenantFromRequest } from '@/lib/auth-helpers';
 import { EnhancedChunking } from '@/lib/enhanced-chunking';
 
+// CORS headers for frontend integration
+const corsHeaders = {
+  'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' 
+    ? 'https://docsflow.app,https://*.docsflow.app' 
+    : '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Tenant-ID, X-Requested-With',
+  'Access-Control-Allow-Credentials': 'true',
+};
+
 // Initialize services - only when environment variables are available
 const genAI = process.env.GOOGLE_AI_API_KEY ? new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY) : null;
 
@@ -23,16 +33,23 @@ function getSupabaseClient() {
   );
 }
 
+export async function OPTIONS(request: NextRequest) {
+  return new Response(null, {
+    status: 200,
+    headers: corsHeaders,
+  });
+}
+
 export async function POST(request: NextRequest) {
   // Skip processing during build time
   if (process.env.NODE_ENV !== 'production' && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    return NextResponse.json({ error: 'Service not available during build' }, { status: 503 });
+    return NextResponse.json({ error: 'Service not available during build' }, { status: 503, headers: corsHeaders });
   }
 
   try {
     // Check if services are available
     if (!genAI) {
-      return NextResponse.json({ error: 'AI service not configured' }, { status: 500 });
+      return NextResponse.json({ error: 'AI service not configured' }, { status: 500, headers: corsHeaders });
     }
 
     const supabase = getSupabaseClient();
@@ -185,13 +202,13 @@ export async function POST(request: NextRequest) {
       filename: file.name,
       status: 'processing',
       message: 'Document uploaded successfully and processing started'
-    });
+    }, { headers: corsHeaders });
 
   } catch (error) {
     console.error('Upload error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
