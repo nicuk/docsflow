@@ -1,7 +1,7 @@
 // Integration test for AI Lead Router SaaS
 // Tests the complete flow: onboarding -> tenant creation -> chat
 
-const API_BASE = 'https://ai-lead-router-saas.vercel.app';
+const API_BASE = 'https://docsflow.app';
 
 async function testCompleteFlow() {
   console.log('🧪 Starting integration test...\n');

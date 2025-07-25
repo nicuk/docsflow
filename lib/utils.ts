@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 // Multi-tenant configuration with fallback
 export const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
-export const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'ai-lead-router-saas.vercel.app'
+export const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'docsflow.app'
 
 // Debug logging for production
 if (process.env.NODE_ENV === 'production') {

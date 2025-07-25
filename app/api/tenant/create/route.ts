@@ -134,7 +134,7 @@ Make it specific to their business type and challenges. Be concise but comprehen
 
     // Step 3: Create default user for the tenant
     const { data: user, error: userError } = await supabase.auth.admin.createUser({
-      email: `admin@${tenantAssignment.subdomain}.ai-lead-router-saas.vercel.app`,
+              email: `admin@${tenantAssignment.subdomain}.docsflow.app`,
       password: Math.random().toString(36).substring(2, 15),
       email_confirm: true,
       user_metadata: {
@@ -159,7 +159,7 @@ Make it specific to their business type and challenges. Be concise but comprehen
         industry: tenant.industry,
         custom_persona: customPersona
       },
-      redirect_url: `https://${tenant.subdomain}.ai-lead-router-saas.vercel.app/`,
+      redirect_url: `https://${tenant.subdomain}.docsflow.app/`,
       message: 'Tenant created successfully'
     }, { headers: corsHeaders });
 
