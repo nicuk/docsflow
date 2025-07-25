@@ -20,12 +20,16 @@ export default async function HomePage() {
             {rootDomain}
           </h1>
           <p className="mt-1 text-sm text-gray-600">
-            Create your own subdomain with a custom emoji
+            Set up enterprise AI document intelligence for your organization
           </p>
         </div>
 
         <div className="bg-white shadow-md rounded-lg p-4">
           <SubdomainForm />
+        </div>
+
+        <div className="text-center text-xs text-gray-500">
+          <p>Already have an account? <Link href="/login" className="text-blue-600 hover:text-blue-500">Sign in</Link></p>
         </div>
       </div>
     </div>

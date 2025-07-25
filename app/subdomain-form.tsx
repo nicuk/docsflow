@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
-import { createSubdomainAction } from '@/app/actions';
+// Remove the old action import - we'll use the new API
 import { rootDomain } from '@/lib/utils';
 
 type CreateState = {
@@ -125,10 +125,8 @@ function IndustrySelector({
 export function SubdomainForm() {
   const [industry, setIndustry] = useState('');
 
-  const [state, action, isPending] = useActionState<CreateState, FormData>(
-    createSubdomainAction,
-    {}
-  );
+  const [state, setState] = useState<CreateState>({});
+  const [isPending, setIsPending] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -141,7 +139,49 @@ export function SubdomainForm() {
         </p>
       </div>
 
-      <form action={action} className="space-y-3">
+      <form onSubmit={async (e) => {
+        e.preventDefault();
+        setIsPending(true);
+        
+        const formData = new FormData(e.currentTarget);
+        const subdomain = formData.get('subdomain') as string;
+        const organizationName = formData.get('organizationName') as string;
+        
+        try {
+          const response = await fetch('/api/tenant/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              responses: {
+                business_overview: `Organization: ${organizationName}`,
+                daily_challenges: 'Standard business operations',
+                key_decisions: 'Operational decisions',
+                success_metrics: 'Business growth and efficiency',
+                information_needs: 'Document intelligence and insights'
+              },
+              tenantAssignment: {
+                businessType: organizationName,
+                industry: industry,
+                subdomain: subdomain,
+                accessLevel: 3,
+                onboardingComplete: true
+              }
+            })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            window.location.href = data.redirect_url;
+          } else {
+            const error = await response.json();
+            setState({ error: error.error || 'Failed to create platform' });
+          }
+        } catch (error) {
+          setState({ error: 'Network error. Please try again.' });
+        } finally {
+          setIsPending(false);
+        }
+      }} className="space-y-3">
         <OrganizationNameInput defaultValue={state?.organizationName} />
         
         <SubdomainInput defaultValue={state?.subdomain} />

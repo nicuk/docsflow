@@ -144,7 +144,7 @@ export async function createSubdomainAction(
     }
 
     // Redirect to the new subdomain on success
-    redirect(`${protocol}://${rootDomain}/s/${sanitizedSubdomain}`);
+    redirect(`${protocol}://${sanitizedSubdomain}.${rootDomain}`);
   } catch (error) {
     console.error('Error creating tenant:', error);
     return { error: 'Failed to create organization. Please try again.' };
