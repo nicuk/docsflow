@@ -9,15 +9,6 @@ export function cn(...inputs: ClassValue[]) {
 export const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
 export const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'docsflow.app'
 
-// Debug logging for production
-if (process.env.NODE_ENV === 'production') {
-  console.log('Root domain configuration:', {
-    NEXT_PUBLIC_ROOT_DOMAIN: process.env.NEXT_PUBLIC_ROOT_DOMAIN,
-    rootDomain,
-    protocol
-  });
-}
-
 // CORS configuration for proper single-origin handling
 const ALLOWED_ORIGINS = [
   'https://v0-ai-saas-s-landing-page-1w.vercel.app',
@@ -33,7 +24,10 @@ export function getCORSHeaders(origin?: string | null): Record<string, string> {
   const isAllowedOrigin = origin && ALLOWED_ORIGINS.includes(origin);
   const allowedOrigin = isAllowedOrigin ? origin : (process.env.NODE_ENV === 'production' ? 'https://www.docsflow.app' : '*');
   
-  console.log('CORS Origin Check:', { origin, isAllowedOrigin, allowedOrigin }); // Debug logging
+  // Only log in development to avoid build noise
+  if (process.env.NODE_ENV === 'development') {
+    console.log('CORS Origin Check:', { origin, isAllowedOrigin, allowedOrigin });
+  }
   
   return {
     'Access-Control-Allow-Origin': allowedOrigin,

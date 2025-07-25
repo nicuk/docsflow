@@ -1,26 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Optimize builds for faster deployment
-  // swcMinify is deprecated in Next.js 15
+  // Simplified configuration to avoid middleware issues
   
-  // CORS headers removed - handled by individual API routes to prevent conflicts
-  // Individual routes use getCORSHeaders() from lib/utils.ts for proper single-origin handling
-  
-  // Reduce memory usage during build
-  experimental: {
-    // Disable some experimental features that might cause hangs
-    optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'],
-  },
-  
-  // External packages for server components (moved from experimental)
+  // External packages for server components
   serverExternalPackages: ['@google/generative-ai', '@supabase/supabase-js'],
-  
-  // Improve build performance
-  typescript: {
-    // Don't fail build on type errors (we already check in CI)
-    ignoreBuildErrors: false,
-  },
   
   // Optimize images
   images: {
@@ -32,31 +16,17 @@ const nextConfig: NextConfig = {
     ],
   },
   
-  // Add build timeout protection
-  staticPageGenerationTimeout: 300, // 5 minutes max
-  
-  // Optimize webpack for faster builds
+  // Simplified webpack config
   webpack: (config, { dev, isServer }) => {
-    // Prevent hanging builds in production
+    // Basic optimization for production
     if (!dev) {
       config.optimization = {
         ...config.optimization,
         minimize: true,
-        // Prevent memory issues
-        splitChunks: {
-          ...config.optimization.splitChunks,
-          maxSize: 244 * 1024, // 244kb max chunk size
-        },
       };
     }
     
     return config;
-  },
-  
-  // Server configuration
-  serverRuntimeConfig: {
-    // Timeout for API routes
-    maxDuration: 60,
   },
 };
 
