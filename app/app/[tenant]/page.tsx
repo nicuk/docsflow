@@ -10,10 +10,14 @@ import Link from "next/link"
 import { rootDomain, protocol } from "@/lib/utils"
 
 interface TenantData {
+  id: string
   subdomain: string
-  emoji: string
-  createdAt: number
-  displayName?: string
+  name: string
+  industry: string
+  custom_persona: any
+  subscription_status: string
+  plan_type: string
+  created_at: string
 }
 
 export default function TenantDashboardPage() {
@@ -34,6 +38,7 @@ export default function TenantDashboardPage() {
           return
         }
 
+        // Fetch tenant data from Supabase
         const response = await fetch(`/api/tenant/${tenantSlug}`)
         if (!response.ok) {
           const errorData = await response.json()
@@ -94,207 +99,168 @@ export default function TenantDashboardPage() {
     )
   }
 
-  const displayName = tenant.displayName || 
+  const displayName = tenant.name || 
     `${tenant.subdomain.charAt(0).toUpperCase() + tenant.subdomain.slice(1)} Company`
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <div className="text-4xl">{tenant.emoji}</div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {displayName}
-                </h1>
-                <p className="text-sm text-gray-500">
-                  {tenant.subdomain}.{rootDomain}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Badge variant="secondary">Active</Badge>
-              <Link href={`${protocol}://${rootDomain}/admin`}>
-                <Button variant="outline" size="sm">
-                  Admin Panel
-                </Button>
-              </Link>
-            </div>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {displayName} Dashboard
+            </h1>
+            <p className="text-gray-600 mt-1">
+              AI Document Intelligence Platform
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Badge variant={tenant.subscription_status === 'trial' ? 'secondary' : 'default'}>
+              {tenant.subscription_status === 'trial' ? 'Trial' : tenant.plan_type}
+            </Badge>
+            <Button variant="outline" size="sm">
+              Settings
+            </Button>
           </div>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-6xl mx-auto p-6">
-        <div className="grid gap-6 md:grid-cols-3 mb-8">
-          {/* Welcome Card */}
+        {/* Quick Stats */}
+        <div className="grid gap-6 md:grid-cols-3">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Welcome</CardTitle>
-              <CardDescription>
-                Your tenant dashboard
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Documents</CardTitle>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                className="h-4 w-4 text-muted-foreground"
+              >
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                <polyline points="14,2 14,8 20,8" />
+              </svg>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <p className="text-sm text-gray-600">
-                  Created: {new Date(tenant.createdAt).toLocaleDateString()}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Subdomain: <code className="bg-gray-100 px-1 rounded">{tenant.subdomain}</code>
-                </p>
-              </div>
+              <div className="text-2xl font-bold">0</div>
+              <p className="text-xs text-muted-foreground">
+                Upload documents to get started
+              </p>
             </CardContent>
           </Card>
 
-          {/* Quick Stats */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Quick Stats</CardTitle>
-              <CardDescription>
-                Platform metrics
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Conversations</CardTitle>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                className="h-4 w-4 text-muted-foreground"
+              >
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Status:</span>
-                  <Badge variant="secondary" className="text-green-600">Online</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Uptime:</span>
-                  <span className="text-sm font-medium">99.9%</span>
-                </div>
-              </div>
+              <div className="text-2xl font-bold">0</div>
+              <p className="text-xs text-muted-foreground">
+                Start chatting with your AI assistant
+              </p>
             </CardContent>
           </Card>
 
-          {/* Actions */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Quick Actions</CardTitle>
-              <CardDescription>
-                Manage your tenant
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">AI Assistant</CardTitle>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                className="h-4 w-4 text-muted-foreground"
+              >
+                <path d="M12 2a3 3 0 0 0-3 3c0 1.68 1.66 3.11 3.75 3.5C9.56 8.75 9 9.5 9 10.5c0 1.1.9 2 2 2s2-.9 2-2c0-1-.56-1.75-1.75-2.5C15.34 8.11 17 6.68 17 5a3 3 0 0 0-3-3z" />
+                <path d="M12 2a3 3 0 0 0-3 3c0 1.68 1.66 3.11 3.75 3.5C9.56 8.75 9 9.5 9 10.5c0 1.1.9 2 2 2s2-.9 2-2c0-1-.56-1.75-1.75-2.5C15.34 8.11 17 6.68 17 5a3 3 0 0 0-3-3z" />
+              </svg>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <Link href={`${protocol}://${rootDomain}/admin`}>
-                <Button variant="outline" size="sm" className="w-full">
-                  Manage Settings
-                </Button>
-              </Link>
-              <Link href={`${protocol}://${tenant.subdomain}.${rootDomain}`}>
-                <Button variant="outline" size="sm" className="w-full">
-                  View Public Page
-                </Button>
-              </Link>
+            <CardContent>
+              <div className="text-2xl font-bold">Ready</div>
+              <p className="text-xs text-muted-foreground">
+                {tenant.custom_persona?.role || 'AI Assistant'}
+              </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Main Dashboard Content */}
+        {/* Main Content */}
         <Card>
           <CardHeader>
-            <CardTitle>AI Lead Router Dashboard</CardTitle>
+            <CardTitle>Welcome to {displayName}</CardTitle>
             <CardDescription>
-              Real-time lead management and AI-powered routing for {displayName}
+              Your AI Document Intelligence platform is ready. Start by uploading documents or chatting with your AI assistant.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
-              {/* Metrics Cards */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Leads Today</p>
-                    <p className="text-2xl font-bold text-gray-900">23</p>
-                  </div>
-                  <div className="text-green-600">
-                    <span className="text-sm">↗ 15%</span>
-                  </div>
-                </div>
-              </div>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Button className="h-32 flex flex-col items-center justify-center space-y-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  className="h-8 w-8"
+                >
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                <span>Start Chatting</span>
+                <span className="text-sm opacity-70">Ask questions about your documents</span>
+              </Button>
 
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Avg Response Time</p>
-                    <p className="text-2xl font-bold text-gray-900">13m</p>
-                  </div>
-                  <Badge variant="secondary" className="text-green-600">GOOD</Badge>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">Target: 15m</p>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">AI Accuracy</p>
-                    <p className="text-2xl font-bold text-gray-900">93%</p>
-                  </div>
-                  <div className="text-green-600">
-                    <span className="text-sm">↗ Improving</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">Channel Status</p>
-                  <div className="space-y-1">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs">WhatsApp</span>
-                      <Badge variant="secondary" className="text-green-600">Active</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs">Email</span>
-                      <Badge variant="secondary" className="text-green-600">Active</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs">Forms</span>
-                      <Badge variant="secondary" className="text-green-600">Active</Badge>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <Button variant="outline" className="h-32 flex flex-col items-center justify-center space-y-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  className="h-8 w-8"
+                >
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                  <polyline points="14,2 14,8 20,8" />
+                </svg>
+                <span>Upload Documents</span>
+                <span className="text-sm opacity-70">Add PDFs, Word docs, and more</span>
+              </Button>
             </div>
 
-            {/* Recent Activity */}
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <div>
-                      <p className="text-sm font-medium">New lead contacted</p>
-                      <p className="text-xs text-gray-500">2 minutes ago • +1234567890 • Confidence: 95%</p>
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Harley Davidson models
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                    <div>
-                      <p className="text-sm font-medium">Lead contacted</p>
-                      <p className="text-xs text-gray-500">5 minutes ago • +1234567891 • Confidence: 87%</p>
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Service scheduling
-                  </div>
-                </div>
+            {tenant.custom_persona && (
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                <h3 className="font-semibold text-blue-900 mb-2">Your AI Assistant</h3>
+                <p className="text-blue-800 text-sm">
+                  <strong>Role:</strong> {tenant.custom_persona.role}<br/>
+                  <strong>Focus:</strong> {tenant.custom_persona.focus_areas?.join(', ')}<br/>
+                  <strong>Tone:</strong> {tenant.custom_persona.tone}
+                </p>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
-      </main>
+      </div>
     </div>
   )
 } 
