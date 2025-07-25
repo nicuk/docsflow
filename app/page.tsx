@@ -4,7 +4,7 @@ import { rootDomain } from '@/lib/utils';
 
 export default async function HomePage() {
   return (
-    <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4 relative">
       <div className="absolute top-4 right-4">
         <Link
           href="/admin"
@@ -14,17 +14,17 @@ export default async function HomePage() {
         </Link>
       </div>
 
-      <div className="w-full max-w-md space-y-6">
+      <div className="w-full max-w-md space-y-4">
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
             {rootDomain}
           </h1>
-          <p className="mt-2 text-base text-gray-600">
+          <p className="mt-1 text-sm text-gray-600">
             Create your own subdomain with a custom emoji
           </p>
         </div>
 
-        <div className="bg-white shadow-md rounded-lg p-6">
+        <div className="bg-white shadow-md rounded-lg p-4">
           <SubdomainForm />
         </div>
       </div>

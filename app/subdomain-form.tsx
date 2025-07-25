@@ -41,8 +41,8 @@ const INDUSTRIES = [
 
 function SubdomainInput({ defaultValue }: { defaultValue?: string }) {
   return (
-    <div className="space-y-2">
-      <Label htmlFor="subdomain">Subdomain</Label>
+    <div className="space-y-1">
+      <Label htmlFor="subdomain" className="text-sm">Subdomain</Label>
       <div className="flex items-center">
         <div className="relative flex-1">
           <Input
@@ -50,11 +50,11 @@ function SubdomainInput({ defaultValue }: { defaultValue?: string }) {
             name="subdomain"
             placeholder="your-company"
             defaultValue={defaultValue}
-            className="w-full rounded-r-none focus:z-10"
+            className="w-full rounded-r-none focus:z-10 h-9"
             required
           />
         </div>
-        <span className="bg-gray-100 px-3 border border-l-0 border-input rounded-r-md text-gray-500 min-h-[36px] flex items-center">
+        <span className="bg-gray-100 px-3 border border-l-0 border-input rounded-r-md text-gray-500 min-h-[36px] flex items-center text-sm">
           .{rootDomain}
         </span>
       </div>
@@ -67,14 +67,14 @@ function SubdomainInput({ defaultValue }: { defaultValue?: string }) {
 
 function OrganizationNameInput({ defaultValue }: { defaultValue?: string }) {
   return (
-    <div className="space-y-2">
-      <Label htmlFor="organizationName">Organization Name</Label>
+    <div className="space-y-1">
+      <Label htmlFor="organizationName" className="text-sm">Organization Name</Label>
       <Input
         id="organizationName"
         name="organizationName"
         placeholder="Acme Corporation"
         defaultValue={defaultValue}
-        className="w-full"
+        className="w-full h-9"
         required
       />
       <p className="text-xs text-gray-500">
@@ -94,12 +94,12 @@ function IndustrySelector({
   defaultValue?: string;
 }) {
   return (
-    <div className="space-y-2">
-      <Label htmlFor="industry">Industry</Label>
+    <div className="space-y-1">
+      <Label htmlFor="industry" className="text-sm">Industry</Label>
       <input type="hidden" name="industry" value={industry} required />
       
       <Select value={industry} onValueChange={setIndustry}>
-        <SelectTrigger className="w-full">
+        <SelectTrigger className="w-full h-9">
           <SelectValue placeholder="Select your industry">
             {industry && (
               <span>{INDUSTRIES.find(ind => ind.value === industry)?.label}</span>
@@ -131,37 +131,35 @@ export function SubdomainForm() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <h2 className="text-xl font-bold text-gray-900 mb-1">
           Create Your AI Document Intelligence Platform
         </h2>
-        <p className="text-gray-600">
+        <p className="text-sm text-gray-600">
           Set up enterprise-grade AI document analysis for your organization
         </p>
       </div>
 
-      <Card className="p-6">
-        <form action={action} className="space-y-4">
-          <OrganizationNameInput defaultValue={state?.organizationName} />
-          
-          <SubdomainInput defaultValue={state?.subdomain} />
+      <form action={action} className="space-y-3">
+        <OrganizationNameInput defaultValue={state?.organizationName} />
+        
+        <SubdomainInput defaultValue={state?.subdomain} />
 
-          <IndustrySelector industry={industry} setIndustry={setIndustry} defaultValue={state?.industry} />
+        <IndustrySelector industry={industry} setIndustry={setIndustry} defaultValue={state?.industry} />
 
-          {state?.error && (
-            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-              {state.error}
-            </div>
-          )}
+        {state?.error && (
+          <div className="text-sm text-red-600 bg-red-50 p-2 rounded-md">
+            {state.error}
+          </div>
+        )}
 
-          <Button type="submit" className="w-full" disabled={isPending || !industry}>
-            {isPending ? 'Creating Platform...' : 'Create AI Platform'}
-          </Button>
-        </form>
-      </Card>
+        <Button type="submit" className="w-full" disabled={isPending || !industry}>
+          {isPending ? 'Creating Platform...' : 'Create AI Platform'}
+        </Button>
+      </form>
 
-      <div className="text-center text-sm text-gray-500">
+      <div className="text-center text-xs text-gray-500">
         <p>By creating an account, you agree to our Terms of Service and Privacy Policy</p>
       </div>
     </div>
