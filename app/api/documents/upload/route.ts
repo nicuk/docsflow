@@ -13,11 +13,12 @@ import { EnhancedChunking } from '@/lib/enhanced-chunking';
 // CORS headers for frontend integration
 const corsHeaders = {
   'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' 
-    ? 'https://docsflow.app,https://*.docsflow.app' 
+    ? 'https://v0-ai-saas-s-landing-page-1w.vercel.app,https://*.vercel.app,https://docsflow.app,https://*.docsflow.app' 
     : '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Tenant-ID, X-Requested-With',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Tenant-ID, X-Requested-With, Accept',
   'Access-Control-Allow-Credentials': 'true',
+  'Access-Control-Max-Age': '86400', // 24 hours
 };
 
 // Initialize services - only when environment variables are available
@@ -52,20 +53,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'AI service not configured' }, { status: 500, headers: corsHeaders });
     }
 
-    const supabase = getSupabaseClient();
+    let supabase;
+    try {
+      supabase = getSupabaseClient();
+    } catch (error) {
+      console.error('Supabase initialization error:', error);
+      return NextResponse.json({ error: 'Database service not available' }, { status: 500, headers: corsHeaders });
+    }
     
     // Get tenant from subdomain and user access level
     const tenantId = extractTenantFromRequest(request);
-    const userAccessLevel = await getUserAccessLevel(request, tenantId);
+    let userAccessLevel;
+    try {
+      userAccessLevel = await getUserAccessLevel(request, tenantId);
+    } catch (error) {
+      console.error('Auth error:', error);
+      userAccessLevel = 1; // Default to level 1
+    }
 
-    // Parse multipart form data
-    const formData = await request.formData();
-    const file = formData.get('file') as File;
+    // Parse multipart form data with error handling
+    let formData, file;
+    try {
+      formData = await request.formData();
+      file = formData.get('file') as File;
+    } catch (error) {
+      console.error('FormData parsing error:', error);
+      return NextResponse.json(
+        { error: 'Failed to parse form data' },
+        { status: 400, headers: corsHeaders }
+      );
+    }
     
     if (!file) {
       return NextResponse.json(
         { error: 'No file provided' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -192,7 +214,7 @@ export async function POST(request: NextRequest) {
         .from('documents')
         .update({ 
           processing_status: 'error',
-          error_message: 'Failed to process document content'
+          error_message: processingError instanceof Error ? processingError.message : 'Failed to process document content'
         })
         .eq('id', document.id);
     }
@@ -227,19 +249,31 @@ async function processDocumentContentEnhanced(
     throw new Error('Google AI API key not configured');
   }
 
-  // Initialize enhanced chunking
-  const enhancedChunking = new EnhancedChunking(process.env.GOOGLE_AI_API_KEY);
+  // Initialize enhanced chunking with error handling
+  let enhancedChunking;
+  try {
+    enhancedChunking = new EnhancedChunking(process.env.GOOGLE_AI_API_KEY);
+  } catch (error) {
+    console.error('EnhancedChunking initialization error:', error);
+    throw new Error('Failed to initialize document processing');
+  }
   
   // Determine document type for better context
   const documentType = getDocumentType(mimeType, filename);
   
   // Create contextual chunks (49% accuracy improvement)
   console.log(`Creating contextual chunks for ${filename}...`);
-  const contextualChunks = await enhancedChunking.createContextualChunks(
-    textContent,
-    filename,
-    documentType
-  );
+  let contextualChunks;
+  try {
+    contextualChunks = await enhancedChunking.createContextualChunks(
+      textContent,
+      filename,
+      documentType
+    );
+  } catch (error) {
+    console.error('Chunk creation error:', error);
+    throw new Error('Failed to process document content into chunks');
+  }
   
   console.log(`Generated ${contextualChunks.length} contextual chunks`);
 
