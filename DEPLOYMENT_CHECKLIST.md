@@ -1,100 +1,122 @@
-# DEPLOYMENT CHECKLIST - AI Lead Router SaaS
+# Deployment Checklist - AI Lead Router SaaS
 
-## ✅ Pre-Deployment Requirements
+## 🚀 Pre-Deployment Checklist
 
-### 1. Environment Variables (Vercel Dashboard)
-**Critical**: Verify these environment variables are set in your Vercel project settings:
+### Environment Variables (Required)
+- [ ] `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key
+- [ ] `GOOGLE_AI_API_KEY` - Google Gemini API key
+- [ ] `NEXT_PUBLIC_API_URL` - Backend API URL (if different from frontend)
 
-#### **Required - Core Functionality**
-```bash
-# Database (Supabase)
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
+### Database Setup
+- [ ] Supabase project created
+- [ ] Database schema migrated (run migrations)
+- [ ] Row Level Security (RLS) policies enabled
+- [ ] Vector search functions created
+- [ ] Test data inserted (optional)
 
-# AI Provider (Google Gemini)
-GOOGLE_AI_API_KEY=AIza...
+### API Endpoints Verification
+- [ ] `/api/tenant/create` - Tenant creation endpoint
+- [ ] `/api/auth/register` - User registration
+- [ ] `/api/auth/login` - User authentication
+- [ ] `/api/chat` - Chat with LLM integration
+- [ ] `/api/documents/upload` - Document processing
+- [ ] CORS headers configured correctly
 
-# Multi-tenant routing
-NEXT_PUBLIC_ROOT_DOMAIN=ai-lead-router-saas.vercel.app
-```
+### Frontend Integration
+- [ ] Frontend auth client configured
+- [ ] Login page integrated with real auth
+- [ ] Onboarding flow connected to backend
+- [ ] Tenant subdomain routing working
+- [ ] Chat interface functional
 
-#### **Optional - Enhanced Features**
-```bash
-# Redis (for tenant metadata)
-KV_REST_API_URL=redis://...
-KV_REST_API_TOKEN=xxx
+## 🧪 Testing Checklist
 
-# Email notifications
-RESEND_API_KEY=re_xxx
+### Integration Tests
+- [ ] Run `node test/integration-test.js`
+- [ ] Tenant creation flow works
+- [ ] User registration works
+- [ ] User login works
+- [ ] Chat API responds correctly
+- [ ] Tenant isolation verified
 
-# Google Drive integration
-GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=xxx
-GOOGLE_REDIRECT_URI=https://ai-lead-router-saas.vercel.app/api/auth/callback
-```
+### Manual Testing
+- [ ] Complete onboarding flow
+- [ ] Create tenant with custom persona
+- [ ] Login with created user
+- [ ] Upload test document
+- [ ] Ask question in chat
+- [ ] Verify industry-specific responses
 
-### 2. Database Setup (Supabase)
-Run these SQL migrations in your Supabase SQL Editor:
+### Security Testing
+- [ ] Tenant data isolation verified
+- [ ] Access level restrictions working
+- [ ] No cross-tenant data leakage
+- [ ] Authentication tokens secure
+- [ ] CORS properly configured
 
-1. **Basic Schema**: `SUPABASE_IMPLEMENTATION.sql`
-2. **Vector Search**: `migrations/001_similarity_search.sql`
-3. **Security**: `migrations/002_security_hardening.sql`
-4. **Vector Migration**: `migrations/003_complete_vector_migration.sql`
+## 📊 Performance Checklist
 
-### 3. Domain Configuration
-- Set up custom domain in Vercel (if using)
-- Configure DNS records for subdomain routing
-- Update CORS origins in API routes
+### Response Times
+- [ ] Tenant creation < 5 seconds
+- [ ] User login < 2 seconds
+- [ ] Chat response < 3 seconds
+- [ ] Document upload < 30 seconds
 
-## 🚨 Current Deployment Error
+### Error Handling
+- [ ] Graceful fallbacks for API failures
+- [ ] User-friendly error messages
+- [ ] Logging for debugging
+- [ ] Rate limiting configured
 
-**Error**: `Application error: a server-side exception has occurred while loading ai-lead-router-saas.vercel.app`
+## 🔧 Post-Deployment Verification
 
-**Most Likely Causes**:
-1. **Missing Environment Variables** - Check Vercel dashboard
-2. **Database Connection** - Verify Supabase credentials
-3. **Missing Vector Extension** - Ensure `pgvector` is enabled
+### Monitoring
+- [ ] Error logs monitored
+- [ ] Performance metrics tracked
+- [ ] User activity logged
+- [ ] API usage monitored
 
-## 🔧 Quick Fixes
-
-### Fix 1: Verify Environment Variables
-```bash
-# Check if all required env vars are set in Vercel:
-vercel env ls
-```
-
-### Fix 2: Test Database Connection
-```sql
--- Run in Supabase SQL Editor to test:
-SELECT current_database(), current_user;
-SELECT * FROM pg_extension WHERE extname = 'vector';
-```
-
-### Fix 3: Check Function Availability
-```sql
--- Verify similarity_search function exists:
-SELECT routine_name FROM information_schema.routines 
-WHERE routine_name = 'similarity_search';
-```
+### Backup & Recovery
+- [ ] Database backups configured
+- [ ] Environment variables backed up
+- [ ] Rollback plan documented
+- [ ] Disaster recovery tested
 
 ## 🎯 Success Criteria
 
-- [ ] Build completes successfully (`npm run build`)
-- [ ] All environment variables configured in Vercel
-- [ ] Database schema and functions deployed
-- [ ] Chat API returns 200 status (`/api/chat`)
-- [ ] Subdomain routing works (`app.your-domain.com`)
+### Functional Requirements
+- [ ] User can complete onboarding
+- [ ] Tenant gets created with custom persona
+- [ ] User can login and access dashboard
+- [ ] Chat provides industry-specific responses
+- [ ] Document upload and search works
+- [ ] Multi-tenant isolation maintained
 
-## 📞 Support
+### Non-Functional Requirements
+- [ ] Response times meet targets
+- [ ] Security requirements satisfied
+- [ ] Error rate < 1%
+- [ ] Uptime > 99.5%
 
-If deployment still fails:
-1. Check Vercel function logs
-2. Verify Supabase query logs  
-3. Test API endpoints individually
-4. Enable debug logging (`LOG_LEVEL=debug`)
+## 🚨 Rollback Plan
+
+If issues are discovered:
+1. Revert to previous deployment
+2. Check environment variables
+3. Verify database connectivity
+4. Test critical user flows
+5. Monitor error logs
+
+## 📞 Support Contacts
+
+- **Backend Issues**: [Backend Team Contact]
+- **Frontend Issues**: [Frontend Team Contact]
+- **Infrastructure**: [DevOps Team Contact]
+- **Database**: [DBA Contact]
 
 ---
 
-**Last Updated**: After Next.js 15 compatibility fixes
-**Status**: Ready for deployment ✅ 
+**Deployment Status**: ⏳ Pending
+**Last Updated**: [Date]
+**Next Review**: [Date] 
