@@ -111,11 +111,32 @@ export async function POST(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
   
   try {
+    // 🔥 CRITICAL: Add Bearer token authentication
+    const authHeader = request.headers.get('authorization');
+    let isAuthenticated = false;
+    let authenticatedUserId = null;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const supabase = getSupabaseClient();
+        const { data: { user }, error } = await supabase.auth.getUser(token);
+        
+        if (!error && user) {
+          isAuthenticated = true;
+          authenticatedUserId = user.id;
+          console.log('Authenticated user:', user.email);
+        }
+      } catch (error) {
+        console.warn('Auth token validation failed:', error);
+      }
+    }
+    
     // Check if in demo mode
     const isDemoMode = request.headers.get('X-Demo-Mode') === 'true';
     const tenantSubdomain = request.headers.get('X-Tenant-Subdomain') || 'demo';
     
-    console.log('Chat API - Demo mode:', isDemoMode, 'Subdomain:', tenantSubdomain);
+    console.log('Chat API - Demo mode:', isDemoMode, 'Subdomain:', tenantSubdomain, 'Authenticated:', isAuthenticated);
     
     // Initialize demo tenant if needed
     if (isDemoMode) {
@@ -287,24 +308,36 @@ export async function POST(request: NextRequest) {
       console.log('Tenant not found, using general prompts');
     }
 
-    // 🚀 USE CUSTOM PERSONA if available (from 5-question onboarding)
+    // 🚀 PRIORITIZE CUSTOM LLM-GENERATED PERSONA (from 5-question onboarding)
     let promptConfig;
     if (tenant?.custom_persona?.prompt_template) {
-      // Custom persona created from onboarding answers
+      // Custom persona created from LLM analysis of onboarding answers
       promptConfig = {
         systemPrompt: tenant.custom_persona.prompt_template,
         contextTemplate: `
+Based STRICTLY on these business documents:
 {context}
 
 User Question: {query}
 
-Instructions: Answer based on the context above using your custom expertise in ${tenant.custom_persona.business_context}. Include source citations and confidence level.`
+🚨 CRITICAL INSTRUCTIONS:
+- ONLY use information explicitly stated in the documents above
+- If the documents don't contain the answer, say "I don't have that information in the available documents"
+- Do NOT make up facts, figures, or details not found in the documents
+- When synthesizing information from multiple sources, clearly indicate which document each fact comes from
+- Use your expertise as ${tenant.custom_persona.role} to provide context-aware insights
+- Focus on ${tenant.custom_persona.focus_areas?.join(', ')} based on the business needs
+
+Business Context: ${tenant.custom_persona.business_context}
+Tone: ${tenant.custom_persona.tone}
+
+Provide accurate, helpful information with proper source citations and confidence level.`
       };
-      console.log(`Using custom persona for ${tenant.name}: ${tenant.custom_persona.role}`);
+      console.log(`✅ Using custom LLM persona for ${tenant.name}: ${tenant.custom_persona.role} (${tenant.custom_persona.created_from})`);
     } else {
-      // Fallback to industry-based prompts
+      // Fallback to industry-based prompts only if no custom persona exists
       promptConfig = getTenantPrompt(tenantId, tenant?.industry);
-      console.log(`Using industry-based prompt for tenant: ${tenantId}`);
+      console.log(`⚠️ Fallback to static industry prompt for tenant: ${tenantId} (${tenant?.industry || 'general'})`);
     }
     
     // Build context string from search results

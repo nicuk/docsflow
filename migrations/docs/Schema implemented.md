@@ -68,8 +68,8 @@ CREATE TABLE public.chat_conversations (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT chat_conversations_pkey PRIMARY KEY (id),
-  CONSTRAINT chat_conversations_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id),
-  CONSTRAINT chat_conversations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT chat_conversations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT chat_conversations_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
 );
 CREATE TABLE public.chat_messages (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -93,10 +93,8 @@ CREATE TABLE public.document_chunks (
   access_level integer NOT NULL DEFAULT 1 CHECK (access_level >= 1 AND access_level <= 5),
   created_at timestamp with time zone DEFAULT now(),
   embedding USER-DEFINED,
-  tenant_id uuid,
   CONSTRAINT document_chunks_pkey PRIMARY KEY (id),
-  CONSTRAINT document_chunks_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id),
-  CONSTRAINT document_chunks_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
+  CONSTRAINT document_chunks_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id)
 );
 CREATE TABLE public.document_processing_jobs (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -119,7 +117,7 @@ CREATE TABLE public.document_processing_jobs (
 );
 CREATE TABLE public.documents (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
-  tenant_id uuid NOT NULL,
+  tenant_id text NOT NULL,
   filename text NOT NULL,
   file_size bigint NOT NULL,
   mime_type text NOT NULL,
@@ -129,9 +127,7 @@ CREATE TABLE public.documents (
   metadata jsonb DEFAULT '{}'::jsonb,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
-  document_category text DEFAULT 'general'::text,
-  CONSTRAINT documents_pkey PRIMARY KEY (id),
-  CONSTRAINT documents_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
+  CONSTRAINT documents_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.file_uploads (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -144,9 +140,9 @@ CREATE TABLE public.file_uploads (
   uploaded_by uuid,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT file_uploads_pkey PRIMARY KEY (id),
-  CONSTRAINT file_uploads_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id),
+  CONSTRAINT file_uploads_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id),
   CONSTRAINT file_uploads_lead_id_fkey FOREIGN KEY (lead_id) REFERENCES public.leads(id),
-  CONSTRAINT file_uploads_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id)
+  CONSTRAINT file_uploads_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
 );
 CREATE TABLE public.lead_interactions (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -200,9 +196,9 @@ CREATE TABLE public.notifications (
   metadata jsonb DEFAULT '{}'::jsonb,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT notifications_pkey PRIMARY KEY (id),
-  CONSTRAINT notifications_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id),
+  CONSTRAINT notifications_lead_id_fkey FOREIGN KEY (lead_id) REFERENCES public.leads(id),
   CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT notifications_lead_id_fkey FOREIGN KEY (lead_id) REFERENCES public.leads(id)
+  CONSTRAINT notifications_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
 );
 CREATE TABLE public.routing_rules (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -218,15 +214,14 @@ CREATE TABLE public.routing_rules (
 );
 CREATE TABLE public.search_history (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
-  tenant_id uuid NOT NULL,
+  tenant_id text NOT NULL,
   query text NOT NULL,
   response text,
   document_ids ARRAY,
   confidence_score numeric,
   response_time_ms integer,
   created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT search_history_pkey PRIMARY KEY (id),
-  CONSTRAINT search_history_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
+  CONSTRAINT search_history_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.subscriptions (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -261,27 +256,7 @@ CREATE TABLE public.tenants (
   plan_type text DEFAULT 'starter'::text,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
-  custom_persona jsonb DEFAULT '{}'::jsonb,
   CONSTRAINT tenants_pkey PRIMARY KEY (id)
-);
-CREATE TABLE public.user_invitations (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  tenant_id uuid NOT NULL,
-  email text NOT NULL,
-  role text NOT NULL DEFAULT 'user'::text CHECK (role = ANY (ARRAY['admin'::text, 'user'::text, 'viewer'::text])),
-  access_level integer NOT NULL DEFAULT 1 CHECK (access_level >= 1 AND access_level <= 5),
-  token text NOT NULL UNIQUE,
-  status text NOT NULL DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'accepted'::text, 'expired'::text, 'cancelled'::text])),
-  expires_at timestamp with time zone NOT NULL,
-  invited_by uuid,
-  accepted_by uuid,
-  accepted_at timestamp with time zone,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT user_invitations_pkey PRIMARY KEY (id),
-  CONSTRAINT user_invitations_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id),
-  CONSTRAINT user_invitations_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES public.users(id),
-  CONSTRAINT user_invitations_accepted_by_fkey FOREIGN KEY (accepted_by) REFERENCES public.users(id)
 );
 CREATE TABLE public.user_sessions (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -297,8 +272,8 @@ CREATE TABLE public.user_sessions (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT user_sessions_pkey PRIMARY KEY (id),
-  CONSTRAINT user_sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT user_sessions_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
+  CONSTRAINT user_sessions_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id),
+  CONSTRAINT user_sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.users (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -309,7 +284,6 @@ CREATE TABLE public.users (
   avatar_url text,
   last_login_at timestamp with time zone,
   created_at timestamp with time zone DEFAULT now(),
-  access_level integer NOT NULL DEFAULT 1 CHECK (access_level >= 1 AND access_level <= 5),
   CONSTRAINT users_pkey PRIMARY KEY (id),
   CONSTRAINT users_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
 );

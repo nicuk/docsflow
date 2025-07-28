@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@/lib/supabase';
 import { getCORSHeaders } from '@/lib/utils';
-
-function getSupabaseClient() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('Supabase configuration missing');
-  }
-  
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
-}
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin');
@@ -32,17 +21,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = getSupabaseClient();
+    const supabase = createServerClient();
 
-    // Create user with Supabase Auth
-    const { data: user, error: authError } = await supabase.auth.admin.createUser({
+    // Create user with Supabase Auth (regular signup, not admin)
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      email_confirm: true,
-      user_metadata: {
-        tenant_id: tenantId,
-        access_level: accessLevel,
-        role: 'user'
+      options: {
+        data: {
+          tenant_id: tenantId,
+          access_level: accessLevel,
+          role: 'user'
+        }
       }
     });
 
@@ -58,8 +48,8 @@ export async function POST(request: NextRequest) {
     const { error: profileError } = await supabase
       .from('users')
       .insert({
-        id: user.user.id,
-        email: user.user.email,
+        id: authData.user?.id,
+        email: authData.user?.email,
         tenant_id: tenantId,
         access_level: accessLevel,
         role: 'user',
@@ -71,13 +61,37 @@ export async function POST(request: NextRequest) {
       // Don't fail the request if profile creation fails
     }
 
+    // Get user profile with tenant info
+    const { data: userProfile, error: fetchProfileError } = await supabase
+      .from('users')
+      .select(`
+        *,
+        tenants (
+          id,
+          subdomain,
+          name,
+          industry,
+          custom_persona
+        )
+      `)
+      .eq('id', authData.user?.id)
+      .single();
+
+    if (fetchProfileError) {
+      console.error('Profile fetch error:', fetchProfileError);
+      // Continue without profile data
+    }
+
     return NextResponse.json({
       success: true,
       user: {
-        id: user.user.id,
-        email: user.user.email,
+        id: authData.user?.id,
+        email: authData.user?.email,
+        access_token: authData.session?.access_token,
+        refresh_token: authData.session?.refresh_token,
         tenant_id: tenantId,
-        access_level: accessLevel
+        access_level: accessLevel,
+        tenant: userProfile?.tenants
       },
       message: 'User registered successfully'
     }, { headers: corsHeaders });

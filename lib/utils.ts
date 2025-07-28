@@ -11,10 +11,16 @@ export const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'docsflow.app'
 
 // CORS configuration for proper single-origin handling
 const ALLOWED_ORIGINS = [
-  'https://v0-ai-saas-s-landing-page-1w.vercel.app',
-  'https://v0-ai-saa-s-landing-page-lqwq5hx4s-nics-projects-4e604dbf.vercel.app', // Current Vercel preview URL
+  // 🏗️ PRODUCTION DOMAINS
   'https://docsflow.app',
   'https://www.docsflow.app',
+  'https://app.docsflow.app',
+  
+  // 🧪 DEVELOPMENT & STAGING DOMAINS
+  'https://v0-ai-saas-s-landing-page-1w.vercel.app',
+  'https://v0-ai-saa-s-landing-page-lqwq5hx4s-nics-projects-4e604dbf.vercel.app',
+  'https://frontend-data-intelligence.vercel.app',
+  'https://frontend-data-intelligence-git-main-nics-projects-4e604dbf.vercel.app',
   'http://localhost:3000',
   'http://localhost:3001'
 ];

@@ -26,6 +26,24 @@ export default function middleware(request: NextRequest) {
       return NextResponse.rewrite(tenantUrl);
     }
 
+    // Handle main domain routing
+    if (hostname === 'docsflow.app' || hostname === 'www.docsflow.app') {
+      // Main landing page - no changes needed
+      return NextResponse.next();
+    }
+
+    // Handle backend domain routing
+    if (hostname === 'ai-lead-router-saas.vercel.app' || hostname.includes('ai-lead-router-saas')) {
+      // Backend API domain - allow access to API routes
+      if (pathname.startsWith('/api')) {
+        return NextResponse.next();
+      }
+      
+      // Non-API routes on backend domain should redirect to main domain
+      const mainDomainUrl = new URL(pathname, 'https://docsflow.app');
+      return NextResponse.redirect(mainDomainUrl);
+    }
+
     // Default case - allow the request to proceed
     return NextResponse.next();
     
