@@ -8,43 +8,57 @@ export default function middleware(request: NextRequest) {
     // Skip middleware for API routes and static files
     if (pathname.startsWith('/api') || 
         pathname.startsWith('/_next') || 
-        pathname.startsWith('/favicon.ico')) {
+        pathname.startsWith('/favicon.ico') ||
+        pathname.startsWith('/sitemap.xml') ||
+        pathname.startsWith('/robots.txt')) {
       return NextResponse.next();
     }
 
-    // Handle subdomain routing - simplified
+    console.log(`[Middleware] Processing: ${hostname}${pathname}`);
+
+    // Handle subdomain routing - enhanced logic
     const hostParts = hostname.split('.');
     const subdomain = hostParts[0];
     
     // Define known main domains
     const mainDomains = ['www', 'docsflow', 'ai-lead-router-saas', 'localhost', '127.0.0.1'];
-    const isSubdomain = !mainDomains.includes(subdomain) && hostParts.length > 1;
+    const isMainDomain = mainDomains.includes(subdomain) || hostname === 'docsflow.app';
+    const isSubdomain = !isMainDomain && hostParts.length >= 2 && subdomain !== '';
     
+    // Handle subdomain routing
     if (isSubdomain && subdomain) {
-      // Route subdomain requests to tenant dashboard
-      const tenantUrl = new URL(`/app/${subdomain}`, request.url);
+      console.log(`[Middleware] Subdomain detected: ${subdomain}, rewriting to /app/${subdomain}`);
+      
+      // Rewrite subdomain to tenant dashboard with proper URL construction
+      const tenantUrl = new URL(request.url);
+      tenantUrl.pathname = `/app/${subdomain}${pathname === '/' ? '' : pathname}`;
+      tenantUrl.hostname = hostname.includes('docsflow.app') ? 'docsflow.app' : hostname;
+      
       return NextResponse.rewrite(tenantUrl);
     }
 
     // Handle main domain routing
     if (hostname === 'docsflow.app' || hostname === 'www.docsflow.app') {
-      // Main landing page - no changes needed
+      console.log(`[Middleware] Main domain access: ${pathname}`);
       return NextResponse.next();
     }
 
     // Handle backend domain routing
-    if (hostname === 'ai-lead-router-saas.vercel.app' || hostname.includes('ai-lead-router-saas')) {
-      // Backend API domain - allow access to API routes
+    if (hostname.includes('ai-lead-router-saas') && hostname.includes('vercel.app')) {
+      console.log(`[Middleware] Backend domain access: ${pathname}`);
+      
+      // Allow API routes on backend domain
       if (pathname.startsWith('/api')) {
         return NextResponse.next();
       }
       
-      // Non-API routes on backend domain should redirect to main domain
-      const mainDomainUrl = new URL(pathname, 'https://docsflow.app');
-      return NextResponse.redirect(mainDomainUrl);
+      // Redirect non-API routes to main domain
+      const mainDomainUrl = new URL(`https://docsflow.app${pathname}`);
+      return NextResponse.redirect(mainDomainUrl, 301);
     }
 
     // Default case - allow the request to proceed
+    console.log(`[Middleware] Default handling for: ${hostname}${pathname}`);
     return NextResponse.next();
     
   } catch (error) {

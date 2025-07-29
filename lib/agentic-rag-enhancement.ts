@@ -198,7 +198,7 @@ Return only the refined queries, one per line.`;
         const result = await this.reasoningModel.generateContent(refinementPrompt);
         const refinedQueries = result.response.text()
           .split('\n')
-          .filter(line => line.trim().length > 0)
+          .filter((line: string) => line.trim().length > 0)
           .slice(0, 3);
         
         return refinedQueries;
@@ -224,7 +224,7 @@ Generate 2 improved queries that might get better matches:`;
         const result = await this.reasoningModel.generateContent(improvementPrompt);
         const improvedQueries = result.response.text()
           .split('\n')
-          .filter(line => line.trim().length > 0)
+          .filter((line: string) => line.trim().length > 0)
           .slice(0, 2);
         
         return [originalQuery, ...improvedQueries];
@@ -334,7 +334,7 @@ Provide a detailed, accurate response with proper source attribution.`;
       // Extract context from previous messages
       const conversationContext = recentMessages
         .reverse()
-        .map(msg => `${msg.role}: ${msg.content}`)
+        .map((msg: any) => `${msg.role}: ${msg.content}`)
         .join('\n');
 
       const contextualQuery = `

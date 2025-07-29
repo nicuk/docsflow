@@ -38,6 +38,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate subdomain format
+    const subdomainRegex = /^[a-z0-9][a-z0-9-]*[a-z0-9]$/;
+    const cleanSubdomain = subdomain.toLowerCase().trim();
+    
+    if (cleanSubdomain.length < 3 || cleanSubdomain.length > 63) {
+      return NextResponse.json(
+        { error: 'Subdomain must be between 3 and 63 characters long' },
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    if (!subdomainRegex.test(cleanSubdomain)) {
+      return NextResponse.json(
+        { error: 'Subdomain can only contain lowercase letters, numbers, and hyphens. Cannot start or end with a hyphen.' },
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    // Check for reserved subdomains
+    const reservedSubdomains = [
+      'www', 'api', 'admin', 'root', 'mail', 'ftp', 'localhost', 'test',
+      'staging', 'dev', 'development', 'prod', 'production', 'beta',
+      'alpha', 'demo', 'docs', 'support', 'help', 'blog', 'news',
+      'status', 'monitor', 'app', 'apps', 'cdn', 'static', 'assets'
+    ];
+
+    if (reservedSubdomains.includes(cleanSubdomain)) {
+      return NextResponse.json(
+        { error: 'This subdomain is reserved and cannot be used' },
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
     const supabase = createServerClient();
 
     // Step 1: Generate LLM persona from onboarding answers
