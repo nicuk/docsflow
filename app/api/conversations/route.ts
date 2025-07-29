@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     
     // Get conversations for this tenant
     const { data: conversations, error } = await supabase
-      .from('conversations')
+      .from('chat_conversations')
       .select(`
         id,
         title,

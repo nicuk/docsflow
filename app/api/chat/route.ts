@@ -7,6 +7,7 @@ import { getUserAccessLevel, extractTenantFromRequest } from '@/lib/auth-helpers
 import { performDeepSearch, buildSynthesizedContext } from '@/lib/deep-search';
 import { ConfidenceScoring } from '@/lib/confidence-scoring';
 import { redis, safeRedisOperation } from '@/lib/redis';
+import { AgenticRAGEnhancement } from '@/lib/agentic-rag-enhancement';
 
 // Dynamic import to prevent build issues
 const loadHybridSearch = () => import('@/lib/hybrid-search');
@@ -201,8 +202,31 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Step 2: Get user access level and perform DEEP SEARCH with cross synthesis
+    // 🤖 AGENTIC RAG ENHANCEMENT: Initialize reasoning agent
+    let agenticEnhancement: AgenticRAGEnhancement | null = null;
+    let agenticQuery: any = null;
+    
+    try {
+      agenticEnhancement = new AgenticRAGEnhancement();
+      
+      // Step 2.1: Enhance query with conversation memory
+      const memoryEnhancedQuery = await agenticEnhancement.enhanceWithMemory(
+        message, 
+        tenantId, 
+        conversationId
+      );
+      
+      // Step 2.2: Analyze query with agentic reasoning
+      agenticQuery = await agenticEnhancement.analyzeQuery(memoryEnhancedQuery, tenantId);
+      console.log(`🤖 Agentic analysis: ${agenticQuery.queryPlan.strategy} strategy with ${agenticQuery.decomposedQueries.length} sub-queries`);
+      
+    } catch (agenticError) {
+      console.warn('Agentic enhancement failed, continuing with standard processing:', agenticError);
+    }
+
+    // Step 3: Get user access level and perform enhanced search
     const userAccessLevel = await getUserAccessLevel(request, tenantId);
+    const finalQuery = agenticQuery?.decomposedQueries[0] || message;
 
     let relevantChunks: Chunk[] = [];
     let searchResult: any;

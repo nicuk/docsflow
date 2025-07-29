@@ -28,10 +28,10 @@ BEGIN
   FROM information_schema.columns 
   WHERE table_name = 'document_chunks' AND column_name = 'embedding';
   
-  RAISE NOTICE 'Current embedding type: %', embedding_type;
+  RAISE NOTICE 'Current embedding type: %', COALESCE(embedding_type, 'NULL');
   
   -- Only fix if it's not already vector type
-  IF embedding_type != 'vector' THEN
+  IF COALESCE(embedding_type, '') != 'vector' THEN
     RAISE NOTICE 'Converting embedding column to vector(768)';
     
     -- Drop any existing vector index
@@ -83,13 +83,13 @@ BEGIN
     AND indexname = 'idx_document_chunks_embedding'
   ) INTO has_index;
   
-  IF embedding_type = 'vector(768)' AND has_index THEN
+  IF COALESCE(embedding_type, '') = 'vector(768)' AND COALESCE(has_index, false) THEN
     RAISE NOTICE '🎉 SCHEMA 100% CORRECT!';
     RAISE NOTICE '✅ embedding: vector(768)';
     RAISE NOTICE '✅ vector index: created';
     RAISE NOTICE '✅ Ready for production integration';
   ELSE
-    RAISE EXCEPTION 'Schema validation failed: embedding=%, index=%', embedding_type, has_index;
+    RAISE EXCEPTION 'Schema validation failed: embedding=%, index=%', COALESCE(embedding_type, 'NULL'), has_index;
   END IF;
 END;
 $$;
