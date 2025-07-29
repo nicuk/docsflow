@@ -158,8 +158,8 @@ export function SubdomainForm() {
         // Store in localStorage for onboarding flow
         localStorage.setItem('onboarding-data', JSON.stringify(onboardingData));
         
-        // Redirect to frontend onboarding flow (superior UX)
-        window.location.href = 'https://docsflow.app/onboarding';
+        // Redirect to our backend onboarding flow
+        window.location.href = '/onboarding';
       }} className="space-y-3">
         <OrganizationNameInput defaultValue={state?.organizationName} />
         
