@@ -1,13 +1,29 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { 
+  checkRateLimit, 
+  extractTenantFromHostname, 
+  createSecureResponse,
+  handlePreflight
+} from './lib/security-middleware';
 
 export default function middleware(request: NextRequest) {
   try {
     const { pathname, hostname } = request.nextUrl;
+    const origin = request.headers.get('origin');
     
-    // Skip middleware for API routes and static files
-    if (pathname.startsWith('/api') || 
-        pathname.startsWith('/_next') || 
+    // Handle OPTIONS preflight requests
+    if (request.method === 'OPTIONS') {
+      return handlePreflight(request);
+    }
+    
+    // Rate limiting check
+    if (!checkRateLimit(request, 200)) {
+      return new NextResponse('Rate limit exceeded', { status: 429 });
+    }
+    
+    // Skip middleware for static files and assets
+    if (pathname.startsWith('/_next') || 
         pathname.startsWith('/favicon.ico') ||
         pathname.startsWith('/sitemap.xml') ||
         pathname.startsWith('/robots.txt')) {
@@ -16,55 +32,56 @@ export default function middleware(request: NextRequest) {
 
     console.log(`[Middleware] Processing: ${hostname}${pathname}`);
 
-    // Handle subdomain routing - enhanced logic
-    const hostParts = hostname.split('.');
-    const subdomain = hostParts[0];
-    
-    // Define known main domains
-    const mainDomains = ['www', 'docsflow', 'ai-lead-router-saas', 'localhost', '127.0.0.1'];
-    const isMainDomain = mainDomains.includes(subdomain) || hostname === 'docsflow.app';
-    const isSubdomain = !isMainDomain && hostParts.length >= 2 && subdomain !== '';
-    
-    // Handle subdomain routing
-    if (isSubdomain && subdomain) {
-      console.log(`[Middleware] Subdomain detected: ${subdomain}, rewriting to /app/${subdomain}`);
-      
-      // Rewrite subdomain to tenant dashboard with proper URL construction
-      const tenantUrl = new URL(request.url);
-      tenantUrl.pathname = `/app/${subdomain}${pathname === '/' ? '' : pathname}`;
-      tenantUrl.hostname = hostname.includes('docsflow.app') ? 'docsflow.app' : hostname;
-      
-      return NextResponse.rewrite(tenantUrl);
+    // Extract tenant from hostname
+    const tenant = extractTenantFromHostname(hostname);
+
+    // Route tenant subdomains to backend
+    if (tenant) {
+      console.log(`[Middleware] Tenant subdomain detected: ${hostname} -> ${tenant}`);
+      // Rewrite to backend with tenant context
+      const response = NextResponse.rewrite(new URL(`/app/${tenant}${pathname}`, request.url));
+      return createSecureResponse(response, origin);
     }
 
-    // Handle main domain routing
-    if (hostname === 'docsflow.app' || hostname === 'www.docsflow.app') {
-      console.log(`[Middleware] Main domain access: ${pathname}`);
-      return NextResponse.next();
+    // Route onboarding to backend for main domain
+    if ((hostname === 'docsflow.app' || hostname === 'www.docsflow.app') && 
+        pathname.startsWith('/onboarding')) {
+      console.log('[Middleware] Onboarding path detected, routing to backend');
+      const response = NextResponse.rewrite(`https://ai-lead-router-saas.vercel.app${pathname}`);
+      return createSecureResponse(response, origin);
     }
 
-    // Handle backend domain routing
+    // Route API calls to backend for main domain
+    if ((hostname === 'docsflow.app' || hostname === 'www.docsflow.app') && 
+        pathname.startsWith('/api')) {
+      console.log('[Middleware] API path detected, routing to backend');
+      const response = NextResponse.rewrite(`https://ai-lead-router-saas.vercel.app${pathname}`);
+      return createSecureResponse(response, origin);
+    }
+
+    // Handle backend domain access - redirect to main domain for non-API routes
     if (hostname.includes('ai-lead-router-saas') && hostname.includes('vercel.app')) {
       console.log(`[Middleware] Backend domain access: ${pathname}`);
       
-      // Allow API routes on backend domain
-      if (pathname.startsWith('/api')) {
-        return NextResponse.next();
+      // Allow API routes and onboarding on backend domain
+      if (pathname.startsWith('/api') || pathname.startsWith('/onboarding') || pathname.startsWith('/app/')) {
+        const response = NextResponse.next();
+        return createSecureResponse(response, origin);
       }
       
       // Redirect non-API routes to main domain
-      const mainDomainUrl = new URL(`https://docsflow.app${pathname}`);
-      return NextResponse.redirect(mainDomainUrl, 301);
+      return NextResponse.redirect(new URL(`https://docsflow.app${pathname}`, request.url), 301);
     }
 
-    // Default case - allow the request to proceed
+    // Default - allow frontend to handle
     console.log(`[Middleware] Default handling for: ${hostname}${pathname}`);
-    return NextResponse.next();
+    const response = NextResponse.next();
+    return createSecureResponse(response, origin);
     
   } catch (error) {
-    // If middleware fails, log the error and allow the request to proceed
     console.error('Middleware error:', error);
-    return NextResponse.next();
+    const response = NextResponse.next();
+    return createSecureResponse(response, request.headers.get('origin'));
   }
 }
 

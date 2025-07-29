@@ -10,7 +10,7 @@
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "*"
+          "value": "https://docsflow.app"
         },
         {
           "key": "Access-Control-Allow-Methods",
@@ -19,8 +19,22 @@
         {
           "key": "Access-Control-Allow-Headers",
           "value": "Content-Type, Authorization, X-Tenant-ID"
+        },
+        {
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
         }
       ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/app/:tenant/(.*)",
+      "destination": "/app/:tenant"
+    },
+    {
+      "source": "/app/:tenant",
+      "destination": "/app/[tenant]/page"
     }
   ]
 }
