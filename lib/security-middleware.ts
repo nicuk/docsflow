@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createHmac } from 'crypto';
 
 /**
  * Security middleware utilities for Edge Functions
+ * Compatible with Vercel Edge Runtime
  */
 
 export interface SecurityConfig {
@@ -22,17 +22,33 @@ const DEFAULT_CONFIG: SecurityConfig = {
 };
 
 /**
- * Generate HMAC signature for secure backend communication
+ * Generate HMAC signature using Web Crypto API (Edge Runtime compatible)
  */
-export function generateHmacSignature(data: string, secret: string): string {
-  return createHmac('sha256', secret).update(data).digest('hex');
+export async function generateHmacSignature(data: string, secret: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  
+  const signature = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    encoder.encode(data)
+  );
+  
+  const hashArray = Array.from(new Uint8Array(signature));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 /**
- * Verify HMAC signature
+ * Verify HMAC signature using Web Crypto API
  */
-export function verifyHmacSignature(data: string, signature: string, secret: string): boolean {
-  const expectedSignature = generateHmacSignature(data, secret);
+export async function verifyHmacSignature(data: string, signature: string, secret: string): Promise<boolean> {
+  const expectedSignature = await generateHmacSignature(data, secret);
   return signature === expectedSignature;
 }
 
@@ -66,8 +82,31 @@ export function getSecureCORSHeaders(origin?: string | null, config: SecurityCon
  */
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
+/**
+ * Extract IP address from request headers (Edge Runtime compatible)
+ */
+function getClientIP(request: NextRequest): string {
+  const forwardedFor = request.headers.get('x-forwarded-for');
+  const realIP = request.headers.get('x-real-ip');
+  const cfConnectingIP = request.headers.get('cf-connecting-ip');
+  
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0].trim();
+  }
+  
+  if (realIP) {
+    return realIP;
+  }
+  
+  if (cfConnectingIP) {
+    return cfConnectingIP;
+  }
+  
+  return 'unknown';
+}
+
 export function checkRateLimit(request: NextRequest, limit: number = 100): boolean {
-  const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+  const ip = getClientIP(request);
   const now = Date.now();
   const windowMs = 60 * 1000; // 1 minute window
   
