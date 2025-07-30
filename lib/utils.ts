@@ -51,7 +51,7 @@ export function getCORSHeaders(origin?: string | null): Record<string, string> {
   
   // Only log in development to avoid build noise
   if (process.env.NODE_ENV === 'development') {
-    console.log('CORS Origin Check:', { origin, isAllowedOrigin, allowedOrigin });
+  
   }
   
   return {

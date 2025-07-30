@@ -30,14 +30,14 @@ export default function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    console.log(`[Middleware] Processing: ${hostname}${pathname}`);
+
 
     // Extract tenant from hostname
     const tenant = extractTenantFromHostname(hostname);
 
     // Route tenant subdomains to the tenant-specific dashboard
     if (tenant) {
-      console.log(`[Middleware] Tenant subdomain detected: ${hostname} -> Rewriting to /app/${tenant}${pathname}`);
+
       // If root path, redirect to dashboard
       if (pathname === '/' || pathname === '') {
         const response = NextResponse.rewrite(new URL(`/app/${tenant}/dashboard`, request.url));
@@ -52,7 +52,7 @@ export default function middleware(request: NextRequest) {
     // when this middleware runs on the backend domain
     if ((hostname === 'docsflow.app' || hostname === 'www.docsflow.app') && 
         (pathname.startsWith('/onboarding') || pathname.startsWith('/api'))) {
-      console.log(`[Middleware] Backend route detected: ${pathname}`);
+
       // Continue to the backend route handler
       const response = NextResponse.next();
       return createSecureResponse(response, origin);
@@ -60,7 +60,7 @@ export default function middleware(request: NextRequest) {
 
     // Handle backend domain access - redirect to main domain for non-API routes
     if (hostname.includes('ai-lead-router-saas') && hostname.includes('vercel.app')) {
-      console.log(`[Middleware] Backend domain access: ${pathname}`);
+
       
       // Allow API routes and onboarding on backend domain
       if (pathname.startsWith('/api') || pathname.startsWith('/onboarding') || pathname.startsWith('/app/')) {
@@ -73,7 +73,7 @@ export default function middleware(request: NextRequest) {
     }
 
     // Default - allow frontend to handle
-    console.log(`[Middleware] Default handling for: ${hostname}${pathname}`);
+
     const response = NextResponse.next();
     return createSecureResponse(response, origin);
     
