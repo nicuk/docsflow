@@ -236,7 +236,7 @@ Make it specific to their business type and challenges. Be concise but comprehen
       }
     }
 
-    // Step 4: Return success response with login redirect
+    // Step 4: Return success response with direct dashboard redirect
     return NextResponse.json({
       success: true,
       tenant: {
@@ -246,9 +246,9 @@ Make it specific to their business type and challenges. Be concise but comprehen
         industry: tenant.industry,
         custom_persona: customPersona
       },
-      // Redirect to login page instead of directly to tenant dashboard
-      redirect_url: 'https://docsflow.app/login',
-      message: 'Tenant created successfully. Please log in to access your dashboard.',
+      // Redirect directly to tenant dashboard
+      redirect_url: `https://${tenant.subdomain}.docsflow.app/`,
+      message: 'Tenant created successfully. Redirecting to your dashboard.',
       admin_credentials: {
         email: adminEmail,
         password: tempPassword,
