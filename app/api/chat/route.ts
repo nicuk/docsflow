@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { google } from '@ai-sdk/google';
 import { generateText, embed } from 'ai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
 import { getTenantPrompt, calculateTenantConfidence } from '@/lib/tenant-prompts';
@@ -13,9 +14,14 @@ import { AgenticRAGEnhancement } from '@/lib/agentic-rag-enhancement';
 // Dynamic import to prevent build issues
 const loadHybridSearch = () => import('@/lib/hybrid-search');
 
-// Initialize Gemini AI
+// Initialize Google AI models
 const googleAI = process.env.GOOGLE_AI_API_KEY 
-  ? createGoogleGenerativeAI()
+  ? google('gemini-1.5-flash')
+  : null;
+
+// Initialize GoogleGenerativeAI for legacy functions
+const genAI = process.env.GOOGLE_AI_API_KEY 
+  ? new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY)
   : null;
 
 function getSupabaseClient() {
@@ -189,7 +195,7 @@ export async function POST(request: NextRequest) {
       // Generate embedding only if not cached
       try {
         const { embedding } = await embed({
-          model: googleAI('models/text-embedding-004'),
+          model: google.textEmbedding('text-embedding-004'),
           value: message,
         });
         queryEmbedding = embedding;
@@ -261,7 +267,7 @@ export async function POST(request: NextRequest) {
       
       // Fallback to deep search
       try {
-        const deepSearchResult = await performDeepSearch(message, tenantId, userAccessLevel, genAI);
+        const deepSearchResult = await performDeepSearch(message, tenantId, userAccessLevel, genAI!);
         relevantChunks = deepSearchResult.chunks;
         searchStrategy = 'deep_search_fallback';
         
@@ -380,7 +386,7 @@ Content: ${ctx.content}
 
     // Initialize chat model with tenant-specific system prompt
     const { text: answerText } = await generateText({
-        model: googleAI('models/gemma-3n-e4b-it'), // Using Gemma 3n E4B
+        model: googleAI || google('gemini-1.5-flash'),
         system: promptConfig.systemPrompt,
         prompt: prompt,
     });

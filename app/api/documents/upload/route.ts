@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { google } from '@ai-sdk/google';
 import { embed } from 'ai';
 import formidable from 'formidable';
 import { promises as fs } from 'fs';
@@ -13,7 +13,7 @@ import { EnhancedChunking } from '@/lib/enhanced-chunking';
 import { getCORSHeaders } from '@/lib/utils';
 
 // Initialize services - only when environment variables are available
-const googleAI = process.env.GOOGLE_AI_API_KEY ? createGoogleGenerativeAI() : null;
+const googleAI = process.env.GOOGLE_AI_API_KEY ? google('gemini-1.5-flash') : null;
 
 function getSupabaseClient() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -276,7 +276,7 @@ googleAI: any,
     try {
       // Generate embedding using contextual content (not just raw content)
       const { embedding } = await embed({
-        model: googleAI('models/text-embedding-004'),
+        model: google.textEmbedding('text-embedding-004'),
         value: chunk.contextual_content,
       });
       
