@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { embed } from 'ai';
 import formidable from 'formidable';
 import { promises as fs } from 'fs';
 // Dynamic imports to prevent build hangs
@@ -12,7 +13,7 @@ import { EnhancedChunking } from '@/lib/enhanced-chunking';
 import { getCORSHeaders } from '@/lib/utils';
 
 // Initialize services - only when environment variables are available
-const genAI = process.env.GOOGLE_AI_API_KEY ? new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY) : null;
+const googleAI = process.env.GOOGLE_AI_API_KEY ? createGoogleGenerativeAI() : null;
 
 function getSupabaseClient() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
 
   try {
     // Check if services are available
-    if (!genAI) {
+    if (!googleAI) {
       return NextResponse.json({ error: 'AI service not configured' }, { status: 500, headers: getCORSHeaders(origin) });
     }
 
@@ -188,7 +189,7 @@ export async function POST(request: NextRequest) {
         file.name, 
         file.type, 
         tenantId, 
-        genAI, 
+googleAI,
         supabase, 
         documentAccessLevel
       );
@@ -234,7 +235,7 @@ async function processDocumentContentEnhanced(
   filename: string,
   mimeType: string,
   tenantId: string, 
-  genAI: any, 
+googleAI: any,
   supabase: any, 
   accessLevel: number = 1
 ) {
@@ -274,7 +275,10 @@ async function processDocumentContentEnhanced(
   for (const chunk of contextualChunks) {
     try {
       // Generate embedding using contextual content (not just raw content)
-      const embedding = await enhancedChunking.generateEmbedding(chunk.contextual_content);
+      const { embedding } = await embed({
+        model: googleAI('models/text-embedding-004'),
+        value: chunk.contextual_content,
+      });
       
       // Store enhanced chunk in database
       await supabase

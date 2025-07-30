@@ -42,7 +42,7 @@ const realProvider = {
   generatePersona: async (prompt: string): Promise<PersonaData> => {
     try {
       const result = await generateText({
-        model: google('gemini-2.0-flash-exp'), // Upgraded to Gemini 2.0 Flash
+        model: google('models/gemma-3n-e4b-it'), // Using Gemma 3n E4B
         prompt,
         maxTokens: 1000,
         temperature: 0.7,
@@ -74,7 +74,7 @@ class AIProvider {
         console.warn('⚠️ GOOGLE_AI_API_KEY not found - using mock AI provider');
         return mockProvider;
       }
-      console.log('✅ Using real Gemini 2.0 Flash AI provider');
+      console.log('✅ Using real Gemma 3n E4B AI provider');
       return realProvider;
     })();
 

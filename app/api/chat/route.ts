@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { generateText, embed } from 'ai';
 import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
 import { getTenantPrompt, calculateTenantConfidence } from '@/lib/tenant-prompts';
@@ -13,8 +14,8 @@ import { AgenticRAGEnhancement } from '@/lib/agentic-rag-enhancement';
 const loadHybridSearch = () => import('@/lib/hybrid-search');
 
 // Initialize Gemini AI
-const genAI = process.env.GOOGLE_AI_API_KEY 
-  ? new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY)
+const googleAI = process.env.GOOGLE_AI_API_KEY 
+  ? createGoogleGenerativeAI()
   : null;
 
 function getSupabaseClient() {
@@ -151,7 +152,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if services are available
-    if (!genAI) {
+    if (!googleAI) {
       return NextResponse.json({ error: 'AI service not configured' }, { status: 500 });
     }
 
@@ -187,9 +188,11 @@ export async function POST(request: NextRequest) {
     if (!queryEmbedding) {
       // Generate embedding only if not cached
       try {
-        const embeddingModel = genAI.getGenerativeModel({ model: 'text-embedding-004' });
-        const embeddingResult = await embeddingModel.embedContent(message);
-        queryEmbedding = embeddingResult.embedding.values;
+        const { embedding } = await embed({
+          model: googleAI('models/text-embedding-004'),
+          value: message,
+        });
+        queryEmbedding = embedding;
         
         // Cache the embedding for future use
         await setCachedEmbedding(message, queryEmbedding);
@@ -376,14 +379,11 @@ Content: ${ctx.content}
       .replace('{query}', message);
 
     // Initialize chat model with tenant-specific system prompt
-    const chatModel = genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
-      systemInstruction: promptConfig.systemPrompt
+    const { text: answerText } = await generateText({
+        model: googleAI('models/gemma-3n-e4b-it'), // Using Gemma 3n E4B
+        system: promptConfig.systemPrompt,
+        prompt: prompt,
     });
-
-    const result = await chatModel.generateContent(prompt);
-    const response = result.response;
-    const answerText = response.text();
 
     // Step 5: Calculate ENHANCED confidence score (49% accuracy improvement)
     const enhancedConfidence = ConfidenceScoring.calculateEnhancedConfidence(
