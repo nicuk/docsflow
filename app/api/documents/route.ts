@@ -26,11 +26,26 @@ export async function GET(request: NextRequest) {
     const supabase = getSupabaseClient();
     
     // Get tenant from subdomain or demo mode
-    const tenantId = request.headers.get('X-Tenant-ID') || 'demo-warehouse-dist';
+    const tenantSubdomain = request.headers.get('X-Tenant-Subdomain') || 'demo-warehouse-dist';
     
-    console.log('Fetching documents for tenant:', tenantId);
+    console.log('Fetching documents for tenant subdomain:', tenantSubdomain);
     
-    // Get documents for this tenant
+    // First, get the tenant UUID from subdomain
+    const { data: tenant, error: tenantError } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('subdomain', tenantSubdomain)
+      .single();
+
+    if (tenantError || !tenant) {
+      console.error('Tenant not found:', tenantError);
+      return NextResponse.json(
+        { error: 'Tenant not found' },
+        { status: 404, headers: corsHeaders }
+      );
+    }
+    
+    // Get documents for this tenant using the actual UUID
     const { data: documents, error } = await supabase
       .from('documents')
       .select(`
@@ -43,7 +58,7 @@ export async function GET(request: NextRequest) {
         created_at,
         tenant_id
       `)
-      .eq('tenant_id', tenantId)
+      .eq('tenant_id', tenant.id)
       .order('created_at', { ascending: false })
       .limit(100);
 
@@ -77,7 +92,22 @@ export async function DELETE(request: NextRequest) {
     const supabase = getSupabaseClient();
     
     // Get tenant from headers (consistent with other routes)
-    const tenantId = request.headers.get('X-Tenant-ID') || 'demo-warehouse-dist';
+    const tenantSubdomain = request.headers.get('X-Tenant-Subdomain') || 'demo-warehouse-dist';
+    
+    // Get the tenant UUID from subdomain
+    const { data: tenant, error: tenantError } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('subdomain', tenantSubdomain)
+      .single();
+
+    if (tenantError || !tenant) {
+      console.error('Tenant not found:', tenantError);
+      return NextResponse.json(
+        { error: 'Tenant not found' },
+        { status: 404, headers: corsHeaders }
+      );
+    }
 
     const { documentId } = await request.json();
 
@@ -93,7 +123,7 @@ export async function DELETE(request: NextRequest) {
       .from('documents')
       .delete()
       .eq('id', documentId)
-      .eq('tenant_id', tenantId);
+      .eq('tenant_id', tenant.id);
 
     if (error) {
       console.error('Delete error:', error);

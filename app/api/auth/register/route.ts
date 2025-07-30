@@ -23,6 +23,20 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServerClient();
 
+    // Check if user already exists
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('email')
+      .eq('email', email)
+      .single();
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'User already exists', details: 'A user with this email address already exists.' },
+        { status: 409, headers: corsHeaders }
+      );
+    }
+
     // Create user with Supabase Auth (regular signup, not admin)
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,

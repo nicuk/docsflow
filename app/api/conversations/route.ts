@@ -26,11 +26,26 @@ export async function GET(request: NextRequest) {
     const supabase = getSupabaseClient();
     
     // Get tenant from subdomain or demo mode
-    const tenantId = request.headers.get('X-Tenant-ID') || 'demo-warehouse-dist';
+    const tenantSubdomain = request.headers.get('X-Tenant-Subdomain') || 'demo-warehouse-dist';
     
-    console.log('Fetching conversations for tenant:', tenantId);
+    console.log('Fetching conversations for tenant subdomain:', tenantSubdomain);
     
-    // Get conversations for this tenant
+    // First, get the tenant UUID from subdomain
+    const { data: tenant, error: tenantError } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('subdomain', tenantSubdomain)
+      .single();
+
+    if (tenantError || !tenant) {
+      console.error('Tenant not found:', tenantError);
+      return NextResponse.json(
+        { error: 'Tenant not found' },
+        { status: 404, headers: corsHeaders }
+      );
+    }
+    
+    // Get conversations for this tenant using the actual UUID
     const { data: conversations, error } = await supabase
       .from('chat_conversations')
       .select(`
@@ -40,7 +55,7 @@ export async function GET(request: NextRequest) {
         updated_at,
         tenant_id
       `)
-      .eq('tenant_id', tenantId)
+      .eq('tenant_id', tenant.id)
       .order('updated_at', { ascending: false })
       .limit(50);
 
@@ -74,7 +89,22 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = getSupabaseClient();
     
-    const tenantId = request.headers.get('X-Tenant-ID') || 'demo-warehouse-dist';
+    const tenantSubdomain = request.headers.get('X-Tenant-Subdomain') || 'demo-warehouse-dist';
+    
+    // Get the tenant UUID from subdomain
+    const { data: tenant, error: tenantError } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('subdomain', tenantSubdomain)
+      .single();
+
+    if (tenantError || !tenant) {
+      console.error('Tenant not found:', tenantError);
+      return NextResponse.json(
+        { error: 'Tenant not found' },
+        { status: 404, headers: corsHeaders }
+      );
+    }
     
     // For now, use demo user ID since we don't have full auth yet
     const userId = '00000000-0000-0000-0000-000000000000';
@@ -86,7 +116,7 @@ export async function POST(request: NextRequest) {
       .from('chat_conversations')
       .insert({
         title: title || 'New Conversation',
-        tenant_id: tenantId,
+        tenant_id: tenant.id,
         user_id: userId,
         status: 'active'
       })
