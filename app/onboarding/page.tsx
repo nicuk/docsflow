@@ -209,7 +209,13 @@ export default function OnboardingPage() {
       // Clear localStorage
       localStorage.removeItem('onboarding-data');
       
-      // Redirect to tenant dashboard
+      // Store admin credentials for login
+      if (result.admin_credentials) {
+        localStorage.setItem('admin-credentials', JSON.stringify(result.admin_credentials));
+        alert(`Onboarding complete! Your admin credentials:\n\nEmail: ${result.admin_credentials.email}\nPassword: ${result.admin_credentials.password}\n\nYou will be redirected to login.`);
+      }
+      
+      // Redirect to login page
       window.location.href = result.redirect_url;
       
     } catch (error) {

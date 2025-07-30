@@ -35,27 +35,20 @@ export default function middleware(request: NextRequest) {
     // Extract tenant from hostname
     const tenant = extractTenantFromHostname(hostname);
 
-    // Route tenant subdomains to backend
+    // Route tenant subdomains to the tenant-specific app page
     if (tenant) {
-      console.log(`[Middleware] Tenant subdomain detected: ${hostname} -> ${tenant}`);
-      // Rewrite to backend with tenant context
+      console.log(`[Middleware] Tenant subdomain detected: ${hostname} -> Rewriting to /app/${tenant}`);
       const response = NextResponse.rewrite(new URL(`/app/${tenant}${pathname}`, request.url));
       return createSecureResponse(response, origin);
     }
 
-    // Route onboarding to backend for main domain
+    // These routes should be handled by the backend project itself
+    // when this middleware runs on the backend domain
     if ((hostname === 'docsflow.app' || hostname === 'www.docsflow.app') && 
-        pathname.startsWith('/onboarding')) {
-      console.log('[Middleware] Onboarding path detected, routing to backend');
-      const response = NextResponse.rewrite(`https://ai-lead-router-saas.vercel.app${pathname}`);
-      return createSecureResponse(response, origin);
-    }
-
-    // Route API calls to backend for main domain
-    if ((hostname === 'docsflow.app' || hostname === 'www.docsflow.app') && 
-        pathname.startsWith('/api')) {
-      console.log('[Middleware] API path detected, routing to backend');
-      const response = NextResponse.rewrite(`https://ai-lead-router-saas.vercel.app${pathname}`);
+        (pathname.startsWith('/onboarding') || pathname.startsWith('/api'))) {
+      console.log(`[Middleware] Backend route detected: ${pathname}`);
+      // Continue to the backend route handler
+      const response = NextResponse.next();
       return createSecureResponse(response, origin);
     }
 

@@ -28,6 +28,8 @@ export async function POST(request: NextRequest) {
       industry, 
       businessType, 
       subdomain,
+      email,
+      password,
       userId 
     } = await request.json();
 
@@ -132,11 +134,25 @@ Make it specific to their business type and challenges. Be concise but comprehen
       };
     }
 
-    // Step 2: Create tenant in database
+    // Step 2: Check if tenant already exists
+    const { data: existingTenant, error: checkError } = await supabase
+      .from('tenants')
+      .select('id, subdomain')
+      .eq('subdomain', cleanSubdomain)
+      .single();
+
+    if (existingTenant) {
+      return NextResponse.json(
+        { error: 'Subdomain already exists. Please choose a different one.' },
+        { status: 409, headers: corsHeaders }
+      );
+    }
+
+    // Step 3: Create tenant in database
     const { data: tenant, error: tenantError } = await supabase
       .from('tenants')
       .insert({
-        subdomain: subdomain.toLowerCase(),
+        subdomain: cleanSubdomain,
         name: businessName || business_overview.substring(0, 50),
         industry: industry || 'general',
         custom_persona: customPersona,
@@ -164,6 +180,46 @@ Make it specific to their business type and challenges. Be concise but comprehen
       );
     }
 
+    // Step 4: Create admin user for the tenant
+    const adminEmail = `admin@${cleanSubdomain}.docsflow.app`;
+    const tempPassword = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    
+    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+      email: adminEmail,
+      password: tempPassword,
+      email_confirm: true,
+      user_metadata: {
+        tenant_id: tenant.id,
+        access_level: 5, // Admin level
+        role: 'admin',
+        onboarding_completed: true
+      }
+    });
+
+    if (authError) {
+      console.error('User creation error:', authError);
+      // Continue without user creation - tenant is created
+    }
+
+    // Step 5: Create user profile
+    if (authUser?.user) {
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert({
+          id: authUser.user.id,
+          tenant_id: tenant.id,
+          email: adminEmail,
+          name: businessName || 'Admin',
+          role: 'admin',
+          access_level: 5,
+          onboarding_completed: true
+        });
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+      }
+    }
+
     // Step 3: Update user with tenant association (if userId provided)
     if (userId) {
       const { error: userUpdateError } = await supabase
@@ -180,7 +236,7 @@ Make it specific to their business type and challenges. Be concise but comprehen
       }
     }
 
-    // Step 4: Return success response
+    // Step 4: Return success response with login redirect
     return NextResponse.json({
       success: true,
       tenant: {
@@ -190,8 +246,14 @@ Make it specific to their business type and challenges. Be concise but comprehen
         industry: tenant.industry,
         custom_persona: customPersona
       },
-      redirect_url: `https://${tenant.subdomain}.docsflow.app/`,
-      message: 'Onboarding completed successfully'
+      // Redirect to login page instead of directly to tenant dashboard
+      redirect_url: 'https://docsflow.app/login',
+      message: 'Tenant created successfully. Please log in to access your dashboard.',
+      admin_credentials: {
+        email: adminEmail,
+        password: tempPassword,
+        tenant_url: `https://${tenant.subdomain}.docsflow.app/`
+      }
     }, { headers: corsHeaders });
 
   } catch (error: any) {
