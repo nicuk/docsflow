@@ -59,23 +59,30 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user profile in users table
+    // If no tenant_id provided, leave it null - user will select/create tenant during onboarding
+    const userInsertData: any = {
+      id: authData.user?.id,
+      email: authData.user?.email,
+      access_level: accessLevel,
+      role: 'user',
+      created_at: new Date().toISOString()
+    };
+    
+    // Only add tenant_id if it's a valid UUID
+    if (tenantId && tenantId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)) {
+      userInsertData.tenant_id = tenantId;
+    }
+
     const { error: profileError } = await supabase
       .from('users')
-      .insert({
-        id: authData.user?.id,
-        email: authData.user?.email,
-        tenant_id: tenantId,
-        access_level: accessLevel,
-        role: 'user',
-        created_at: new Date().toISOString()
-      });
+      .insert(userInsertData);
 
     if (profileError) {
       console.error('Profile creation error:', profileError);
       // Don't fail the request if profile creation fails
     }
 
-    // Get user profile with tenant info
+    // Get user profile with tenant info (tenant may be null for new signups)
     const { data: userProfile, error: fetchProfileError } = await supabase
       .from('users')
       .select(`
@@ -89,7 +96,7 @@ export async function POST(request: NextRequest) {
         )
       `)
       .eq('id', authData.user?.id)
-      .single();
+      .maybeSingle();
 
     if (fetchProfileError) {
       console.error('Profile fetch error:', fetchProfileError);
