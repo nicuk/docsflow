@@ -64,10 +64,17 @@ export async function GET(request: NextRequest) {
 
     const supabase = createServerClient();
 
-    // Check if subdomain already exists
+    // Check if subdomain already exists with detailed info
     const { data: existingTenant, error } = await supabase
       .from('tenants')
-      .select('id, subdomain')
+      .select(`
+        id, 
+        subdomain, 
+        name,
+        industry,
+        created_at,
+        custom_persona
+      `)
       .eq('subdomain', subdomain)
       .single();
 
@@ -82,13 +89,59 @@ export async function GET(request: NextRequest) {
 
     const isAvailable = !existingTenant;
 
+    if (isAvailable) {
+      return NextResponse.json(
+        { 
+          available: true,
+          subdomain: subdomain,
+          message: 'Subdomain is available'
+        },
+        { status: 200, headers: corsHeaders }
+      );
+    }
+
+    // If tenant exists, check for user email in URL params and look for invitation
+    const userEmail = searchParams.get('email');
+    let hasInvitation = false;
+    let invitationToken = null;
+
+    if (userEmail && existingTenant) {
+      // Check for pending invitation
+      const { data: invitation } = await supabase
+        .from('user_invitations')
+        .select('token, status, expires_at')
+        .eq('tenant_id', existingTenant.id)
+        .eq('email', userEmail)
+        .eq('status', 'pending')
+        .gt('expires_at', new Date().toISOString())
+        .single();
+
+      if (invitation) {
+        hasInvitation = true;
+        invitationToken = invitation.token;
+      }
+    }
+
+    // Get user count for this tenant
+    const { count: userCount } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', existingTenant.id);
+
     return NextResponse.json(
       { 
-        available: isAvailable,
+        available: false,
         subdomain: subdomain,
-        message: isAvailable 
-          ? 'Subdomain is available' 
-          : 'Subdomain is already taken'
+        message: 'Subdomain is already taken',
+        existingTenant: {
+          id: existingTenant.id,
+          name: existingTenant.name || `${subdomain} Organization`,
+          industry: existingTenant.industry || 'general',
+          userCount: userCount || 1,
+          createdAt: existingTenant.created_at
+        },
+        hasInvitation,
+        invitationToken
       },
       { status: 200, headers: corsHeaders }
     );
