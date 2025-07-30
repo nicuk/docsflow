@@ -134,8 +134,18 @@ export function extractTenantFromHostname(hostname: string): string | null {
     return null;
   }
   
+  // Exclude system subdomains from being treated as tenants
+  const systemSubdomains = ['api', 'www', 'admin', 'cdn', 'mail', 'support', 'docs'];
+  
   if (hostname.endsWith('.docsflow.app')) {
-    return hostname.split('.')[0];
+    const subdomain = hostname.split('.')[0];
+    
+    // Don't treat system subdomains as tenants
+    if (systemSubdomains.includes(subdomain)) {
+      return null;
+    }
+    
+    return subdomain;
   }
   
   return null;
