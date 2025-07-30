@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { aiProvider, isRealAIAvailable } from '@/lib/ai/providers';
 import { getCORSHeaders } from '@/lib/utils';
 
 // Initialize Supabase client
@@ -15,10 +15,7 @@ function getSupabaseClient() {
   );
 }
 
-// Initialize Gemini AI for persona generation
-const genAI = process.env.GOOGLE_AI_API_KEY 
-  ? new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY)
-  : null;
+// AI provider is now imported from lib/ai/providers
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin');
@@ -41,12 +38,11 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseClient();
 
-    // Step 1: Generate LLM persona from onboarding responses
+    // Step 1: Generate LLM persona from onboarding responses using proper AI SDK
     let customPersona = null;
     
-    if (genAI) {
-      try {
-        const personaPrompt = `
+    try {
+      const personaPrompt = `
 You are creating a custom AI assistant persona for a business based on their onboarding responses.
 
 Business Overview: ${responses.business_overview || 'Not provided'}
@@ -69,20 +65,18 @@ Create a JSON response with the following structure:
 Make it specific to their business type and challenges. Be concise but comprehensive.
 `;
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-        const result = await model.generateContent(personaPrompt);
-        const response = result.response;
-        const personaText = response.text();
-        
-        // Extract JSON from response
-        const jsonMatch = personaText.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          customPersona = JSON.parse(jsonMatch[0]);
-        }
-      } catch (error) {
-        console.error('LLM persona generation failed:', error);
-        // Continue with fallback persona
+      // Use the proper AI provider (like working aichatbot)
+      customPersona = await aiProvider.generatePersona(personaPrompt);
+      
+      if (isRealAIAvailable()) {
+        console.log('✅ Generated persona using real Gemini AI');
+      } else {
+        console.log('🔄 Generated persona using fallback template');
       }
+      
+    } catch (error) {
+      console.error('LLM persona generation failed:', error);
+      // Continue with fallback persona
     }
 
     // Fallback persona if LLM fails

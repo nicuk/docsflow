@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getCORSHeaders } from '@/lib/utils';
-
-// Initialize Gemini AI for persona generation
-const genAI = process.env.GOOGLE_AI_API_KEY 
-  ? new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY)
-  : null;
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin');
@@ -75,65 +69,6 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServerClient();
 
-    // Step 1: Generate LLM persona from onboarding answers
-    let customPersona = null;
-    
-    if (genAI) {
-      try {
-        const personaPrompt = `
-You are creating a custom AI assistant persona for a business based on their onboarding responses.
-
-Business Overview: ${business_overview}
-Daily Challenges: ${daily_challenges || 'Not specified'}
-Key Decisions: ${key_decisions || 'Not specified'}
-Success Metrics: ${success_metrics || 'Not specified'}
-Information Needs: ${information_needs || 'Not specified'}
-
-Create a JSON response with the following structure:
-{
-  "role": "Specific role title for this business",
-  "tone": "Professional tone description",
-  "focus_areas": ["area1", "area2", "area3"],
-  "business_context": "Brief business context",
-  "prompt_template": "Custom system prompt for this business",
-  "industry": "${industry || 'general'}",
-  "created_from": "onboarding_answers"
-}
-
-Make it specific to their business type and challenges. Be concise but comprehensive.
-`;
-
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-        const result = await model.generateContent(personaPrompt);
-        const response = result.response;
-        const personaText = response.text();
-        
-        // Extract JSON from response
-        const jsonMatch = personaText.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          customPersona = JSON.parse(jsonMatch[0]);
-        }
-      } catch (error) {
-        console.error('LLM persona generation failed:', error);
-        // Continue with fallback persona
-      }
-    }
-
-    // Fallback persona if LLM fails
-    if (!customPersona) {
-      customPersona = {
-        role: `${industry === 'motorcycle_dealer' ? 'Motorcycle Dealership' : 
-               industry === 'warehouse_distribution' ? 'Warehouse & Distribution' : 
-               'Business'} Intelligence Assistant`,
-        tone: "Professional and helpful",
-        focus_areas: ["document analysis", "business insights", "decision support"],
-        business_context: business_overview.substring(0, 100) + "...",
-        prompt_template: `You are an AI assistant for ${businessName || 'this business'}. Focus on providing helpful, accurate information based on the user's documents and questions.`,
-        industry: industry || 'general',
-        created_from: "onboarding_answers_fallback"
-      };
-    }
-
     // Step 2: Check if tenant already exists
     const { data: existingTenant, error: checkError } = await supabase
       .from('tenants')
@@ -155,7 +90,6 @@ Make it specific to their business type and challenges. Be concise but comprehen
         subdomain: cleanSubdomain,
         name: businessName || business_overview.substring(0, 50),
         industry: industry || 'general',
-        custom_persona: customPersona,
         subscription_status: 'trial',
         plan_type: 'starter',
         settings: {
@@ -244,7 +178,7 @@ Make it specific to their business type and challenges. Be concise but comprehen
         subdomain: tenant.subdomain,
         name: tenant.name,
         industry: tenant.industry,
-        custom_persona: customPersona
+        custom_persona: { created_from: 'frontend' }
       },
       // Redirect directly to tenant dashboard
       redirect_url: `https://${tenant.subdomain}.docsflow.app/dashboard`,
