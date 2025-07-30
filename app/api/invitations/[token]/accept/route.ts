@@ -111,7 +111,7 @@ export async function POST(
         data: {
           user: existingUser,
           tenant: invitation.tenants,
-          redirectUrl: `https://${(invitation.tenants as any).subdomain}.ai-lead-router-saas.vercel.app`
+          redirectUrl: `https://${(invitation.tenants as any).subdomain}.docsflow.app/dashboard`
         }
       });
     }
@@ -175,7 +175,7 @@ export async function POST(
     }
 
     // Send welcome email
-    const dashboardUrl = `https://${(invitation.tenants as any).subdomain}.ai-lead-router-saas.vercel.app`;
+    const dashboardUrl = `https://${(invitation.tenants as any).subdomain}.docsflow.app/dashboard`;
     const emailResult = await sendWelcomeEmail({
       email: newUser.email,
       name: newUser.name,

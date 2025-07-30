@@ -35,9 +35,15 @@ export default function middleware(request: NextRequest) {
     // Extract tenant from hostname
     const tenant = extractTenantFromHostname(hostname);
 
-    // Route tenant subdomains to the tenant-specific app page
+    // Route tenant subdomains to the tenant-specific dashboard
     if (tenant) {
-      console.log(`[Middleware] Tenant subdomain detected: ${hostname} -> Rewriting to /app/${tenant}`);
+      console.log(`[Middleware] Tenant subdomain detected: ${hostname} -> Rewriting to /app/${tenant}${pathname}`);
+      // If root path, redirect to dashboard
+      if (pathname === '/' || pathname === '') {
+        const response = NextResponse.rewrite(new URL(`/app/${tenant}/dashboard`, request.url));
+        return createSecureResponse(response, origin);
+      }
+      // Otherwise, preserve the path structure
       const response = NextResponse.rewrite(new URL(`/app/${tenant}${pathname}`, request.url));
       return createSecureResponse(response, origin);
     }
@@ -82,11 +88,11 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * Note: We DO want to process /api routes for CORS headers
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }; 

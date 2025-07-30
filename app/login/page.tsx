@@ -75,7 +75,7 @@ export default function LoginPage() {
       if (result.success) {
         // Redirect to the appropriate tenant dashboard
         if (result.user.tenant) {
-          window.location.href = `https://${result.user.tenant.subdomain}.docsflow.app/`;
+          window.location.href = `https://${result.user.tenant.subdomain}.docsflow.app/dashboard`;
         } else {
           // If no tenant, redirect to onboarding
           router.push('/onboarding');

@@ -247,12 +247,12 @@ Make it specific to their business type and challenges. Be concise but comprehen
         custom_persona: customPersona
       },
       // Redirect directly to tenant dashboard
-      redirect_url: `https://${tenant.subdomain}.docsflow.app/`,
+      redirect_url: `https://${tenant.subdomain}.docsflow.app/dashboard`,
       message: 'Tenant created successfully. Redirecting to your dashboard.',
       admin_credentials: {
         email: adminEmail,
         password: tempPassword,
-        tenant_url: `https://${tenant.subdomain}.docsflow.app/`
+        tenant_url: `https://${tenant.subdomain}.docsflow.app/dashboard`
       }
     }, { headers: corsHeaders });
 

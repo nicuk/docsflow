@@ -159,7 +159,7 @@ Make it specific to their business type and challenges. Be concise but comprehen
         industry: tenant.industry,
         custom_persona: customPersona
       },
-      redirect_url: `https://${tenant.subdomain}.docsflow.app/`,
+      redirect_url: `https://${tenant.subdomain}.docsflow.app/dashboard`,
       message: 'Tenant created successfully'
     }, { headers: corsHeaders });
 

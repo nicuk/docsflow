@@ -10,7 +10,7 @@
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "https://docsflow.app"
+          "value": "*"
         },
         {
           "key": "Access-Control-Allow-Methods",

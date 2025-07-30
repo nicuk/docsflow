@@ -107,7 +107,7 @@ export async function GET(
         success: false,
         error: 'You are already a member of this organization',
                  data: {
-           redirectUrl: `https://${(invitation.tenants as any).subdomain}.ai-lead-router-saas.vercel.app`
+           redirectUrl: `https://${(invitation.tenants as any).subdomain}.docsflow.app/dashboard`
          }
       }, { status: 409 });
     }

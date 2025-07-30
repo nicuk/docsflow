@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate invitation URL
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `https://${tenant.subdomain}.ai-lead-router-saas.vercel.app`;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `https://${tenant.subdomain}.docsflow.app`;
     const invitationUrl = `${baseUrl}/invite/${invitation.token}`;
 
     // Send invitation email

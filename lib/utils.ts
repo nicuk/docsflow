@@ -15,6 +15,7 @@ const ALLOWED_ORIGINS = [
   'https://docsflow.app',
   'https://www.docsflow.app',
   'https://app.docsflow.app',
+  'https://api.docsflow.app',
   
   // 🧪 DEVELOPMENT & STAGING DOMAINS
   'https://v0-ai-saas-s-landing-page-1w.vercel.app',
@@ -27,8 +28,26 @@ const ALLOWED_ORIGINS = [
 
 // Dynamic CORS headers that comply with browser standards
 export function getCORSHeaders(origin?: string | null): Record<string, string> {
-  const isAllowedOrigin = origin && ALLOWED_ORIGINS.includes(origin);
-  const allowedOrigin = isAllowedOrigin ? origin : (process.env.NODE_ENV === 'production' ? 'https://www.docsflow.app' : '*');
+  // Check if origin is from an allowed domain or subdomain
+  let isAllowedOrigin = false;
+  let allowedOrigin = '*';
+  
+  if (origin) {
+    // Check exact matches first
+    if (ALLOWED_ORIGINS.includes(origin)) {
+      isAllowedOrigin = true;
+    } else {
+      // Check if it's a subdomain of docsflow.app
+      const docsflowRegex = /^https:\/\/[a-zA-Z0-9-]+\.docsflow\.app$/;
+      if (docsflowRegex.test(origin)) {
+        isAllowedOrigin = true;
+      }
+    }
+    
+    if (isAllowedOrigin) {
+      allowedOrigin = origin;
+    }
+  }
   
   // Only log in development to avoid build noise
   if (process.env.NODE_ENV === 'development') {
@@ -38,7 +57,7 @@ export function getCORSHeaders(origin?: string | null): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Tenant-ID, X-Requested-With, Accept',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Tenant-ID, X-Tenant-Subdomain, X-Requested-With, Accept, X-Demo-Mode',
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Max-Age': '86400',
   };
