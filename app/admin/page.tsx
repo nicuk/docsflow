@@ -12,8 +12,12 @@ export const metadata: Metadata = {
   description: `Manage subdomains for ${rootDomain}`
 };
 
+import { requirePlatformAdmin } from '@/lib/platform-auth';
+import { NextRequest } from 'next/server';
+
 export default async function AdminPage() {
-  // TODO: You can add authentication here with your preferred auth provider
+  // Note: In a real app, you'd handle this in middleware
+  // For now, we handle it client-side in the dashboard component
   const tenants = await getAllSubdomains();
 
   return (

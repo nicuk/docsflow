@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { 
-  checkRateLimit, 
   extractTenantFromHostname, 
   createSecureResponse,
   handlePreflight
 } from './lib/security-middleware';
+import { 
+  checkRateLimit,
+  detectSuspiciousActivity,
+  getSecurityHeaders 
+} from './lib/security-enhancements';
 
 export default function middleware(request: NextRequest) {
   try {
@@ -17,6 +21,11 @@ export default function middleware(request: NextRequest) {
       return handlePreflight(request);
     }
     
+    // Enhanced security checks
+    if (detectSuspiciousActivity(request)) {
+      return new NextResponse('Forbidden', { status: 403 });
+    }
+
     // Rate limiting check
     if (!checkRateLimit(request, 200)) {
       return new NextResponse('Rate limit exceeded', { status: 429 });

@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
 
   try {
-    const { email, password, tenantId, accessLevel = 3 } = await request.json();
+    const { email, password, tenantId, accessLevel = 3, companyName } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
     const userInsertData: any = {
       id: authData.user?.id,
       email: authData.user?.email,
+      name: companyName || email.split('@')[0], // Use company name or email prefix as default name
       access_level: accessLevel,
       role: 'user',
       created_at: new Date().toISOString()

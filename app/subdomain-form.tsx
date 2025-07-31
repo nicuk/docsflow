@@ -39,9 +39,46 @@ const INDUSTRIES = [
   { value: 'education', label: 'Education' }
 ];
 
-function SubdomainInput({ defaultValue }: { defaultValue?: string }) {
+function SubdomainInput({ 
+  defaultValue, 
+  checkStatus, 
+  onSubdomainChange, 
+  suggestions 
+}: { 
+  defaultValue?: string;
+  checkStatus: { status: string; message?: string };
+  onSubdomainChange: (value: string) => void;
+  suggestions: string[];
+}) {
+  const getStatusIcon = () => {
+    switch (checkStatus.status) {
+      case 'checking':
+        return <Loader2 className="h-4 w-4 animate-spin text-gray-500" />;
+      case 'available':
+        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+      case 'taken':
+      case 'error':
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
+      default:
+        return null;
+    }
+  };
+
+  const getInputClassName = () => {
+    const base = "w-full rounded-r-none focus:z-10 h-9";
+    switch (checkStatus.status) {
+      case 'available':
+        return `${base} border-green-300 focus:border-green-500`;
+      case 'taken':
+      case 'error':
+        return `${base} border-red-300 focus:border-red-500`;
+      default:
+        return base;
+    }
+  };
+
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       <Label htmlFor="subdomain" className="text-sm">Subdomain</Label>
       <div className="flex items-center">
         <div className="relative flex-1">
@@ -50,14 +87,55 @@ function SubdomainInput({ defaultValue }: { defaultValue?: string }) {
             name="subdomain"
             placeholder="your-company"
             defaultValue={defaultValue}
-            className="w-full rounded-r-none focus:z-10 h-9"
+            className={getInputClassName()}
+            onChange={(e) => onSubdomainChange(e.target.value)}
             required
           />
+          {checkStatus.status !== 'idle' && (
+            <div className="absolute inset-y-0 right-2 flex items-center">
+              {getStatusIcon()}
+            </div>
+          )}
         </div>
         <span className="bg-gray-100 px-3 border border-l-0 border-input rounded-r-md text-gray-500 min-h-[36px] flex items-center text-sm">
           .{rootDomain}
         </span>
       </div>
+      
+      {checkStatus.message && (
+        <div className={`text-xs p-2 rounded-md ${
+          checkStatus.status === 'available' 
+            ? 'text-green-700 bg-green-50' 
+            : 'text-red-700 bg-red-50'
+        }`}>
+          {checkStatus.message}
+        </div>
+      )}
+      
+      {suggestions.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-xs text-gray-600">Suggestions:</p>
+          <div className="flex flex-wrap gap-1">
+            {suggestions.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                onClick={() => {
+                  const input = document.querySelector('input[name="subdomain"]') as HTMLInputElement;
+                  if (input) {
+                    input.value = suggestion;
+                    onSubdomainChange(suggestion);
+                  }
+                }}
+                className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      
       <p className="text-xs text-gray-500">
         Choose a unique subdomain for your organization
       </p>
@@ -124,9 +202,56 @@ function IndustrySelector({
 
 export function SubdomainForm() {
   const [industry, setIndustry] = useState('');
+  const [subdomainCheck, setSubdomainCheck] = useState<{
+    status: 'idle' | 'checking' | 'available' | 'taken' | 'error';
+    message?: string;
+  }>({ status: 'idle' });
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
   const [state, setState] = useState<CreateState>({});
   const [isPending, setIsPending] = useState(false);
+
+  // Debounced subdomain availability check
+  const checkSubdomainAvailability = async (subdomain: string) => {
+    if (!subdomain || subdomain.length < 3) {
+      setSubdomainCheck({ status: 'idle' });
+      return;
+    }
+
+    setSubdomainCheck({ status: 'checking' });
+    
+    try {
+      const response = await fetch(`/api/subdomain/check?subdomain=${encodeURIComponent(subdomain)}`);
+      const data = await response.json();
+      
+      if (data.available) {
+        setSubdomainCheck({ status: 'available', message: 'Great! This subdomain is available.' });
+        setSuggestions([]);
+      } else {
+        setSubdomainCheck({ 
+          status: 'taken', 
+          message: data.existingTenant ? 
+            `Already taken by ${data.existingTenant.name}. You can request to join this organization.` :
+            'This subdomain is not available.'
+        });
+        setSuggestions(data.suggestions || []);
+      }
+    } catch (error) {
+      setSubdomainCheck({ status: 'error', message: 'Error checking availability. Please try again.' });
+    }
+  };
+
+  // Debounce subdomain checking
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      const subdomainInput = document.querySelector('input[name="subdomain"]') as HTMLInputElement;
+      if (subdomainInput?.value) {
+        checkSubdomainAvailability(subdomainInput.value);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -163,7 +288,12 @@ export function SubdomainForm() {
       }} className="space-y-3">
         <OrganizationNameInput defaultValue={state?.organizationName} />
         
-        <SubdomainInput defaultValue={state?.subdomain} />
+        <SubdomainInput 
+          defaultValue={state?.subdomain}
+          checkStatus={subdomainCheck}
+          onSubdomainChange={checkSubdomainAvailability}
+          suggestions={suggestions}
+        />
 
         <IndustrySelector industry={industry} setIndustry={setIndustry} defaultValue={state?.industry} />
 

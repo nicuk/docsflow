@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, Loader2 } from 'lucide-react';
@@ -20,11 +20,52 @@ type DeleteState = {
 };
 
 function DashboardHeader() {
-  // TODO: You can add authentication here with your preferred auth provider
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Check authentication status
+    const checkAuth = () => {
+      const authCookie = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('platform-admin-token='));
+      
+      if (authCookie) {
+        setIsAuthenticated(true);
+      } else {
+        // Redirect to login if not authenticated
+        window.location.href = '/admin/login';
+      }
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, []);
+
+  const handleLogout = () => {
+    // Clear auth cookie
+    document.cookie = 'platform-admin-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    window.location.href = '/admin/login';
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null; // Will redirect
+  }
 
   return (
     <div className="flex justify-between items-center mb-8">
-      <h1 className="text-3xl font-bold">Subdomain Management</h1>
+      <div>
+        <h1 className="text-3xl font-bold">Platform Admin Dashboard</h1>
+        <p className="text-sm text-gray-600 mt-1">🔒 Secure subdomain management</p>
+      </div>
       <div className="flex items-center gap-4">
         <Link
           href={`${protocol}://${rootDomain}`}
@@ -32,6 +73,14 @@ function DashboardHeader() {
         >
           {rootDomain}
         </Link>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleLogout}
+          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+        >
+          Logout
+        </Button>
       </div>
     </div>
   );

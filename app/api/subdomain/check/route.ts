@@ -1,156 +1,129 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase';
-import { getCORSHeaders } from '@/lib/utils';
+import { getSubdomainData } from '@/lib/subdomains';
+import { supabase } from '@/lib/supabase';
 
-export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin');
-  return new NextResponse(null, { status: 200, headers: getCORSHeaders(origin) });
+// Generate intelligent subdomain suggestions
+function generateSubdomainSuggestions(requestedSubdomain: string): string[] {
+  const suggestions = [];
+  const base = requestedSubdomain.toLowerCase().replace(/[^a-z0-9]/g, '');
+  
+  // Add common business suffixes
+  suggestions.push(`${base}-corp`, `${base}-inc`, `${base}-llc`, `${base}-co`);
+  
+  // Add year
+  const currentYear = new Date().getFullYear();
+  suggestions.push(`${base}${currentYear}`, `${base}-${currentYear}`);
+  
+  // Add location-based
+  suggestions.push(`${base}-usa`, `${base}-hq`, `${base}-main`);
+  
+  // Add numbers
+  for (let i = 1; i <= 3; i++) {
+    suggestions.push(`${base}${i}`, `${base}-${i}`);
+  }
+  
+  // Add descriptive suffixes
+  suggestions.push(`${base}-team`, `${base}-group`, `${base}-pro`);
+  
+  // Remove duplicates and filter out invalid/long names
+  return [...new Set(suggestions)]
+    .filter(s => s.length >= 3 && s.length <= 20)
+    .slice(0, 6);
 }
 
 export async function GET(request: NextRequest) {
-  const origin = request.headers.get('origin');
-  const corsHeaders = getCORSHeaders(origin);
-
   try {
     const { searchParams } = new URL(request.url);
-    const subdomain = searchParams.get('subdomain')?.toLowerCase().trim();
+    const subdomain = searchParams.get('subdomain');
 
     if (!subdomain) {
       return NextResponse.json(
         { error: 'Subdomain parameter is required' },
-        { status: 400, headers: corsHeaders }
+        { status: 400 }
       );
     }
 
-    // Validate subdomain format
-    const subdomainRegex = /^[a-z0-9][a-z0-9-]*[a-z0-9]$/;
-    if (subdomain.length < 3 || subdomain.length > 63) {
-      return NextResponse.json(
-        { 
-          available: false, 
-          error: 'Subdomain must be between 3 and 63 characters long' 
-        },
-        { status: 400, headers: corsHeaders }
-      );
+    // Sanitize subdomain
+    const sanitizedSubdomain = subdomain.toLowerCase().replace(/[^a-z0-9-]/g, '');
+
+    if (sanitizedSubdomain !== subdomain) {
+      return NextResponse.json({
+        available: false,
+        error: 'Subdomain can only contain lowercase letters, numbers, and hyphens'
+      });
     }
 
-    if (!subdomainRegex.test(subdomain)) {
-      return NextResponse.json(
-        { 
-          available: false, 
-          error: 'Subdomain can only contain lowercase letters, numbers, and hyphens. Cannot start or end with a hyphen.' 
-        },
-        { status: 400, headers: corsHeaders }
-      );
+    if (sanitizedSubdomain.length < 3 || sanitizedSubdomain.length > 63) {
+      return NextResponse.json({
+        available: false,
+        error: 'Subdomain must be between 3 and 63 characters'
+      });
     }
 
-    // Check for reserved subdomains
+    // Reserved subdomains
     const reservedSubdomains = [
-      'www', 'api', 'admin', 'root', 'mail', 'ftp', 'localhost', 'test',
-      'staging', 'dev', 'development', 'prod', 'production', 'beta',
-      'alpha', 'demo', 'docs', 'support', 'help', 'blog', 'news',
-      'status', 'monitor', 'app', 'apps', 'cdn', 'static', 'assets'
+      'www', 'api', 'admin', 'app', 'mail', 'ftp', 'blog', 'shop', 'store',
+      'support', 'help', 'docs', 'cdn', 'static', 'assets', 'test', 'staging',
+      'dev', 'demo', 'beta', 'alpha', 'preview', 'dashboard', 'console'
     ];
 
-    if (reservedSubdomains.includes(subdomain)) {
-      return NextResponse.json(
-        { 
-          available: false, 
-          error: 'This subdomain is reserved and cannot be used' 
-        },
-        { status: 200, headers: corsHeaders }
-      );
+    if (reservedSubdomains.includes(sanitizedSubdomain)) {
+      return NextResponse.json({
+        available: false,
+        error: 'This subdomain is reserved'
+      });
     }
 
-    const supabase = createServerClient();
-
-    // Check if subdomain already exists with detailed info
-    const { data: existingTenant, error } = await supabase
+    // Check if subdomain exists in Redis (legacy)
+    const existingData = await getSubdomainData(sanitizedSubdomain);
+    
+    // Also check Supabase (new system)
+    const { data: supabaseTenant } = await supabase
       .from('tenants')
-      .select(`
-        id, 
-        subdomain, 
-        name,
-        industry,
-        created_at,
-        custom_persona
-      `)
-      .eq('subdomain', subdomain)
+      .select('id, subdomain, name, industry, created_at')
+      .eq('subdomain', sanitizedSubdomain)
       .single();
 
-    if (error && error.code !== 'PGRST116') {
-      // PGRST116 is "not found" error, which is what we want
-      console.error('Database error checking subdomain:', error);
-      return NextResponse.json(
-        { error: 'Failed to check subdomain availability' },
-        { status: 500, headers: corsHeaders }
-      );
-    }
-
-    const isAvailable = !existingTenant;
-
-    if (isAvailable) {
-      return NextResponse.json(
-        { 
-          available: true,
-          subdomain: subdomain,
-          message: 'Subdomain is available'
-        },
-        { status: 200, headers: corsHeaders }
-      );
-    }
-
-    // If tenant exists, check for user email in URL params and look for invitation
-    const userEmail = searchParams.get('email');
-    let hasInvitation = false;
-    let invitationToken = null;
-
-    if (userEmail && existingTenant) {
-      // Check for pending invitation
-      const { data: invitation } = await supabase
-        .from('user_invitations')
-        .select('token, status, expires_at')
-        .eq('tenant_id', existingTenant.id)
-        .eq('email', userEmail)
-        .eq('status', 'pending')
-        .gt('expires_at', new Date().toISOString())
-        .single();
-
-      if (invitation) {
-        hasInvitation = true;
-        invitationToken = invitation.token;
-      }
-    }
-
-    // Get user count for this tenant
-    const { count: userCount } = await supabase
-      .from('users')
-      .select('*', { count: 'exact', head: true })
-      .eq('tenant_id', existingTenant.id);
-
-    return NextResponse.json(
-      { 
+    if (existingData || supabaseTenant) {
+      const suggestions = generateSubdomainSuggestions(sanitizedSubdomain);
+      const tenant = supabaseTenant || {
+        name: existingData?.organizationName || existingData?.displayName || 'Unknown Organization',
+        industry: existingData?.industry || 'general',
+        created_at: existingData?.createdAt ? new Date(existingData.createdAt).toISOString() : null
+      };
+      
+      return NextResponse.json({
         available: false,
-        subdomain: subdomain,
-        message: 'Subdomain is already taken',
+        error: 'Subdomain is already taken',
         existingTenant: {
-          id: existingTenant.id,
-          name: existingTenant.name || `${subdomain} Organization`,
-          industry: existingTenant.industry || 'general',
-          userCount: userCount || 1,
-          createdAt: existingTenant.created_at
+          id: sanitizedSubdomain,
+          name: tenant.name,
+          industry: tenant.industry,
+          createdAt: tenant.created_at
         },
-        hasInvitation,
-        invitationToken
-      },
-      { status: 200, headers: corsHeaders }
-    );
+        suggestions
+      });
+    }
 
-  } catch (error: any) {
-    console.error('Subdomain check API error:', error);
+    // Subdomain is available
+    return NextResponse.json({
+      available: true,
+      message: 'Subdomain is available'
+    });
+
+  } catch (error) {
+    console.error('Subdomain check error:', error);
+    
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
-      { status: 500, headers: corsHeaders }
+      { error: 'Internal server error' },
+      { status: 500 }
     );
   }
+}
+
+export async function POST() {
+  return NextResponse.json(
+    { error: 'Method not allowed' },
+    { status: 405 }
+  );
 }
