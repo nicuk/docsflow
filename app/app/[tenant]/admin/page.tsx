@@ -3,13 +3,13 @@ import { getSubdomainData } from '@/lib/subdomains';
 import { TenantAdminDashboard } from './dashboard';
 
 interface TenantAdminPageProps {
-  params: {
+  params: Promise<{
     tenant: string;
-  };
+  }>;
 }
 
 export default async function TenantAdminPage({ params }: TenantAdminPageProps) {
-  const { tenant } = params;
+  const { tenant } = await params;
 
   // Verify tenant exists
   const tenantData = await getSubdomainData(tenant);

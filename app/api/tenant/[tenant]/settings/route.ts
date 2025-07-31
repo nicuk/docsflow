@@ -13,10 +13,10 @@ interface TenantSettingsRequest {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { tenant: string } }
+  { params }: { params: Promise<{ tenant: string }> }
 ) {
   try {
-    const { tenant } = params;
+    const { tenant } = await params;
     const settings: TenantSettingsRequest = await request.json();
 
     // Verify tenant exists
@@ -76,10 +76,10 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { tenant: string } }
+  { params }: { params: Promise<{ tenant: string }> }
 ) {
   try {
-    const { tenant } = params;
+    const { tenant } = await params;
 
     const tenantData = await getSubdomainData(tenant);
     

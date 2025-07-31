@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     const existingData = await getSubdomainData(sanitizedSubdomain);
     
     // Also check Supabase (new system)
-    const { data: supabaseTenant } = await supabase
+    const { data: supabaseTenant } = await supabase!
       .from('tenants')
       .select('id, subdomain, name, industry, created_at')
       .eq('subdomain', sanitizedSubdomain)
