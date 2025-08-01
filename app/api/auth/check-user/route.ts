@@ -62,10 +62,10 @@ export async function POST(request: NextRequest) {
             tenant_id: existingUser.tenant_id,
             access_level: existingUser.access_level,
             role: existingUser.role,
-            tenant: existingUser.tenants ? {
-              id: existingUser.tenants.id,
-              name: existingUser.tenants.name,
-              subdomain: existingUser.tenants.subdomain
+            tenant: existingUser.tenants && existingUser.tenants.length > 0 ? {
+              id: existingUser.tenants[0].id,
+              name: existingUser.tenants[0].name,
+              subdomain: existingUser.tenants[0].subdomain
             } : null
           }
         },
