@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, AlertCircle } from 'lucide-react';
 
-export default function AuthCallback() {
+// Component that uses useSearchParams - must be wrapped in Suspense
+function AuthCallbackHandler() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -112,5 +113,35 @@ export default function AuthCallback() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// Loading component for Suspense fallback
+function AuthCallbackLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle>Loading...</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center space-y-4">
+          <div className="flex justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          </div>
+          <p className="text-gray-600">
+            Preparing authentication...
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Main component with Suspense wrapper
+export default function AuthCallback() {
+  return (
+    <Suspense fallback={<AuthCallbackLoading />}>
+      <AuthCallbackHandler />
+    </Suspense>
   );
 }
