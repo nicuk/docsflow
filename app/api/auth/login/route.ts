@@ -31,9 +31,30 @@ export async function POST(request: NextRequest) {
 
     if (authError) {
       console.error('Login error:', authError);
+      
+      // Provide specific error messages based on error type
+      let errorMessage = 'Invalid credentials';
+      let statusCode = 401;
+      
+      if (authError.message.includes('Invalid login credentials')) {
+        errorMessage = 'User not found or incorrect password';
+      } else if (authError.message.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and confirm your account';
+        statusCode = 403;
+      } else if (authError.message.includes('Too many requests')) {
+        errorMessage = 'Too many login attempts. Please try again later';
+        statusCode = 429;
+      } else if (authError.message.includes('User not found')) {
+        errorMessage = 'No account found with this email address';
+      }
+      
       return NextResponse.json(
-        { error: 'Invalid credentials', details: authError.message },
-        { status: 401, headers: corsHeaders }
+        { 
+          error: errorMessage, 
+          details: authError.message,
+          code: authError.status || statusCode 
+        },
+        { status: statusCode, headers: corsHeaders }
       );
     }
 
