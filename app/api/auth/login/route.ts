@@ -36,22 +36,38 @@ export async function POST(request: NextRequest) {
       let errorMessage = 'Invalid credentials';
       let statusCode = 401;
       
+      // Check if user exists first to provide more specific error
       if (authError.message.includes('Invalid login credentials')) {
-        errorMessage = 'User not found or incorrect password';
+        try {
+          const { data: userExists } = await supabase
+            .from('users')
+            .select('email')
+            .eq('email', email)
+            .single();
+          
+          if (userExists) {
+            errorMessage = 'Incorrect password. Please check your password and try again.';
+          } else {
+            errorMessage = 'No account found with this email address. Please check your email or sign up.';
+          }
+        } catch (checkError) {
+          // If we can't check, fall back to generic message
+          errorMessage = 'Invalid email or password. Please check your credentials.';
+        }
       } else if (authError.message.includes('Email not confirmed')) {
-        errorMessage = 'Please check your email and confirm your account';
+        errorMessage = 'Please check your email and confirm your account before signing in.';
         statusCode = 403;
       } else if (authError.message.includes('Too many requests')) {
-        errorMessage = 'Too many login attempts. Please try again later';
+        errorMessage = 'Too many login attempts. Please wait a few minutes and try again.';
         statusCode = 429;
       } else if (authError.message.includes('User not found')) {
-        errorMessage = 'No account found with this email address';
+        errorMessage = 'No account found with this email address. Please check your email or sign up.';
       }
       
       return NextResponse.json(
         { 
           error: errorMessage, 
-          details: authError.message,
+          details: process.env.NODE_ENV === 'development' ? authError.message : undefined,
           code: authError.status || statusCode 
         },
         { status: statusCode, headers: corsHeaders }

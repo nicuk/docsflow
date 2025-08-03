@@ -37,10 +37,16 @@ export default function RegisterPage() {
     setError(null);
 
     try {
+      // Determine the correct redirect URL based on environment
+      const isProduction = window.location.hostname !== 'localhost';
+      const redirectUrl = isProduction 
+        ? `https://${window.location.hostname}/auth/callback`
+        : `${window.location.origin}/auth/callback`;
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: redirectUrl
         }
       });
 
@@ -152,6 +158,7 @@ export default function RegisterPage() {
                 value={formData.email}
                 onChange={handleInputChange}
                 placeholder="your@email.com"
+                autoComplete="email"
                 required
                 disabled={isLoading}
               />
@@ -166,6 +173,7 @@ export default function RegisterPage() {
                 value={formData.password}
                 onChange={handleInputChange}
                 placeholder="Create a strong password"
+                autoComplete="new-password"
                 required
                 disabled={isLoading}
                 minLength={6}
@@ -181,6 +189,7 @@ export default function RegisterPage() {
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
                 placeholder="Confirm your password"
+                autoComplete="new-password"
                 required
                 disabled={isLoading}
                 minLength={6}
