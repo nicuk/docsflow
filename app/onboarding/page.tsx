@@ -92,16 +92,44 @@ export default function OnboardingPage() {
   const progress = ((currentStep + 1) / totalSteps) * 100;
 
   useEffect(() => {
+    // DEBUG: Log current state
+    console.log('🔍 ONBOARDING DEBUG - Initial currentStep:', currentStep);
+    console.log('🔍 ONBOARDING DEBUG - QUESTIONS.length:', QUESTIONS.length);
+    
     // Load pre-filled data from localStorage
     const storedData = localStorage.getItem('onboarding-data');
+    console.log('🔍 ONBOARDING DEBUG - localStorage data:', storedData);
+    
     if (storedData) {
       try {
         const data = JSON.parse(storedData);
-        setOnboardingData(data);
-        setSubdomainInput(data.subdomain || '');
+        console.log('🔍 ONBOARDING DEBUG - Parsed data:', data);
+        
+        // CRITICAL FIX: Only load organization data, NOT step progression
+        // This prevents localStorage from corrupting the question flow
+        setOnboardingData({
+          organizationName: data.organizationName,
+          industry: data.industry,
+          timestamp: data.timestamp
+        });
+        
+        // Only set subdomain if we're actually on the subdomain step
+        if (currentStep >= QUESTIONS.length && data.subdomain) {
+          setSubdomainInput(data.subdomain);
+        }
+        
+        console.log('🔍 ONBOARDING DEBUG - After loading, currentStep should be:', currentStep);
       } catch (error) {
         console.error('Error parsing onboarding data:', error);
+        // Clear corrupted data
+        localStorage.removeItem('onboarding-data');
       }
+    }
+    
+    // FORCE: Ensure new users always start at step 0 (first question)
+    if (currentStep !== 0) {
+      console.log('🚨 ONBOARDING DEBUG - Resetting currentStep from', currentStep, 'to 0');
+      setCurrentStep(0);
     }
   }, []);
 
@@ -386,7 +414,19 @@ export default function OnboardingPage() {
         </div>
 
         {/* Content */}
-        {currentStep < QUESTIONS.length ? renderQuestionStep(currentStep) : renderSubdomainStep()}
+        {(() => {
+          console.log('🔍 RENDER DEBUG - currentStep:', currentStep);
+          console.log('🔍 RENDER DEBUG - QUESTIONS.length:', QUESTIONS.length);
+          console.log('🔍 RENDER DEBUG - Should show questions?', currentStep < QUESTIONS.length);
+          
+          if (currentStep < QUESTIONS.length) {
+            console.log('✅ RENDER DEBUG - Showing question step:', currentStep);
+            return renderQuestionStep(currentStep);
+          } else {
+            console.log('🚨 RENDER DEBUG - Showing subdomain step instead of questions!');
+            return renderSubdomainStep();
+          }
+        })()}
       </div>
     </div>
   );
