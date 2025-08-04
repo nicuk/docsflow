@@ -60,8 +60,8 @@ export default function LoginPage() {
       // Determine the correct redirect URL based on environment
       const isProduction = window.location.hostname !== 'localhost';
       const redirectUrl = isProduction 
-        ? `https://${window.location.hostname}/auth/callback`
-        : `${window.location.origin}/auth/callback`;
+        ? `https://api.docsflow.app/api/auth/google/callback`
+        : `${window.location.origin}/api/auth/google/callback`;
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
