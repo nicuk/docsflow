@@ -126,11 +126,9 @@ export default function OnboardingPage() {
       }
     }
     
-    // FORCE: Ensure new users always start at step 0 (first question)
-    if (currentStep !== 0) {
-      console.log('🚨 ONBOARDING DEBUG - Resetting currentStep from', currentStep, 'to 0');
-      setCurrentStep(0);
-    }
+    // REMOVED: The infinite re-render loop that was breaking onboarding
+    // useState(0) already initializes currentStep correctly
+    // No need to force reset on every render
   }, []);
 
   const handleAnswerChange = (questionId: string, value: string) => {

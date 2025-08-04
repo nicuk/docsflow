@@ -95,6 +95,9 @@ export async function POST(request: NextRequest) {
       // Continue without profile data
     }
 
+    // Check onboarding completion status
+    const hasCompletedOnboarding = userProfile?.tenant_id && userProfile?.tenants;
+    
     return NextResponse.json({
       success: true,
       user: {
@@ -104,7 +107,8 @@ export async function POST(request: NextRequest) {
         refresh_token: authData.session.refresh_token,
         tenant_id: userProfile?.tenant_id,
         access_level: userProfile?.access_level,
-        tenant: userProfile?.tenants
+        tenant: userProfile?.tenants,
+        onboarding_completed: hasCompletedOnboarding
       },
       message: 'Login successful'
     }, { headers: corsHeaders });

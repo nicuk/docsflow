@@ -161,12 +161,32 @@ export async function deleteSubdomainAction(
     return { error: 'Invalid subdomain' };
   }
 
-  await safeRedisOperation(
-    () => redis!.del(`subdomain:${subdomainValue}`),
-    undefined
-  );
-  revalidatePath('/admin');
-  return { success: 'Domain deleted successfully' };
+  try {
+    // Call the DELETE API endpoint that removes tenant from both Redis and Supabase
+    const response = await fetch(`/api/tenants/${subdomainValue}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const result = await response.json();
+      return { error: result.error || 'Failed to delete tenant' };
+    }
+
+    const result = await response.json();
+    revalidatePath('/admin');
+    
+    if (result.success) {
+      return { success: result.message || 'Tenant deleted successfully' };
+    } else {
+      return { error: result.error || 'Failed to delete tenant' };
+    }
+  } catch (error) {
+    console.error('Error deleting tenant:', error);
+    return { error: 'Failed to delete tenant. Please try again.' };
+  }
 }
 
 // Helper function to create sample documents

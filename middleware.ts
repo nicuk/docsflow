@@ -54,6 +54,10 @@ export default function middleware(request: NextRequest) {
       }
       // Otherwise, preserve the path structure
       const response = NextResponse.rewrite(new URL(`/app/${tenant}${pathname}`, request.url));
+
+      // 🚨 Inject the tenant ID into the request headers for frontend context
+      response.headers.set('x-tenant-id', tenant);
+
       return createSecureResponse(response, origin);
     }
 

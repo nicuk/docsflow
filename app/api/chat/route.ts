@@ -10,6 +10,7 @@ import { performDeepSearch, buildSynthesizedContext } from '@/lib/deep-search';
 import { ConfidenceScoring } from '@/lib/confidence-scoring';
 import { redis, safeRedisOperation } from '@/lib/redis';
 import { AgenticRAGEnhancement } from '@/lib/agentic-rag-enhancement';
+import { validateTenantContext } from '@/lib/api-tenant-validation';
 
 // Dynamic import to prevent build issues
 const loadHybridSearch = () => import('@/lib/hybrid-search');
@@ -140,9 +141,24 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Check if in demo mode
-    const isDemoMode = request.headers.get('X-Demo-Mode') === 'true';
-    const tenantSubdomain = request.headers.get('X-Tenant-Subdomain') || 'demo';
+    // 🔒 SECURE: Validate tenant context with proper security checks
+    const tenantValidation = await validateTenantContext(request, {
+      allowDemo: true,
+      requireAuth: false // Set to true for production
+    });
+
+    if (!tenantValidation.isValid) {
+      return NextResponse.json(
+        { 
+          error: tenantValidation.error,
+          security_violation: 'Invalid tenant context'
+        },
+        { status: tenantValidation.statusCode || 400, headers: corsHeaders }
+      );
+    }
+
+    const tenantSubdomain = tenantValidation.tenantId!;
+    const isDemoMode = tenantValidation.tenantData?.isDemo || false;
     
     console.log('Chat API - Demo mode:', isDemoMode, 'Subdomain:', tenantSubdomain, 'Authenticated:', isAuthenticated);
     

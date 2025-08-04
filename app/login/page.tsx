@@ -110,11 +110,12 @@ export default function LoginPage() {
       const result = await response.json();
       
       if (result.success) {
-        // Redirect to the appropriate tenant dashboard
-        if (result.user.tenant) {
+        // Check if user has completed onboarding
+        if (result.user.onboarding_completed && result.user.tenant) {
+          // User has completed onboarding, redirect to their tenant dashboard
           window.location.href = `https://${result.user.tenant.subdomain}.docsflow.app/dashboard`;
         } else {
-          // If no tenant, redirect to onboarding
+          // User hasn't completed onboarding, redirect to onboarding flow
           router.push('/onboarding');
         }
       }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
+import { validateTenantContext } from '@/lib/api-tenant-validation';
 
 function getSupabaseClient() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -25,24 +26,42 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = getSupabaseClient();
     
-    // Get tenant from subdomain or demo mode
-    const tenantSubdomain = request.headers.get('X-Tenant-Subdomain') || 'demo-warehouse-dist';
-    
-    console.log('Fetching documents for tenant subdomain:', tenantSubdomain);
-    
-    // First, get the tenant UUID from subdomain
-    const { data: tenant, error: tenantError } = await supabase
-      .from('tenants')
-      .select('id')
-      .eq('subdomain', tenantSubdomain)
-      .single();
+    // 🔒 SECURE: Validate tenant context with proper security checks
+    const tenantValidation = await validateTenantContext(request, {
+      allowDemo: true,
+      requireAuth: false // Set to true for production
+    });
 
-    if (tenantError || !tenant) {
-      console.error('Tenant not found:', tenantError);
+    if (!tenantValidation.isValid) {
       return NextResponse.json(
-        { error: 'Tenant not found' },
-        { status: 404, headers: corsHeaders }
+        { 
+          error: tenantValidation.error,
+          security_violation: 'Invalid tenant context'
+        },
+        { status: tenantValidation.statusCode || 400, headers: corsHeaders }
       );
+    }
+
+    const tenantSubdomain = tenantValidation.tenantId!;
+    console.log('Fetching documents for validated tenant:', tenantSubdomain);
+    
+    // Get the tenant UUID - use validated data if available
+    let tenantId = tenantValidation.tenantData?.id;
+    if (!tenantId) {
+      const { data: tenant, error: tenantError } = await supabase
+        .from('tenants')
+        .select('id')
+        .eq('subdomain', tenantSubdomain)
+        .single();
+
+      if (tenantError || !tenant) {
+        console.error('Tenant not found:', tenantError);
+        return NextResponse.json(
+          { error: 'Tenant not found' },
+          { status: 404, headers: corsHeaders }
+        );
+      }
+      tenantId = tenant.id;
     }
     
     // Get documents for this tenant using the actual UUID
@@ -58,7 +77,7 @@ export async function GET(request: NextRequest) {
         created_at,
         tenant_id
       `)
-      .eq('tenant_id', tenant.id)
+      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .limit(100);
 
@@ -91,22 +110,39 @@ export async function DELETE(request: NextRequest) {
   try {
     const supabase = getSupabaseClient();
     
-    // Get tenant from headers (consistent with other routes)
-    const tenantSubdomain = request.headers.get('X-Tenant-Subdomain') || 'demo-warehouse-dist';
-    
-    // Get the tenant UUID from subdomain
-    const { data: tenant, error: tenantError } = await supabase
-      .from('tenants')
-      .select('id')
-      .eq('subdomain', tenantSubdomain)
-      .single();
+    // 🔒 SECURE: Validate tenant context with proper security checks
+    const tenantValidation = await validateTenantContext(request, {
+      allowDemo: true,
+      requireAuth: false // Set to true for production
+    });
 
-    if (tenantError || !tenant) {
-      console.error('Tenant not found:', tenantError);
+    if (!tenantValidation.isValid) {
       return NextResponse.json(
-        { error: 'Tenant not found' },
-        { status: 404, headers: corsHeaders }
+        { 
+          error: tenantValidation.error,
+          security_violation: 'Invalid tenant context'
+        },
+        { status: tenantValidation.statusCode || 400, headers: corsHeaders }
       );
+    }
+
+    // Get the tenant UUID - use validated data if available
+    let tenantId = tenantValidation.tenantData?.id;
+    if (!tenantId) {
+      const { data: tenant, error: tenantError } = await supabase
+        .from('tenants')
+        .select('id')
+        .eq('subdomain', tenantValidation.tenantId!)
+        .single();
+
+      if (tenantError || !tenant) {
+        console.error('Tenant not found:', tenantError);
+        return NextResponse.json(
+          { error: 'Tenant not found' },
+          { status: 404, headers: corsHeaders }
+        );
+      }
+      tenantId = tenant.id;
     }
 
     const { documentId } = await request.json();
@@ -123,7 +159,7 @@ export async function DELETE(request: NextRequest) {
       .from('documents')
       .delete()
       .eq('id', documentId)
-      .eq('tenant_id', tenant.id);
+      .eq('tenant_id', tenantId);
 
     if (error) {
       console.error('Delete error:', error);
