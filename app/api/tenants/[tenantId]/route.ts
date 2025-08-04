@@ -29,10 +29,10 @@ const TENANT_CACHE_PREFIX = 'tenant:';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  { params }: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params;
+    const { tenantId } = await params;
 
     if (!tenantId) {
       return NextResponse.json(
@@ -110,10 +110,10 @@ export async function GET(
 // Optional: Handle tenant updates (invalidate cache)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  { params }: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params;
+    const { tenantId } = await params;
     const updates = await request.json();
 
     // Update in database
@@ -154,10 +154,10 @@ export async function PUT(
 // Handle tenant deletion
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  { params }: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params;
+    const { tenantId } = await params;
 
     if (!tenantId) {
       return NextResponse.json(
