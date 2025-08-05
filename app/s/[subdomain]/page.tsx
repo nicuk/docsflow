@@ -21,7 +21,7 @@ export async function generateMetadata({
     };
   }
 
-  const orgName = subdomainData.organizationName || `${subdomain} Organization`;
+  const orgName = subdomainData.displayName || `${subdomain} Organization`;
 
   return {
     title: `${orgName} - AI Document Intelligence`,
@@ -41,8 +41,8 @@ export default async function SubdomainPage({
     notFound();
   }
 
-  const organizationName = subdomainData.organizationName || `${subdomain} Organization`;
-  const industry = subdomainData.industry || 'General Business';
+  const organizationName = subdomainData.displayName || `${subdomain} Organization`;
+  const industry = 'General Business'; // Industry not available in SubdomainData type
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -75,9 +75,9 @@ export default async function SubdomainPage({
             <CheckCircle className="w-5 h-5" />
             <span className="font-medium">Platform Successfully Created</span>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Welcome to {organizationName}
-          </h2>
+          </h1>
           <p className="text-gray-600 max-w-2xl mx-auto text-lg">
             Your enterprise AI document intelligence platform is ready. Start asking questions about your business documents with industry-specific AI assistance.
           </p>

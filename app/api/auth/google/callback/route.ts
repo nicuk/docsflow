@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createServerClient } from '@/lib/supabase';
+import { createServerClient } from '@supabase/ssr';
 import { getCORSHeaders } from '@/lib/utils';
 
 export async function OPTIONS(request: NextRequest) {
@@ -72,7 +72,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${process.env.FRONTEND_URL || 'https://docsflow.app'}?error=user_info_error`);
     }
 
-    const supabase = createServerClient(cookies());
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options)
+            })
+          },
+        },
+      }
+    );
 
     // Check if user exists
     let { data: existingUser, error: userLookupError } = await supabase
