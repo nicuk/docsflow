@@ -2,6 +2,7 @@
 import { google } from '@ai-sdk/google';
 import { generateText } from 'ai';
 
+// Environment-based configuration like the working aichatbot
 const isTestEnvironment = Boolean(
   process.env.PLAYWRIGHT_TEST_BASE_URL ||
   process.env.PLAYWRIGHT ||
@@ -9,26 +10,13 @@ const isTestEnvironment = Boolean(
   process.env.NODE_ENV === 'test'
 );
 
-export function isRealAIAvailable(): boolean {
-  return !isTestEnvironment && Boolean(process.env.GOOGLE_AI_API_KEY);
-}
-
-export interface PersonaData {
-  role: string;
-  tone: string;
-  focus_areas: string[];
-  business_context: string;
-  prompt_template: string;
-  industry: string;
-  created_from: string;
-}
-
+// Mock provider for development when no API key
 const mockProvider = {
-  generatePersona: async (prompt: string): Promise<PersonaData> => {
+  generatePersona: async (prompt: string) => {
     console.log('🔄 Using mock AI provider (no GOOGLE_AI_API_KEY)');
     return {
       role: "Business Intelligence Assistant",
-      tone: "Professional and helpful",
+      tone: "Professional and helpful", 
       focus_areas: ["document analysis", "business insights", "decision support"],
       business_context: "AI-powered business intelligence",
       prompt_template: "You are an AI assistant focused on providing helpful, accurate information.",
@@ -38,16 +26,18 @@ const mockProvider = {
   }
 };
 
+// Real Gemini provider (like working aichatbot)
 const realProvider = {
-  generatePersona: async (prompt: string): Promise<PersonaData> => {
+  generatePersona: async (prompt: string) => {
     try {
       const result = await generateText({
-        model: google('models/gemma-3n-e4b-it'), // Using Gemma 3n E4B
+        model: google('gemini-1.5-flash'),
         prompt,
         maxTokens: 1000,
         temperature: 0.7,
       });
-
+      
+      // Extract JSON from response
       const jsonMatch = result.text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
@@ -56,6 +46,7 @@ const realProvider = {
           created_from: "onboarding_answers"
         };
       }
+      
       throw new Error('Failed to parse AI response');
     } catch (error) {
       console.error('Gemini API Error:', error);
@@ -64,39 +55,25 @@ const realProvider = {
   }
 };
 
-class AIProvider {
-  async generatePersona(prompt: string): Promise<PersonaData | null> {
-    const provider = (() => {
-      if (isTestEnvironment) {
-        return mockProvider;
-      }
-      if (!process.env.GOOGLE_AI_API_KEY) {
-        console.warn('⚠️ GOOGLE_AI_API_KEY not found - using mock AI provider');
-        return mockProvider;
-      }
-      console.log('✅ Using real Gemma 3n E4B AI provider');
-      return realProvider;
-    })();
-
-    try {
-      return await provider.generatePersona(prompt);
-    } catch (error) {
-      console.error('AI Provider Error:', error);
-      // Fallback to mock provider on error
-      return await mockProvider.generatePersona(prompt);
-    }
+// Export the provider based on environment (like working aichatbot)
+export const aiProvider = (() => {
+  // If in test environment, use mock
+  if (isTestEnvironment) {
+    return mockProvider;
   }
-
-  private isValidPersona(persona: any): boolean {
-    return (
-      persona &&
-      typeof persona.role === 'string' &&
-      typeof persona.tone === 'string' &&
-      Array.isArray(persona.focus_areas) &&
-      typeof persona.business_context === 'string' &&
-      typeof persona.prompt_template === 'string'
-    );
+  
+  // If no API key, use mock
+  if (!process.env.GOOGLE_AI_API_KEY) {
+    console.warn('⚠️ GOOGLE_AI_API_KEY not found - using mock AI provider');
+    return mockProvider;
   }
-}
+  
+  // Use real Gemini
+  console.log('✅ Using real Gemini AI provider');
+  return realProvider;
+})();
 
-export const aiProvider = new AIProvider();
+// Helper function to check if real AI is available
+export const isRealAIAvailable = () => {
+  return !isTestEnvironment && Boolean(process.env.GOOGLE_AI_API_KEY);
+};
