@@ -3,9 +3,8 @@ import { updateTenantMetadata, getSubdomainData } from '@/lib/subdomains';
 import { auditLogger, AUDIT_ACTIONS } from '@/lib/audit-logger';
 
 interface TenantSettingsRequest {
-  organizationName?: string;
-  contactEmail?: string;
   displayName?: string;
+  contactEmail?: string;
   aiEnabled?: boolean;
   notifications?: boolean;
   description?: string;
@@ -30,9 +29,8 @@ export async function POST(
 
     // Update tenant metadata
     const updatedData = await updateTenantMetadata(tenant, {
-      organizationName: settings.organizationName,
-      contactEmail: settings.contactEmail,
       displayName: settings.displayName,
+      contactEmail: settings.contactEmail,
       aiEnabled: settings.aiEnabled,
       settings: {
         ...existingData.settings,
