@@ -110,27 +110,56 @@ export default function LoginPage() {
       const result = await response.json();
       
       if (result.success) {
-        // Store user data in localStorage for session management
+        // Store user data in localStorage for session management (compatible with frontend)
         localStorage.setItem('user_session', JSON.stringify({
           user: result.user,
           timestamp: Date.now()
         }));
         
+        // CRITICAL: Also store in frontend-compatible format
+        localStorage.setItem('user', JSON.stringify(result.user));
+        localStorage.setItem('access_token', result.user.access_token);
+        localStorage.setItem('refresh_token', result.user.refresh_token);
+        localStorage.setItem('user-email', result.user.email);
+        
+        // Set cookies for frontend compatibility
+        document.cookie = `user-email=${result.user.email}; path=/; secure; samesite=strict`;
+        document.cookie = `auth-token=${result.user.access_token}; path=/; secure; samesite=strict`;
+        if (result.user.tenant_id) {
+          document.cookie = `tenant-id=${result.user.tenant_id}; path=/; secure; samesite=strict`;
+        }
+        
         // Check if user has completed onboarding
+        console.log('🔍 Login Success - Checking onboarding status:', {
+          onboarding_completed: result.user.onboarding_completed,
+          has_tenant: !!result.user.tenant,
+          tenant_id: result.user.tenant_id,
+          user_email: result.user.email
+        });
+        
         if (result.user.onboarding_completed && result.user.tenant) {
           // User has completed onboarding, redirect to their tenant dashboard
-          // For development, use internal routing; for production, use external subdomain
+          console.log('✅ User has completed onboarding, redirecting to tenant dashboard');
           const isProduction = window.location.hostname !== 'localhost';
           if (isProduction) {
+            console.log(`🚀 Production redirect to: https://${result.user.tenant.subdomain}.docsflow.app/dashboard`);
             window.location.href = `https://${result.user.tenant.subdomain}.docsflow.app/dashboard`;
           } else {
             // Development: use internal tenant routing
+            console.log(`🔧 Development redirect to: /app/${result.user.tenant.subdomain}/dashboard`);
             router.push(`/app/${result.user.tenant.subdomain}/dashboard`);
           }
         } else {
           // User hasn't completed onboarding, redirect to onboarding flow
-          console.log('🔄 Redirecting to onboarding - user needs to complete setup');
-          router.push('/onboarding');
+          console.log('🔄 User needs onboarding - redirecting to onboarding flow');
+          console.log('📋 Onboarding redirect reason:', {
+            missing_onboarding: !result.user.onboarding_completed,
+            missing_tenant: !result.user.tenant,
+            will_redirect_to: '/onboarding'
+          });
+          
+          // Force redirect to onboarding
+          window.location.href = '/onboarding';
         }
       }
     } catch (error) {
