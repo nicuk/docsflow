@@ -47,9 +47,11 @@ export default function middleware(request: NextRequest) {
     // Route tenant subdomains to the tenant-specific dashboard
     if (tenant) {
 
-      // If root path, redirect to dashboard
+      // If root path, check if user needs onboarding first
       if (pathname === '/' || pathname === '') {
-        const response = NextResponse.rewrite(new URL(`/app/${tenant}/dashboard`, request.url));
+        // TODO: Add proper onboarding completion check here
+        // For now, redirect to main domain for proper user flow
+        const response = NextResponse.redirect(new URL('https://docsflow.app', request.url));
         return createSecureResponse(response, origin);
       }
       // Otherwise, preserve the path structure
