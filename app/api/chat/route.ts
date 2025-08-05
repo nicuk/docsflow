@@ -143,7 +143,6 @@ export async function POST(request: NextRequest) {
     
     // 🔒 SECURE: Validate tenant context with proper security checks
     const tenantValidation = await validateTenantContext(request, {
-      allowDemo: true,
       requireAuth: false // Set to true for production
     });
 
