@@ -152,7 +152,7 @@ export default function OnboardingFlow() {
       setCurrentStep(1);
       
       // Update onboarding data with selected domain
-      setOnboardingData(prev => ({
+      setOnboardingData((prev: any) => ({
         ...prev,
         subdomain: domain,
         isNewTenant: true,
@@ -196,7 +196,7 @@ export default function OnboardingFlow() {
       console.error('Failed to join existing tenant:', error);
       // Fallback: continue to onboarding with limited role
       setCurrentStep(1);
-      setOnboardingData(prev => ({
+      setOnboardingData((prev: any) => ({
         ...prev,
         subdomain: domain,
         isNewTenant: false,
