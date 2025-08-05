@@ -10,7 +10,7 @@ export const rootDomain = process.env.NODE_ENV === 'production' ? 'docsflow.app'
 export const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
 
 // CORS headers for API routes
-export function getCORSHeaders(origin?: string) {
+export function getCORSHeaders(origin?: string | null) {
   return {
     'Access-Control-Allow-Origin': origin || '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
