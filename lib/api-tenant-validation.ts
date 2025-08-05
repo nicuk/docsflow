@@ -16,7 +16,7 @@ export interface TenantValidationResult {
 }
 
 export interface TenantValidationOptions {
-  allowDemo?: boolean;
+
   requireAuth?: boolean;
   fallbackTenant?: string;
   skipValidation?: boolean;
@@ -31,7 +31,7 @@ export async function validateTenantContext(
   options: TenantValidationOptions = {}
 ): Promise<TenantValidationResult> {
   const {
-    allowDemo = false,
+
     requireAuth = false,
     fallbackTenant = null,
     skipValidation = false
@@ -74,21 +74,7 @@ export async function validateTenantContext(
       tenantId = url.searchParams.get('tenant');
     }
 
-    // Handle demo mode
-    const isDemoMode = request.headers.get('X-Demo-Mode') === 'true';
-    if (isDemoMode && allowDemo) {
-      return {
-        isValid: true,
-        tenantId: 'demo',
-        tenantData: {
-          id: 'demo',
-          subdomain: 'demo',
-          name: 'Demo Organization',
-          industry: 'general',
-          isDemo: true
-        }
-      };
-    }
+    // Enterprise mode - no demo fallback
 
     // If no tenant found and fallback allowed
     if (!tenantId && fallbackTenant) {
