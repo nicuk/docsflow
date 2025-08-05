@@ -87,8 +87,8 @@ export async function GET(request: NextRequest) {
     if (existingData || supabaseTenant) {
       const suggestions = generateSubdomainSuggestions(sanitizedSubdomain);
       const tenant = supabaseTenant || {
-        name: existingData?.organizationName || existingData?.displayName || 'Unknown Organization',
-        industry: existingData?.industry || 'general',
+        name: existingData?.displayName || 'Unknown Organization',
+        industry: 'general', // Default since frontend SubdomainData doesn't include industry
         created_at: existingData?.createdAt ? new Date(existingData.createdAt).toISOString() : null
       };
       
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
         existingTenant: {
           id: sanitizedSubdomain,
           name: tenant.name,
-          industry: tenant.industry,
+          industry: supabaseTenant?.industry || 'general',
           createdAt: tenant.created_at
         },
         suggestions
