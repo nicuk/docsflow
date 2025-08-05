@@ -37,11 +37,9 @@ export default function RegisterPage() {
     setError(null);
 
     try {
-      // Determine the correct redirect URL based on environment
-      const isProduction = window.location.hostname !== 'localhost';
-      const redirectUrl = isProduction 
-        ? `https://api.docsflow.app/api/auth/google/callback`
-        : `${window.location.origin}/api/auth/google/callback`;
+      // Use environment variable for OAuth redirect URI to ensure consistency
+      // This prevents localhost redirect issues in production deployments
+      const redirectUrl = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI || 'https://api.docsflow.app/api/auth/google/callback';
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

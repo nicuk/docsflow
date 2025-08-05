@@ -1,6 +1,72 @@
 # **🏗️ ENTERPRISE ARCHITECTURE SPRINT PLAN**
 *AtomicArchitect-GEN9 Multi-Tenant SaaS Upgrade Specification*
 
+## **🎯 COMPLETE ENTERPRISE USER FLOW SPECIFICATION**
+
+### **📋 COMPREHENSIVE MULTI-TENANT ONBOARDING FLOW**
+
+#### **🔐 PHASE 1: USER REGISTRATION & AUTHENTICATION**
+1. **User Registration/Login** → `support@bitto.tech` creates account or logs in
+2. **Email-Based Intelligence** → System analyzes email domain (`@bitto.tech`) for company context
+3. **Onboarding Status Check** → Backend checks if user has `tenant_id` and `onboarding_completed`
+
+#### **🏢 PHASE 2: TENANT DISCOVERY & CREATION LOGIC**
+4. **Domain Intelligence** → System suggests subdomain based on email domain:
+
+#### **🆕 NEW TENANT CREATION PATH** - ✅ **COMPLETE**
+- ✅ **5-Question Business Onboarding**: Full implementation in `/app/onboarding/page.tsx`
+- ✅ **AI Persona Customization**: LLM-generated personas based on onboarding answers
+- ✅ **Subdomain Selection & Creation**: Domain selection component working
+- ✅ **Tenant Database Creation**: Full tenant record creation with admin privileges
+- ✅ **Admin Privileges Assignment**: `access_level: 'admin'` for first user
+- ✅ **Redirect to Tenant Dashboard**: Environment-aware routing logic
+
+#### **🏢 EXISTING TENANT JOIN PATH** - ✅ **COMPLETE**
+- ✅ **Invite System**: Complete invitation API (`/api/users/invite`)
+- ✅ **Admin Notification**: Email-based invitation system
+- ✅ **Admin Approval**: 5-level access control (`admin`, `user`, `viewer`, etc.)
+- ✅ **User Notification**: Professional email templates with Resend
+- ✅ **Invitation Acceptance**: `/api/invitations/[token]/accept` endpoint
+- ✅ **Access Request Flow**: Complete invitation workflow
+
+#### **🎛️ PHASE 3: ADMIN MANAGEMENT & PERMISSIONS** - ✅ **COMPLETE**
+- ✅ **User Management**: Admin dashboard with user listing
+- ✅ **Invite System**: Send email invites with custom access levels
+- ✅ **Access Level Control**: 5-tier permission system (1-5)
+- ✅ **Tenant Settings**: Company settings, branding, business hours
+- ✅ **Analytics**: Tenant-specific dashboard with metrics
+
+#### **🔒 PHASE 4: TENANT ISOLATION & SECURITY** - ✅ **COMPLETE**
+- ✅ **Subdomain Routing**: Middleware handles `{subdomain}.docsflow.app`
+- ✅ **Data Isolation**: Comprehensive RLS policies
+- ✅ **Permission Enforcement**: API routes validate access levels
+- ✅ **Multi-Tenant Analytics**: Tenant-specific data views
+
+---
+
+### **❌ CRITICAL GAPS CAUSING USER FLOW ISSUES**
+
+#### **🚨 ROOT CAUSE: Missing Email-Based Tenant Discovery**
+- **Problem**: `support@bitto.tech` should suggest `bitto` subdomain
+- **Current**: No email domain analysis for subdomain suggestions
+- **Impact**: Users don't get intelligent tenant recommendations
+
+#### **🚨 ROOT CAUSE: Broken Onboarding Redirect Logic**
+- **Problem**: Users with incomplete onboarding get "Demo User" instead of onboarding redirect
+- **Current**: Login API returns `onboarding_completed: false` but user still gets dashboard
+- **Impact**: Users bypass the 5-question onboarding flow
+
+#### **🚨 ROOT CAUSE: Frontend-Backend Integration Issues**
+- **Problem**: Frontend shows "Demo User" instead of real user data
+- **Current**: CORS errors blocking API calls, session management issues
+- **Impact**: User sees generic dashboard instead of personalized tenant experience
+14. **Subdomain Routing** → All tenant users access via `{subdomain}.docsflow.app`
+15. **Data Isolation** → RLS policies ensure tenant-specific data access only
+16. **Permission Enforcement** → API routes validate user access level for operations
+17. **Multi-Tenant Analytics** → Each tenant sees only their data/metrics
+
+---
+
 ## **📊 EXECUTIVE SUMMARY**
 
 **CRITICAL REVISION:** After comprehensive codebase analysis, your implementation is **significantly more advanced** than initially assessed.

@@ -3,7 +3,19 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:integration": "jest --testMatch='**/*.integration.test.{js,ts}'",
+    "test:api": "jest --testMatch='**/*.api.test.{js,ts}'",
+    "test:e2e:staging": "jest --testMatch='**/*.e2e.test.{js,ts}' --testEnvironment=node",
+    "test:smoke:production": "jest --testMatch='**/*.smoke.test.{js,ts}' --testEnvironment=node",
+    "migrate:test": "node scripts/test-migrations.js",
+    "migrate:prod": "node scripts/run-migrations.js",
+    "security:audit": "npm audit --audit-level=high",
+    "analyze": "ANALYZE=true npm run build"
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.22",
