@@ -40,8 +40,8 @@ export async function GET(request: NextRequest) {
           available: cachedData !== null,
           data: cachedData ? {
             subdomain: testTenant,
-            organization: cachedData.organizationName || cachedData.displayName,
-            industry: cachedData.industry,
+            organization: cachedData.displayName || 'Unknown Organization',
+            subscriptionTier: cachedData.subscriptionTier || 'demo',
             created: cachedData.createdAt
           } : null
         },

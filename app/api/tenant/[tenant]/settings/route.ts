@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateTenantMetadata, getSubdomainData } from '@/lib/subdomains';
 import { auditLogger, AUDIT_ACTIONS } from '@/lib/audit-logger';
+import { TenantSettings } from '@/lib/types/shared';
 
-interface TenantSettingsRequest {
-  displayName?: string;
-  contactEmail?: string;
-  aiEnabled?: boolean;
-  notifications?: boolean;
-  description?: string;
-}
+// ✅ CANONICAL: Using frontend-compatible types
+type TenantSettingsRequest = TenantSettings;
 
 export async function POST(
   request: NextRequest,

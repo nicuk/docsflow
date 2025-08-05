@@ -44,6 +44,43 @@
 
 ---
 
+## **🔄 CLEAN SLATE MIGRATION STRATEGY**
+
+### **📊 STRATEGIC ANALYSIS**
+
+#### **🚨 Root Cause Identified**
+- **Type System Schism**: Frontend uses `displayName` (SubdomainData), Backend uses `organizationName` (TenantSettings)
+- **Cascading Failures**: 37+ backend files affected by type mismatches
+- **Architecture Conflict**: Two incompatible data models forced together without proper integration layer
+
+#### **💡 Strategic Decision: Clean Slate Approach**
+- **Frontend as Canonical**: Working frontend defines all API contracts and data models
+- **Backend Adaptation**: Rebuild backend endpoints to serve frontend expectations exactly
+- **Type Unification**: Create shared contract layer based on frontend types
+- **Conflict Resolution**: Remove all backend code that conflicts with frontend standards
+
+### **🎯 IMPLEMENTATION ROADMAP**
+
+#### **Phase 1: Type System Unification** 🔄 IN PROGRESS
+- [ ] Extract canonical frontend API contracts from `Frontend-Data-Intelligence`
+- [ ] Create unified type definitions in `lib/types/shared.ts`
+- [ ] Document all frontend data models and API expectations
+- [ ] Establish frontend types as single source of truth
+
+#### **Phase 2: Backend Cleanup** 🔄 NEXT
+- [ ] Remove all conflicting backend type definitions
+- [ ] Delete or refactor 37+ files using `organizationName`
+- [ ] Align all backend APIs with frontend contracts
+- [ ] Implement data transformation layer if needed
+
+#### **Phase 3: Integration Verification** 🔄 PENDING
+- [ ] Test all user flows end-to-end
+- [ ] Verify session management integration
+- [ ] Confirm onboarding → dashboard flow works
+- [ ] Validate production deployment
+
+---
+
 ### **❌ CRITICAL GAPS CAUSING USER FLOW ISSUES**
 
 #### **🚨 ROOT CAUSE: Missing Email-Based Tenant Discovery**
