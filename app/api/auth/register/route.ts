@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { createServerClient } from '@/lib/supabase';
 import { getCORSHeaders } from '@/lib/utils';
 
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createServerClient();
+    const supabase = createServerClient(cookies());
 
     // Create user with Supabase Auth (regular signup, not admin)
     // Let Supabase Auth handle user existence validation

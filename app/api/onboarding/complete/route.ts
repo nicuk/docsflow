@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { createServerClient } from '@/lib/supabase';
 import { getCORSHeaders } from '@/lib/utils';
 
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createServerClient();
+    const supabase = createServerClient(cookies());
 
     // Step 2: Check if tenant already exists
     const { data: existingTenant, error: checkError } = await supabase

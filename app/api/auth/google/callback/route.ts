@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { createServerClient } from '@/lib/supabase';
 import { getCORSHeaders } from '@/lib/utils';
 
@@ -71,7 +72,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${process.env.FRONTEND_URL || 'https://docsflow.app'}?error=user_info_error`);
     }
 
-    const supabase = createServerClient();
+    const supabase = createServerClient(cookies());
 
     // Check if user exists
     let { data: existingUser, error: userLookupError } = await supabase
