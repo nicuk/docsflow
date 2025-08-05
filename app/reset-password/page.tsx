@@ -140,8 +140,8 @@ export default function ResetPasswordPage() {
               <Button asChild className="w-full">
                 <Link href="/forgot-password">Request New Reset Link</Link>
               </Button>
-              <div className="text-center">
-                <Link href="/login" className="text-blue-600 hover:text-blue-500 font-medium text-sm">
+              <div className="text-center text-sm">
+                <Link href="/login" className="text-blue-600 hover:text-blue-500 font-medium">
                   Back to Sign In
                 </Link>
               </div>
@@ -244,8 +244,8 @@ export default function ResetPasswordPage() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
-            <Link href="/login" className="text-blue-600 hover:text-blue-500 font-medium text-sm">
+          <div className="mt-6 text-center text-sm">
+            <Link href="/login" className="text-blue-600 hover:text-blue-500 font-medium">
               Back to Sign In
             </Link>
           </div>
