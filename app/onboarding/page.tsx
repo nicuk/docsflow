@@ -241,8 +241,15 @@ export default function OnboardingPage() {
         alert(`Onboarding complete! Your admin credentials:\n\nEmail: ${result.admin_credentials.email}\nPassword: ${result.admin_credentials.password}\n\nYou will be redirected to login.`);
       }
       
-      // Redirect to login page
-      window.location.href = result.redirect_url;
+      // Redirect based on environment
+      const isProduction = window.location.hostname !== 'localhost';
+      if (result.redirect_url && isProduction) {
+        // Production: use external redirect URL
+        window.location.href = result.redirect_url;
+      } else {
+        // Development: redirect to login page
+        window.location.href = '/login';
+      }
       
     } catch (error) {
       console.error('Onboarding submission error:', error);

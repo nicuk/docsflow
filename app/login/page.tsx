@@ -110,12 +110,26 @@ export default function LoginPage() {
       const result = await response.json();
       
       if (result.success) {
+        // Store user data in localStorage for session management
+        localStorage.setItem('user_session', JSON.stringify({
+          user: result.user,
+          timestamp: Date.now()
+        }));
+        
         // Check if user has completed onboarding
         if (result.user.onboarding_completed && result.user.tenant) {
           // User has completed onboarding, redirect to their tenant dashboard
-          window.location.href = `https://${result.user.tenant.subdomain}.docsflow.app/dashboard`;
+          // For development, use internal routing; for production, use external subdomain
+          const isProduction = window.location.hostname !== 'localhost';
+          if (isProduction) {
+            window.location.href = `https://${result.user.tenant.subdomain}.docsflow.app/dashboard`;
+          } else {
+            // Development: use internal tenant routing
+            router.push(`/app/${result.user.tenant.subdomain}/dashboard`);
+          }
         } else {
           // User hasn't completed onboarding, redirect to onboarding flow
+          console.log('🔄 Redirecting to onboarding - user needs to complete setup');
           router.push('/onboarding');
         }
       }
