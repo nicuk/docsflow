@@ -1,116 +1,175 @@
-'use client';
+"use client"
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { authClient } from '@/lib/auth-client';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 
 // Component that uses useSearchParams - must be wrapped in Suspense
 function AuthCallbackHandler() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Initialize Supabase client
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
+  const [message, setMessage] = useState('Processing authentication...');
 
   useEffect(() => {
-    const handleAuthCallback = async () => {
+    const handleCallback = async () => {
       try {
-        // Handle the auth callback
-        const { data, error } = await supabase.auth.getSession();
-        
+        const code = searchParams.get('code');
+        const error = searchParams.get('error');
+        const state = searchParams.get('state');
+
         if (error) {
-          throw error;
+          setStatus('error');
+          setMessage(`Authentication failed: ${error}`);
+          return;
         }
 
-        if (data.session) {
-          const user = data.session.user;
-          
-          // Check if user exists in our users table
-          const checkResponse = await fetch('/api/auth/check-user', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${data.session.access_token}`
-            },
-            body: JSON.stringify({
-              email: user.email,
-              user_id: user.id,
-              user_metadata: user.user_metadata
-            })
-          });
-
-          const checkResult = await checkResponse.json();
-
-          if (checkResult.success) {
-            if (checkResult.user.tenant) {
-              // User has a tenant, redirect to their dashboard
-              window.location.href = `https://${checkResult.user.tenant.subdomain}.docsflow.app/dashboard`;
-            } else {
-              // User exists but no tenant, redirect to onboarding
-              router.push('/onboarding');
-            }
-          } else {
-            // New user, redirect to onboarding
-            router.push('/onboarding');
-          }
-        } else {
-          // No session, redirect to login
-          router.push('/login');
+        if (!code) {
+          setStatus('error');
+          setMessage('No authorization code received');
+          return;
         }
+
+        // Verify state parameter
+        const storedState = localStorage.getItem('oauth-state');
+        if (state !== storedState) {
+          setStatus('error');
+          setMessage('Invalid state parameter');
+          return;
+        }
+
+        // Handle Supabase OAuth callback
+        const { supabase } = await import('@/lib/supabase');
+
+        // Exchange code for session
+        const { data, error: oauthError } = await supabase.auth.exchangeCodeForSession(code);
+
+        if (oauthError) {
+          console.error('Supabase OAuth error:', oauthError);
+          setStatus('error');
+          setMessage(oauthError.message || 'Failed to authenticate with Google');
+          return;
+        }
+
+        if (!data.user) {
+          setStatus('error');
+          setMessage('No user data received from Google');
+          return;
+        }
+
+        // Create user object in expected format
+        const user = {
+          id: data.user.id,
+          email: data.user.email || '',
+          access_token: data.session?.access_token || '',
+          refresh_token: data.session?.refresh_token || '',
+          tenant_id: null,
+          access_level: 3
+        };
+
+        // Store user data
+        localStorage.setItem('access_token', user.access_token);
+        localStorage.setItem('refresh_token', user.refresh_token);
+        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('user-email', user.email);
+        localStorage.setItem('signup-data', JSON.stringify({
+          email: user.email,
+          companyName: extractCompanyFromEmail(user.email),
+          authMethod: 'google'
+        }));
+
+        setStatus('success');
+        setMessage('Google authentication successful! Redirecting...');
+
+        // Redirect to onboarding for domain selection
+        setTimeout(() => {
+          router.push('/onboarding');
+        }, 1500);
+
       } catch (error) {
-        console.error('Auth callback error:', error);
-        setError(error instanceof Error ? error.message : 'Authentication failed');
-        setLoading(false);
+        console.error('OAuth callback error:', error);
+        setStatus('error');
+        setMessage('Authentication processing failed');
       }
     };
 
-    handleAuthCallback();
-  }, [router, supabase.auth]);
+    handleCallback();
+  }, [searchParams, router]);
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-red-600">Authentication Error</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <div className="flex items-center justify-center space-x-2 text-red-600">
-              <AlertCircle className="h-5 w-5" />
-              <p>{error}</p>
-            </div>
-            <p className="text-sm text-gray-600">
-              <a href="/login" className="text-blue-600 hover:text-blue-500">
-                Return to login
-              </a>
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Extract company name from email domain
+  const extractCompanyFromEmail = (email: string): string => {
+    const domain = email.split('@')[1];
+    if (!domain) return 'company';
+    
+    // Remove common email providers
+    const commonDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com'];
+    if (commonDomains.includes(domain.toLowerCase())) {
+      return email.split('@')[0]; // Use username part
+    }
+    
+    // Use domain name for business emails
+    return domain.split('.')[0];
+  };
+
+  const getIcon = () => {
+    switch (status) {
+      case 'processing':
+        return <Loader2 className="w-8 h-8 animate-spin text-blue-500" />;
+      case 'success':
+        return <CheckCircle className="w-8 h-8 text-green-500" />;
+      case 'error':
+        return <XCircle className="w-8 h-8 text-red-500" />;
+    }
+  };
+
+  const getStatusColor = () => {
+    switch (status) {
+      case 'processing':
+        return 'border-blue-200 bg-blue-50';
+      case 'success':
+        return 'border-green-200 bg-green-50';
+      case 'error':
+        return 'border-red-200 bg-red-50';
+    }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+      <Card className={`w-full max-w-md ${getStatusColor()}`}>
         <CardHeader className="text-center">
-          <CardTitle>Completing Sign In</CardTitle>
-        </CardHeader>
-        <CardContent className="text-center space-y-4">
-          <div className="flex justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <div className="flex justify-center mb-4">
+            {getIcon()}
           </div>
-          <p className="text-gray-600">
-            Please wait while we complete your authentication...
-          </p>
-        </CardContent>
+          <CardTitle className="text-xl">
+            {status === 'processing' && 'Completing Sign In'}
+            {status === 'success' && 'Welcome to DocsFlow!'}
+            {status === 'error' && 'Sign In Failed'}
+          </CardTitle>
+          <CardDescription>
+            {message}
+          </CardDescription>
+        </CardHeader>
+        
+        {status === 'error' && (
+          <CardContent className="text-center">
+            <button
+              onClick={() => router.push('/login')}
+              className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </CardContent>
+        )}
+        
+        {status === 'success' && (
+          <CardContent className="text-center">
+            <p className="text-sm text-gray-600">
+              Taking you to the setup process...
+            </p>
+          </CardContent>
+        )}
       </Card>
     </div>
   );
@@ -119,19 +178,17 @@ function AuthCallbackHandler() {
 // Loading component for Suspense fallback
 function AuthCallbackLoading() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md border-blue-200 bg-blue-50">
         <CardHeader className="text-center">
-          <CardTitle>Loading...</CardTitle>
-        </CardHeader>
-        <CardContent className="text-center space-y-4">
-          <div className="flex justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <div className="flex justify-center mb-4">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
           </div>
-          <p className="text-gray-600">
+          <CardTitle className="text-xl">Loading...</CardTitle>
+          <CardDescription>
             Preparing authentication...
-          </p>
-        </CardContent>
+          </CardDescription>
+        </CardHeader>
       </Card>
     </div>
   );

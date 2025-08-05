@@ -1,0 +1,77 @@
+/* Spotlight color configurations */
+:root {
+  --spotlight-primary-light: rgba(36, 101, 237, 0.2);
+  --spotlight-primary-dark: rgba(36, 101, 237, 0.25);
+  --spotlight-pink-light: rgba(236, 72, 153, 0.15);
+  --spotlight-pink-dark: rgba(236, 72, 153, 0.2);
+  --spotlight-green-light: rgba(16, 185, 129, 0.15);
+  --spotlight-green-dark: rgba(16, 185, 129, 0.2);
+  --spotlight-purple-light: rgba(168, 85, 247, 0.15);
+  --spotlight-purple-dark: rgba(168, 85, 247, 0.2);
+  --spotlight-yellow-light: rgba(251, 191, 36, 0.15);
+  --spotlight-yellow-dark: rgba(251, 191, 36, 0.2);
+}
+
+.spotlight-primary {
+  background: radial-gradient(circle, var(--spotlight-primary-light) 0%, transparent 70%);
+  width: 1000px;
+  height: 1000px;
+  border-radius: 50%;
+}
+
+.spotlight-secondary {
+  background: radial-gradient(circle, var(--spotlight-pink-light) 0%, transparent 70%);
+  width: 800px;
+  height: 800px;
+  border-radius: 50%;
+  left: 20%;
+  top: 30%;
+}
+
+.spotlight-tertiary {
+  background: radial-gradient(circle, var(--spotlight-green-light) 0%, transparent 70%);
+  width: 700px;
+  height: 700px;
+  border-radius: 50%;
+  right: 20%;
+  bottom: 30%;
+}
+
+.spotlight-purple {
+  background: radial-gradient(circle, var(--spotlight-purple-light) 0%, transparent 70%);
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  left: 60%;
+  top: 20%;
+}
+
+.spotlight-yellow {
+  background: radial-gradient(circle, var(--spotlight-yellow-light) 0%, transparent 70%);
+  width: 550px;
+  height: 550px;
+  border-radius: 50%;
+  left: 30%;
+  bottom: 15%;
+}
+
+/* Dark theme variants */
+[data-theme="dark"] .spotlight-primary {
+  background: radial-gradient(circle, var(--spotlight-primary-dark) 0%, transparent 70%);
+}
+
+[data-theme="dark"] .spotlight-secondary {
+  background: radial-gradient(circle, var(--spotlight-pink-dark) 0%, transparent 70%);
+}
+
+[data-theme="dark"] .spotlight-tertiary {
+  background: radial-gradient(circle, var(--spotlight-green-dark) 0%, transparent 70%);
+}
+
+[data-theme="dark"] .spotlight-purple {
+  background: radial-gradient(circle, var(--spotlight-purple-dark) 0%, transparent 70%);
+}
+
+[data-theme="dark"] .spotlight-yellow {
+  background: radial-gradient(circle, var(--spotlight-yellow-dark) 0%, transparent 70%);
+}

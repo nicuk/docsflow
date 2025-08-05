@@ -1,5 +1,6 @@
-import { createBrowserClient, createServerClient as createSSRServerClient } from '@supabase/ssr'
+import { createBrowserClient, createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
+import { cookies } from 'next/headers'
 
 // Browser client for client-side operations
 export const createSupabaseClient = () => {
@@ -21,29 +22,11 @@ export const getSupabaseClient = () => {
   );
 };
 
-// Server client for server-side operations
-export const createServerClient = (cookies: any) => {
-  return createSSRServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookies.get(name)?.value
-        },
-        set(name: string, value: string, options: any) {
-          cookies.set({ name, value, ...options })
-        },
-        remove(name: string, options: any) {
-          cookies.set({ name, value: '', ...options })
-        },
-      },
-    }
-  )
-}
-
 // Export the client instance
 export const supabase = getSupabaseClient();
+
+// Server client for SSR operations
+export { createServerClient }
 
 // Export default browser client
 export default createSupabaseClient()

@@ -1,0 +1,11 @@
+.grid-background {
+  background-image: linear-gradient(to right, rgba(36, 101, 237, 0.2) 0.5px, transparent 0.5px),
+    linear-gradient(to bottom, rgba(36, 101, 237, 0.2) 0.5px, transparent 0.5px);
+  background-size: 80px 80px;
+  mask-image: radial-gradient(circle at center, transparent 20%, black 70%);
+  -webkit-mask-image: radial-gradient(circle at center, transparent 20%, black 70%);
+}
+
+.grid-gradient {
+  background: radial-gradient(70% 70% at 50% 50%, transparent 0%, rgba(36, 101, 237, 0.05) 100%);
+}
