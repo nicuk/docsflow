@@ -32,7 +32,7 @@ import {
   X,
   Settings,
 } from "lucide-react"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import { BarChart } from "@tremor/react"
 
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -805,17 +805,13 @@ export default function SettingsPage() {
                         },
                       }}
                     >
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={usageData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
-                          <YAxis />
-                          <Tooltip content={<ChartTooltipContent />} />
-                          <Bar dataKey="documents" fill="var(--color-documents)" />
-                          <Bar dataKey="apiCalls" fill="var(--color-apiCalls)" />
-                          <Bar dataKey="storage" fill="var(--color-storage)" />
-                        </BarChart>
-                      </ResponsiveContainer>
+                      <BarChart
+                        data={usageData}
+                        index="name"
+                        categories={["documents", "apiCalls", "storage"]}
+                        colors={["blue", "green", "orange"]}
+                        className="h-full w-full"
+                      />
                     </ChartContainer>
                   </div>
                 </div>

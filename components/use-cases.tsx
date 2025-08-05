@@ -77,10 +77,10 @@ export default function UseCases() {
       y: 0,
       transition: {
         duration: 0.5,
-        ease: "easeOut",
+        ease: "easeOut" as const,
       },
     },
-  }
+  } as const
 
   return (
     <section id="use-cases" className="py-20 bg-gradient-to-b from-background to-muted/30 dark:from-background dark:to-muted/10 border-t border-b border-border/50">
