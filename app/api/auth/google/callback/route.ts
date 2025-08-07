@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: userData.email,
         user_metadata: {
-          full_name: userData.name,
+          name: userData.name,
           picture: userData.picture,
           provider: 'google',
           google_id: userData.id
@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
         .insert({
           id: userId,
           email: userData.email,
-          full_name: userData.name,
+          name: userData.name,
           avatar_url: userData.picture,
           provider: 'google',
           google_id: userData.id,

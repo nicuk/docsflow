@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       .select(`
         id,
         email,
-        full_name,
+        name,
         tenant_id,
         access_level,
         role,
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
       success: true,
       id: userData.id,
       email: userData.email,
-      fullName: userData.full_name,
+      fullName: userData.name,
       tenantId: userData.tenant_id,
       accessLevel: userData.access_level,
       role: userData.role,
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
       .select(`
         id,
         email,
-        full_name,
+        name,
         tenant_id,
         access_level,
         role,
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
           user: {
             id: existingUser.id,
             email: existingUser.email,
-            full_name: existingUser.full_name,
+            name: existingUser.name,
             tenant_id: existingUser.tenant_id,
             access_level: existingUser.access_level,
             role: existingUser.role,
@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
         .insert({
           id: user_id,
           email: email,
-          full_name: user_metadata?.full_name || user_metadata?.name || email.split('@')[0],
+          name: user_metadata?.full_name || user_metadata?.name || email.split('@')[0],
           avatar_url: user_metadata?.picture || user_metadata?.avatar_url,
           provider: 'google',
           google_id: user_metadata?.sub || user_metadata?.id,
@@ -214,7 +214,7 @@ export async function POST(request: NextRequest) {
           user: {
             id: user_id,
             email: email,
-            full_name: user_metadata?.full_name || user_metadata?.name || email.split('@')[0],
+            name: user_metadata?.full_name || user_metadata?.name || email.split('@')[0],
             tenant_id: null,
             access_level: 3,
             role: 'user',

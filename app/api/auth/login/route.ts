@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
       .select(`
         id,
         email,
-        full_name,
+        name,
         tenant_id,
         access_level,
         role,
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
       user: {
         id: authData.user.id,
         email: authData.user.email,
-        full_name: userProfile?.full_name,
+        fullName: userProfile?.name,
         access_token: authData.session.access_token,
         refresh_token: authData.session.refresh_token,
         tenant_id: userProfile?.tenant_id,

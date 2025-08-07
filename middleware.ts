@@ -47,12 +47,20 @@ export default function middleware(request: NextRequest) {
     // Route tenant subdomains to the tenant-specific dashboard
     if (tenant) {
 
-      // If root path, allow tenant dashboard access
-      // Onboarding checks are handled by login component and dashboard pages
+      // If root path, check if user has completed onboarding
       if (pathname === '/' || pathname === '') {
-        const response = NextResponse.rewrite(new URL(`/app/${tenant}/dashboard`, request.url));
-        response.headers.set('x-tenant-id', tenant);
-        return createSecureResponse(response, origin);
+        // Check onboarding completion from cookies
+        const onboardingComplete = request.cookies.get('onboarding-complete')?.value === 'true';
+        
+        if (onboardingComplete) {
+          // User has completed onboarding - allow dashboard access
+          const response = NextResponse.rewrite(new URL(`/app/${tenant}/dashboard`, request.url));
+          response.headers.set('x-tenant-id', tenant);
+          return createSecureResponse(response, origin);
+        } else {
+          // User hasn't completed onboarding - redirect to onboarding
+          return NextResponse.redirect(new URL('/onboarding', request.url));
+        }
       }
       // Otherwise, preserve the path structure
       const response = NextResponse.rewrite(new URL(`/app/${tenant}${pathname}`, request.url));
