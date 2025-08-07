@@ -91,23 +91,67 @@ export default function OnboardingFlow() {
   const [customPersonality, setCustomPersonality] = useState<any>(null);
   const [onboardingData, setOnboardingData] = useState<any>(null);
 
-  // Load onboarding data from localStorage
+  // Authentication and onboarding data loading
   React.useEffect(() => {
-    const storedData = localStorage.getItem('onboarding-data');
-    const signupData = localStorage.getItem('signup-data');
-    
-    if (storedData) {
-      setOnboardingData(JSON.parse(storedData));
-    } else if (signupData) {
-      // Use signup data if no onboarding data exists
-      const parsedSignupData = JSON.parse(signupData);
-      setOnboardingData({
-        organizationName: parsedSignupData.companyName,
-        subdomain: parsedSignupData.companyName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'company',
-        industry: 'general',
-        email: parsedSignupData.email
-      });
-    }
+    const checkAuthAndLoadData = async () => {
+      try {
+        // First, verify user is authenticated
+        const response = await fetch('/api/auth/check-user', {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          // User not authenticated, redirect to login
+          console.log('User not authenticated, redirecting to login');
+          window.location.href = '/login';
+          return;
+        }
+
+        const userData = await response.json();
+        
+        // Check if user already completed onboarding
+        if (userData.onboardingComplete && userData.tenantId) {
+          console.log('User already completed onboarding, redirecting to dashboard');
+          window.location.href = '/dashboard';
+          return;
+        }
+
+        // Load onboarding data from localStorage or user data
+        const storedData = localStorage.getItem('onboarding-data');
+        const signupData = localStorage.getItem('signup-data');
+        
+        if (storedData) {
+          setOnboardingData(JSON.parse(storedData));
+        } else if (signupData) {
+          // Use signup data if no onboarding data exists
+          const parsedSignupData = JSON.parse(signupData);
+          setOnboardingData({
+            organizationName: parsedSignupData.companyName,
+            subdomain: parsedSignupData.companyName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'company',
+            industry: 'general',
+            email: parsedSignupData.email || userData.email,
+            userId: userData.id
+          });
+        } else {
+          // Fallback to user data from backend
+          setOnboardingData({
+            organizationName: userData.tenant?.name || 'Your Company',
+            subdomain: userData.tenant?.subdomain || 'company',
+            industry: userData.tenant?.industry || 'general',
+            email: userData.email,
+            userId: userData.id
+          });
+        }
+        
+      } catch (error) {
+        console.error('Authentication check failed:', error);
+        // On error, redirect to login
+        window.location.href = '/login';
+      }
+    };
+
+    checkAuthAndLoadData();
   }, []);
 
   // Variables moved to render section to avoid duplication
