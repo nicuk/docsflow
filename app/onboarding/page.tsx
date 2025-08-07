@@ -96,26 +96,41 @@ export default function OnboardingFlow() {
     const checkAuthAndLoadData = async () => {
       try {
         // First, verify user is authenticated
+        console.log('🔍 Checking user authentication...');
         const response = await fetch('/api/auth/check-user', {
           method: 'GET',
           credentials: 'include',
         });
 
+        console.log('🔍 Auth check response status:', response.status);
+        console.log('🔍 Auth check response ok:', response.ok);
+        
         if (!response.ok) {
+          // Get error details for debugging
+          const errorText = await response.text();
+          console.error('❌ Auth check failed:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorText
+          });
+          
           // User not authenticated, redirect to login
-          console.log('User not authenticated, redirecting to login');
+          console.log('❌ User not authenticated, redirecting to login');
           window.location.href = '/login';
           return;
         }
 
         const userData = await response.json();
+        console.log('✅ Auth check successful, user data:', userData);
         
         // Check if user already completed onboarding
         if (userData.onboardingComplete && userData.tenantId) {
-          console.log('User already completed onboarding, redirecting to dashboard');
+          console.log('✅ User already completed onboarding, redirecting to dashboard');
           window.location.href = '/dashboard';
           return;
         }
+        
+        console.log('🔄 User needs onboarding, proceeding with onboarding flow...');
 
         // Load onboarding data from localStorage or user data
         const storedData = localStorage.getItem('onboarding-data');
