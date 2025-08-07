@@ -51,12 +51,10 @@ export async function GET(request: NextRequest) {
         tenant_id,
         access_level,
         role,
-
         tenants (
           id,
           name,
           subdomain,
-          industry,
           industry
         )
       `)

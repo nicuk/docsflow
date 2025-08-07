@@ -250,15 +250,25 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <Card>
+    <div className="w-full max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="text-center space-y-2">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Welcome to DocsFlow!
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Let's get your organization set up
+        </p>
+      </div>
+
+      <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Building className="w-6 h-6" />
+            <Building className="h-5 w-5" />
             Choose Your Domain
           </CardTitle>
           <CardDescription>
-            Select a professional subdomain for {companyName || 'your organization'}
+            Select a professional subdomain for your organization
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
