@@ -45,6 +45,15 @@ export async function POST(request: NextRequest) {
       email,
       password
     });
+    
+    // CRITICAL FIX: Ensure session is properly set
+    if (authData.session) {
+      // Manually set the session to ensure cookies are set
+      await supabase.auth.setSession({
+        access_token: authData.session.access_token,
+        refresh_token: authData.session.refresh_token
+      });
+    }
 
     if (authError) {
       console.error('Login error:', authError);
@@ -101,12 +110,10 @@ export async function POST(request: NextRequest) {
         tenant_id,
         access_level,
         role,
-
         tenants (
           id,
           subdomain,
           name,
-          industry,
           industry,
           custom_persona
         )
@@ -123,14 +130,16 @@ export async function POST(request: NextRequest) {
     // Since onboarding_complete column doesn't exist, check if user has tenant_id
     const hasCompletedOnboarding = userProfile?.tenant_id ? true : false;
     
-    return NextResponse.json({
+    // CRITICAL FIX: Set the session cookies for Supabase Auth
+    // This is what was missing - the session needs to be stored in cookies
+    // so that subsequent API calls can authenticate properly
+    
+    const response = NextResponse.json({
       success: true,
       user: {
         id: authData.user.id,
         email: authData.user.email,
         fullName: userProfile?.name,
-        access_token: authData.session.access_token,
-        refresh_token: authData.session.refresh_token,
         tenant_id: userProfile?.tenant_id,
         access_level: userProfile?.access_level,
         role: userProfile?.role,
@@ -145,6 +154,18 @@ export async function POST(request: NextRequest) {
       },
       message: 'Login successful'
     }, { headers: corsHeaders });
+    
+    // Set onboarding completion cookie for middleware
+    if (hasCompletedOnboarding) {
+      response.cookies.set('onboarding-complete', 'true', {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 30 // 30 days
+      });
+    }
+    
+    return response;
 
   } catch (error: any) {
     console.error('Login API error:', error);
