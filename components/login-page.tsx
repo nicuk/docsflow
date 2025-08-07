@@ -82,38 +82,54 @@ export default function LoginPage() {
     setErrors({})
 
     try {
-      // Import auth client
-      const { authClient } = await import('@/lib/auth-client')
+      // FIXED: Use Supabase directly instead of custom API
+      const { createSupabaseClient } = await import('@/lib-frontend/supabase')
+      const supabase = createSupabaseClient()
       
-      // Attempt real login
-      const response = await authClient.login(formData.email, formData.password)
+      // Direct Supabase authentication - this handles session cookies automatically
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password
+      })
       
-      console.log("Login successful for:", formData.email)
-      setIsSuccess(true)
-      
-      // CRITICAL FIX: Store user data in session storage for dashboard
-      sessionStorage.setItem('user', JSON.stringify(response.user))
-      
-      // Check if user needs onboarding
-      if (!(response.user as any)?.onboarding_complete) {
-        // Redirect to onboarding first
-        setTimeout(() => {
-          router.push('/onboarding')
-        }, 1500)
+      if (error) {
+        console.error('Supabase auth error:', error)
+        setErrors({
+          general: error.message || "Invalid email or password"
+        })
         return
       }
       
-      // Redirect to tenant dashboard if available
-      const tenantSubdomain = response.user?.tenant?.subdomain
-      if (tenantSubdomain) {
-        setTimeout(() => {
-          window.location.href = `https://${tenantSubdomain}.docsflow.app/dashboard`
-        }, 1500)
-      } else {
-        // Fallback to main dashboard
-        setTimeout(() => {
-          router.push('/dashboard')
-        }, 1500)
+      if (data.user) {
+        setIsSuccess(true)
+        
+        // Check user's onboarding status from database
+        const { data: userProfile } = await supabase
+          .from('users')
+          .select('tenant_id, tenants(subdomain)')
+          .eq('id', data.user.id)
+          .single()
+        
+        // Check if user needs to complete onboarding
+        if (!userProfile?.tenant_id) {
+          setTimeout(() => {
+            router.push('/onboarding')
+          }, 1500)
+          return
+        }
+        
+        // Redirect to tenant dashboard if available
+        const tenantSubdomain = (userProfile.tenants as any)?.subdomain
+        if (tenantSubdomain) {
+          setTimeout(() => {
+            window.location.href = `https://${tenantSubdomain}.docsflow.app/dashboard`
+          }, 1500)
+        } else {
+          // Fallback to main dashboard
+          setTimeout(() => {
+            router.push('/dashboard')
+          }, 1500)
+        }
       }
       
     } catch (error) {
