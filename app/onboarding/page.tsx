@@ -97,26 +97,57 @@ export default function OnboardingFlow() {
       try {
         // First, verify user is authenticated
         console.log('🔍 Checking user authentication...');
-        const response = await fetch('/api/auth/check-user', {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        console.log('🔍 Auth check response status:', response.status);
-        console.log('🔍 Auth check response ok:', response.ok);
         
-        if (!response.ok) {
-          // Get error details for debugging
-          const errorText = await response.text();
-          console.error('❌ Auth check failed:', {
-            status: response.status,
-            statusText: response.statusText,
-            error: errorText
+        // Add retry logic for session persistence issues
+        let response: Response | null = null;
+        let retryCount = 0;
+        const maxRetries = 3;
+        
+        while (retryCount < maxRetries) {
+          response = await fetch('/api/auth/check-user', {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
           });
           
-          // User not authenticated, redirect to login
-          console.log('❌ User not authenticated, redirecting to login');
-          window.location.href = '/login';
+          console.log(`🔍 Auth check attempt ${retryCount + 1}:`, {
+            status: response?.status,
+            ok: response?.ok
+          });
+          
+          if (response?.ok) {
+            break;
+          }
+          
+          // If 401 and we have retries left, wait and retry
+          if (response?.status === 401 && retryCount < maxRetries - 1) {
+            console.log(`⏳ Auth failed, retrying in ${(retryCount + 1) * 500}ms...`);
+            await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 500));
+            retryCount++;
+            continue;
+          }
+          
+          break;
+        }
+        
+        if (!response || !response.ok) {
+          // Get error details for debugging
+          const errorText = response ? await response.text() : 'No response received';
+          console.error('❌ Auth check failed after retries:', {
+            status: response?.status || 'unknown',
+            statusText: response?.statusText || 'unknown',
+            error: errorText,
+            retries: retryCount + 1
+          });
+          
+          // Check if we're already on login page to prevent redirect loop
+          if (window.location.pathname !== '/login') {
+            console.log('❌ User not authenticated, redirecting to login');
+            window.location.href = '/login';
+          }
           return;
         }
 
