@@ -78,8 +78,13 @@ export function extractTenantFromRequest(request: NextRequest): string {
   
   // Handle various deployment scenarios
   if (subdomain === 'localhost' || subdomain.includes('ai-lead-router-saas')) {
-    return 'demo'; // Default tenant for testing
+    // For local development, extract from path or use default
+    const pathSegments = url.pathname.split('/');
+    if (pathSegments[1] && pathSegments[1] !== 'api') {
+      return pathSegments[1]; // Use path-based tenant for local dev
+    }
+    return 'main'; // Default for main domain
   }
   
   return subdomain;
-} 
+}

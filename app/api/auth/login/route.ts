@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
           subdomain,
           name,
           industry,
-          business_type,
+          industry,
           custom_persona
         )
       `)
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
           subdomain: userProfile.tenants[0].subdomain,
           name: userProfile.tenants[0].name,
           industry: userProfile.tenants[0].industry,
-          business_type: userProfile.tenants[0].business_type
+          businessType: userProfile.tenants[0].industry
         } : null,
         onboarding_complete: hasCompletedOnboarding
       },

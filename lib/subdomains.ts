@@ -29,19 +29,41 @@ export async function getSubdomainData(
 ): Promise<SubdomainData | null> {
   const sanitized = sanitizeSubdomain(subdomain);
   
-  // For MVP, return demo data for any subdomain
-  // This will be replaced with real Redis integration later
-  return {
-    emoji: '🏢',
-    createdAt: Date.now(),
-    leadCount: 0,
-    lastActivity: Date.now(),
-    aiEnabled: true,
-    subscriptionTier: 'demo',
-    settings: {},
-    contactEmail: 'demo@example.com',
-    displayName: `Demo Tenant (${sanitized})`
-  };
+  // Enterprise mode: Query real tenant data from database
+  try {
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    
+    const { data: tenant, error } = await supabase
+      .from('tenants')
+      .select('*')
+      .eq('subdomain', sanitized)
+      .single();
+    
+    if (error || !tenant) {
+      // No tenant found - return null to indicate invalid subdomain
+      return null;
+    }
+    
+    return {
+      emoji: '🏢',
+      createdAt: new Date(tenant.created_at).getTime(),
+      leadCount: 0, // TODO: Query actual lead count
+      lastActivity: new Date(tenant.updated_at).getTime(),
+      aiEnabled: true,
+      subscriptionTier: tenant.plan_type || 'starter',
+      settings: tenant.settings || {},
+      contactEmail: tenant.email_config?.contact_email || 'contact@' + sanitized + '.com',
+      displayName: tenant.name
+    };
+  } catch (error) {
+    console.error('Error fetching tenant data:', error);
+    return null;
+  }
 }
 
 export async function getAllSubdomains() {

@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
           name,
           subdomain,
           industry,
-          business_type
+          industry
         )
       `)
       .eq('id', user.id)
@@ -87,13 +87,13 @@ export async function GET(request: NextRequest) {
       role: userData.role,
       onboardingComplete: userData.onboarding_complete || false,
       industry: tenantData?.industry || 'general',
-      businessType: tenantData?.business_type || 'General Business',
+      businessType: tenantData?.industry || 'general',
       tenant: tenantData ? {
         id: tenantData.id,
         name: tenantData.name,
         subdomain: tenantData.subdomain,
         industry: tenantData.industry,
-        businessType: tenantData.business_type
+        businessType: tenantData.industry
       } : null
     }, { headers: corsHeaders });
 

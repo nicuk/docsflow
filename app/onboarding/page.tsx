@@ -80,7 +80,7 @@ const GENERIC_QUESTIONS = [
 ];
 
 export default function OnboardingFlow() {
-  const [currentStep, setCurrentStep] = useState(0); // 0 = questions, 1 = domain selection
+  const [currentStep, setCurrentStep] = useState(0); // 0 = domain selection, 1 = questions (only for new tenants)
   const [selectedDomain, setSelectedDomain] = useState('');
   const [isJoiningExisting, setIsJoiningExisting] = useState(false);
   const [userRole, setUserRole] = useState<'admin' | 'user' | 'technician'>('admin');
@@ -205,47 +205,35 @@ export default function OnboardingFlow() {
     }
   };
 
-  // Join existing tenant workflow
+  // Request invitation to existing tenant (per Enterprise Architecture Plan)
   const joinExistingTenant = async (domain: string) => {
     try {
-      const { authClient } = await import('@/lib/auth-client');
-      const authHeaders = authClient.getAuthHeaders();
-      const userEmail = localStorage.getItem('user-email') || '';
-      
-      const response = await fetch(`https://api.docsflow.app/api/tenant/${domain}/join`, {
-        method: 'POST',
-        headers: {
-          ...authHeaders,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: userEmail,
-          role: 'technician' // Default role for joiners
-        })
+      // Get user data for invitation request
+      const response = await fetch('/api/auth/check-user', {
+        method: 'GET',
+        credentials: 'include',
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        
-        // Set completion cookies
-        document.cookie = 'onboarding-complete=true; path=/; secure; samesite=strict';
-        document.cookie = `tenant-id=${domain}; path=/; secure; samesite=strict`;
-        
-        // Redirect to tenant dashboard
-        window.location.href = `https://${domain}.docsflow.app/dashboard`;
-      } else {
-        throw new Error('Failed to join tenant');
+      if (!response.ok) {
+        throw new Error('User not authenticated');
       }
-    } catch (error) {
-      console.error('Failed to join existing tenant:', error);
-      // Fallback: continue to onboarding with limited role
-      setCurrentStep(1);
-      setOnboardingData((prev: any) => ({
-        ...prev,
+
+      const userData = await response.json();
+      
+      // Store invitation request data
+      localStorage.setItem('invitation-request', JSON.stringify({
         subdomain: domain,
-        isNewTenant: false,
-        userRole: 'technician'
+        userEmail: userData.email,
+        companyName: onboardingData?.organizationName || 'Unknown Company',
+        requestType: 'join_existing'
       }));
+      
+      // Redirect to invitation request page
+      window.location.href = `/invite-request?subdomain=${domain}`;
+      
+    } catch (error) {
+      console.error('Failed to request invitation:', error);
+      alert('Unable to request invitation. Please try again or contact support.');
     }
   };
 
@@ -795,8 +783,8 @@ const tenantAssignment = {
     );
   }
 
-// Show domain selection on step 1
-  if (currentStep === 1) {
+// Show domain selection on step 0 (FIRST STEP per Enterprise Architecture Plan)
+  if (currentStep === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-4xl">
