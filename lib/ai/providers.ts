@@ -13,7 +13,7 @@ const isTestEnvironment = Boolean(
 // Mock provider for development when no API key
 const mockProvider = {
   generatePersona: async (prompt: string) => {
-    console.log('🔄 Using mock AI provider (no GOOGLE_AI_API_KEY)');
+    console.log('🔄 Using mock AI provider (no GOOGLE_GENERATIVE_AI_API_KEY)');
     return {
       role: "Business Intelligence Assistant",
       tone: "Professional and helpful", 
@@ -63,8 +63,8 @@ export const aiProvider = (() => {
   }
   
   // If no API key, use mock
-  if (!process.env.GOOGLE_AI_API_KEY) {
-    console.warn('⚠️ GOOGLE_AI_API_KEY not found - using mock AI provider');
+  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+    console.warn('⚠️ GOOGLE_GENERATIVE_AI_API_KEY not found - using mock AI provider');
     return mockProvider;
   }
   
@@ -75,5 +75,5 @@ export const aiProvider = (() => {
 
 // Helper function to check if real AI is available
 export const isRealAIAvailable = () => {
-  return !isTestEnvironment && Boolean(process.env.GOOGLE_AI_API_KEY);
+  return !isTestEnvironment && Boolean(process.env.GOOGLE_GENERATIVE_AI_API_KEY);
 };

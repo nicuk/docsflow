@@ -38,6 +38,26 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseClient();
 
+    // Map industry to allowed database values
+    const mapIndustryToDbValue = (industry: string): string => {
+      const industryMap: Record<string, string> = {
+        'healthcare': 'general',
+        'technology': 'general',
+        'automotive': 'motorcycle_dealer',
+        'motorcycle_dealer': 'motorcycle_dealer',
+        'warehouse_distribution': 'warehouse_distribution',
+        'logistics': 'warehouse_distribution',
+        'manufacturing': 'warehouse_distribution',
+        'retail': 'general',
+        'finance': 'general',
+        'education': 'general',
+        'consulting': 'general'
+      };
+      return industryMap[industry.toLowerCase()] || 'general';
+    };
+
+    const mappedIndustry = mapIndustryToDbValue(tenantAssignment.industry);
+
     // Step 1: Generate LLM persona from onboarding responses using proper AI SDK
     let customPersona = null;
     
@@ -100,7 +120,7 @@ Make it specific to their business type and challenges. Be concise but comprehen
       .insert({
         subdomain: tenantAssignment.subdomain,
         name: tenantAssignment.businessType,
-        industry: tenantAssignment.industry,
+        industry: mappedIndustry,
         custom_persona: customPersona,
         subscription_status: 'trial',
         plan_type: 'starter',

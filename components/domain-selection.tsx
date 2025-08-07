@@ -251,15 +251,7 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Welcome to DocsFlow!
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Let's get your organization set up
-        </p>
-      </div>
+
 
       <Card className="w-full">
         <CardHeader>
