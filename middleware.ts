@@ -54,7 +54,7 @@ export default function middleware(request: NextRequest) {
         
         if (onboardingComplete) {
           // User has completed onboarding - allow dashboard access
-          const response = NextResponse.rewrite(new URL(`/app/${tenant}/dashboard`, request.url));
+          const response = NextResponse.rewrite(new URL(`/dashboard`, request.url));
           response.headers.set('x-tenant-id', tenant);
           return createSecureResponse(response, origin);
         } else {
@@ -62,8 +62,15 @@ export default function middleware(request: NextRequest) {
           return NextResponse.redirect(new URL('/onboarding', request.url));
         }
       }
-      // Otherwise, preserve the path structure
-      const response = NextResponse.rewrite(new URL(`/app/${tenant}${pathname}`, request.url));
+      // Otherwise, preserve the path structure for tenant routes
+      // Map tenant paths to actual app routes
+      let targetPath = pathname;
+      if (pathname.startsWith('/dashboard')) {
+        targetPath = pathname; // Keep dashboard paths as-is
+      } else if (pathname === '/') {
+        targetPath = '/dashboard'; // Root goes to dashboard
+      }
+      const response = NextResponse.rewrite(new URL(targetPath, request.url));
 
       // 🚨 Inject the tenant ID into the request headers for frontend context
       response.headers.set('x-tenant-id', tenant);
