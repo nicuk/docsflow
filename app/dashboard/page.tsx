@@ -58,36 +58,62 @@ export default function DashboardPage() {
   const [tenantContext, setTenantContext] = useState<TenantContext | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load tenant context on mount
+  // Load tenant context and check onboarding completion
   useEffect(() => {
-    const loadTenantContext = () => {
+    const loadTenantContext = async () => {
       try {
-        // Get tenant ID from cookie
-        const tenantId = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('tenant-id='))
-          ?.split('=')[1]
+        // Check user authentication and onboarding status from backend
+        const response = await fetch('/api/auth/check-user', {
+          method: 'GET',
+          credentials: 'include',
+        });
 
-        if (tenantId) {
-          // Try to load stored context
-          const storedContext = localStorage.getItem(`tenant-${tenantId}`)
-          
-          if (storedContext) {
-            setTenantContext(JSON.parse(storedContext))
-          } else {
-            // Redirect to onboarding if no context exists
-            window.location.href = '/onboarding'
-            return
-          }
+        if (!response.ok) {
+          // User not authenticated, redirect to login
+          window.location.href = '/login';
+          return;
         }
+
+        const userData = await response.json();
+        
+        // Check if user has completed onboarding
+        if (!userData.onboardingComplete) {
+          console.log('User has not completed onboarding, redirecting...');
+          window.location.href = '/onboarding';
+          return;
+        }
+
+        // Check if user has a tenant association
+        if (!userData.tenantId) {
+          console.log('User has no tenant association, redirecting to onboarding...');
+          window.location.href = '/onboarding';
+          return;
+        }
+
+        // Set tenant context from backend data
+        const context: TenantContext = {
+          tenantId: userData.tenantId,
+          industry: userData.industry || 'general',
+          businessType: userData.businessType || 'General Business',
+          accessLevel: userData.accessLevel || 1,
+          onboardingComplete: userData.onboardingComplete
+        };
+
+        setTenantContext(context);
+        
+        // Store context in localStorage for faster subsequent loads
+        localStorage.setItem(`tenant-${userData.tenantId}`, JSON.stringify(context));
+        
       } catch (error) {
-        console.error('Failed to load tenant context:', error)
+        console.error('Failed to load tenant context:', error);
+        // On error, redirect to login to re-authenticate
+        window.location.href = '/login';
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
 
-    loadTenantContext()
+    loadTenantContext();
   }, [])
 
   // Industry-specific welcome messages
@@ -239,12 +265,42 @@ export default function DashboardPage() {
     }
   }
 
-  // TODO: Replace with real Supabase Auth user data
-  const user = {
-    name: "Demo User",
-    email: "demo@docuintel.com",
+  // State for real user data
+  const [user, setUser] = useState({
+    name: "Loading...",
+    email: "loading@example.com",
     avatar: "/placeholder-user.jpg",
-  }
+  });
+
+  // Fetch real user data on component mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // Get user from session storage (set during login)
+        const userData = sessionStorage.getItem('user');
+        if (userData) {
+          const parsedUser = JSON.parse(userData);
+          
+          // CRITICAL: Check onboarding completion per enterprise architecture plan
+          if (!parsedUser.onboarding_complete) {
+            // Redirect to onboarding if not completed
+            window.location.href = '/onboarding';
+            return;
+          }
+          
+          setUser({
+            name: parsedUser.email?.split('@')[0] || "User",
+            email: parsedUser.email || "user@example.com",
+            avatar: "/placeholder-user.jpg",
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+    
+    fetchUserData();
+  }, []);
 
   const stats = getIndustryStats()
   const quickActions = getQuickActions()

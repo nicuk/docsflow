@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
         tenant_id: tenant.id,
         access_level: 5, // Admin level
         role: 'admin',
-        onboarding_completed: true
+        onboarding_complete: true
       }
     });
 
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
           name: businessName || 'Admin',
           role: 'admin',
           access_level: 5,
-          onboarding_completed: true
+          onboarding_complete: true
         });
 
       if (profileError) {
@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
         .from('users')
         .update({ 
           tenant_id: tenant.id,
-          onboarding_completed: true 
+          onboarding_complete: true 
         })
         .eq('id', userId);
 

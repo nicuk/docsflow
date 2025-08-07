@@ -95,12 +95,19 @@ export async function POST(request: NextRequest) {
     const { data: userProfile, error: profileError } = await supabase
       .from('users')
       .select(`
-        *,
+        id,
+        email,
+        full_name,
+        tenant_id,
+        access_level,
+        role,
+        onboarding_complete,
         tenants (
           id,
           subdomain,
           name,
           industry,
+          business_type,
           custom_persona
         )
       `)
@@ -112,20 +119,28 @@ export async function POST(request: NextRequest) {
       // Continue without profile data
     }
 
-    // Check onboarding completion status
-    const hasCompletedOnboarding = userProfile?.tenant_id && userProfile?.tenants;
+    // Check actual onboarding completion status from database
+    const hasCompletedOnboarding = userProfile?.onboarding_complete || false;
     
     return NextResponse.json({
       success: true,
       user: {
         id: authData.user.id,
         email: authData.user.email,
+        full_name: userProfile?.full_name,
         access_token: authData.session.access_token,
         refresh_token: authData.session.refresh_token,
         tenant_id: userProfile?.tenant_id,
         access_level: userProfile?.access_level,
-        tenant: userProfile?.tenants,
-        onboarding_completed: hasCompletedOnboarding
+        role: userProfile?.role,
+        tenant: userProfile?.tenants && Array.isArray(userProfile.tenants) && userProfile.tenants.length > 0 ? {
+          id: userProfile.tenants[0].id,
+          subdomain: userProfile.tenants[0].subdomain,
+          name: userProfile.tenants[0].name,
+          industry: userProfile.tenants[0].industry,
+          business_type: userProfile.tenants[0].business_type
+        } : null,
+        onboarding_complete: hasCompletedOnboarding
       },
       message: 'Login successful'
     }, { headers: corsHeaders });

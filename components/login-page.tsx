@@ -91,6 +91,18 @@ export default function LoginPage() {
       console.log("Login successful for:", formData.email)
       setIsSuccess(true)
       
+      // CRITICAL FIX: Store user data in session storage for dashboard
+      sessionStorage.setItem('user', JSON.stringify(response.user))
+      
+      // Check if user needs onboarding
+      if (!(response.user as any)?.onboarding_complete) {
+        // Redirect to onboarding first
+        setTimeout(() => {
+          router.push('/onboarding')
+        }, 1500)
+        return
+      }
+      
       // Redirect to tenant dashboard if available
       const tenantSubdomain = response.user?.tenant?.subdomain
       if (tenantSubdomain) {

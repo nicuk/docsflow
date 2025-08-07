@@ -154,14 +154,35 @@ export default function SignupPage() {
         timestamp: new Date().toISOString()
       }));
       
-      // Store tenant context for onboarding
+      // Generate subdomain suggestion from company name
+      const suggestedSubdomain = generateSubdomainFromCompany(formData.companyName);
+      
+      // Check if subdomain already exists
+      const subdomainExists = await checkSubdomainExists(suggestedSubdomain);
+      
+      if (subdomainExists) {
+        // Subdomain exists - trigger invitation flow
+        localStorage.setItem('invitation-request', JSON.stringify({
+          companyName: formData.companyName,
+          suggestedSubdomain,
+          userEmail: formData.email,
+          requestType: 'join_existing'
+        }));
+        
+        // Redirect to invitation request page
+        window.location.href = `/invite-request?subdomain=${suggestedSubdomain}`;
+        return;
+      }
+      
+      // Subdomain doesn't exist - proceed with onboarding
       const tenantContext = {
-        subdomain: result.user.tenant?.subdomain || 'demo-warehouse-dist',
+        subdomain: suggestedSubdomain,
         organizationName: formData.companyName,
         industry: 'general', // Will be determined in onboarding
         tenantId: result.user.tenant?.id,
-        accessLevel: result.user.access_level || 3,
-        onboardingComplete: false
+        accessLevel: 1, // First user gets admin (level 1)
+        onboardingComplete: false,
+        isNewTenant: true
       };
       localStorage.setItem('tenant-context', JSON.stringify(tenantContext));
       
@@ -190,6 +211,33 @@ export default function SignupPage() {
       } finally {
         setIsLoading(false)
       }
+    }
+  }
+
+  // Helper function to generate subdomain from company name
+  const generateSubdomainFromCompany = (companyName: string): string => {
+    return companyName
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single
+      .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
+      .substring(0, 30) // Limit length
+      || 'company'; // Fallback
+  }
+
+  // Helper function to check if subdomain already exists
+  const checkSubdomainExists = async (subdomain: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`/api/tenants/check?subdomain=${subdomain}`);
+      if (response.ok) {
+        const data = await response.json();
+        return data.exists;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error checking subdomain:', error);
+      return false; // Assume doesn't exist if check fails
     }
   }
 

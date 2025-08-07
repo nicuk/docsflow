@@ -65,10 +65,37 @@ const getUserFromCookies = () => {
     }
   }
   
-  // Fallback
+  // Fallback - try to get from session storage
+  try {
+    const userData = typeof window !== 'undefined' ? sessionStorage.getItem('user') : null;
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      
+      // CRITICAL: Check onboarding completion per enterprise architecture plan
+      if (!parsedUser.onboarding_complete && typeof window !== 'undefined') {
+        // Redirect to onboarding if not completed
+        window.location.href = '/onboarding';
+        return {
+          name: 'Redirecting...',
+          email: 'redirecting@example.com',
+          avatar: '/placeholder.svg',
+        };
+      }
+      
+      return {
+        name: parsedUser.email?.split('@')[0] || 'User',
+        email: parsedUser.email || 'user@example.com',
+        avatar: '/placeholder.svg',
+      };
+    }
+  } catch (error) {
+    console.error('Error getting user from session:', error);
+  }
+  
+  // Final fallback
   return {
-    name: 'Demo User',
-    email: 'demo@docuintel.com',
+    name: 'User',
+    email: 'user@example.com',
     avatar: '/placeholder.svg',
   };
 };

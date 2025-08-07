@@ -51,7 +51,7 @@ export interface UserData {
   tenant_id?: string;
   role?: string;
   access_level?: number;
-  onboarding_completed?: boolean;
+  onboarding_complete?: boolean;
 }
 
 // ✅ CANONICAL: Frontend tenant data structure
