@@ -1,11 +1,52 @@
 import { createBrowserClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 
-// Browser client for client-side operations
+// Browser client for client-side operations with proper cookie configuration
 export const createSupabaseClient = () => {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return document.cookie
+            .split(';')
+            .map(cookie => {
+              const [name, ...rest] = cookie.trim().split('=')
+              return { name, value: rest.join('=') }
+            })
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            let cookieString = `${name}=${value}`
+            
+            if (options?.maxAge) {
+              cookieString += `; Max-Age=${options.maxAge}`
+            }
+            if (options?.expires) {
+              cookieString += `; Expires=${options.expires.toUTCString()}`
+            }
+            if (options?.domain) {
+              cookieString += `; Domain=${options.domain}`
+            }
+            if (options?.path) {
+              cookieString += `; Path=${options.path}`
+            }
+            if (options?.secure) {
+              cookieString += '; Secure'
+            }
+            if (options?.httpOnly) {
+              cookieString += '; HttpOnly'
+            }
+            if (options?.sameSite) {
+              cookieString += `; SameSite=${options.sameSite}`
+            }
+            
+            document.cookie = cookieString
+          })
+        },
+      },
+    }
   )
 }
 

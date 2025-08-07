@@ -104,14 +104,43 @@ export default function OnboardingFlow() {
         const maxRetries = 3;
         
         while (retryCount < maxRetries) {
-          response = await fetch('/api/auth/check-user', {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache'
+          // FIXED: Use direct Supabase instead of custom API
+          const { createSupabaseClient } = await import('@/lib-frontend/supabase');
+          const supabase = createSupabaseClient();
+          
+          // Get current user from Supabase
+          const { data: { user }, error: authError } = await supabase.auth.getUser();
+          
+          // Create a mock response object for compatibility with existing code
+          response = {
+            ok: !authError && !!user,
+            status: (!authError && !!user) ? 200 : 401,
+            json: async () => {
+              if (authError || !user) {
+                throw new Error('Authentication failed');
+              }
+              
+              // Get user profile from database
+              const { data: userProfile } = await supabase
+                .from('users')
+                .select('id, email, name, tenant_id, tenants(subdomain)')
+                .eq('id', user.id)
+                .single();
+              
+              return {
+                user: {
+                  id: user.id,
+                  email: user.email,
+                  name: userProfile?.name
+                },
+                onboardingComplete: !!userProfile?.tenant_id,
+                tenantId: userProfile?.tenant_id,
+                tenant: userProfile?.tenant_id ? {
+                  subdomain: (userProfile.tenants as any)?.subdomain
+                } : null
+              };
             }
-          });
+          } as Response;
           
           console.log(`🔍 Auth check attempt ${retryCount + 1}:`, {
             status: response?.status,
