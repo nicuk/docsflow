@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
         tenant_id,
         access_level,
         role,
-        onboarding_complete,
+
         tenants (
           id,
           subdomain,
@@ -120,7 +120,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check actual onboarding completion status from database
-    const hasCompletedOnboarding = userProfile?.onboarding_complete || false;
+    // Since onboarding_complete column doesn't exist, check if user has tenant_id
+    const hasCompletedOnboarding = userProfile?.tenant_id ? true : false;
     
     return NextResponse.json({
       success: true,
@@ -140,7 +141,7 @@ export async function POST(request: NextRequest) {
           industry: userProfile.tenants[0].industry,
           businessType: userProfile.tenants[0].industry
         } : null,
-        onboarding_complete: hasCompletedOnboarding
+        onboardingComplete: hasCompletedOnboarding
       },
       message: 'Login successful'
     }, { headers: corsHeaders });

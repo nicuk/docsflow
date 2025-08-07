@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         tenant_id,
         access_level,
         role,
-        onboarding_complete,
+
         tenants (
           id,
           name,
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
       tenantId: userData.tenant_id,
       accessLevel: userData.access_level,
       role: userData.role,
-      onboardingComplete: userData.onboarding_complete || false,
+      onboardingComplete: userData.tenant_id ? true : false,
       industry: tenantData?.industry || 'general',
       businessType: tenantData?.industry || 'general',
       tenant: tenantData ? {
