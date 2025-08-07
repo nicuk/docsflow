@@ -374,7 +374,7 @@ const tenantAssignment = {
       const { authClient } = await import('@/lib/auth-client');
       const authHeaders = authClient.getAuthHeaders();
       
-      const response = await fetch('https://api.docsflow.app/api/tenant/create', {
+      const response = await fetch('/api/tenant/create', {
         method: 'POST',
         headers: {
           ...authHeaders,

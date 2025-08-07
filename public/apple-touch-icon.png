@@ -1,0 +1,24 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- DocsFlow Apple Touch Icon -->
+  <rect width="180" height="180" rx="40" fill="#2563eb"/>
+  
+  <!-- Document Stack -->
+  <g transform="translate(30, 40)">
+    <!-- Back document -->
+    <rect x="8" y="8" width="104" height="130" rx="12" fill="white" opacity="0.3"/>
+    <!-- Middle document -->
+    <rect x="4" y="4" width="104" height="130" rx="12" fill="white" opacity="0.6"/>
+    <!-- Front document -->
+    <rect x="0" y="0" width="104" height="130" rx="12" fill="white"/>
+    
+    <!-- Document lines -->
+    <rect x="16" y="24" width="72" height="6" fill="#2563eb" opacity="0.8"/>
+    <rect x="16" y="40" width="72" height="6" fill="#2563eb" opacity="0.8"/>
+    <rect x="16" y="56" width="56" height="6" fill="#2563eb" opacity="0.8"/>
+    <rect x="16" y="72" width="48" height="6" fill="#2563eb" opacity="0.8"/>
+  </g>
+  
+  <!-- AI Checkmark Circle -->
+  <circle cx="135" cy="125" r="25" fill="#10b981"/>
+  <path d="M125 125l7 7L147 117" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

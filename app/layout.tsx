@@ -14,6 +14,14 @@ export const metadata: Metadata = {
   description:
     "Save 8+ hours/week with AI-powered answers from your own files. Instantly search SOPs, contracts, reports. Join 500+ teams — try it free.",
   keywords: "document AI, document search, AI document analysis, SOPs, contract analysis, team productivity, business efficiency",
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '32x32' }
+    ],
+    apple: '/apple-touch-icon.png',
+    shortcut: '/favicon.ico'
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -24,7 +32,7 @@ export const metadata: Metadata = {
     siteName: "DocsFlow",
     images: [
       {
-        url: "https://docsflow.app/og-image.jpg",
+        url: "https://docsflow.app/og-image.svg",
         width: 1200,
         height: 630,
         alt: "DocsFlow - AI Document Intelligence",
@@ -35,7 +43,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "DocsFlow | AI-Powered Document Intelligence",
     description: "Stop searching files. Start getting answers. AI that understands your business documents.",
-    images: ["https://docsflow.app/twitter-image.jpg"],
+    images: ["https://docsflow.app/og-image.svg"],
   },
   robots: {
     index: true,
