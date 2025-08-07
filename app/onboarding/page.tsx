@@ -135,18 +135,45 @@ export default function OnboardingFlow() {
         
         if (!response || !response.ok) {
           // Get error details for debugging
-          const errorText = response ? await response.text() : 'No response received';
-          console.error('❌ Auth check failed after retries:', {
+          let errorText = 'No response received';
+          let errorData = null;
+          
+          if (response) {
+            try {
+              const responseClone = response.clone();
+              errorText = await response.text();
+              
+              // Try to parse as JSON for more details
+              if (errorText.startsWith('{')) {
+                errorData = JSON.parse(errorText);
+              }
+            } catch (e) {
+              console.error('🔍 Error parsing response:', e);
+            }
+          }
+          
+          console.error('❌ AUTH CHECK FAILED - DETAILED DEBUG:', {
             status: response?.status || 'unknown',
             statusText: response?.statusText || 'unknown',
-            error: errorText,
-            retries: retryCount + 1
+            errorText: errorText,
+            errorData: errorData,
+            retries: retryCount + 1,
+            url: '/api/auth/check-user',
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            cookies: document.cookie
           });
           
           // Check if we're already on login page to prevent redirect loop
           if (window.location.pathname !== '/login') {
-            console.log('❌ User not authenticated, redirecting to login');
-            window.location.href = '/login';
+            console.log('❌ User not authenticated, redirecting to login in 5 seconds...');
+            console.log('🔍 DEBUGGING: Please take screenshot of console now!');
+            
+            // Add delay to allow debugging
+            setTimeout(() => {
+              console.log('🔄 Redirecting to login now...');
+              window.location.href = '/login';
+            }, 5000);
           }
           return;
         }
