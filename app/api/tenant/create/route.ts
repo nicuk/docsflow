@@ -41,17 +41,99 @@ export async function POST(request: NextRequest) {
     // Map industry to allowed database values
     const mapIndustryToDbValue = (industry: string): string => {
       const industryMap: Record<string, string> = {
+        // Healthcare & Medical
         'healthcare': 'general',
+        'medical': 'general',
+        'pharmaceutical': 'general',
+        'biotechnology': 'general',
+        'dental': 'general',
+        'veterinary': 'general',
+        
+        // Financial Services
+        'finance': 'general',
+        'banking': 'general',
+        'insurance': 'general',
+        'accounting': 'general',
+        'investment': 'general',
+        'fintech': 'general',
+        
+        // Legal & Professional Services
+        'legal': 'general',
+        'law': 'general',
+        'consulting': 'general',
+        'professional_services': 'general',
+        'audit': 'general',
+        
+        // Technology & Software
         'technology': 'general',
+        'software': 'general',
+        'saas': 'general',
+        'cybersecurity': 'general',
+        'ai': 'general',
+        'data_analytics': 'general',
+        
+        // Real Estate & Construction
+        'real_estate': 'general',
+        'construction': 'general',
+        'architecture': 'general',
+        'property_management': 'general',
+        
+        // Manufacturing & Industrial
+        'manufacturing': 'warehouse_distribution',
+        'industrial': 'warehouse_distribution',
+        'aerospace': 'warehouse_distribution',
+        'chemicals': 'warehouse_distribution',
+        'electronics': 'warehouse_distribution',
+        
+        // Logistics & Supply Chain
+        'logistics': 'warehouse_distribution',
+        'supply_chain': 'warehouse_distribution',
+        'transportation': 'warehouse_distribution',
+        'shipping': 'warehouse_distribution',
+        'freight': 'warehouse_distribution',
+        'warehouse_distribution': 'warehouse_distribution',
+        
+        // Automotive & Vehicles
         'automotive': 'motorcycle_dealer',
         'motorcycle_dealer': 'motorcycle_dealer',
-        'warehouse_distribution': 'warehouse_distribution',
-        'logistics': 'warehouse_distribution',
-        'manufacturing': 'warehouse_distribution',
+        'auto_dealer': 'motorcycle_dealer',
+        'vehicle_sales': 'motorcycle_dealer',
+        'car_dealer': 'motorcycle_dealer',
+        
+        // Retail & E-commerce
         'retail': 'general',
-        'finance': 'general',
+        'ecommerce': 'general',
+        'fashion': 'general',
+        'consumer_goods': 'general',
+        
+        // Education & Training
         'education': 'general',
-        'consulting': 'general'
+        'university': 'general',
+        'training': 'general',
+        'edtech': 'general',
+        
+        // Government & Non-Profit
+        'government': 'general',
+        'nonprofit': 'general',
+        'public_sector': 'general',
+        
+        // Media & Communications
+        'media': 'general',
+        'marketing': 'general',
+        'advertising': 'general',
+        'communications': 'general',
+        
+        // Energy & Utilities
+        'energy': 'general',
+        'utilities': 'general',
+        'oil_gas': 'general',
+        'renewable_energy': 'general',
+        
+        // Food & Agriculture
+        'food_service': 'general',
+        'agriculture': 'general',
+        'restaurant': 'general',
+        'hospitality': 'general'
       };
       return industryMap[industry.toLowerCase()] || 'general';
     };
