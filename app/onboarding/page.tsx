@@ -566,10 +566,18 @@ const tenantAssignment = {
   };
 
   const generateSubdomain = (businessOverview: string) => {
-    // Generate a safe subdomain based on business name
-    const words = businessOverview.split(' ').slice(0, 2);
-    const subdomain = words.join('-').toLowerCase().replace(/[^a-z0-9-]/g, '');
-    return subdomain + '-' + Math.random().toString(36).substring(2, 8);
+    // Generate a safe subdomain based on business name - consistent with signup logic
+    const cleanSubdomain = businessOverview
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single
+      .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
+      .substring(0, 20) // Shorter limit for random suffix
+      || 'company'; // Fallback
+    
+    // Add random suffix for uniqueness
+    return cleanSubdomain + '-' + Math.random().toString(36).substring(2, 6);
   };
 
   if (customPersonality) {
