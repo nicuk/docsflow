@@ -576,6 +576,8 @@ const tenantAssignment = {
     return (
       <OptimizedCompletion
         responses={responses}
+        createdPersona={customPersonality?.tenant?.custom_persona}
+        tenantData={customPersonality?.tenant}
         onComplete={() => {
           console.log('Launch button clicked!');
           console.log('customPersonality:', customPersonality);

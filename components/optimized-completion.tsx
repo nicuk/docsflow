@@ -7,6 +7,8 @@ import { motion } from 'framer-motion';
 
 interface OptimizedCompletionProps {
   responses: Record<string, string>;
+  createdPersona?: any; // The already-created persona data
+  tenantData?: any;     // The already-created tenant data
   onComplete: () => void;
 }
 
@@ -19,7 +21,7 @@ interface PersonalizedInsights {
   isUsingLLM?: boolean;
 }
 
-export function OptimizedCompletion({ responses, onComplete }: OptimizedCompletionProps) {
+export function OptimizedCompletion({ responses, createdPersona, tenantData, onComplete }: OptimizedCompletionProps) {
   const [insights, setInsights] = useState<PersonalizedInsights | null>(null);
   const [isGenerating, setIsGenerating] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
@@ -44,38 +46,19 @@ export function OptimizedCompletion({ responses, onComplete }: OptimizedCompleti
     }
 
     try {
-      // 🔥 CORRECT: Backend API handles all AI generation securely
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ai-lead-router-saas.vercel.app/api';
-      const response = await fetch(`${apiUrl}/tenant/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          responses,
-          tenantAssignment: {
-            businessType: responses.business_overview?.substring(0, 100) || 'Business',
-            industry: determineIndustry(responses.business_overview || ''),
-            subdomain: `demo-${Date.now()}`,
-            accessLevel: 3,
-            onboardingComplete: true
-          }
-        })
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        const customPersona = result.tenant?.custom_persona;
+      // 🔥 NEW: Use already-created persona data instead of making duplicate API call
+      if (createdPersona && tenantData) {
+        console.log('✅ Using already-created persona data:', createdPersona);
         
         // Check if we got real LLM-generated content
-        const isLLMGenerated = customPersona?.created_from === 'onboarding_answers';
+        const isLLMGenerated = createdPersona?.created_from === 'onboarding_answers';
         
         // Convert backend persona to frontend format
         const personalizedInsights: PersonalizedInsights = {
-          welcomeMessage: customPersona?.role || 'Your Business Intelligence Center is ready',
-          keyStrengths: customPersona?.focus_areas || ['Document analysis', 'Business insights', 'Decision support'],
-          quickWins: generateQuickWins(customPersona?.industry || 'general', []),
-          nextSteps: generateNextSteps(customPersona?.industry || 'general'),
+          welcomeMessage: createdPersona?.role || 'Your Business Intelligence Center is ready',
+          keyStrengths: createdPersona?.focus_areas || ['Document analysis', 'Business insights', 'Decision support'],
+          quickWins: generateQuickWins(tenantData?.industry || 'general', []),
+          nextSteps: generateNextSteps(tenantData?.industry || 'general'),
           confidence: isLLMGenerated ? 0.95 : 0.75,
           isUsingLLM: isLLMGenerated
         };
@@ -83,17 +66,18 @@ export function OptimizedCompletion({ responses, onComplete }: OptimizedCompleti
         setInsights(personalizedInsights);
         
         if (isLLMGenerated) {
-          console.log('✅ Successfully generated persona using backend Gemini AI');
+          console.log('✅ Displaying real Gemini AI-generated persona');
         } else {
-          console.log('🔄 Generated persona using backend templates (no API key)');
+          console.log('🔄 Displaying fallback persona template');
         }
-        
       } else {
-        throw new Error('Backend API unavailable');
+        // Fallback to smart template if no persona data provided
+        console.log('⚠️ No persona data provided, using smart fallback');
+        setInsights(generateSmartFallback(responses));
       }
       
     } catch (error) {
-      console.error('Backend persona generation failed:', error);
+      console.error('Error processing persona data:', error);
       // 🔄 ULTIMATE FALLBACK: Simple frontend template system
       setInsights(generateSmartFallback(responses));
     }
