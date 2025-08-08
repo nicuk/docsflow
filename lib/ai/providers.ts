@@ -30,12 +30,19 @@ const mockProvider = {
 const realProvider = {
   generatePersona: async (prompt: string) => {
     try {
-      const result = await generateText({
+      // Add timeout wrapper to prevent Vercel serverless timeout
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('AI generation timeout')), 25000); // 25s limit
+      });
+
+      const generatePromise = generateText({
         model: google('gemini-1.5-flash'),
         prompt,
-        maxTokens: 1000,
+        maxTokens: 500, // Reduced for faster response
         temperature: 0.7,
       });
+
+      const result = await Promise.race([generatePromise, timeoutPromise]) as any;
       
       // Extract JSON from response
       const jsonMatch = result.text.match(/\{[\s\S]*\}/);

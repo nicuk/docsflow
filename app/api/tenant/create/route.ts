@@ -144,28 +144,22 @@ export async function POST(request: NextRequest) {
     let customPersona = null;
     
     try {
-      const personaPrompt = `
-You are creating a custom AI assistant persona for a business based on their onboarding responses.
+      const personaPrompt = `Create AI assistant persona JSON for: ${responses.business_overview || 'Business'}
 
-Business Overview: ${responses.business_overview || 'Not provided'}
-Daily Challenges: ${responses.daily_challenges || 'Not provided'}
-Key Decisions: ${responses.key_decisions || 'Not provided'}
-Success Metrics: ${responses.success_metrics || 'Not provided'}
-Information Needs: ${responses.information_needs || 'Not provided'}
+Challenges: ${responses.daily_challenges || 'General business challenges'}
+Decisions: ${responses.key_decisions || 'Strategic decisions'}
+Metrics: ${responses.success_metrics || 'Performance metrics'}
 
-Create a JSON response with the following structure:
+Return only JSON:
 {
-  "role": "Specific role title for this business",
-  "tone": "Professional tone description",
+  "role": "Specific role title",
+  "tone": "Professional tone",
   "focus_areas": ["area1", "area2", "area3"],
-  "business_context": "Brief business context",
-  "prompt_template": "Custom system prompt for this business",
+  "business_context": "Brief context",
+  "prompt_template": "System prompt for this business",
   "industry": "${tenantAssignment.industry}",
   "created_from": "onboarding_answers"
-}
-
-Make it specific to their business type and challenges. Be concise but comprehensive.
-`;
+}`;
 
       // Use the proper AI provider (like working aichatbot)
       customPersona = await aiProvider.generatePersona(personaPrompt);
