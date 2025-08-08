@@ -55,11 +55,11 @@ export async function GET(
 
     console.log(`❌ Cache MISS for tenant: ${tenantId} - fetching from database`);
 
-    // Fetch from Supabase database
+    // Fetch from Supabase database - query by subdomain since tenantId is actually subdomain
     const { data: tenant, error } = await supabase
       .from('tenants')
       .select('*')
-      .eq('id', tenantId)
+      .eq('subdomain', tenantId)
       .single();
 
     if (error || !tenant) {
@@ -116,11 +116,11 @@ export async function PUT(
     const { tenantId } = await params;
     const updates = await request.json();
 
-    // Update in database
+    // Update in database - query by subdomain since tenantId is actually subdomain
     const { data: tenant, error } = await supabase
       .from('tenants')
       .update(updates)
-      .eq('id', tenantId)
+      .eq('subdomain', tenantId)
       .select()
       .single();
 
