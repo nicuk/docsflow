@@ -47,8 +47,9 @@ export function TenantProvider({ children, tenantId }: TenantProviderProps) {
     const fetchTenantData = async () => {
       setIsLoading(true);
       try {
-        // Fetch tenant data from backend API
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'}/api/tenants/${tenantId}`);
+        // Fetch tenant data from backend API - use relative URL in production
+        const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || (typeof window !== 'undefined' && window.location.origin) || '';
+        const response = await fetch(`${baseUrl}/api/tenants/${tenantId}`);
         
         if (!response.ok) {
           if (response.status === 404) {
