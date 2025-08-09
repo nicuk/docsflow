@@ -356,6 +356,9 @@ export default function OnboardingFlow() {
       const industryAnalysis = smartIndustryDetection(allResponses);
       console.log('Industry Detection Results:', industryAnalysis);
       
+      // Show AI reasoning to user for transparency
+      console.log(`🤖 AI Analysis: ${industryAnalysis.reason} (${Math.round(industryAnalysis.confidence * 100)}% confidence)`);
+      
 const tenantAssignment = {
         businessType: onboardingData?.organizationName || allResponses.business_overview?.substring(0, 100) + "...",
         industry: industryAnalysis.industry,
@@ -412,9 +415,14 @@ const tenantAssignment = {
           // Store in sessionStorage for dashboard layout
           sessionStorage.setItem('user', JSON.stringify(userData));
           
-          // Also set user email cookie for dashboard fallback
+          // CRITICAL: Set cookies that dashboard layout expects
           document.cookie = `user-email=${user.email}; path=/`;
           document.cookie = `user-name=${userData.name}; path=/`;
+          document.cookie = `onboarding-complete=true; path=/`;
+          document.cookie = `tenant-id=${tenantAssignment.subdomain}; path=/`;
+          
+          // Also store in localStorage for persistence
+          localStorage.setItem('user-session', JSON.stringify(userData));
         }
         
         setCustomPersonality({

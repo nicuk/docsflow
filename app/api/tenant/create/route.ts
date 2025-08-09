@@ -239,9 +239,11 @@ Return only JSON:
       password: Math.random().toString(36).substring(2, 15),
       email_confirm: true,
       user_metadata: {
-        tenant_id: tenant.id,
+        tenant_id: tenant.subdomain,  // Use subdomain, not UUID
+        tenant_uuid: tenant.id,       // Keep UUID for internal use
         access_level: tenantAssignment.accessLevel,
-        role: 'admin'
+        role: 'admin',
+        onboarding_complete: true
       }
     });
 
