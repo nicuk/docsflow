@@ -361,7 +361,7 @@ const tenantAssignment = {
         industry: industryAnalysis.industry,
         industryConfidence: industryAnalysis.confidence,
         industryReason: industryAnalysis.reason,
-        subdomain: industryAnalysis.industry.replace(/_/g, '-') + '-business', // Suggest relevant domain based on industry
+        subdomain: selectedDomain || finalDomain, // Use user's selected domain, not industry-based
         accessLevel: userRole === 'admin' ? 1 : 3, // Level 1 for admin, Level 3 for technician
         userRole: userRole,
         isNewTenant: !isJoiningExisting,
@@ -390,9 +390,32 @@ const tenantAssignment = {
       if (response.ok) {
         const personality = await response.json();
         
+        // Get current user from Supabase session for proper user data
+        const { authClient } = await import('@/lib/auth-client');
+        const user = await authClient.getCurrentUser();
+        
         // Set onboarding completion cookie
         document.cookie = 'onboarding-complete=true; path=/';
         document.cookie = `tenant-id=${tenantAssignment.subdomain}; path=/`;
+        
+        // CRITICAL: Store real user session data for dashboard
+        if (user && typeof window !== 'undefined') {
+          const userData = {
+            id: user.id,
+            email: user.email,
+            name: (user as any).user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+            onboarding_complete: true,
+            tenant_id: tenantAssignment.subdomain,
+            access_level: tenantAssignment.accessLevel
+          };
+          
+          // Store in sessionStorage for dashboard layout
+          sessionStorage.setItem('user', JSON.stringify(userData));
+          
+          // Also set user email cookie for dashboard fallback
+          document.cookie = `user-email=${user.email}; path=/`;
+          document.cookie = `user-name=${userData.name}; path=/`;
+        }
         
         setCustomPersonality({
           ...personality,
