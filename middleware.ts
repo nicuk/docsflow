@@ -10,8 +10,41 @@ import {
   detectSuspiciousActivity,
   getSecurityHeaders 
 } from './lib/security-enhancements';
+import { createClient } from '@supabase/supabase-js';
 
-export default function middleware(request: NextRequest) {
+// Quick tenant verification function
+async function verifyTenantExists(subdomain: string): Promise<boolean> {
+  try {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Supabase configuration missing for tenant verification');
+      return false;
+    }
+    
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+    
+    const { data, error } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('subdomain', subdomain)
+      .single();
+    
+    if (error || !data) {
+      console.log(`Tenant verification: '${subdomain}' not found`);
+      return false;
+    }
+    
+    console.log(`Tenant verification: '${subdomain}' exists`);
+    return true;
+  } catch (error) {
+    console.error('Tenant verification error:', error);
+    return false;
+  }
+}
+
+export default async function middleware(request: NextRequest) {
   try {
     const { pathname, hostname } = request.nextUrl;
     const origin = request.headers.get('origin');
@@ -46,6 +79,19 @@ export default function middleware(request: NextRequest) {
 
     // Route tenant subdomains to the tenant-specific dashboard
     if (tenant) {
+      // CRITICAL FIX: Verify tenant exists before allowing subdomain access
+      // If tenant doesn't exist, redirect to main domain for onboarding
+      
+      // Check if tenant exists by making a quick database lookup
+      // This prevents showing onboarding/dashboard on non-existent subdomains
+      const tenantExists = await verifyTenantExists(tenant);
+      
+      if (!tenantExists) {
+        // Tenant doesn't exist - redirect to main domain for onboarding
+        console.log(`🚨 Tenant '${tenant}' not found, redirecting to main domain`);
+        const mainDomainUrl = new URL('https://docsflow.app/onboarding');
+        return NextResponse.redirect(mainDomainUrl);
+      }
 
       // If root path, check if user has completed onboarding
       if (pathname === '/' || pathname === '') {
@@ -58,8 +104,9 @@ export default function middleware(request: NextRequest) {
           response.headers.set('x-tenant-id', tenant);
           return createSecureResponse(response, origin);
         } else {
-          // User hasn't completed onboarding - redirect to onboarding
-          return NextResponse.redirect(new URL('/onboarding', request.url));
+          // User hasn't completed onboarding - redirect to main domain
+          const mainDomainUrl = new URL('https://docsflow.app/onboarding');
+          return NextResponse.redirect(mainDomainUrl);
         }
       }
       // Otherwise, preserve the path structure for tenant routes
