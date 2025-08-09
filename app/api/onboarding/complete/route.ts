@@ -187,8 +187,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Step 4: Return success response with direct dashboard redirect
-    return NextResponse.json({
+    // Step 4: Return success response with complete session data for frontend storage
+    const response = NextResponse.json({
       success: true,
       tenant: {
         id: tenant.id,
@@ -196,6 +196,15 @@ export async function POST(request: NextRequest) {
         name: tenant.name,
         industry: tenant.industry,
         custom_persona: { created_from: 'frontend' }
+      },
+      // CRITICAL: Include user session data for frontend storage
+      user: {
+        id: userId || authUser?.user?.id,
+        email: email || adminEmail,
+        name: businessName || 'Admin',
+        tenant_id: tenant.subdomain, // Use subdomain as tenant_id for frontend
+        access_level: 5,
+        onboarding_complete: true
       },
       // Redirect directly to tenant dashboard
       redirect_url: `https://${tenant.subdomain}.docsflow.app/dashboard`,
@@ -206,6 +215,34 @@ export async function POST(request: NextRequest) {
         tenant_url: `https://${tenant.subdomain}.docsflow.app/dashboard`
       }
     }, { headers: corsHeaders });
+
+    // CRITICAL: Set session cookies for immediate dashboard access
+    response.cookies.set('user-email', email || adminEmail, { 
+      path: '/', 
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
+    response.cookies.set('user-name', businessName || 'Admin', { 
+      path: '/', 
+      maxAge: 60 * 60 * 24 * 7,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
+    response.cookies.set('tenant-id', tenant.subdomain, { 
+      path: '/', 
+      maxAge: 60 * 60 * 24 * 7,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
+    response.cookies.set('onboarding-complete', 'true', { 
+      path: '/', 
+      maxAge: 60 * 60 * 24 * 7,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
+
+    return response;
 
   } catch (error: any) {
     console.error('Onboarding completion API error:', error);

@@ -397,32 +397,56 @@ const tenantAssignment = {
         const { authClient } = await import('@/lib/auth-client');
         const user = await authClient.getCurrentUser();
         
-        // Set onboarding completion cookie
-        document.cookie = 'onboarding-complete=true; path=/';
-        document.cookie = `tenant-id=${tenantAssignment.subdomain}; path=/`;
-        
-        // CRITICAL: Store real user session data for dashboard
-        if (user && typeof window !== 'undefined') {
-          const userData = {
-            id: user.id,
-            email: user.email,
-            name: (user as any).user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-            onboarding_complete: true,
-            tenant_id: tenantAssignment.subdomain,
-            access_level: tenantAssignment.accessLevel
-          };
+        // CRITICAL: Store complete session data from backend response
+        if (personality.user && typeof window !== 'undefined') {
+          const userData = personality.user; // Use complete user data from backend
           
           // Store in sessionStorage for dashboard layout
           sessionStorage.setItem('user', JSON.stringify(userData));
           
-          // CRITICAL: Set cookies that dashboard layout expects
-          document.cookie = `user-email=${user.email}; path=/`;
-          document.cookie = `user-name=${userData.name}; path=/`;
-          document.cookie = `onboarding-complete=true; path=/`;
-          document.cookie = `tenant-id=${tenantAssignment.subdomain}; path=/`;
+          // CRITICAL: Set cookies that dashboard layout expects (backend already sets these, but ensure they're set)
+          document.cookie = `user-email=${userData.email}; path=/; max-age=${60 * 60 * 24 * 7}`;
+          document.cookie = `user-name=${userData.name}; path=/; max-age=${60 * 60 * 24 * 7}`;
+          document.cookie = `tenant-id=${userData.tenant_id}; path=/; max-age=${60 * 60 * 24 * 7}`;
+          document.cookie = `onboarding-complete=true; path=/; max-age=${60 * 60 * 24 * 7}`;
           
           // Also store in localStorage for persistence
           localStorage.setItem('user-session', JSON.stringify(userData));
+          
+          // Store tenant context for dashboard
+          const tenantContext = {
+            tenantId: userData.tenant_id,
+            industry: personality.tenant?.industry || tenantAssignment.industry,
+            businessType: personality.tenant?.name || tenantAssignment.businessType,
+            accessLevel: userData.access_level,
+            onboardingComplete: true,
+            subdomain: personality.tenant?.subdomain || tenantAssignment.subdomain
+          };
+          localStorage.setItem(`tenant-${userData.tenant_id}`, JSON.stringify(tenantContext));
+          
+          console.log('✅ Session data stored successfully:', { userData, tenantContext });
+        } else if (user && typeof window !== 'undefined') {
+          // Fallback: Use current user data if backend doesn't return user data
+          const userData = {
+            id: user.id,
+            email: user.email,
+            name: (user as any).user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+            tenant_id: tenantAssignment.subdomain,
+            access_level: tenantAssignment.accessLevel,
+            onboarding_complete: true
+          };
+          
+          // Store session data
+          sessionStorage.setItem('user', JSON.stringify(userData));
+          localStorage.setItem('user-session', JSON.stringify(userData));
+          
+          // Set cookies
+          document.cookie = `user-email=${userData.email}; path=/; max-age=${60 * 60 * 24 * 7}`;
+          document.cookie = `user-name=${userData.name}; path=/; max-age=${60 * 60 * 24 * 7}`;
+          document.cookie = `tenant-id=${userData.tenant_id}; path=/; max-age=${60 * 60 * 24 * 7}`;
+          document.cookie = `onboarding-complete=true; path=/; max-age=${60 * 60 * 24 * 7}`;
+          
+          console.log('✅ Fallback session data stored:', userData);
         }
         
         setCustomPersonality({
