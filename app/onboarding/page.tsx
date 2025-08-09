@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { CheckCircle, ArrowRight, Brain, Zap, Target, TrendingUp } from 'lucide-react';
 import OptimizedCompletion from '@/components/optimized-completion';
 import DomainSelection from '@/components/domain-selection';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 const GENERIC_QUESTIONS = [
   {

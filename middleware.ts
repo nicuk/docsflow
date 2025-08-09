@@ -10,34 +10,36 @@ import {
   detectSuspiciousActivity,
   getSecurityHeaders 
 } from './lib/security-enhancements';
-import { createClient } from '@supabase/supabase-js';
+import { redis, safeRedisOperation } from './lib/redis';
 
-// Quick tenant verification function
+// PERFORMANCE FIX: Use Redis for tenant verification instead of database calls
 async function verifyTenantExists(subdomain: string): Promise<boolean> {
   try {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('Supabase configuration missing for tenant verification');
-      return false;
-    }
-    
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
+    // First try Redis cache (fast)
+    const cachedTenant = await safeRedisOperation(
+      () => redis!.get(`subdomain:${subdomain}`),
+      null
     );
     
-    const { data, error } = await supabase
-      .from('tenants')
-      .select('id')
-      .eq('subdomain', subdomain)
-      .single();
-    
-    if (error || !data) {
-      console.log(`Tenant verification: '${subdomain}' not found`);
-      return false;
+    if (cachedTenant) {
+      console.log(`✅ Redis cache HIT for tenant: ${subdomain}`);
+      return true;
     }
     
-    console.log(`Tenant verification: '${subdomain}' exists`);
-    return true;
+    // If not in Redis, check tenant cache
+    const tenantCacheKey = `tenant:${subdomain}`;
+    const tenantData = await safeRedisOperation(
+      () => redis!.get(tenantCacheKey),
+      null
+    );
+    
+    if (tenantData) {
+      console.log(`✅ Redis tenant cache HIT for: ${subdomain}`);
+      return true;
+    }
+    
+    console.log(`❌ Redis cache MISS for tenant: ${subdomain}`);
+    return false;
   } catch (error) {
     console.error('Tenant verification error:', error);
     return false;
