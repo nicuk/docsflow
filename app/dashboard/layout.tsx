@@ -237,7 +237,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-72 p-0">
-          <MobileSidebar />
+          <MobileSidebar user={user} />
         </SheetContent>
       </Sheet>
 
@@ -247,7 +247,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           sidebarOpen ? 'w-64' : 'w-16'
         }`}
       >
-        <DesktopSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+        <DesktopSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} user={user} />
       </aside>
 
       {/* Main content area */}
@@ -342,7 +342,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   )
 }
 
-function DesktopSidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (open: boolean) => void }) {
+function DesktopSidebar({ isOpen, setIsOpen, user }: { 
+  isOpen: boolean; 
+  setIsOpen: (open: boolean) => void;
+  user: { name: string; email: string; avatar: string; };
+}) {
   const pathname = usePathname()
 
   return (
@@ -429,7 +433,7 @@ function DesktopSidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (op
   )
 }
 
-function MobileSidebar() {
+function MobileSidebar({ user }: { user: { name: string; email: string; avatar: string; } }) {
   const pathname = usePathname()
 
   return (
