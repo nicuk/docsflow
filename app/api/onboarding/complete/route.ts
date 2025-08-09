@@ -187,7 +187,30 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Step 4: Return success response with complete session data for frontend storage
+    // Step 6: CRITICAL FIX - Update Redis cache for middleware
+    try {
+      const redis = (await import('@/lib/redis')).redis;
+      if (redis) {
+        // Cache tenant data for middleware lookup
+        await redis.setex(`tenant:${tenant.subdomain}`, 3600, JSON.stringify({
+          id: tenant.id,
+          subdomain: tenant.subdomain,
+          name: tenant.name,
+          industry: tenant.industry,
+          subscription_status: 'trial'
+        })); // Cache for 1 hour
+        
+        // Also cache subdomain existence for quick checks
+        await redis.setex(`subdomain:${tenant.subdomain}`, 3600, 'exists');
+        
+        console.log(`✅ Redis cache updated for tenant: ${tenant.subdomain}`);
+      }
+    } catch (redisError) {
+      console.error('Redis cache update failed:', redisError);
+      // Continue without Redis - not critical for functionality
+    }
+
+    // Step 7: Return success response with complete session data for frontend storage
     const response = NextResponse.json({
       success: true,
       tenant: {
