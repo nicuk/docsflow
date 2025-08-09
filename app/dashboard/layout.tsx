@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -100,7 +100,86 @@ const getUserFromCookies = () => {
   };
 };
 
-const user = getUserFromCookies();
+// Dynamic user session hook
+function useUserSession() {
+  const [user, setUser] = useState({
+    name: 'Loading...',
+    email: 'loading@example.com',
+    avatar: '/placeholder.svg',
+  });
+
+  useEffect(() => {
+    const getUserData = async () => {
+      // First, try to get from cookies (fastest)
+      if (typeof window !== 'undefined') {
+        const emailCookie = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('user-email='))
+          ?.split('=')[1];
+        
+        if (emailCookie && emailCookie !== 'user@example.com') {
+          const name = emailCookie.split('@')[0];
+          setUser({
+            name: name.charAt(0).toUpperCase() + name.slice(1),
+            email: emailCookie,
+            avatar: '/placeholder.svg',
+          });
+          return;
+        }
+      }
+      
+      // Second, try session storage
+      try {
+        const userData = typeof window !== 'undefined' ? sessionStorage.getItem('user') : null;
+        if (userData) {
+          const parsedUser = JSON.parse(userData);
+          
+          if (parsedUser.email && parsedUser.email !== 'user@example.com') {
+            setUser({
+              name: parsedUser.name || parsedUser.email?.split('@')[0] || 'User',
+              email: parsedUser.email,
+              avatar: '/placeholder.svg',
+            });
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error getting user from session:', error);
+      }
+      
+      // Third, try localStorage backup
+      try {
+        const userSession = typeof window !== 'undefined' ? localStorage.getItem('user-session') : null;
+        if (userSession) {
+          const parsedUser = JSON.parse(userSession);
+          
+          if (parsedUser.email && parsedUser.email !== 'user@example.com') {
+            setUser({
+              name: parsedUser.name || parsedUser.email?.split('@')[0] || 'User',
+              email: parsedUser.email,
+              avatar: '/placeholder.svg',
+            });
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error getting user from localStorage:', error);
+      }
+      
+      // Final fallback - but this indicates a session issue
+      console.warn('No valid user session found, falling back to mock data');
+      setUser({
+        name: 'User',
+        email: 'user@example.com',
+        avatar: '/placeholder.svg',
+      });
+    };
+
+    getUserData();
+  }, []);
+
+  return user;
+}
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -127,6 +206,7 @@ function ThemeToggle() {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const pathname = usePathname()
+  const user = useUserSession() // Dynamic user session restoration
 
   // Add logout functionality
   const handleLogout = () => {
