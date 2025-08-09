@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { aiProvider, isRealAIAvailable } from '@/lib/ai/providers';
 import { getCORSHeaders } from '@/lib/utils';
+import { tenantCreationLimiter } from '@/lib/rate-limiter';
+import { createSuccessResponse, createErrorResponse, validateRequiredFields, logApiError, API_ERROR_CODES } from '@/lib/api-response';
 
 // Initialize Supabase client
 function getSupabaseClient() {
@@ -26,14 +28,23 @@ export async function POST(request: NextRequest) {
   const origin = request.headers.get('origin');
   const corsHeaders = getCORSHeaders(origin);
 
+  // Apply rate limiting for tenant creation
+  const rateLimitResponse = await tenantCreationLimiter(request);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   try {
     const { responses, tenantAssignment } = await request.json();
 
-    if (!responses || !tenantAssignment) {
-      return NextResponse.json(
-        { error: 'Missing required data' },
-        { status: 400, headers: corsHeaders }
+    // Validate required fields using standardized validation
+    const missingFields = validateRequiredFields({ responses, tenantAssignment }, ['responses', 'tenantAssignment']);
+    if (missingFields.length > 0) {
+      const { response, status } = createErrorResponse(
+        `Missing required fields: ${missingFields.join(', ')}`,
+        API_ERROR_CODES.MISSING_REQUIRED_FIELDS
       );
+      return NextResponse.json(response, { status, headers: corsHeaders });
     }
 
     const supabase = getSupabaseClient();
