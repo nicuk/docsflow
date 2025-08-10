@@ -71,7 +71,7 @@ export interface TenantData {
 // 🚫 DEPRECATED: Backend legacy types - DO NOT USE
 // These will be systematically removed
 export interface LegacyTenantSettings {
-  organizationName?: string; // 🚫 DEPRECATED: Conflicts with frontend
+
   contactEmail?: string;
   displayName?: string;
   aiEnabled?: boolean;

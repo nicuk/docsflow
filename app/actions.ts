@@ -20,7 +20,7 @@ function getSupabaseClient() {
 
 interface CreateSubdomainState {
   subdomain?: string;
-  organizationName?: string;
+  displayName?: string;
   industry?: string;
   success?: boolean;
   error?: string;
@@ -36,18 +36,18 @@ export async function createSubdomainAction(
   formData: FormData
 ): Promise<CreateSubdomainState> {
   const subdomainValue = formData.get('subdomain');
-  const organizationNameValue = formData.get('organizationName');
+  const displayNameValue = formData.get('displayName');
   const industryValue = formData.get('industry');
 
-  if (typeof subdomainValue !== 'string' || typeof organizationNameValue !== 'string' || typeof industryValue !== 'string') {
+  if (typeof subdomainValue !== 'string' || typeof displayNameValue !== 'string' || typeof industryValue !== 'string') {
     return { success: false, error: 'Invalid form data' };
   }
 
   const subdomain = subdomainValue;
-  const organizationName = organizationNameValue;
+  const displayName = displayNameValue;
   const industry = industryValue;
 
-  if (!subdomain || !organizationName || !industry) {
+  if (!subdomain || !displayName || !industry) {
     return { success: false, error: 'All fields are required' };
   }
 
@@ -56,7 +56,7 @@ export async function createSubdomainAction(
   if (sanitizedSubdomain !== subdomain) {
     return {
       subdomain,
-      organizationName,
+      displayName,
       industry,
       success: false,
       error: 'Subdomain can only have lowercase letters, numbers, and hyphens. Please try again.'
@@ -70,7 +70,7 @@ export async function createSubdomainAction(
   if (subdomainAlreadyExists) {
     return {
       subdomain,
-      organizationName,
+      displayName,
       industry,
       success: false,
       error: 'This subdomain is already taken'
@@ -80,7 +80,7 @@ export async function createSubdomainAction(
   try {
     // Create tenant data with organization info
     const tenantData = {
-      organizationName,
+      displayName,
       industry,
       createdAt: Date.now(),
       leadCount: 0,
@@ -108,10 +108,10 @@ export async function createSubdomainAction(
           .from('tenants')
           .insert({
             subdomain: sanitizedSubdomain,
-            name: organizationName,
+            name: displayName,
             industry: industry,
             settings: {
-              organizationName,
+              displayName,
               created_via: 'subdomain_form',
               demo_mode: true
             }
@@ -134,9 +134,9 @@ export async function createSubdomainAction(
             });
 
           // Add sample documents for instant demo value
-          await createSampleDocuments(supabase, tenant.id, organizationName, industry);
+          await createSampleDocuments(supabase, tenant.id, displayName, industry);
           
-          console.log(`✅ Created enterprise tenant: ${organizationName} (${tenant.id})`);
+          console.log(`✅ Created enterprise tenant: ${displayName} (${tenant.id})`);
         }
       } catch (supabaseError) {
         console.error('Supabase operations failed:', supabaseError);
@@ -190,17 +190,17 @@ export async function deleteSubdomainAction(
 }
 
 // Helper function to create sample documents
-async function createSampleDocuments(supabase: any, tenantId: string, organizationName: string, industry: string) {
+async function createSampleDocuments(supabase: any, tenantId: string, displayName: string, industry: string) {
   const sampleDocs = [
     {
       filename: 'Company Handbook.pdf',
-      content: `Welcome to ${organizationName}. This handbook contains our policies, procedures, and company culture guidelines for our ${industry} organization.`,
+      content: `Welcome to ${displayName}. This handbook contains our policies, procedures, and company culture guidelines for our ${industry} organization.`,
       access_level: 2,
       processing_status: 'completed'
     },
     {
       filename: 'Operations Manual.pdf', 
-      content: `Operations procedures and guidelines for ${organizationName}. Includes ${industry}-specific processes, safety guidelines, and standard operating procedures.`,
+      content: `Operations procedures and guidelines for ${displayName}. Includes ${industry}-specific processes, safety guidelines, and standard operating procedures.`,
       access_level: 3,
       processing_status: 'completed'
     }

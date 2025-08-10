@@ -230,7 +230,7 @@ export default function OnboardingFlow() {
           // Use signup data if no onboarding data exists
           const parsedSignupData = JSON.parse(signupData);
           setOnboardingData({
-            organizationName: parsedSignupData.companyName,
+            displayName: parsedSignupData.companyName,
             subdomain: parsedSignupData.companyName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'company',
             industry: 'general',
             email: parsedSignupData.email || userData.email,
@@ -239,7 +239,7 @@ export default function OnboardingFlow() {
         } else {
           // Fallback to user data from backend
           setOnboardingData({
-            organizationName: userData.tenant?.name || 'Your Company',
+            displayName: userData.tenant?.name || 'Your Company',
             subdomain: userData.tenant?.subdomain || 'company',
             industry: userData.tenant?.industry || 'general',
             email: userData.email,
@@ -327,7 +327,7 @@ export default function OnboardingFlow() {
       localStorage.setItem('invitation-request', JSON.stringify({
         subdomain: domain,
         userEmail: userData.email,
-        companyName: onboardingData?.organizationName || 'Unknown Company',
+        companyName: onboardingData?.displayName || 'Unknown Company',
         requestType: 'join_existing'
       }));
       
@@ -361,7 +361,7 @@ export default function OnboardingFlow() {
       console.log(`🤖 AI Analysis: ${industryAnalysis.reason} (${Math.round(industryAnalysis.confidence * 100)}% confidence)`);
       
 const tenantAssignment = {
-        businessType: onboardingData?.organizationName || allResponses.business_overview?.substring(0, 100) + "...",
+        businessType: onboardingData?.displayName || allResponses.business_overview?.substring(0, 100) + "...",
         industry: industryAnalysis.industry,
         industryConfidence: industryAnalysis.confidence,
         industryReason: industryAnalysis.reason,
@@ -370,7 +370,7 @@ const tenantAssignment = {
         userRole: userRole,
         isNewTenant: !isJoiningExisting,
         onboardingComplete: true,
-        companyName: onboardingData?.organizationName || extractCompanyName(allResponses.business_overview || ''),
+        companyName: onboardingData?.displayName || extractCompanyName(allResponses.business_overview || ''),
         responses: allResponses
       };
 
@@ -469,7 +469,7 @@ const tenantAssignment = {
       
       // 🔥 FALLBACK: Complete onboarding locally for frontend development
       const tenantAssignment = {
-        businessType: onboardingData?.organizationName || allResponses.business_overview?.substring(0, 100) + "...",
+        businessType: onboardingData?.displayName || allResponses.business_overview?.substring(0, 100) + "...",
         industry: onboardingData?.industry || determineIndustry(allResponses.business_overview || ''),
         subdomain: selectedDomain, // Use selected domain in fallback too
         accessLevel: 3,
@@ -961,7 +961,7 @@ const tenantAssignment = {
             <p className="text-muted-foreground">
               {(() => {
                 const tenantContext = localStorage.getItem('tenant-context');
-                const companyName = tenantContext ? JSON.parse(tenantContext).organizationName : null;
+                const companyName = tenantContext ? JSON.parse(tenantContext).displayName : null;
                 return companyName ? 
                   `Let's set up your domain for ${companyName}` :
                   "Let's get your organization set up";
@@ -972,7 +972,7 @@ const tenantAssignment = {
           <DomainSelection
             companyName={(() => {
               const tenantContext = localStorage.getItem('tenant-context');
-              return tenantContext ? JSON.parse(tenantContext).organizationName : null;
+              return tenantContext ? JSON.parse(tenantContext).displayName : null;
             })()}
             onDomainSelected={handleDomainSelected}
             onInviteAccepted={handleInviteAccepted}
@@ -997,7 +997,7 @@ const tenantAssignment = {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-sm sm:text-lg font-semibold text-foreground">
-                  Setting up AI for {onboardingData.organizationName}
+                  Setting up AI for {onboardingData.displayName}
                 </h2>
                 <p className="text-xs sm:text-sm text-muted-foreground">
                   Subdomain: {onboardingData.subdomain}.docsflow.app • Industry: {onboardingData.industry}

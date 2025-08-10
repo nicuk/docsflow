@@ -177,7 +177,7 @@ export default function SignupPage() {
       // Subdomain doesn't exist - proceed with onboarding
       const tenantContext = {
         subdomain: suggestedSubdomain,
-        organizationName: formData.companyName,
+        displayName: formData.companyName,
         industry: 'general', // Will be determined in onboarding
         tenantId: result.user.tenant?.id,
         accessLevel: 1, // First user gets admin (level 1)

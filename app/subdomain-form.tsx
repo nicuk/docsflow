@@ -22,7 +22,7 @@ type CreateState = {
   error?: string;
   success?: boolean;
   subdomain?: string;
-  organizationName?: string;
+  displayName?: string;
   industry?: string;
 };
 
@@ -146,10 +146,10 @@ function SubdomainInput({
 function OrganizationNameInput({ defaultValue }: { defaultValue?: string }) {
   return (
     <div className="space-y-1">
-      <Label htmlFor="organizationName" className="text-sm">Organization Name</Label>
+      <Label htmlFor="displayName" className="text-sm">Organization Name</Label>
       <Input
-        id="organizationName"
-        name="organizationName"
+        id="displayName"
+        name="displayName"
         placeholder="Acme Corporation"
         defaultValue={defaultValue}
         className="w-full h-9"
@@ -270,11 +270,11 @@ export function SubdomainForm() {
         
         const formData = new FormData(e.currentTarget);
         const subdomain = formData.get('subdomain') as string;
-        const organizationName = formData.get('organizationName') as string;
+        const displayName = formData.get('displayName') as string;
         
         // Store basic info for onboarding
         const onboardingData = {
-          organizationName,
+          displayName,
           subdomain,
           industry,
           timestamp: new Date().toISOString()
@@ -286,7 +286,7 @@ export function SubdomainForm() {
         // Redirect to our backend onboarding flow
         window.location.href = '/onboarding';
       }} className="space-y-3">
-        <OrganizationNameInput defaultValue={state?.organizationName} />
+        <OrganizationNameInput defaultValue={state?.displayName} />
         
         <SubdomainInput 
           defaultValue={state?.subdomain}

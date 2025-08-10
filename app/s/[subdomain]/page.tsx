@@ -41,7 +41,7 @@ export default async function SubdomainPage({
     notFound();
   }
 
-  const organizationName = subdomainData.displayName || `${subdomain} Organization`;
+  const displayName = subdomainData.displayName || `${subdomain} Organization`;
   const industry = 'General Business'; // Industry not available in SubdomainData type
 
   return (
@@ -54,7 +54,7 @@ export default async function SubdomainPage({
           </div>
           <div>
             <h1 className="text-xl font-semibold text-gray-900">
-              {organizationName}
+              {displayName}
             </h1>
             <p className="text-sm text-gray-500">{industry} • AI Document Intelligence</p>
           </div>
@@ -76,7 +76,7 @@ export default async function SubdomainPage({
             <span className="font-medium">Platform Successfully Created</span>
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Welcome to {organizationName}
+            Welcome to {displayName}
           </h1>
           <p className="text-gray-600 max-w-2xl mx-auto text-lg">
             Your enterprise AI document intelligence platform is ready. Start asking questions about your business documents with industry-specific AI assistance.
