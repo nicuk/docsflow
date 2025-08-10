@@ -131,60 +131,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Step 4: Create admin user for the tenant
-    const adminEmail = `admin@${cleanSubdomain}.docsflow.app`;
-    const tempPassword = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    
-    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-      email: adminEmail,
-      password: tempPassword,
-      email_confirm: true,
-      user_metadata: {
-        tenant_id: tenant.id,
-        access_level: 5, // Admin level
-        role: 'admin',
-        onboarding_complete: true
-      }
-    });
-
-    if (authError) {
-      console.error('User creation error:', authError);
-      // Continue without user creation - tenant is created
-    }
-
-    // Step 5: Create user profile
-    if (authUser?.user) {
-      const { error: profileError } = await supabase
-        .from('users')
-        .insert({
-          id: authUser.user.id,
-          tenant_id: tenant.id,
-          email: adminEmail,
-          name: businessName || 'Admin',
-          role: 'admin',
-          access_level: 5,
-          onboarding_complete: true
-        });
-
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-      }
-    }
-
-    // Step 3: Update user with tenant association (if userId provided)
-    if (userId) {
+    // Step 4: FIXED - Link the REAL user as tenant admin (no fake admin creation)
+    if (userId && email) {
+      // Update the real user to be the tenant admin
       const { error: userUpdateError } = await supabase
         .from('users')
         .update({ 
           tenant_id: tenant.id,
+          role: 'admin',
+          access_level: 5, // Admin level
           onboarding_complete: true 
         })
         .eq('id', userId);
 
       if (userUpdateError) {
-        console.error('User update error:', userUpdateError);
-        // Continue without user update
+        console.error('Real user update error:', userUpdateError);
+        return NextResponse.json(
+          { error: 'Failed to assign admin role to user', details: userUpdateError.message },
+          { status: 500, headers: corsHeaders }
+        );
       }
+
+      // Also update auth user metadata
+      const { error: authUpdateError } = await supabase.auth.admin.updateUserById(userId, {
+        user_metadata: {
+          tenant_id: tenant.id,
+          access_level: 5,
+          role: 'admin',
+          onboarding_complete: true
+        }
+      });
+
+      if (authUpdateError) {
+        console.error('Auth metadata update error:', authUpdateError);
+        // Continue - not critical
+      }
+
+      console.log(`✅ Real user ${email} assigned as admin for tenant ${tenant.subdomain}`);
+    } else {
+      console.error('❌ No userId or email provided - cannot assign admin role');
+      return NextResponse.json(
+        { error: 'User identification required for tenant creation' },
+        { status: 400, headers: corsHeaders }
+      );
     }
 
     // Step 6: CRITICAL FIX - Update Redis cache for middleware
@@ -220,10 +209,10 @@ export async function POST(request: NextRequest) {
         industry: tenant.industry,
         custom_persona: { created_from: 'frontend' }
       },
-      // CRITICAL: Include user session data for frontend storage
+      // CRITICAL: Include REAL user session data for frontend storage
       user: {
-        id: userId || authUser?.user?.id,
-        email: email || adminEmail,
+        id: userId,
+        email: email, // Use the REAL user email, not fake admin email
         name: businessName || 'Admin',
         tenant_id: tenant.subdomain, // Use subdomain as tenant_id for frontend
         access_level: 5,
@@ -231,16 +220,11 @@ export async function POST(request: NextRequest) {
       },
       // Redirect directly to tenant dashboard
       redirect_url: `https://${tenant.subdomain}.docsflow.app/dashboard`,
-      message: 'Tenant created successfully. Redirecting to your dashboard.',
-      admin_credentials: {
-        email: adminEmail,
-        password: tempPassword,
-        tenant_url: `https://${tenant.subdomain}.docsflow.app/dashboard`
-      }
+      message: 'Tenant created successfully. You are now the admin. Redirecting to your dashboard.'
     }, { headers: corsHeaders });
 
     // CRITICAL: Set session cookies for immediate dashboard access
-    response.cookies.set('user-email', email || adminEmail, { 
+    response.cookies.set('user-email', email, { // Use REAL user email 
       path: '/', 
       maxAge: 60 * 60 * 24 * 7, // 7 days
       secure: process.env.NODE_ENV === 'production',
