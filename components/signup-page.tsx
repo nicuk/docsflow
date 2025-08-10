@@ -263,7 +263,8 @@ export default function SignupPage() {
               onClick={() => {
                 // Store signup data for onboarding
                 const signupData = {
-                  companyName: formData.companyName,
+                  displayName: formData.companyName, // SURGICAL FIX: Use displayName to match rest of system
+                  companyName: formData.companyName, // Keep for backward compatibility
                   email: formData.email,
                   timestamp: new Date().toISOString()
                 };

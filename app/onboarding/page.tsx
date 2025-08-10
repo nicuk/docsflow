@@ -877,20 +877,73 @@ const tenantAssignment = {
           </div>
           
           <DomainSelection
-            companyName={onboardingData?.displayName || (() => {
+            companyName={(() => {
+              // SURGICAL FIX: Unified data retrieval with proper fallback chain
+              console.log('🔍 DomainSelection: Retrieving companyName...');
+              
+              // Priority 1: onboardingData from state
+              if (onboardingData?.displayName) {
+                console.log('✅ Found companyName from onboardingData:', onboardingData.displayName);
+                return onboardingData.displayName;
+              }
+              
+              // Priority 2: Client-side localStorage access (SSR-safe)
               if (typeof window !== 'undefined') {
+                // Check signup-data first (PRIMARY SOURCE - where signup stores companyName)
                 const signupData = localStorage.getItem('signup-data');
                 if (signupData) {
-                  const parsed = JSON.parse(signupData);
-                  return parsed.companyName || parsed.displayName;
+                  try {
+                    const parsed = JSON.parse(signupData);
+                    // CRITICAL: signup-data stores 'companyName', not 'displayName'
+                    if (parsed.companyName) {
+                      console.log('✅ Found companyName from signup-data:', parsed.companyName);
+                      return parsed.companyName;
+                    }
+                    if (parsed.displayName) {
+                      console.log('✅ Found displayName from signup-data:', parsed.displayName);
+                      return parsed.displayName;
+                    }
+                  } catch (e) {
+                    console.warn('❌ Failed to parse signup-data:', e);
+                  }
                 }
+                
+                // Check onboarding-data as secondary fallback
                 const onboardingStoredData = localStorage.getItem('onboarding-data');
                 if (onboardingStoredData) {
-                  const parsed = JSON.parse(onboardingStoredData);
-                  return parsed.displayName || parsed.companyName;
+                  try {
+                    const parsed = JSON.parse(onboardingStoredData);
+                    if (parsed.displayName) {
+                      console.log('✅ Found displayName from onboarding-data:', parsed.displayName);
+                      return parsed.displayName;
+                    }
+                    if (parsed.companyName) {
+                      console.log('✅ Found companyName from onboarding-data:', parsed.companyName);
+                      return parsed.companyName;
+                    }
+                  } catch (e) {
+                    console.warn('❌ Failed to parse onboarding-data:', e);
+                  }
+                }
+                
+                // Check tenant-context as tertiary fallback
+                const tenantContext = localStorage.getItem('tenant-context');
+                if (tenantContext) {
+                  try {
+                    const parsed = JSON.parse(tenantContext);
+                    if (parsed.displayName) {
+                      console.log('✅ Found displayName from tenant-context:', parsed.displayName);
+                      return parsed.displayName;
+                    }
+                  } catch (e) {
+                    console.warn('❌ Failed to parse tenant-context:', e);
+                  }
                 }
               }
-              return null;
+              
+              // Default fallback - should rarely happen now
+              console.warn('No companyName found in any storage - this indicates a signup data issue');
+              return null; // Let DomainSelection handle null gracefully
             })()}
             onDomainSelected={handleDomainSelected}
             onInviteAccepted={handleInviteAccepted}
