@@ -17,6 +17,10 @@ import { smartIndustryDetection, generateSubdomain } from '@/lib/industry-detect
 // Questions data moved to /lib/onboarding-questions.ts
 
 export default function OnboardingFlow() {
+  // Security: Block rendering until auth is verified
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
   const [currentStep, setCurrentStep] = useState(0); // 0 = domain selection, 1 = questions (only for new tenants)
   const [selectedDomain, setSelectedDomain] = useState('');
   const [isJoiningExisting, setIsJoiningExisting] = useState(false);
@@ -118,43 +122,32 @@ export default function OnboardingFlow() {
             }
           }
           
-          console.error('❌ AUTH CHECK FAILED - DETAILED DEBUG:', {
-            status: response?.status || 'unknown',
-            statusText: response?.statusText || 'unknown',
-            errorText: errorText,
-            errorData: errorData,
-            retries: retryCount + 1,
-            url: '/api/auth/check-user',
-            timestamp: new Date().toISOString(),
-            userAgent: navigator.userAgent,
-            cookies: document.cookie
-          });
+          // Security: Minimal logging for production
+          console.error('Authentication required');
+          
+          // Security: Set auth states and redirect immediately
+          setIsAuthChecking(false);
+          setIsAuthenticated(false);
           
           // Check if we're already on login page to prevent redirect loop
           if (window.location.pathname !== '/login') {
-            console.log('❌ User not authenticated, redirecting to login in 5 seconds...');
-            console.log('🔍 DEBUGGING: Please take screenshot of console now!');
-            
-            // Add delay to allow debugging
-            setTimeout(() => {
-              console.log('🔄 Redirecting to login now...');
-              window.location.href = '/login';
-            }, 5000);
+            // Security: Immediate redirect, no delays
+            window.location.href = '/login';
           }
           return;
         }
 
         const userData = await response.json();
-        console.log('✅ Auth check successful, user data:', userData);
+        
+        // Security: Set authenticated state
+        setIsAuthenticated(true);
+        setIsAuthChecking(false);
         
         // Check if user already completed onboarding
         if (userData.onboardingComplete && userData.tenantId) {
-          console.log('✅ User already completed onboarding, redirecting to dashboard');
           window.location.href = '/dashboard';
           return;
         }
-        
-        console.log('🔄 User needs onboarding, proceeding with onboarding flow...');
 
         // Load onboarding data from localStorage or user data (client-side only)
         const storedData = typeof window !== 'undefined' ? localStorage.getItem('onboarding-data') : null;
@@ -878,72 +871,55 @@ const tenantAssignment = {
           
           <DomainSelection
             companyName={(() => {
-              // SURGICAL FIX: Unified data retrieval with proper fallback chain
-              console.log('🔍 DomainSelection: Retrieving companyName...');
-              
               // Priority 1: onboardingData from state
               if (onboardingData?.displayName) {
-                console.log('✅ Found companyName from onboardingData:', onboardingData.displayName);
                 return onboardingData.displayName;
               }
               
               // Priority 2: Client-side localStorage access (SSR-safe)
               if (typeof window !== 'undefined') {
-                // Check signup-data first (PRIMARY SOURCE - where signup stores companyName)
+                // Check signup-data first
                 const signupData = localStorage.getItem('signup-data');
                 if (signupData) {
                   try {
                     const parsed = JSON.parse(signupData);
-                    // CRITICAL: signup-data stores 'companyName', not 'displayName'
-                    if (parsed.companyName) {
-                      console.log('✅ Found companyName from signup-data:', parsed.companyName);
-                      return parsed.companyName;
-                    }
-                    if (parsed.displayName) {
-                      console.log('✅ Found displayName from signup-data:', parsed.displayName);
-                      return parsed.displayName;
+                    if (parsed.displayName || parsed.companyName) {
+                      return parsed.displayName || parsed.companyName;
                     }
                   } catch (e) {
-                    console.warn('❌ Failed to parse signup-data:', e);
+                    // Silent error handling
                   }
                 }
                 
-                // Check onboarding-data as secondary fallback
+                // Check onboarding-data as fallback
                 const onboardingStoredData = localStorage.getItem('onboarding-data');
                 if (onboardingStoredData) {
                   try {
                     const parsed = JSON.parse(onboardingStoredData);
-                    if (parsed.displayName) {
-                      console.log('✅ Found displayName from onboarding-data:', parsed.displayName);
-                      return parsed.displayName;
-                    }
-                    if (parsed.companyName) {
-                      console.log('✅ Found companyName from onboarding-data:', parsed.companyName);
-                      return parsed.companyName;
+                    if (parsed.displayName || parsed.companyName) {
+                      return parsed.displayName || parsed.companyName;
                     }
                   } catch (e) {
-                    console.warn('❌ Failed to parse onboarding-data:', e);
+                    // Silent error handling
                   }
                 }
                 
-                // Check tenant-context as tertiary fallback
+                // Check tenant-context as final fallback
                 const tenantContext = localStorage.getItem('tenant-context');
                 if (tenantContext) {
                   try {
                     const parsed = JSON.parse(tenantContext);
-                    if (parsed.displayName) {
-                      console.log('✅ Found displayName from tenant-context:', parsed.displayName);
-                      return parsed.displayName;
+                    if (parsed.displayName || parsed.companyName) {
+                      return parsed.displayName || parsed.companyName;
                     }
                   } catch (e) {
-                    console.warn('❌ Failed to parse tenant-context:', e);
+                    // Silent error handling
                   }
                 }
               }
               
-              // Default fallback - should rarely happen now
-              console.warn('No companyName found in any storage - this indicates a signup data issue');
-              return null; // Let DomainSelection handle null gracefully
+              // Default fallback
+              return 'your-company';
             })()}
             onDomainSelected={handleDomainSelected}
             onInviteAccepted={handleInviteAccepted}
@@ -954,6 +930,28 @@ const tenantAssignment = {
   }
 
   // Define variables for current question step
+  // Security: Block all rendering until auth is verified
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Verifying access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Access denied. Redirecting...</p>
+        </div>
+      </div>
+    );
+  }
+
   const currentQuestionData = GENERIC_QUESTIONS[currentQuestion];
   const totalSteps = GENERIC_QUESTIONS.length + 1; // +1 for domain selection
 
