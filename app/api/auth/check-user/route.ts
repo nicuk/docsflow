@@ -13,7 +13,17 @@ export async function GET(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
 
   try {
+    console.log('🔍 Auth check - Request headers:', {
+      origin,
+      userAgent: request.headers.get('user-agent'),
+      cookie: request.headers.get('cookie')?.substring(0, 100) + '...',
+      referer: request.headers.get('referer')
+    });
+
     const cookieStore = await cookies();
+    const allCookies = cookieStore.getAll();
+    console.log('🔍 Auth check - Available cookies:', allCookies.map(c => c.name));
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -24,7 +34,11 @@ export async function GET(request: NextRequest) {
           },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options)
+              try {
+                cookieStore.set(name, value, options)
+              } catch (error) {
+                console.error('Cookie set error:', error);
+              }
             })
           },
         },
@@ -34,9 +48,19 @@ export async function GET(request: NextRequest) {
     // Get current user from Supabase Auth
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
+    console.log('🔍 Auth check - Supabase auth result:', {
+      user: user ? { id: user.id, email: user.email } : null,
+      authError: authError ? authError.message : null
+    });
+
     if (authError || !user) {
+      console.log('❌ Auth check failed:', {
+        authError: authError?.message,
+        hasUser: !!user,
+        timestamp: new Date().toISOString()
+      });
       return NextResponse.json(
-        { error: 'Not authenticated' },
+        { error: 'Not authenticated', details: authError?.message },
         { status: 401, headers: corsHeaders }
       );
     }
@@ -96,9 +120,20 @@ export async function GET(request: NextRequest) {
     }, { headers: corsHeaders });
 
   } catch (error: any) {
-    console.error('Check user GET error:', error);
+    console.error('🚨 Check user GET error - DETAILED DEBUG:', {
+      error: error.message,
+      stack: error.stack,
+      name: error.name,
+      timestamp: new Date().toISOString(),
+      origin,
+      userAgent: request.headers.get('user-agent')
+    });
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error', 
+        details: error.message,
+        timestamp: new Date().toISOString()
+      },
       { status: 500, headers: corsHeaders }
     );
   }
