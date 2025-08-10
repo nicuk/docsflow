@@ -44,7 +44,11 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
   // Generate smart business-focused suggestions based on company name
   useEffect(() => {
     const generateSuggestions = async (company: string, industry: string) => {
-      if (!company) return;
+      console.log('🔍 DomainSelection generateSuggestions called with:', { company, industry });
+      if (!company) {
+        console.warn('⚠️ No company name provided to generateSuggestions');
+        return;
+      }
       
       const baseName = company.toLowerCase()
         .replace(/[^a-z0-9\s]/g, '')
@@ -98,9 +102,12 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
     };
 
     // Generate suggestions when component mounts or companyName changes
+    console.log('🔍 DomainSelection useEffect triggered with companyName:', companyName);
     if (companyName) {
       const storedIndustry = localStorage.getItem('industry') || 'general';
       generateSuggestions(companyName, storedIndustry);
+    } else {
+      console.warn('⚠️ DomainSelection: No companyName prop received');
     }
   }, [companyName]);
 
