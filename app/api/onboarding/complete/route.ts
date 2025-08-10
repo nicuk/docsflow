@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
       .from('tenants')
       .insert({
         subdomain: cleanSubdomain,
-        name: businessName || business_overview.substring(0, 50),
+        name: businessName || cleanSubdomain, // Use subdomain as fallback, not business_overview
         industry: industry || 'general',
         subscription_status: 'trial',
         plan_type: 'starter',
@@ -199,7 +199,98 @@ export async function POST(request: NextRequest) {
       // Continue without Redis - not critical for functionality
     }
 
-    // Step 7: Return success response with complete session data for frontend storage
+    // Step 7: Create real LLM persona using the business context
+    let customPersona = null;
+    try {
+      const { aiProvider } = await import('@/lib/ai/providers');
+      
+      // Create comprehensive business context for LLM
+      const businessContext = {
+        business_overview,
+        daily_challenges,
+        key_decisions,
+        success_metrics,
+        information_needs,
+        industry: tenant.industry,
+        businessName: tenant.name
+      };
+      
+      // Generate custom LLM persona
+      const personaPrompt = `Create a specialized AI assistant persona for this business:
+
+Business: ${tenant.name}
+Industry: ${tenant.industry}
+Overview: ${business_overview}
+Daily Challenges: ${daily_challenges}
+Key Decisions: ${key_decisions}
+Success Metrics: ${success_metrics}
+Information Needs: ${information_needs}
+
+Create a JSON response with:
+- role: Professional role/title for the AI
+- focus_areas: Array of 3-5 key expertise areas
+- tone: Communication style (professional, friendly, technical, etc.)
+- business_context: Summary of business understanding
+- prompt_template: System prompt for chat interactions`;
+      
+      console.log('🤖 Creating LLM persona for:', tenant.name);
+      
+      // Call AI provider with timeout
+      const personaResponse = await Promise.race([
+        aiProvider.generatePersona(personaPrompt),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Persona creation timeout')), 25000)
+        )
+      ]);
+      
+      // Parse AI response
+      try {
+        customPersona = JSON.parse(personaResponse as string);
+        customPersona.created_from = 'ai_generated';
+        customPersona.created_at = new Date().toISOString();
+        
+        console.log('✅ LLM persona created successfully:', customPersona.role);
+      } catch (parseError) {
+        console.error('❌ Failed to parse AI persona response:', parseError);
+        // Fallback persona
+        customPersona = {
+          role: `${tenant.industry} Business Advisor`,
+          focus_areas: ['Operations', 'Strategy', 'Growth'],
+          tone: 'professional',
+          business_context: business_overview,
+          prompt_template: `You are a specialized ${tenant.industry} business advisor for ${tenant.name}.`,
+          created_from: 'fallback',
+          created_at: new Date().toISOString()
+        };
+      }
+      
+    } catch (error) {
+      console.error('❌ LLM persona creation failed:', error);
+      // Fallback persona
+      customPersona = {
+        role: `${tenant.industry} Business Advisor`,
+        focus_areas: ['Operations', 'Strategy', 'Growth'],
+        tone: 'professional',
+        business_context: business_overview,
+        prompt_template: `You are a specialized ${tenant.industry} business advisor for ${tenant.name}.`,
+        created_from: 'fallback',
+        created_at: new Date().toISOString()
+      };
+    }
+    
+    // Step 8: Update tenant with custom persona
+    const { error: personaUpdateError } = await supabase
+      .from('tenants')
+      .update({ custom_persona: customPersona })
+      .eq('id', tenant.id);
+      
+    if (personaUpdateError) {
+      console.error('❌ Failed to save persona to tenant:', personaUpdateError);
+    } else {
+      console.log('✅ Custom persona saved to tenant:', tenant.subdomain);
+    }
+
+    // Step 9: Return success response with complete session data for frontend storage
     const response = NextResponse.json({
       success: true,
       tenant: {
@@ -207,7 +298,7 @@ export async function POST(request: NextRequest) {
         subdomain: tenant.subdomain,
         name: tenant.name,
         industry: tenant.industry,
-        custom_persona: { created_from: 'frontend' }
+        custom_persona: customPersona
       },
       // CRITICAL: Include REAL user session data for frontend storage
       user: {
