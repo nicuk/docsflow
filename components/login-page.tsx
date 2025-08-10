@@ -94,8 +94,19 @@ export default function LoginPage() {
       
       if (error) {
         console.error('Supabase auth error:', error)
+        
+        // Provide more specific error messages
+        let errorMessage = "Invalid email or password"
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = "User not found. Please check your email or sign up for a new account."
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = "Please check your email and confirm your account before signing in."
+        } else if (error.message.includes('Too many requests')) {
+          errorMessage = "Too many login attempts. Please wait a moment and try again."
+        }
+        
         setErrors({
-          general: error.message || "Invalid email or password"
+          general: errorMessage
         })
         return
       }
@@ -135,7 +146,7 @@ export default function LoginPage() {
     } catch (error) {
       console.error('Login error:', error)
       setErrors({
-        general: error instanceof Error ? error.message : "Invalid email or password",
+        general: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
       })
     } finally {
       setIsLoading(false)

@@ -269,16 +269,35 @@ class AuthClient {
     }
   }
 
-  // Redirect to Google OAuth
+  // Redirect to Google OAuth using Supabase
   async signInWithGoogle(): Promise<void> {
     try {
-      const { authUrl, state } = await this.initiateGoogleAuth();
+      // Import Supabase client
+      const { createSupabaseClient } = await import('@/lib-frontend/supabase');
+      const supabase = createSupabaseClient();
       
-      // Store state for verification
-      localStorage.setItem('oauth-state', state);
-      localStorage.setItem('oauth-provider', 'google');
+      // Get the correct redirect URL based on environment
+      const redirectUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://docsflow.app/auth/callback'
+        : 'http://localhost:3000/auth/callback';
       
-      window.location.href = authUrl;
+      // Use Supabase OAuth with correct redirect URL
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+      
+      if (error) {
+        console.error('Google OAuth error:', error);
+        throw new Error('Failed to initiate Google sign-in');
+      }
+      
     } catch (error) {
       console.error('Google OAuth error:', error);
       throw new Error('Failed to initiate Google sign-in');

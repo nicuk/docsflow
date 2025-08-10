@@ -32,16 +32,12 @@ function AuthCallbackHandler() {
           return;
         }
 
-        // Verify state parameter
-        const storedState = localStorage.getItem('oauth-state');
-        if (state !== storedState) {
-          setStatus('error');
-          setMessage('Invalid state parameter');
-          return;
-        }
+        // State verification is handled by Supabase OAuth flow
+        // No need for manual state verification
 
         // Handle Supabase OAuth callback
-        const { supabase } = await import('@/lib/supabase');
+        const { createSupabaseClient } = await import('@/lib-frontend/supabase');
+        const supabase = createSupabaseClient();
 
         // Exchange code for session
         const { data, error: oauthError } = await supabase.auth.exchangeCodeForSession(code);
@@ -59,13 +55,20 @@ function AuthCallbackHandler() {
           return;
         }
 
+        // Check if user exists in our database
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('id, tenant_id, tenants(subdomain)')
+          .eq('id', data.user.id)
+          .single();
+
         // Create user object in expected format
         const user = {
           id: data.user.id,
           email: data.user.email || '',
           access_token: data.session?.access_token || '',
           refresh_token: data.session?.refresh_token || '',
-          tenant_id: null,
+          tenant_id: existingUser?.tenant_id || null,
           access_level: 3
         };
 
@@ -74,19 +77,38 @@ function AuthCallbackHandler() {
         localStorage.setItem('refresh_token', user.refresh_token);
         localStorage.setItem('user', JSON.stringify(user));
         localStorage.setItem('user-email', user.email);
-        localStorage.setItem('signup-data', JSON.stringify({
-          email: user.email,
-          companyName: extractCompanyFromEmail(user.email),
-          authMethod: 'google'
-        }));
-
-        setStatus('success');
-        setMessage('Google authentication successful! Redirecting...');
-
-        // Redirect to onboarding for domain selection
-        setTimeout(() => {
-          router.push('/onboarding');
-        }, 1500);
+        
+        // If user doesn't exist in our database, create them and go to onboarding
+        if (!existingUser) {
+          // Store signup data for onboarding
+          localStorage.setItem('signup-data', JSON.stringify({
+            email: user.email,
+            companyName: extractCompanyFromEmail(user.email),
+            authMethod: 'google'
+          }));
+          
+          setStatus('success');
+          setMessage('Welcome! Setting up your account...');
+          
+          // Redirect to onboarding for new users
+          setTimeout(() => {
+            router.push('/onboarding');
+          }, 1500);
+        } else {
+          // Existing user - redirect to their tenant dashboard or main dashboard
+          const tenantSubdomain = (existingUser.tenants as any)?.subdomain;
+          
+          setStatus('success');
+          setMessage('Welcome back! Redirecting to your dashboard...');
+          
+          setTimeout(() => {
+            if (tenantSubdomain) {
+              window.location.href = `https://${tenantSubdomain}.docsflow.app/dashboard`;
+            } else {
+              router.push('/dashboard');
+            }
+          }, 1500);
+        }
 
       } catch (error) {
         console.error('OAuth callback error:', error);
