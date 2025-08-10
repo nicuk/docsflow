@@ -135,17 +135,55 @@ export async function POST(request: NextRequest) {
       }, { headers: corsHeaders });
     }
 
+    // CRITICAL FIX: Set session cookies when session exists (email verification disabled)
+    if (authData.session) {
+      const response = NextResponse.json({
+        success: true,
+        user: {
+          id: authData.user?.id,
+          email: authData.user?.email,
+          access_token: authData.session.access_token,
+          refresh_token: authData.session.refresh_token,
+          tenant_id: tenantId,
+          access_level: accessLevel,
+          tenant: userProfile?.tenants,
+          name: companyName
+        },
+        message: 'User registered successfully'
+      }, { headers: corsHeaders });
+
+      // Set Supabase session cookies for immediate auth recognition
+      response.cookies.set('sb-access-token', authData.session.access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: authData.session.expires_in || 3600,
+        path: '/'
+      });
+
+      response.cookies.set('sb-refresh-token', authData.session.refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 30, // 30 days
+        path: '/'
+      });
+
+      return response;
+    }
+
+    // Fallback for email verification flow
     return NextResponse.json({
       success: true,
       user: {
         id: authData.user?.id,
         email: authData.user?.email,
-        access_token: (authData.session as any)?.access_token || null,
-        refresh_token: (authData.session as any)?.refresh_token || null,
+        access_token: null,
+        refresh_token: null,
         tenant_id: tenantId,
         access_level: accessLevel,
         tenant: userProfile?.tenants,
-        name: companyName // Include company name in response
+        name: companyName
       },
       message: 'User registered successfully'
     }, { headers: corsHeaders });
