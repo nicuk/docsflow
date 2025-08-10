@@ -80,7 +80,7 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
     try {
       // Check if domain is available (include user email for invitation lookup)
       const userEmail = localStorage.getItem('user-email') || '';
-      const response = await fetch(`https://api.docsflow.app/api/subdomain/check?subdomain=${encodeURIComponent(domain)}&email=${encodeURIComponent(userEmail)}`);
+      const response = await fetch(`/api/subdomain/check?subdomain=${encodeURIComponent(domain)}&email=${encodeURIComponent(userEmail)}`);
       const result = await response.json();
 
       if (!result.available && result.existingTenant) {
@@ -147,7 +147,7 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
     
     try {
       // Request to join existing tenant
-      const response = await fetch(`https://api.docsflow.app/api/tenant/${existingTenant.id}/request-access`, {
+      const response = await fetch(`/api/tenant/${existingTenant.id}/request-access`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

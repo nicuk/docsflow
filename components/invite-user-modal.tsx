@@ -57,7 +57,7 @@ export default function InviteUserModal({ isOpen, onClose, tenantInfo }: InviteU
 
     try {
       // Call backend to send invitation
-      const response = await fetch('https://api.docsflow.app/api/users/invite', {
+      const response = await fetch('/api/users/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

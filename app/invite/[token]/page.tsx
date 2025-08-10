@@ -49,7 +49,7 @@ export default function InviteAcceptancePage() {
 
   const loadInvitation = async () => {
     try {
-      const response = await fetch(`https://api.docsflow.app/api/invitations/${params.token}`);
+      const response = await fetch(`/api/invitations/${params.token}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -91,7 +91,7 @@ export default function InviteAcceptancePage() {
     setError('');
 
     try {
-      const response = await fetch(`https://api.docsflow.app/api/invitations/${params.token}/accept`, {
+      const response = await fetch(`/api/invitations/${params.token}/accept`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
