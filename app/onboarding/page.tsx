@@ -871,13 +871,16 @@ const tenantAssignment = {
           
           <DomainSelection
             companyName={(() => {
-              // Priority 1: onboardingData from state
+              // Priority 1: onboardingData from state (check multiple field names)
               if (onboardingData?.displayName) {
                 return onboardingData.displayName;
               }
+              if (onboardingData?.user?.name) {
+                return onboardingData.user.name;
+              }
               
               // Priority 2: Client-side localStorage access (SSR-safe)
-              if (typeof window !== 'undefined') {
+              if (typeof window !== 'undefined' && typeof document !== 'undefined') {
                 // Check signup-data first
                 const signupData = localStorage.getItem('signup-data');
                 if (signupData) {
