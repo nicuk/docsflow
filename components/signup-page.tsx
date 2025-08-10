@@ -255,28 +255,37 @@ export default function SignupPage() {
         <Card className="w-full max-w-sm">
           <CardContent className="pt-6 text-center">
             <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Welcome aboard!</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Check Your Email!</h2>
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-              Your account has been created successfully. Please check your email to verify your account.
+              Account created for <strong>{formData.companyName}</strong>! 
+              Please check your email and click the verification link to continue to onboarding.
             </p>
-            <Button 
-              onClick={() => {
-                // Store signup data for onboarding
-                const signupData = {
-                  displayName: formData.companyName, // SURGICAL FIX: Use displayName to match rest of system
-                  companyName: formData.companyName, // Keep for backward compatibility
-                  email: formData.email,
-                  timestamp: new Date().toISOString()
-                };
-                localStorage.setItem('signup-data', JSON.stringify(signupData));
-                
-                // Redirect to frontend onboarding flow (5-question setup)
-                window.location.href = '/onboarding';
-              }}
-              className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-sm"
-            >
-              Set Up Your AI Assistant
-            </Button>
+            <div className="space-y-3">
+              <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                <p className="mb-1">📧 <strong>Check your inbox:</strong> {formData.email}</p>
+                <p>Click the verification link to activate your account and proceed to AI setup.</p>
+              </div>
+              <Button 
+                onClick={() => {
+                  // Store signup data for post-verification onboarding
+                  const signupData = {
+                    displayName: formData.companyName,
+                    companyName: formData.companyName,
+                    email: formData.email,
+                    timestamp: new Date().toISOString(),
+                    awaitingVerification: true
+                  };
+                  localStorage.setItem('signup-data', JSON.stringify(signupData));
+                  
+                  // Redirect to login page to handle post-verification flow
+                  window.location.href = '/login?message=verify-email';
+                }}
+                variant="outline"
+                className="w-full h-10 text-sm"
+              >
+                I'll Check My Email
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

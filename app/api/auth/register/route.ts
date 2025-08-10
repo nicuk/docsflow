@@ -40,8 +40,7 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    // Create user with Supabase Auth (regular signup, not admin)
-    // Let Supabase Auth handle user existence validation
+    // Create user with proper Supabase signup flow (includes email verification)
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -49,7 +48,8 @@ export async function POST(request: NextRequest) {
         data: {
           tenant_id: tenantId,
           access_level: accessLevel,
-          role: 'user'
+          role: 'user',
+          company_name: companyName
         }
       }
     });
@@ -117,16 +117,34 @@ export async function POST(request: NextRequest) {
       // Continue without profile data
     }
 
+    // Handle email verification requirement (proper Supabase flow)
+    if (!authData.session && authData.user && !authData.user.email_confirmed_at) {
+      // User created successfully but needs email verification
+      // Store company name in user metadata for retrieval after verification
+      return NextResponse.json({
+        success: true,
+        requiresEmailVerification: true,
+        user: {
+          id: authData.user.id,
+          email: authData.user.email,
+          name: companyName
+        },
+        message: 'Account created! Please check your email and click the verification link to continue to onboarding.',
+        nextStep: 'email_verification'
+      }, { headers: corsHeaders });
+    }
+
     return NextResponse.json({
       success: true,
       user: {
         id: authData.user?.id,
         email: authData.user?.email,
-        access_token: authData.session?.access_token,
-        refresh_token: authData.session?.refresh_token,
+        access_token: (authData.session as any)?.access_token || null,
+        refresh_token: (authData.session as any)?.refresh_token || null,
         tenant_id: tenantId,
         access_level: accessLevel,
-        tenant: userProfile?.tenants
+        tenant: userProfile?.tenants,
+        name: companyName // Include company name in response
       },
       message: 'User registered successfully'
     }, { headers: corsHeaders });
