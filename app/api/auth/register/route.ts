@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     const userInsertData: any = {
       id: authData.user?.id,
       email: authData.user?.email,
-      name: companyName || email.split('@')[0], // Use company name or email prefix as default name
+      name: companyName || 'Company', // CRITICAL FIX: Store company name in name field
       access_level: accessLevel,
       role: 'user',
       created_at: new Date().toISOString()
