@@ -865,6 +865,8 @@ const tenantAssignment = {
             <h1 className="text-3xl font-bold mb-2">Welcome to DocsFlow!</h1>
             <p className="text-muted-foreground">
               {(() => {
+                // SSR-safe localStorage access
+                if (typeof window === 'undefined') return "Let's get your organization set up";
                 const tenantContext = localStorage.getItem('tenant-context');
                 const companyName = tenantContext ? JSON.parse(tenantContext).displayName : null;
                 return companyName ? 

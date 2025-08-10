@@ -10,6 +10,8 @@ export const createSupabaseClient = () => {
     {
       cookies: {
         getAll() {
+          // SSR-safe cookie access
+          if (typeof document === 'undefined') return [];
           return document.cookie
             .split(';')
             .map(cookie => {
@@ -18,6 +20,8 @@ export const createSupabaseClient = () => {
             })
         },
         setAll(cookiesToSet) {
+          // SSR-safe cookie setting
+          if (typeof document === 'undefined') return;
           cookiesToSet.forEach(({ name, value, options }) => {
             let cookieString = `${name}=${value}`
             
