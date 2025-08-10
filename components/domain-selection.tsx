@@ -18,6 +18,7 @@ interface DomainSuggestion {
   domain: string;
   available: boolean;
   type: 'primary' | 'alternative';
+  description?: string;
 }
 
 interface ExistingTenant {
@@ -40,32 +41,65 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
   const [showJoinOption, setShowJoinOption] = useState(false);
   const [requestingAccess, setRequestingAccess] = useState(false);
 
-  // Generate smart suggestions based on company name
+  // Generate smart business-focused suggestions based on company name
   useEffect(() => {
     const generateSuggestions = async (company: string, industry: string) => {
+      if (!company) return;
+      
       const baseName = company.toLowerCase()
         .replace(/[^a-z0-9\s]/g, '')
         .replace(/\s+/g, '-')
         .substring(0, 20);
 
-      const suggestions = [
-        { domain: baseName, available: true, type: 'primary' as const },
-        { domain: `${baseName}-corp`, available: true, type: 'alternative' as const },
-        { domain: `${baseName}-team`, available: true, type: 'alternative' as const },
-        { domain: `${baseName}-ai`, available: true, type: 'alternative' as const },
+      // Business-focused domain alternatives based on corporate structure
+      const businessSuffixes = [
+        { suffix: 'ops', description: 'Operations' },
+        { suffix: 'hq', description: 'Headquarters' },
+        { suffix: 'main', description: 'Main Office' },
+        { suffix: 'mgmt', description: 'Management' },
+        { suffix: 'admin', description: 'Administration' },
+        { suffix: 'global', description: 'Global Operations' },
+        { suffix: 'us', description: 'US Operations' }
       ];
 
-      // Check availability for all suggestions
-      for (const suggestion of suggestions) {
-        await checkDomainAvailability(suggestion.domain, true);
-      }
+      const suggestions: DomainSuggestion[] = [
+        { domain: baseName, available: true, type: 'primary' as const, description: 'Primary domain' },
+        ...businessSuffixes.slice(0, 3).map(({ suffix, description }) => ({
+          domain: `${baseName}-${suffix}`,
+          available: true,
+          type: 'alternative' as const,
+          description
+        }))
+      ];
 
-      setSuggestions(suggestions);
+      // Check availability for all suggestions in parallel
+      const availabilityChecks = suggestions.map(async (suggestion) => {
+        try {
+          const response = await fetch('/api/subdomain/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subdomain: suggestion.domain })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            suggestion.available = !data.exists;
+          }
+        } catch (error) {
+          console.error(`Failed to check ${suggestion.domain}:`, error);
+          // Assume available on error to not block user
+          suggestion.available = true;
+        }
+        return suggestion;
+      });
+
+      const checkedSuggestions = await Promise.all(availabilityChecks);
+      setSuggestions(checkedSuggestions);
     };
 
-    // Enhance domain suggestions with industry context
-    const storedIndustry = localStorage.getItem('industry') || 'general';
+    // Generate suggestions when component mounts or companyName changes
     if (companyName) {
+      const storedIndustry = localStorage.getItem('industry') || 'general';
       generateSuggestions(companyName, storedIndustry);
     }
   }, [companyName]);
@@ -368,18 +402,30 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
                 {suggestions.map((suggestion) => (
                   <div
                     key={suggestion.domain}
-                    className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-colors ${
+                    className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-all ${
                       selectedDomain === suggestion.domain 
-                        ? 'border-blue-500 bg-blue-50' 
-                        : 'hover:border-gray-300'
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20' 
+                        : 'hover:border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                    } ${
+                      !suggestion.available ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                     onClick={() => suggestion.available && handleDomainSelect(suggestion.domain)}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="font-mono">{suggestion.domain}.docsflow.app</span>
-                      {suggestion.type === 'primary' && (
-                        <Badge variant="outline" className="text-xs">Recommended</Badge>
-                      )}
+                      <div className="flex flex-col">
+                        <span className="font-mono text-sm font-medium">{suggestion.domain}.docsflow.app</span>
+                        {suggestion.description && (
+                          <span className="text-xs text-muted-foreground mt-1">{suggestion.description}</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {suggestion.type === 'primary' && (
+                          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">Recommended</Badge>
+                        )}
+                        {suggestion.type === 'alternative' && (
+                          <Badge variant="secondary" className="text-xs">Business</Badge>
+                        )}
+                      </div>
                     </div>
                     {suggestion.available ? (
                       <CheckCircle className="w-5 h-5 text-green-500" />
