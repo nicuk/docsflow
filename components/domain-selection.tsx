@@ -182,67 +182,163 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
 
   if (showJoinOption && existingTenant) {
     return (
-      <div className="max-w-2xl mx-auto p-6">
-        <Card className="border-orange-200 bg-orange-50">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Building className="w-6 h-6 text-orange-600" />
-              <div>
-                <CardTitle className="text-orange-900">Organization Found!</CardTitle>
-                <CardDescription className="text-orange-700">
-                  {existingTenant.name} already uses {existingTenant.subdomain}.docsflow.app
-                </CardDescription>
+      <div className="w-full max-w-4xl mx-auto">
+        <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950 dark:to-indigo-950">
+          <CardHeader className="text-center pb-6">
+            <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <Building className="w-10 h-10 text-white" />
+            </div>
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-3">
+              Workspace Found
+            </CardTitle>
+            <CardDescription className="text-xl text-muted-foreground">
+              {existingTenant.name} has an active DocsFlow workspace
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="space-y-8">
+            {/* Premium Company Showcase */}
+            <div className="bg-gradient-to-r from-background to-muted/50 rounded-2xl p-6 border shadow-lg">
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Building className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-foreground">{existingTenant.name}</h3>
+                    <div className="flex items-center gap-3 mt-2">
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 font-medium">
+                        {existingTenant.industry}
+                      </Badge>
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Users className="w-4 h-4" />
+                        <span className="text-sm font-medium">{existingTenant.userCount} members</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Trust Indicators */}
+                <div className="flex flex-col items-end gap-2">
+                  <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-200 dark:border-green-800">
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    Verified
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    Enterprise Security
+                  </Badge>
+                </div>
+              </div>
+              
+              {/* Workspace URL Display */}
+              <div className="bg-muted/50 rounded-xl p-4 border">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="font-mono text-lg font-bold text-foreground">
+                    {existingTenant.subdomain}.docsflow.app
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Secure AI-powered document intelligence platform
+                </p>
+              </div>
+              
+              {/* Value Proposition */}
+              <div className="grid grid-cols-3 gap-4 mt-6">
+                <div className="text-center p-3 bg-background rounded-lg shadow-sm border">
+                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">AI</div>
+                  <div className="text-xs text-muted-foreground">Powered</div>
+                </div>
+                <div className="text-center p-3 bg-background rounded-lg shadow-sm border">
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">99.9%</div>
+                  <div className="text-xs text-muted-foreground">Uptime</div>
+                </div>
+                <div className="text-center p-3 bg-background rounded-lg shadow-sm border">
+                  <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">SOC 2</div>
+                  <div className="text-xs text-muted-foreground">Compliant</div>
+                </div>
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
-                <div>
-                  <h3 className="font-semibold">{existingTenant.name}</h3>
-                  <p className="text-sm text-gray-600">{existingTenant.industry} • {existingTenant.userCount} users</p>
-                  <p className="text-sm text-blue-600 font-medium">{existingTenant.subdomain}.docsflow.app</p>
-                </div>
-                <Users className="w-8 h-8 text-gray-400" />
-              </div>
 
-              {existingTenant.hasInvitation ? (
-                <div className="text-center space-y-3">
-                  <div className="flex items-center justify-center gap-2 text-green-700">
-                    <CheckCircle className="w-5 h-5" />
-                    <span className="font-medium">You have a pending invitation!</span>
+            {existingTenant.hasInvitation ? (
+              <div className="text-center space-y-4 p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 rounded-2xl border border-green-200 dark:border-green-800">
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
                   </div>
-                  <p className="text-sm text-gray-600">
-                    Redirecting you to accept your invitation...
-                  </p>
-                  <Loader2 className="w-6 h-6 animate-spin text-green-600 mx-auto" />
+                  <div className="text-left">
+                    <h4 className="font-bold text-lg text-green-800 dark:text-green-200">Invitation Ready!</h4>
+                    <p className="text-sm text-green-600 dark:text-green-400">You have access to this workspace</p>
+                  </div>
                 </div>
-              ) : (
-                <div className="flex gap-3">
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin text-green-600 dark:text-green-400" />
+                  <span className="text-green-700 dark:text-green-300 font-medium">Redirecting to your workspace...</span>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Enhanced Value Proposition */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
+                  <h4 className="font-bold text-xl text-blue-900 dark:text-blue-100 mb-3">
+                    Join {existingTenant.name}'s Workspace
+                  </h4>
+                  <p className="text-blue-700 dark:text-blue-300 mb-4">
+                    Get instant access to AI-powered document intelligence, team collaboration, and enterprise-grade security.
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <span className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                      <CheckCircle className="w-4 h-4" /> Enterprise AI Tools
+                    </span>
+                    <span className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                      <CheckCircle className="w-4 h-4" /> Team Collaboration
+                    </span>
+                    <span className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                      <CheckCircle className="w-4 h-4" /> Document Intelligence
+                    </span>
+                    <span className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                      <CheckCircle className="w-4 h-4" /> 24/7 Support
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Premium Action Buttons */}
+                <div className="flex gap-4">
                   <Button 
                     onClick={handleRequestAccess}
                     disabled={requestingAccess}
-                    className="flex-1"
+                    className="flex-1 h-16 text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-xl"
                   >
                     {requestingAccess ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                        Requesting...
+                        <Loader2 className="w-5 h-5 animate-spin mr-3" />
+                        Requesting Access...
                       </>
                     ) : (
-                      'Request to Join'
+                      <>
+                        <ArrowRight className="w-5 h-5 mr-3" />
+                        Access Workspace
+                      </>
                     )}
                   </Button>
                   <Button 
                     variant="outline" 
                     onClick={() => setShowJoinOption(false)}
-                    className="flex-1"
+                    className="flex-1 h-16 text-lg font-semibold border-2 hover:bg-muted/50"
                   >
-                    Choose Different Domain
+                    Create New Workspace
                   </Button>
                 </div>
-              )}
-            </div>
+                
+                {/* Professional Help Text */}
+                <div className="text-center p-4 bg-muted/30 rounded-lg border">
+                  <p className="text-sm text-muted-foreground">
+                    Need assistance? Contact our enterprise support team at{' '}
+                    <span className="font-medium text-blue-600 dark:text-blue-400">support@docsflow.app</span>
+                  </p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
