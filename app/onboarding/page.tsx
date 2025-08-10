@@ -955,6 +955,15 @@ const tenantAssignment = {
   const currentQuestionData = GENERIC_QUESTIONS[currentQuestion];
   const totalSteps = GENERIC_QUESTIONS.length + 1; // +1 for domain selection
 
+  const handleBack = () => {
+    if (currentQuestion > 0) {
+      setCurrentQuestion(currentQuestion - 1);
+      // Restore previous response if it exists
+      const prevResponse = (responses as any)[currentQuestion - 1] || '';
+      setCurrentResponse(prevResponse);
+    }
+  };
+
   return (
     <OnboardingQuestionStep
       currentQuestion={currentQuestion}
@@ -962,6 +971,7 @@ const tenantAssignment = {
       currentResponse={currentResponse}
       onResponseChange={setCurrentResponse}
       onNext={handleNext}
+      onBack={handleBack}
       onboardingData={onboardingData}
       totalSteps={totalSteps}
       currentStep={currentStep}

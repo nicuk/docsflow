@@ -14,6 +14,7 @@ interface OnboardingQuestionStepProps {
   currentResponse: string;
   onResponseChange: (response: string) => void;
   onNext: () => void;
+  onBack?: () => void;
   onboardingData: any;
   totalSteps: number;
   currentStep: number;
@@ -27,6 +28,7 @@ export default function OnboardingQuestionStep({
   currentResponse,
   onResponseChange,
   onNext,
+  onBack,
   onboardingData,
   totalSteps,
   currentStep,
@@ -151,6 +153,12 @@ export default function OnboardingQuestionStep({
                   placeholder={questionData.placeholder}
                   value={currentResponse}
                   onChange={(e) => onResponseChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey && currentResponse.length >= 10) {
+                      e.preventDefault();
+                      onNext();
+                    }
+                  }}
                   className="resize-none h-full w-full text-sm"
                 />
               </div>
@@ -178,8 +186,8 @@ export default function OnboardingQuestionStep({
                 </div>
               </div>
 
-              {/* Action Button */}
-              <div className="mt-3 flex-shrink-0">
+              {/* Action Buttons */}
+              <div className="mt-3 flex-shrink-0 space-y-2">
                 <Button 
                   onClick={onNext}
                   disabled={currentResponse.length < 10}
@@ -198,6 +206,18 @@ export default function OnboardingQuestionStep({
                     </>
                   )}
                 </Button>
+                
+                {/* Back Button - Only show if not first question and onBack is provided */}
+                {currentQuestion > 0 && onBack && (
+                  <Button 
+                    onClick={onBack}
+                    variant="outline"
+                    className="w-full text-xs sm:text-sm"
+                    size="sm"
+                  >
+                    Back
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
