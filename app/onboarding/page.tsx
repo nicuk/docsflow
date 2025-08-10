@@ -959,14 +959,21 @@ const tenantAssignment = {
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-2">Welcome to DocsFlow!</h1>
             <p className="text-muted-foreground">
-              {onboardingData?.organizationName ? 
-                `Let's set up your domain for ${onboardingData.organizationName}` :
-                "Let's get your organization set up"}
+              {(() => {
+                const tenantContext = localStorage.getItem('tenant-context');
+                const companyName = tenantContext ? JSON.parse(tenantContext).organizationName : null;
+                return companyName ? 
+                  `Let's set up your domain for ${companyName}` :
+                  "Let's get your organization set up";
+              })()}
             </p>
           </div>
           
           <DomainSelection
-            companyName={onboardingData?.organizationName}
+            companyName={(() => {
+              const tenantContext = localStorage.getItem('tenant-context');
+              return tenantContext ? JSON.parse(tenantContext).organizationName : null;
+            })()}
             onDomainSelected={handleDomainSelected}
             onInviteAccepted={handleInviteAccepted}
           />
