@@ -3,82 +3,18 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircle, ArrowRight, Brain, Zap, Target, TrendingUp } from 'lucide-react';
 import OptimizedCompletion from '@/components/optimized-completion';
 import DomainSelection from '@/components/domain-selection';
+import OnboardingQuestionStep from '@/components/onboarding-question-step';
+import OnboardingLoading from '@/components/onboarding-loading';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { GENERIC_QUESTIONS } from '@/lib/onboarding-questions';
+import { smartIndustryDetection, generateSubdomain } from '@/lib/industry-detection';
 
-const GENERIC_QUESTIONS = [
-  {
-    id: 'business_overview',
-    question: "Tell us about your business",
-    subtext: "What do you do? What industry are you in? What makes your company unique?",
-    placeholder: "We are a motorcycle dealership that specializes in Harley-Davidson bikes and custom modifications...",
-    impactMultiplier: "4.8x",
-    impactDescription: "more relevant responses when we understand your business model",
-    examples: [
-      "We operate a multi-location automotive parts distribution network serving 500+ repair shops across the Southeast, specializing in high-performance aftermarket components with same-day delivery",
-      "We're a regional healthcare system with 12 clinics processing 2,000+ patient visits monthly, focusing on preventive care and chronic disease management with integrated EHR systems",
-      "We manufacture precision-engineered luxury furniture for Fortune 500 corporate headquarters, managing complex supply chains with 50+ international suppliers and $10M+ annual contracts"
-    ]
-  },
-  {
-    id: 'daily_challenges',
-    question: "What are your biggest daily challenges?",
-    subtext: "What problems slow you down? What keeps you up at night?",
-    placeholder: "Our biggest challenge is managing inventory - we never know which bikes will sell fast and which will sit on the lot for months...",
-    impactMultiplier: "5.2x",
-    impactDescription: "better problem-solving when we know your pain points",
-    examples: [
-      "Demand forecasting across 847 SKUs - we're constantly either overstocked on slow-movers (tying up $2M+ in dead inventory) or out-of-stock on fast-sellers (losing $50K+ weekly in sales)",
-      "Patient no-show rates averaging 23% cost us $180K annually in lost revenue, while emergency walk-ins create scheduling chaos that cascades through our entire day, affecting 40+ other appointments",
-      "Quality control bottlenecks where manual inspection of 200+ daily units creates delivery delays, and defects discovered at client sites cost us $25K+ in expedited replacements and reputation damage"
-    ]
-  },
-  {
-    id: 'key_decisions',
-    question: "What important decisions do you make regularly?",
-    subtext: "What choices require data? What decisions impact your bottom line?",
-    placeholder: "Every month we decide which bikes to order, how to price trade-ins, and which marketing campaigns to run...",
-    impactMultiplier: "4.6x",
-    impactDescription: "more actionable insights for your specific decision-making needs",
-    examples: [
-      "Pricing strategy decisions affecting $5M+ annual revenue - analyzing competitor pricing, cost fluctuations, and demand elasticity to optimize margins while maintaining market share across 25+ product categories",
-      "Capacity planning decisions for 150+ staff across multiple shifts - predicting patient volume, balancing specialist availability, and optimizing resource allocation to maintain 95% utilization without burnout",
-      "Capital investment decisions for $2M+ annual equipment purchases - evaluating ROI on new machinery, comparing lease vs buy scenarios, and timing investments to maximize tax benefits and operational efficiency"
-    ]
-  },
-  {
-    id: 'success_metrics',
-    question: "How do you measure success?",
-    subtext: "What numbers matter most? What would make you say 'we're winning'?",
-    placeholder: "Success for us means turning inventory faster, higher profit margins per bike, and more repeat customers...",
-    impactMultiplier: "4.3x",
-    impactDescription: "more focused analysis on metrics that actually matter to you",
-    examples: [
-      "Inventory turnover rate above 12x annually, gross margins maintaining 28%+, customer retention rate exceeding 85%, and same-day fulfillment rate hitting 95%+ while keeping carrying costs under 18% of inventory value",
-      "Patient satisfaction scores above 4.8/5.0, appointment utilization rate of 92%+, average revenue per patient visit increasing 8% YoY, and clinical outcome improvements measurable through HbA1c, blood pressure, and preventive screening compliance rates",
-      "Production efficiency metrics: OEE (Overall Equipment Effectiveness) above 85%, defect rates below 0.3%, on-time delivery performance of 98%+, and customer quality ratings averaging 4.9/5.0 with repeat order rates exceeding 90%"
-    ]
-  },
-  {
-    id: 'information_needs',
-    question: "What information do you wish you had easier access to?",
-    subtext: "What data would help you make better decisions faster?",
-    placeholder: "I wish I could quickly see which bike models are trending, seasonal demand patterns, and competitor pricing...",
-    impactMultiplier: "5.1x",
-    impactDescription: "more targeted document analysis focusing on your information gaps",
-    examples: [
-      "Real-time demand signals across all channels (B2B orders, market trends, seasonal patterns), supplier performance analytics (delivery times, quality scores, price volatility), and profitability analysis by SKU including true carrying costs and opportunity costs",
-      "Integrated patient journey analytics combining clinical outcomes with financial metrics, population health trends affecting our service area, provider productivity benchmarks, and predictive indicators for chronic disease progression to enable proactive interventions",
-      "End-to-end production visibility from raw material costs to delivered product profitability, real-time quality metrics correlated with supplier batch data, customer satisfaction feedback linked to specific production runs, and predictive maintenance schedules optimized for minimal downtime"
-    ]
-  }
-];
+// Questions data moved to /lib/onboarding-questions.ts
 
 export default function OnboardingFlow() {
   const [currentStep, setCurrentStep] = useState(0); // 0 = domain selection, 1 = questions (only for new tenants)
@@ -220,9 +156,9 @@ export default function OnboardingFlow() {
         
         console.log('🔄 User needs onboarding, proceeding with onboarding flow...');
 
-        // Load onboarding data from localStorage or user data
-        const storedData = localStorage.getItem('onboarding-data');
-        const signupData = localStorage.getItem('signup-data');
+        // Load onboarding data from localStorage or user data (client-side only)
+        const storedData = typeof window !== 'undefined' ? localStorage.getItem('onboarding-data') : null;
+        const signupData = typeof window !== 'undefined' ? localStorage.getItem('signup-data') : null;
         
         if (storedData) {
           setOnboardingData(JSON.parse(storedData));
@@ -350,7 +286,7 @@ export default function OnboardingFlow() {
     
     try {
       // Validate we have a selected domain
-      const finalDomain = selectedDomain || localStorage.getItem('selected-domain') || 
+      const finalDomain = selectedDomain || (typeof window !== 'undefined' ? localStorage.getItem('selected-domain') : null) || 
         generateSubdomain(allResponses.business_overview || 'business');
       
       // 🔥 CRITICAL: Complete onboarding with smart industry detection
@@ -917,38 +853,7 @@ const tenantAssignment = {
   }
 
   if (isGenerating) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="w-full max-w-2xl">
-          <Card className="shadow-lg">
-            <CardContent className="p-8 text-center">
-              <Brain className="w-12 h-12 text-blue-600 mx-auto mb-4 animate-pulse" />
-              <h2 className="text-2xl font-bold mb-2">Creating Your Custom AI Assistant</h2>
-              <p className="text-muted-foreground mb-6">Analyzing your responses to build the perfect business intelligence partner...</p>
-              
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 text-left">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
-                  <span>Understanding your business model...</span>
-                </div>
-                <div className="flex items-center gap-3 text-left">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse delay-200"></div>
-                  <span>Identifying your key challenges...</span>
-                </div>
-                <div className="flex items-center gap-3 text-left">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse delay-400"></div>
-                  <span>Customizing AI personality...</span>
-                </div>
-                <div className="flex items-center gap-3 text-left">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse delay-600"></div>
-                  <span>Optimizing for your success metrics...</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+    return <OnboardingLoading />;
   }
 
 // Show domain selection on step 0 (FIRST STEP per Enterprise Architecture Plan)
@@ -970,9 +875,20 @@ const tenantAssignment = {
           </div>
           
           <DomainSelection
-            companyName={(() => {
-              const tenantContext = localStorage.getItem('tenant-context');
-              return tenantContext ? JSON.parse(tenantContext).displayName : null;
+            companyName={onboardingData?.displayName || (() => {
+              if (typeof window !== 'undefined') {
+                const signupData = localStorage.getItem('signup-data');
+                if (signupData) {
+                  const parsed = JSON.parse(signupData);
+                  return parsed.companyName || parsed.displayName;
+                }
+                const onboardingStoredData = localStorage.getItem('onboarding-data');
+                if (onboardingStoredData) {
+                  const parsed = JSON.parse(onboardingStoredData);
+                  return parsed.displayName || parsed.companyName;
+                }
+              }
+              return null;
             })()}
             onDomainSelected={handleDomainSelected}
             onInviteAccepted={handleInviteAccepted}
@@ -985,185 +901,19 @@ const tenantAssignment = {
   // Define variables for current question step
   const currentQuestionData = GENERIC_QUESTIONS[currentQuestion];
   const totalSteps = GENERIC_QUESTIONS.length + 1; // +1 for domain selection
-  const currentProgress = currentStep; // currentStep accounts for domain selection
-  const questionProgress = (currentProgress / totalSteps) * 100;
 
   return (
-    <div className="h-screen bg-background p-2 sm:p-4 flex flex-col overflow-hidden">
-      <div className="max-w-7xl mx-auto flex flex-col h-full">
-        {/* Compact Organization Info Header */}
-        {onboardingData && (
-          <div className="mb-2 bg-muted/50 p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-sm sm:text-lg font-semibold text-foreground">
-                  Setting up AI for {onboardingData.displayName}
-                </h2>
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  Subdomain: {onboardingData.subdomain}.docsflow.app • Industry: {onboardingData.industry}
-                </p>
-              </div>
-              <div className="text-right">
-                <div className="text-xs text-primary">
-                  Step {currentStep + 1} of {totalSteps}
-                </div>
-                <div className="text-xs sm:text-sm font-medium text-foreground">
-                  {userRole === 'admin' ? 'Admin Setup' : 'User Setup'}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Ultra Compact Progress Header */}
-        <div className="flex items-center justify-between mb-2 sm:mb-3 bg-card p-2 sm:p-3 rounded-lg shadow-sm border border-border flex-shrink-0">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-sm sm:text-base">
-              {currentQuestion + 1}
-            </div>
-            <div>
-              <h1 className="text-sm sm:text-lg font-bold text-foreground">{currentQuestionData.question}</h1>
-              <p className="text-xs text-muted-foreground">Question {currentQuestion + 1} of {GENERIC_QUESTIONS.length} • {Math.round(questionProgress)}% complete</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="text-right hidden sm:block">
-              <div className="text-xs font-medium text-primary">{currentQuestionData.impactMultiplier}</div>
-              <div className="text-xs text-muted-foreground">impact</div>
-            </div>
-            <Progress value={questionProgress} className="w-16 sm:w-24" />
-          </div>
-        </div>
-
-        {/* Main Content - Fills Remaining Space */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 min-h-0">
-          
-          {/* Left Column: Examples & Impact */}
-          <div className="flex flex-col gap-2 sm:gap-3 min-h-0">
-            {/* Impact Explanation - Ultra Compact */}
-            <Card className="border-primary/20 bg-primary/10 flex-shrink-0">
-              <CardContent className="p-2 sm:p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <Zap className="w-4 h-4 text-primary" />
-                  <h3 className="text-sm font-semibold text-foreground">Why This Matters</h3>
-                </div>
-                <p className="text-muted-foreground text-xs mb-2">
-                  {currentQuestionData.subtext}
-                </p>
-                <div className="flex items-center gap-1 bg-muted p-1 rounded text-xs">
-                  <TrendingUp className="w-3 h-3 text-primary" />
-                  <span className="text-foreground font-medium">
-                    Detailed = {currentQuestionData.impactMultiplier} better results
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Examples - Scrollable */}
-            <Card className="flex-1 flex flex-col min-h-0">
-              <CardHeader className="pb-2 flex-shrink-0">
-                <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-green-600" />
-                  <CardTitle className="text-sm text-green-600 dark:text-green-400">High-Value Examples</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-1 overflow-y-auto min-h-0">
-                <div className="space-y-2">
-                  {currentQuestionData.examples.map((example: string, index: number) => (
-                    <div key={index} className="p-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/50 rounded-lg">
-                      <div className="flex items-start gap-2">
-                        <div className="w-4 h-4 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                          {index + 1}
-                        </div>
-                        <p className="text-xs text-green-800 dark:text-green-200 font-medium">{example}</p>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  <div className="p-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg">
-                    <p className="text-xs text-amber-800 dark:text-amber-200">
-                      💡 <strong>Pro Tip:</strong> Copy and adapt these examples
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column: Response Input */}
-          <Card className="flex flex-col min-h-0">
-            <CardHeader className="pb-2 flex-shrink-0">
-              <CardTitle className="text-sm sm:text-base">Your Response</CardTitle>
-              <CardDescription className="text-xs">Be specific - more detail = better AI results</CardDescription>
-            </CardHeader>
-            
-            <CardContent className="flex-1 flex flex-col min-h-0">
-              <div className="flex-1 min-h-0">
-                <Textarea
-                  id="response"
-                  placeholder={currentQuestionData.placeholder}
-                  value={currentResponse}
-                  onChange={(e) => setCurrentResponse(e.target.value)}
-                  className="resize-none h-full w-full text-sm"
-                />
-              </div>
-              
-              {/* Response Quality Indicator - Compact */}
-              <div className="mt-2 p-2 rounded-lg bg-muted/50 flex-shrink-0">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-xs font-medium text-foreground">
-                    {currentResponse.length > 100 ? '🎯 Excellent!' : 
-                     currentResponse.length > 50 ? '✅ Good!' : 
-                     currentResponse.length > 20 ? '⚠️ More detail' : 
-                     '❌ Too brief'}
-                  </span>
-                  <span className="text-xs text-muted-foreground">{currentResponse.length}</span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-1">
-                  <div 
-                    className={`h-1 rounded-full transition-all ${
-                      currentResponse.length > 100 ? 'bg-green-500' :
-                      currentResponse.length > 50 ? 'bg-primary' :
-                      currentResponse.length > 20 ? 'bg-yellow-500' : 'bg-red-500'
-                    }`}
-                    style={{ width: `${Math.min(100, (currentResponse.length / 200) * 100)}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Navigation - Compact */}
-              <div className="flex gap-2 mt-2 flex-shrink-0">
-                {currentQuestion > 0 && (
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setCurrentQuestion(currentQuestion - 1)}
-                    className="flex-1 text-xs sm:text-sm h-8 sm:h-10"
-                  >
-                    ← Previous
-                  </Button>
-                )}
-                <Button 
-                  onClick={handleNext}
-                  disabled={currentResponse.trim().length < 20}
-                  className="flex-1 text-xs sm:text-sm h-8 sm:h-10"
-                >
-                  {isLastQuestion ? (
-                    <>
-                      <Brain className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                      Create AI
-                    </>
-                  ) : (
-                    <>
-                      Next
-                      <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
+    <OnboardingQuestionStep
+      currentQuestion={currentQuestion}
+      questionData={currentQuestionData}
+      currentResponse={currentResponse}
+      onResponseChange={setCurrentResponse}
+      onNext={handleNext}
+      onboardingData={onboardingData}
+      totalSteps={totalSteps}
+      currentStep={currentStep}
+      userRole={userRole}
+      isLastQuestion={isLastQuestion}
+    />
   );
-} 
+}
