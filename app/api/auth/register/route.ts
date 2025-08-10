@@ -117,10 +117,11 @@ export async function POST(request: NextRequest) {
       // Continue without profile data
     }
 
-    // Handle email verification requirement (proper Supabase flow)
-    if (!authData.session && authData.user && !authData.user.email_confirmed_at) {
-      // User created successfully but needs email verification
-      // Store company name in user metadata for retrieval after verification
+    // Let Supabase handle email verification based on your dashboard settings
+    // If email verification is disabled in Supabase, authData.session will exist
+    // If email verification is enabled, authData.session will be null until verified
+    if (!authData.session && authData.user) {
+      // Email verification is required (based on your Supabase settings)
       return NextResponse.json({
         success: true,
         requiresEmailVerification: true,
