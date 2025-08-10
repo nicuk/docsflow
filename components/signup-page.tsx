@@ -229,7 +229,7 @@ export default function SignupPage() {
   // Helper function to check if subdomain already exists
   const checkSubdomainExists = async (subdomain: string): Promise<boolean> => {
     try {
-      const response = await fetch(`/api/tenants/check?subdomain=${subdomain}`);
+      const response = await fetch(`/api/subdomain/check?subdomain=${subdomain}`);
       if (response.ok) {
         const data = await response.json();
         return data.exists;

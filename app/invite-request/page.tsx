@@ -61,7 +61,7 @@ export default function InviteRequestPage() {
 
   const fetchTenantInfo = async (subdomainToCheck: string) => {
     try {
-      const response = await fetch(`/api/tenants/check?subdomain=${subdomainToCheck}`);
+      const response = await fetch(`/api/subdomain/check?subdomain=${subdomainToCheck}`);
       if (response.ok) {
         const data = await response.json();
         if (data.exists && data.tenant) {
