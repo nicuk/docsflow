@@ -15,8 +15,6 @@ export async function POST(request: NextRequest) {
 
   try {
     const requestBody = await request.json();
-    console.log('🔍 DEBUG: Received request body:', JSON.stringify(requestBody, null, 2));
-    
     const { responses = {}, tenantAssignment = {} } = requestBody;
     
     // Extract from the actual frontend structure with defensive checks
@@ -28,13 +26,6 @@ export async function POST(request: NextRequest) {
     const businessName = tenantAssignment.companyName || tenantAssignment.businessType || '';
     const industry = tenantAssignment.industry || 'technology';
     const subdomain = tenantAssignment.subdomain || '';
-    
-    console.log('🔍 DEBUG: Extracted data:', {
-      business_overview: business_overview.substring(0, 50) + '...',
-      subdomain,
-      businessName,
-      industry
-    });
 
     if (!business_overview || !subdomain) {
       return NextResponse.json(
@@ -116,12 +107,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 3: Create tenant in database using service role to bypass RLS
-    console.log('🔍 DEBUG: Service role key exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
-    console.log('🔍 DEBUG: Service role key length:', process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0);
-    console.log('🔍 DEBUG: Service role key prefix:', process.env.SUPABASE_SERVICE_ROLE_KEY?.substring(0, 20) || 'MISSING');
-    console.log('🔍 DEBUG: All env vars:', Object.keys(process.env).filter(k => k.includes('SUPABASE')));
-    
-    // CRITICAL: Verify we're actually using service role
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!serviceRoleKey) {
       console.error('❌ CRITICAL: SUPABASE_SERVICE_ROLE_KEY is missing!');
