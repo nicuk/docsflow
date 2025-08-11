@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
 
 export async function OPTIONS(request: NextRequest) {
@@ -130,21 +131,10 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const adminSupabase = createServerClient(
+    // CRITICAL FIX: Use createClient for service role operations (no cookies)
+    const adminSupabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      serviceRoleKey, // Use service role key
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet: Array<{name: string, value: string, options?: any}>) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options)
-            })
-          },
-        },
-      }
+      serviceRoleKey // Direct service role authentication
     );
 
     const { data: tenant, error: tenantError } = await adminSupabase
