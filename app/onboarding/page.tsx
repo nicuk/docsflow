@@ -170,7 +170,7 @@ export default function OnboardingFlow() {
           setOnboardingData({
             displayName: userData.tenant?.name || 'Your Company',
             subdomain: userData.tenant?.subdomain || 'company',
-            industry: userData.tenant?.industry || 'general',
+            industry: userData.tenant?.industry || 'technology',
             email: userData.email,
             userId: userData.id
           });
@@ -871,47 +871,34 @@ const tenantAssignment = {
           
           <DomainSelection
             companyName={(() => {
-              // Priority 1: onboardingData from state (check multiple field names)
-              if (onboardingData?.displayName) {
-                return onboardingData.displayName;
-              }
-              if (onboardingData?.user?.name) {
-                return onboardingData.user.name;
-              }
-              
-              // Priority 2: Client-side localStorage access (SSR-safe)
-              if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-                // Check signup-data first
-                const signupData = localStorage.getItem('signup-data');
-                if (signupData) {
-                  try {
-                    const parsed = JSON.parse(signupData);
-                    if (parsed.displayName || parsed.companyName) {
-                      return parsed.displayName || parsed.companyName;
-                    }
-                  } catch (e) {
-                    // Silent error handling
-                  }
-                }
-                
-                // Check onboarding-data as fallback
-                const onboardingStoredData = localStorage.getItem('onboarding-data');
-                if (onboardingStoredData) {
-                  try {
-                    const parsed = JSON.parse(onboardingStoredData);
-                    if (parsed.displayName || parsed.companyName) {
-                      return parsed.displayName || parsed.companyName;
-                    }
-                  } catch (e) {
-                    // Silent error handling
-                  }
-                }
-                
-                // Check tenant-context as final fallback
+              // SURGICAL FIX: Use same data source as page header for consistency
+              if (typeof window !== 'undefined') {
+                // Priority 1: tenant-context (same as page header)
                 const tenantContext = localStorage.getItem('tenant-context');
                 if (tenantContext) {
                   try {
                     const parsed = JSON.parse(tenantContext);
+                    if (parsed.displayName) {
+                      return parsed.displayName;
+                    }
+                  } catch (e) {
+                    // Silent error handling
+                  }
+                }
+                
+                // Priority 2: onboardingData from state
+                if (onboardingData?.displayName) {
+                  return onboardingData.displayName;
+                }
+                if (onboardingData?.user?.name) {
+                  return onboardingData.user.name;
+                }
+                
+                // Priority 3: signup-data as fallback
+                const signupData = localStorage.getItem('signup-data');
+                if (signupData) {
+                  try {
+                    const parsed = JSON.parse(signupData);
                     if (parsed.displayName || parsed.companyName) {
                       return parsed.displayName || parsed.companyName;
                     }
