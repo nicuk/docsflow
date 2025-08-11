@@ -13,17 +13,27 @@ export async function POST(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
 
   try {
-    const { responses = {}, tenantAssignment = {} } = await request.json();
+    const requestBody = await request.json();
+    console.log('🔍 DEBUG: Received request body:', JSON.stringify(requestBody, null, 2));
     
-    // Extract from the actual frontend structure
-    const business_overview = responses.business_overview;
-    const daily_challenges = responses.daily_challenges;
-    const key_decisions = responses.key_decisions;
-    const success_metrics = responses.success_metrics;
-    const information_needs = responses.information_needs;
-    const businessName = tenantAssignment.companyName || tenantAssignment.businessType;
-    const industry = tenantAssignment.industry;
-    const subdomain = tenantAssignment.subdomain;
+    const { responses = {}, tenantAssignment = {} } = requestBody;
+    
+    // Extract from the actual frontend structure with defensive checks
+    const business_overview = responses.business_overview || '';
+    const daily_challenges = responses.daily_challenges || '';
+    const key_decisions = responses.key_decisions || '';
+    const success_metrics = responses.success_metrics || '';
+    const information_needs = responses.information_needs || '';
+    const businessName = tenantAssignment.companyName || tenantAssignment.businessType || '';
+    const industry = tenantAssignment.industry || 'technology';
+    const subdomain = tenantAssignment.subdomain || '';
+    
+    console.log('🔍 DEBUG: Extracted data:', {
+      business_overview: business_overview.substring(0, 50) + '...',
+      subdomain,
+      businessName,
+      industry
+    });
 
     if (!business_overview || !subdomain) {
       return NextResponse.json(
@@ -346,11 +356,17 @@ Create a JSON response with:
 
     return response;
 
-  } catch (error: any) {
-    console.error('Onboarding completion API error:', error);
+  } catch (error) {
+    console.error('❌ Onboarding completion error:', error);
+    console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { 
+        error: 'Internal server error', 
+        details: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      },
       { status: 500, headers: corsHeaders }
     );
   }
-} 
+}
