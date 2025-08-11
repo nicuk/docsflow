@@ -175,8 +175,8 @@ export async function POST(request: NextRequest) {
         .update({ 
           tenant_id: tenant.id,
           role: 'admin',
-          access_level: 5, // Admin level
-          onboarding_complete: true 
+          access_level: 5 // Admin level
+          // onboarding_complete tracked in user_metadata instead
         })
         .eq('id', userId);
 
