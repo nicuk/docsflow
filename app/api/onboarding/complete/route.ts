@@ -104,7 +104,26 @@ export async function POST(request: NextRequest) {
     if (existingTenant) {
       // Use secure dual verification to check if user is admin of this tenant
       console.log(`🔐 Checking admin status for existing tenant: ${cleanSubdomain}`);
-      const adminVerification = await verifyTenantAdmin(userId!, existingTenant.id);
+      
+      let adminVerification;
+      try {
+        adminVerification = await verifyTenantAdmin(userId!, existingTenant.id);
+        console.log(`🔍 Admin verification result:`, {
+          isAdmin: adminVerification.isAdmin,
+          method: adminVerification.verificationMethod,
+          hasErrors: adminVerification.details.errors?.length > 0
+        });
+      } catch (verificationError) {
+        console.error(`❌ Admin verification failed with exception:`, verificationError);
+        console.error(`🔍 Verification error type:`, verificationError?.constructor?.name);
+        console.error(`📝 Verification error message:`, verificationError?.message);
+        
+        // Fallback to deny access when verification fails
+        return NextResponse.json(
+          { error: 'Unable to verify admin status. Please try again or contact support.' },
+          { status: 500, headers: corsHeaders }
+        );
+      }
       
       if (adminVerification.isAdmin && adminVerification.verificationMethod === 'dual') {
         // User is verified admin of this tenant - complete onboarding
