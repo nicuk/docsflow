@@ -2,7 +2,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "npm install --legacy-peer-deps && next build",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
