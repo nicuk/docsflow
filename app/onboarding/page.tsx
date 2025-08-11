@@ -161,7 +161,7 @@ export default function OnboardingFlow() {
           setOnboardingData({
             displayName: parsedSignupData.companyName,
             subdomain: parsedSignupData.companyName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'company',
-            industry: 'general',
+            industry: 'technology', // Default to technology instead of generic 'general'
             email: parsedSignupData.email || userData.email,
             userId: userData.id
           });

@@ -104,7 +104,8 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
     // Generate suggestions when component mounts or companyName changes
     console.log('🔍 DomainSelection useEffect triggered with companyName:', companyName);
     if (companyName) {
-      const storedIndustry = localStorage.getItem('industry') || 'general';
+      // Get industry from onboarding data or detect from company name
+      const storedIndustry = localStorage.getItem('industry') || 'technology';
       generateSuggestions(companyName, storedIndustry);
     } else {
       console.warn('⚠️ DomainSelection: No companyName prop received');

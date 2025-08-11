@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     const userInsertData: any = {
       id: authData.user?.id,
       email: authData.user?.email,
-      name: companyName || 'Company', // CRITICAL FIX: Store company name in name field
+      name: companyName, // Store actual company name (e.g., 'bitto')
       access_level: accessLevel,
       role: 'user',
       created_at: new Date().toISOString()
@@ -152,21 +152,25 @@ export async function POST(request: NextRequest) {
         message: 'User registered successfully'
       }, { headers: corsHeaders });
 
-      // Set Supabase session cookies for immediate auth recognition
-      response.cookies.set('sb-access-token', authData.session.access_token, {
+      // Set correct Supabase session cookies for immediate auth recognition
+      const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: authData.session.expires_in || 3600,
+        sameSite: 'lax' as const,
         path: '/'
-      });
+      };
 
-      response.cookies.set('sb-refresh-token', authData.session.refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-        path: '/'
+      // Use Supabase's actual cookie names
+      response.cookies.set(`sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`, JSON.stringify({
+        access_token: authData.session.access_token,
+        refresh_token: authData.session.refresh_token,
+        expires_in: authData.session.expires_in,
+        expires_at: authData.session.expires_at,
+        token_type: authData.session.token_type,
+        user: authData.user
+      }), {
+        ...cookieOptions,
+        maxAge: authData.session.expires_in || 3600
       });
 
       return response;
