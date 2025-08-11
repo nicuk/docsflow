@@ -49,10 +49,12 @@ const realProvider = {
       const jsonMatch = result.text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
-        return {
+        const enhancedResponse = {
           ...parsed,
           created_from: "onboarding_answers"
         };
+        // CRITICAL FIX: Return JSON string, not object (onboarding route expects string)
+        return JSON.stringify(enhancedResponse);
       }
       
       throw new Error('Failed to parse AI response');
