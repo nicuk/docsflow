@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     const userId = user?.id;
     const email = user?.email;
 
-    // Step 2: Check if tenant already exists
+    // Step 2: Check if tenant already exists and user's relationship to it
     const { data: existingTenant, error: checkError } = await supabase
       .from('tenants')
       .select('id, subdomain')
@@ -100,10 +100,40 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (existingTenant) {
-      return NextResponse.json(
-        { error: 'Subdomain already exists. Please choose a different one.' },
-        { status: 409, headers: corsHeaders }
-      );
+      // Check if current user is already admin of this tenant
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id, role, tenant_id')
+        .eq('id', userId)
+        .eq('tenant_id', existingTenant.id)
+        .single();
+
+      if (existingUser && existingUser.role === 'admin') {
+        // User is already admin of this tenant - complete onboarding
+        console.log(`✅ User ${email} is already admin of tenant ${cleanSubdomain} - completing onboarding`);
+        
+        // Update user metadata to mark onboarding complete
+        const { error: authUpdateError } = await supabase.auth.admin.updateUserById(userId, {
+          user_metadata: {
+            tenant_id: existingTenant.id,
+            access_level: 5,
+            role: 'admin',
+            onboarding_complete: true
+          }
+        });
+
+        return NextResponse.json({
+          success: true,
+          tenant: existingTenant,
+          message: 'Onboarding completed for existing tenant'
+        }, { headers: corsHeaders });
+      } else {
+        // User is not admin - they need an invitation
+        return NextResponse.json(
+          { error: 'Subdomain already exists. You need an invitation from the admin to join this tenant.' },
+          { status: 409, headers: corsHeaders }
+        );
+      }
     }
 
     // Step 3: Create tenant in database using service role to bypass RLS
