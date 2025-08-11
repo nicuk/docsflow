@@ -14,7 +14,8 @@ const isTestEnvironment = Boolean(
 const mockProvider = {
   generatePersona: async (prompt: string) => {
     console.log('🔄 Using mock AI provider (no GOOGLE_GENERATIVE_AI_API_KEY)');
-    return {
+    // SURGICAL FIX: Return JSON string, not object (API expects string for JSON.parse)
+    return JSON.stringify({
       role: "Business Intelligence Assistant",
       tone: "Professional and helpful", 
       focus_areas: ["document analysis", "business insights", "decision support"],
@@ -22,7 +23,7 @@ const mockProvider = {
       prompt_template: "You are an AI assistant focused on providing helpful, accurate information.",
       industry: "general",
       created_from: "onboarding_answers_fallback"
-    };
+    });
   }
 };
 

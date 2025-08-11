@@ -13,20 +13,17 @@ export async function POST(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
 
   try {
-    const { 
-      business_overview,
-      daily_challenges,
-      key_decisions,
-      success_metrics,
-      information_needs,
-      businessName, 
-      industry, 
-      businessType, 
-      subdomain,
-      email,
-      password,
-      userId 
-    } = await request.json();
+    const { responses = {}, tenantAssignment = {} } = await request.json();
+    
+    // Extract from the actual frontend structure
+    const business_overview = responses.business_overview;
+    const daily_challenges = responses.daily_challenges;
+    const key_decisions = responses.key_decisions;
+    const success_metrics = responses.success_metrics;
+    const information_needs = responses.information_needs;
+    const businessName = tenantAssignment.companyName || tenantAssignment.businessType;
+    const industry = tenantAssignment.industry;
+    const subdomain = tenantAssignment.subdomain;
 
     if (!business_overview || !subdomain) {
       return NextResponse.json(
@@ -86,6 +83,13 @@ export async function POST(request: NextRequest) {
       }
     );
 
+    // Get current authenticated user (auth was already working)
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    // Get user data from authentication
+    const userId = user?.id;
+    const email = user?.email;
+
     // Step 2: Check if tenant already exists
     const { data: existingTenant, error: checkError } = await supabase
       .from('tenants')
@@ -106,7 +110,7 @@ export async function POST(request: NextRequest) {
       .insert({
         subdomain: cleanSubdomain,
         name: businessName || cleanSubdomain, // Use subdomain as fallback, not business_overview
-        industry: industry || 'general',
+        industry: industry || 'technology',
         subscription_status: 'trial',
         plan_type: 'starter',
         settings: {
@@ -302,7 +306,7 @@ Create a JSON response with:
       },
       // CRITICAL: Include REAL user session data for frontend storage
       user: {
-        id: userId,
+        userId: userId,
         email: email, // Use the REAL user email, not fake admin email
         name: businessName || 'Admin',
         tenant_id: tenant.subdomain, // Use subdomain as tenant_id for frontend
