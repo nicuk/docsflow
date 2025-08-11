@@ -1,7 +1,9 @@
+import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
-import { createClient } from '@supabase/supabase-js';
+import { Redis } from '@upstash/redis';
+import { verifyTenantAdmin, logAdminAction } from '@/lib/auth/admin-verification';
 import { getCORSHeaders } from '@/lib/utils';
 
 export async function OPTIONS(request: NextRequest) {
@@ -100,17 +102,20 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (existingTenant) {
-      // Check if current user is already admin of this tenant
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id, role, tenant_id')
-        .eq('id', userId)
-        .eq('tenant_id', existingTenant.id)
-        .single();
-
-      if (existingUser && existingUser.role === 'admin') {
-        // User is already admin of this tenant - complete onboarding
-        console.log(`✅ User ${email} is already admin of tenant ${cleanSubdomain} - completing onboarding`);
+      // Use secure dual verification to check if user is admin of this tenant
+      console.log(`🔐 Checking admin status for existing tenant: ${cleanSubdomain}`);
+      const adminVerification = await verifyTenantAdmin(userId!, existingTenant.id);
+      
+      if (adminVerification.isAdmin && adminVerification.verificationMethod === 'dual') {
+        // User is verified admin of this tenant - complete onboarding
+        console.log(`✅ User ${email} is verified admin of tenant ${cleanSubdomain} - completing onboarding`);
+        console.log(`🔒 Verification method: ${adminVerification.verificationMethod}, Access level: ${adminVerification.accessLevel}`);
+        
+        // Log admin action for audit trail
+        await logAdminAction(userId!, existingTenant.id, 'onboarding_completion_existing_tenant', {
+          subdomain: cleanSubdomain,
+          verification_method: adminVerification.verificationMethod
+        });
         
         // Update user metadata to mark onboarding complete
         const { error: authUpdateError } = await supabase.auth.admin.updateUserById(userId, {
@@ -129,6 +134,19 @@ export async function POST(request: NextRequest) {
         }, { headers: corsHeaders });
       } else {
         // User is not admin - they need an invitation
+        console.log(`❌ User ${email} is not admin of existing tenant ${cleanSubdomain}`);
+        console.log(`🔒 Verification details:`, {
+          method: adminVerification.verificationMethod,
+          errors: adminVerification.details.errors
+        });
+        
+        // Log failed admin verification attempt for security monitoring
+        await logAdminAction(userId!, existingTenant.id, 'onboarding_attempt_non_admin', {
+          subdomain: cleanSubdomain,
+          verification_method: adminVerification.verificationMethod,
+          errors: adminVerification.details.errors
+        });
+        
         return NextResponse.json(
           { error: 'Subdomain already exists. You need an invitation from the admin to join this tenant.' },
           { status: 409, headers: corsHeaders }
