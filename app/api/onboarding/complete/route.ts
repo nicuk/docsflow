@@ -93,6 +93,9 @@ export async function POST(request: NextRequest) {
     // Get user data from authentication
     const userId = user?.id;
     const email = user?.email;
+    
+    // Log user information for debugging
+    console.log(`👤 User info:`, { userId, email });
 
     // Step 2: Check if tenant already exists and user's relationship to it
     const { data: existingTenant, error: checkError } = await supabase
@@ -100,6 +103,15 @@ export async function POST(request: NextRequest) {
       .select('id, subdomain')
       .eq('subdomain', cleanSubdomain)
       .single();
+
+    // Handle errors in tenant existence check
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is 'Record not found' which is expected
+      console.error('Tenant existence check error:', checkError);
+      return NextResponse.json(
+        { error: 'Failed to check tenant existence', details: checkError.message },
+        { status: 500, headers: corsHeaders }
+      );
+    }
 
     if (existingTenant) {
       // Use secure dual verification to check if user is admin of this tenant
@@ -124,6 +136,9 @@ export async function POST(request: NextRequest) {
           { status: 500, headers: corsHeaders }
         );
       }
+      
+      // Log detailed verification result for debugging
+      console.log(`🔍 Detailed admin verification result:`, JSON.stringify(adminVerification, null, 2));
       
       if (adminVerification.isAdmin && adminVerification.verificationMethod === 'dual') {
         // User is verified admin of this tenant - complete onboarding
@@ -183,6 +198,9 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    // Log service role key status for debugging (without exposing the actual key)
+    console.log(`🔑 Service role key configured: ${!!serviceRoleKey}`);
+    
     // CRITICAL FIX: Use createClient for service role operations (no cookies)
     const adminSupabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -213,6 +231,15 @@ export async function POST(request: NextRequest) {
 
     if (tenantError) {
       console.error('Tenant creation error:', tenantError);
+      
+      // Handle specific constraint violation for duplicate subdomain
+      if (tenantError.code === '23505' && tenantError.message?.includes('tenants_subdomain_key')) {
+        return NextResponse.json(
+          { error: 'Subdomain already exists. You need an invitation from the admin to join this tenant.' },
+          { status: 409, headers: corsHeaders }
+        );
+      }
+      
       return NextResponse.json(
         { error: 'Failed to create tenant', details: tenantError.message },
         { status: 500, headers: corsHeaders }
@@ -221,8 +248,8 @@ export async function POST(request: NextRequest) {
 
     // Step 4: FIXED - Link the REAL user as tenant admin (no fake admin creation)
     if (userId && email) {
-      // Update the real user to be the tenant admin
-      const { error: userUpdateError } = await supabase
+      // Update the real user to be the tenant admin using service role
+      const { error: userUpdateError } = await adminSupabase
         .from('users')
         .update({ 
           tenant_id: tenant.id,
@@ -240,8 +267,8 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Also update auth user metadata
-      const { error: authUpdateError } = await supabase.auth.admin.updateUserById(userId, {
+      // Also update auth user metadata using service role
+      const { error: authUpdateError } = await adminSupabase.auth.admin.updateUserById(userId, {
         user_metadata: {
           tenant_id: tenant.id,
           access_level: 5,
@@ -401,8 +428,8 @@ Create a JSON response with:
       };
     }
     
-    // Step 8: Update tenant with custom persona
-    const { error: personaUpdateError } = await supabase
+    // Step 8: Update tenant with custom persona using service role
+    const { error: personaUpdateError } = await adminSupabase
       .from('tenants')
       .update({ custom_persona: customPersona })
       .eq('id', tenant.id);
@@ -411,6 +438,18 @@ Create a JSON response with:
       console.error('❌ Failed to save persona to tenant:', personaUpdateError);
     } else {
       console.log('✅ Custom persona saved to tenant:', tenant.subdomain);
+    }
+
+    // Step 8.5: Refresh user session to prevent token invalidation after admin role assignment
+    try {
+      const { data: refreshedSession, error: refreshError } = await adminSupabase.auth.refreshSession();
+      if (refreshError) {
+        console.warn('⚠️ Session refresh failed (non-critical):', refreshError);
+      } else {
+        console.log('✅ User session refreshed after admin assignment');
+      }
+    } catch (refreshErr) {
+      console.warn('⚠️ Session refresh attempt failed (non-critical):', refreshErr);
     }
 
     // Step 9: Return success response with complete session data for frontend storage

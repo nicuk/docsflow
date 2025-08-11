@@ -39,6 +39,8 @@ export async function verifyTenantAdmin(
   };
 
   try {
+    console.log('🔐 Starting admin verification for user:', userId, 'tenant:', tenantId);
+    
     // Step 1: Verify via Supabase Auth metadata (cryptographically secure)
     console.log('🔍 Step 1: Checking auth metadata...');
     let authMetadata = null;
@@ -88,6 +90,15 @@ export async function verifyTenantAdmin(
       result.details.errors?.push(`Database service error: ${dbError}`);
       console.error('❌ Database service error:', dbError);
     }
+    
+    // Log cross-verification details
+    console.log('🔍 Cross-verification details:', {
+      authMetadataAvailable: !!authMetadata,
+      dbRecordAvailable: !!dbRecord,
+      authTenantId: authMetadata?.tenant_id,
+      dbTenantId: dbRecord?.tenant_id,
+      expectedTenantId: tenantId
+    });
 
     // Step 3: Cross-verify both sources (BOTH must agree for admin access)
     console.log('🔍 Step 3: Cross-verifying sources...');
