@@ -20,9 +20,7 @@ CREATE POLICY "Users can only access their own tenant" ON tenants
 
 -- Policy: Service role can access all tenants (for admin operations)
 CREATE POLICY "Service role can access all tenants" ON tenants
-  FOR ALL USING (
-    auth.role() = 'service_role'
-  );
+  FOR ALL TO service_role USING (true);
 
 -- 2. USERS TABLE - Tenant isolation for user management
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
