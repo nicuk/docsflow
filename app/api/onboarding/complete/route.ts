@@ -251,9 +251,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 7: Create real LLM persona using the business context
+    console.log('🤖 STEP 7: Starting LLM persona generation...');
     let customPersona = null;
     try {
+      console.log('🔄 Importing AI provider...');
       const { aiProvider } = await import('@/lib/ai/providers');
+      console.log('✅ AI provider imported successfully');
       
       // Create comprehensive business context for LLM
       const businessContext = {
@@ -265,8 +268,15 @@ export async function POST(request: NextRequest) {
         industry: tenant.industry,
         businessName: tenant.name
       };
+      console.log('📋 Business context prepared:', {
+        industry: tenant.industry,
+        businessName: tenant.name,
+        hasOverview: !!business_overview,
+        hasChallenges: !!daily_challenges
+      });
       
       // Generate custom LLM persona
+      console.log('🎯 Creating persona prompt...');
       const personaPrompt = `Create a specialized AI assistant persona for this business:
 
 Business: ${tenant.name}
@@ -285,24 +295,39 @@ Create a JSON response with:
 - prompt_template: System prompt for chat interactions`;
       
       console.log('🤖 Creating LLM persona for:', tenant.name);
+      console.log('📝 Prompt length:', personaPrompt.length, 'characters');
+      
+      // Check AI provider type
+      console.log('🔍 AI provider type check...');
+      console.log('🔑 GOOGLE_GENERATIVE_AI_API_KEY exists:', !!process.env.GOOGLE_GENERATIVE_AI_API_KEY);
+      console.log('🧪 Test environment:', Boolean(process.env.NODE_ENV === 'test'));
       
       // Call AI provider with timeout
+      console.log('🚀 Calling aiProvider.generatePersona...');
+      const startTime = Date.now();
       const personaResponse = await Promise.race([
         aiProvider.generatePersona(personaPrompt),
         new Promise((_, reject) => 
           setTimeout(() => reject(new Error('Persona creation timeout')), 25000)
         )
       ]);
+      const endTime = Date.now();
+      console.log(`⏱️ AI generation completed in ${endTime - startTime}ms`);
+      console.log('📤 AI response type:', typeof personaResponse);
+      console.log('📤 AI response length:', personaResponse?.toString().length || 0);
       
       // Parse AI response
       try {
+        console.log('🔄 Parsing AI response as JSON...');
         customPersona = JSON.parse(personaResponse as string);
         customPersona.created_from = 'ai_generated';
         customPersona.created_at = new Date().toISOString();
         
         console.log('✅ LLM persona created successfully:', customPersona.role);
+        console.log('📊 Persona focus areas:', customPersona.focus_areas);
       } catch (parseError) {
         console.error('❌ Failed to parse AI persona response:', parseError);
+        console.error('📄 Raw AI response:', personaResponse?.toString().substring(0, 200) + '...');
         // Fallback persona
         customPersona = {
           role: `${tenant.industry} Business Advisor`,
@@ -317,6 +342,16 @@ Create a JSON response with:
       
     } catch (error) {
       console.error('❌ LLM persona creation failed:', error);
+      console.error('🔍 Error type:', error?.constructor?.name);
+      console.error('📝 Error message:', error?.message);
+      console.error('🔗 Error stack:', error?.stack?.substring(0, 500));
+      console.error('🌍 Environment check:', {
+        NODE_ENV: process.env.NODE_ENV,
+        hasGoogleKey: !!process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+        keyLength: process.env.GOOGLE_GENERATIVE_AI_API_KEY?.length || 0
+      });
+      console.log('🔄 Using fallback persona due to error...');
+      
       // Fallback persona
       customPersona = {
         role: `${tenant.industry} Business Advisor`,
