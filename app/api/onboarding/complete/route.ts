@@ -115,9 +115,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 3: Create tenant in database using service role to bypass RLS
+    console.log('🔍 DEBUG: Service role key exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+    console.log('🔍 DEBUG: Service role key length:', process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0);
+    console.log('🔍 DEBUG: Service role key prefix:', process.env.SUPABASE_SERVICE_ROLE_KEY?.substring(0, 20) || 'MISSING');
+    console.log('🔍 DEBUG: All env vars:', Object.keys(process.env).filter(k => k.includes('SUPABASE')));
+    
+    // CRITICAL: Verify we're actually using service role
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!serviceRoleKey) {
+      console.error('❌ CRITICAL: SUPABASE_SERVICE_ROLE_KEY is missing!');
+      return NextResponse.json(
+        { error: 'Service role key not configured' },
+        { status: 500, headers: corsHeaders }
+      );
+    }
+    
     const adminSupabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!, // Use service role key
+      serviceRoleKey, // Use service role key
       {
         cookies: {
           getAll() {
@@ -137,7 +152,7 @@ export async function POST(request: NextRequest) {
       .insert({
         subdomain: cleanSubdomain,
         name: businessName || cleanSubdomain, // Use subdomain as fallback, not business_overview
-        industry: industry || 'technology',
+        industry: industry === 'healthcare' ? 'general' : (industry || 'general'),
         subscription_status: 'trial',
         plan_type: 'starter',
         settings: {
