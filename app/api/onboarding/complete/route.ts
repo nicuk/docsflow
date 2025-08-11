@@ -19,15 +19,38 @@ export async function POST(request: NextRequest) {
     const requestBody = await request.json();
     const { responses = {}, tenantAssignment = {} } = requestBody;
     
+    // Debug: Log the actual request structure to understand data mapping
+    console.log('📋 Request data structure:', {
+      responses: Object.keys(responses),
+      tenantAssignment: tenantAssignment,
+      fullRequestBody: requestBody
+    });
+    
     // Extract from the actual frontend structure with defensive checks
     const business_overview = responses.business_overview || '';
     const daily_challenges = responses.daily_challenges || '';
     const key_decisions = responses.key_decisions || '';
     const success_metrics = responses.success_metrics || '';
     const information_needs = responses.information_needs || '';
-    const businessName = tenantAssignment.companyName || tenantAssignment.businessType || '';
-    const industry = tenantAssignment.industry || 'technology';
+    
+    // Fix: Check multiple possible business name fields from frontend
+    const businessName = tenantAssignment.companyName || 
+                         tenantAssignment.businessName || 
+                         tenantAssignment.businessType || 
+                         tenantAssignment.name ||
+                         responses.company_name ||
+                         responses.business_name ||
+                         '';
+    
+    const industry = tenantAssignment.industry || responses.industry || 'technology';
     const subdomain = tenantAssignment.subdomain || '';
+    
+    console.log('📊 Extracted data:', {
+      businessName,
+      industry,
+      subdomain,
+      cleanSubdomain: subdomain.toLowerCase().trim()
+    });
 
     if (!business_overview || !subdomain) {
       return NextResponse.json(
