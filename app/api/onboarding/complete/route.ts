@@ -111,7 +111,22 @@ export async function POST(request: NextRequest) {
     );
 
     // Get current authenticated user (auth was already working)
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    console.log('🔐 Authentication check:', { 
+      hasUser: !!user, 
+      authError: authError?.message,
+      userEmail: user?.email,
+      userId: user?.id 
+    });
+    
+    if (authError || !user) {
+      console.error('❌ Authentication failed:', authError);
+      return NextResponse.json(
+        { error: 'Authentication required', details: authError?.message },
+        { status: 401, headers: corsHeaders }
+      );
+    }
     
     // Get user data from authentication
     const userId = user?.id;
@@ -271,8 +286,27 @@ export async function POST(request: NextRequest) {
 
     // Step 4: FIXED - Link the REAL user as tenant admin (no fake admin creation)
     if (userId && email) {
+      console.log('🔄 Starting user admin assignment:', { 
+        userId, 
+        email, 
+        tenantId: tenant.id, 
+        tenantSubdomain: tenant.subdomain 
+      });
+
+      // First, check current user state
+      const { data: currentUser, error: getCurrentError } = await adminSupabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      console.log('📋 Current user state before update:', {
+        currentUser,
+        getCurrentError: getCurrentError?.message
+      });
+
       // Update the real user to be the tenant admin using service role
-      const { error: userUpdateError } = await adminSupabase
+      const { data: updatedUser, error: userUpdateError } = await adminSupabase
         .from('users')
         .update({ 
           tenant_id: tenant.id,
@@ -280,18 +314,28 @@ export async function POST(request: NextRequest) {
           access_level: 5 // Admin level
           // onboarding_complete tracked in user_metadata instead
         })
-        .eq('id', userId);
+        .eq('id', userId)
+        .select()
+        .single();
+
+      console.log('✅ User update result:', {
+        updatedUser,
+        userUpdateError: userUpdateError?.message,
+        success: !userUpdateError
+      });
 
       if (userUpdateError) {
-        console.error('Real user update error:', userUpdateError);
+        console.error('❌ Real user update error:', userUpdateError);
         return NextResponse.json(
           { error: 'Failed to assign admin role to user', details: userUpdateError.message },
           { status: 500, headers: corsHeaders }
         );
       }
 
+      console.log('🔐 Updating auth metadata for user:', userId);
+
       // Also update auth user metadata using service role
-      const { error: authUpdateError } = await adminSupabase.auth.admin.updateUserById(userId, {
+      const { data: authUpdateData, error: authUpdateError } = await adminSupabase.auth.admin.updateUserById(userId, {
         user_metadata: {
           tenant_id: tenant.id,
           access_level: 5,
@@ -300,8 +344,14 @@ export async function POST(request: NextRequest) {
         }
       });
 
+      console.log('🔐 Auth metadata update result:', {
+        authUpdateData: authUpdateData?.user?.user_metadata,
+        authUpdateError: authUpdateError?.message,
+        success: !authUpdateError
+      });
+
       if (authUpdateError) {
-        console.error('Auth metadata update error:', authUpdateError);
+        console.error('❌ Auth metadata update error:', authUpdateError);
         // Continue - not critical
       }
 
