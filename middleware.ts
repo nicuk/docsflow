@@ -104,6 +104,7 @@ export default async function middleware(request: NextRequest) {
           // User has completed onboarding - allow dashboard access
           const response = NextResponse.rewrite(new URL(`/dashboard`, request.url));
           response.headers.set('x-tenant-id', tenant);
+          response.headers.set('x-tenant-subdomain', tenant);
           return createSecureResponse(response, origin);
         } else {
           // User hasn't completed onboarding - redirect to main domain
@@ -121,8 +122,9 @@ export default async function middleware(request: NextRequest) {
       }
       const response = NextResponse.rewrite(new URL(targetPath, request.url));
 
-      // 🚨 Inject the tenant ID into the request headers for frontend context
+      // 🚨 Inject the tenant ID and subdomain into the request headers for frontend context
       response.headers.set('x-tenant-id', tenant);
+      response.headers.set('x-tenant-subdomain', tenant);
 
       return createSecureResponse(response, origin);
     }
