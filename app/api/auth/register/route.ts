@@ -153,25 +153,41 @@ export async function POST(request: NextRequest) {
         message: 'User registered successfully'
       }, { headers: corsHeaders });
 
-      // Set correct Supabase session cookies for immediate auth recognition
+      // FIXED: Use standard auth cookie names that subdomain/check expects
       const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax' as const,
-        path: '/'
+        path: '/',
+        domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined
       };
 
-      // Use Supabase's actual cookie names
-      response.cookies.set(`sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`, JSON.stringify({
-        access_token: authData.session.access_token,
-        refresh_token: authData.session.refresh_token,
-        expires_in: authData.session.expires_in,
-        expires_at: authData.session.expires_at,
-        token_type: authData.session.token_type,
-        user: authData.user
+      // Set standard auth cookies that all endpoints expect
+      response.cookies.set('auth-token', authData.session.access_token, {
+        ...cookieOptions,
+        maxAge: authData.session.expires_in || 3600
+      });
+
+      response.cookies.set('refresh-token', authData.session.refresh_token, {
+        ...cookieOptions,
+        maxAge: authData.session.expires_in || 3600
+      });
+
+      // Set user session data
+      response.cookies.set('user-session', JSON.stringify({
+        id: authData.user?.id,
+        email: authData.user?.email,
+        tenant_id: tenantId,
+        access_level: accessLevel
       }), {
         ...cookieOptions,
         maxAge: authData.session.expires_in || 3600
+      });
+
+      console.log('🍪 Registration cookies set:', {
+        authToken: !!authData.session.access_token,
+        refreshToken: !!authData.session.refresh_token,
+        userSession: !!authData.user?.id
       });
 
       return response;

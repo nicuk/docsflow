@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@supabase/ssr';
 import { extractCompanyName } from '@/lib/industry-detection';
 import { createResponseWithSessionCookies } from '@/lib/cookie-utils';
 import { Redis } from '@upstash/redis';
@@ -56,7 +58,7 @@ export async function POST(request: NextRequest) {
       businessName,
       industry,
       subdomain,
-      cleanSubdomain: subdomain.toLowerCase().trim()
+      cleanSubdomain
     });
 
     if (!business_overview || !subdomain) {
@@ -65,10 +67,6 @@ export async function POST(request: NextRequest) {
         { status: 400, headers: corsHeaders }
       );
     }
-
-    // Validate subdomain format
-    const subdomainRegex = /^[a-z0-9][a-z0-9-]*[a-z0-9]$/;
-    const cleanSubdomain = subdomain.toLowerCase().trim();
     
     if (cleanSubdomain.length < 3 || cleanSubdomain.length > 63) {
       return NextResponse.json(
