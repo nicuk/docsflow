@@ -369,7 +369,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Step 6: CRITICAL FIX - Update Redis cache for middleware
+    // Step 6: CRITICAL FIX - Update Redis cache for middleware with verification
     try {
       const redis = (await import('@/lib/redis')).redis;
       if (redis) {
@@ -385,7 +385,17 @@ export async function POST(request: NextRequest) {
         // Also cache subdomain existence for quick checks
         await redis.setex(`subdomain:${tenant.subdomain}`, 3600, 'exists');
         
-        console.log(`✅ Redis cache updated for tenant: ${tenant.subdomain}`);
+        // CRITICAL: Verify cache is actually set before proceeding
+        const verifyCache = await redis.get(`subdomain:${tenant.subdomain}`);
+        if (verifyCache) {
+          console.log(`✅ Redis cache updated and verified for tenant: ${tenant.subdomain}`);
+        } else {
+          console.warn(`⚠️ Redis cache set but verification failed for tenant: ${tenant.subdomain}`);
+          // Add small delay and retry once
+          await new Promise(resolve => setTimeout(resolve, 100));
+          await redis.setex(`subdomain:${tenant.subdomain}`, 3600, 'exists');
+          console.log(`🔄 Redis cache retry completed for tenant: ${tenant.subdomain}`);
+        }
       }
     } catch (redisError) {
       console.error('Redis cache update failed:', redisError);
@@ -530,21 +540,35 @@ Create a JSON response with:
       console.warn('⚠️ Session refresh attempt failed (non-critical):', refreshErr);
     }
 
-    // Step 9: Return success response with session cookies using proper Set-Cookie headers
+    // Step 9: Return success response with comprehensive user and tenant data
+    console.log('✅ Onboarding complete, creating comprehensive response');
+    
     const response = createResponseWithSessionCookies({
       success: true,
       tenant: {
         id: tenant.id,
         subdomain: tenant.subdomain,
+        name: tenant.name,
+        industry: tenant.industry,
         displayName: businessName || tenant.display_name || 'Your Business'
       },
-      redirect: `https://${tenant.subdomain}.docsflow.app/dashboard`
+      user: {
+        id: userId,
+        email: email,
+        role: 'admin',
+        access_level: 5,
+        tenant_id: tenant.id
+      },
+      redirectUrl: `https://${tenant.subdomain}.docsflow.app/dashboard`,
+      message: 'Onboarding completed successfully! You are now the admin of your tenant.'
     }, {
       userEmail: email, // Use REAL user email
       userName: businessName || 'Admin',
       tenantId: tenant.subdomain,
       onboardingComplete: true
     });
+    
+    console.log('🎯 Response created with redirect to:', `https://${tenant.subdomain}.docsflow.app/dashboard`);
 
     return response;
 

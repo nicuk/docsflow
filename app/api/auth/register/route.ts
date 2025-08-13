@@ -140,8 +140,10 @@ export async function POST(request: NextRequest) {
     if (authData.session) {
       console.log('🍪 Setting authentication cookies...');
       
-      // Create response
-      const response = NextResponse.json({
+      // CRITICAL FIX: Use cookie utility for proper domain handling
+      const { createResponseWithSessionCookies } = await import('@/lib/cookie-utils');
+      
+      const response = createResponseWithSessionCookies({
         success: true,
         user: {
           id: authData.user?.id,
@@ -159,9 +161,14 @@ export async function POST(request: NextRequest) {
         } : null,
         message: 'Registration successful! Redirecting to onboarding.',
         nextStep: 'onboarding'
-      }, { headers: corsHeaders });
+      }, {
+        userEmail: authData.user?.email || email,
+        userName: companyName,
+        tenantId: userProfile?.tenant_id ? (userProfile.tenants as any)?.subdomain : undefined,
+        onboardingComplete: !!userProfile?.tenant_id
+      });
 
-      // CRITICAL: Set cookies properly with cookieStore
+      // CRITICAL: Also set auth tokens with proper domain using cookieStore
       cookieStore.set('auth-token', authData.session.access_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',

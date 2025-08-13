@@ -131,11 +131,10 @@ export async function POST(request: NextRequest) {
     // Since onboarding_complete column doesn't exist, check if user has tenant_id
     const hasCompletedOnboarding = userProfile?.tenant_id ? true : false;
     
-    // CRITICAL FIX: Set the session cookies for Supabase Auth
-    // This is what was missing - the session needs to be stored in cookies
-    // so that subsequent API calls can authenticate properly
+    // CRITICAL FIX: Use cookie utility for proper domain handling
+    const { createResponseWithSessionCookies } = await import('@/lib/cookie-utils');
     
-    const response = NextResponse.json({
+    const response = createResponseWithSessionCookies({
       success: true,
       user: {
         id: authData.user.id,
@@ -145,10 +144,38 @@ export async function POST(request: NextRequest) {
         access_level: userProfile?.access_level,
         onboarding_complete: hasCompletedOnboarding
       },
+      tenant: userProfile?.tenant_id && userProfile.tenants ? {
+        id: (userProfile.tenants as any).id,
+        subdomain: (userProfile.tenants as any).subdomain,
+        name: (userProfile.tenants as any).name,
+        industry: (userProfile.tenants as any).industry
+      } : null,
       message: 'Login successful'
     }, {
-      // Set onboarding completion cookie for middleware if completed
+      userEmail: authData.user.email,
+      userName: userProfile?.name || authData.user.email?.split('@')[0] || 'User',
+      tenantId: userProfile?.tenant_id ? (userProfile.tenants as any)?.subdomain : undefined,
       onboardingComplete: hasCompletedOnboarding
+    });
+    
+    // Also set auth tokens with proper domain
+    const authCookieStore = await cookies();
+    authCookieStore.set('auth-token', authData.session.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
+      maxAge: authData.session.expires_in || 3600
+    });
+
+    authCookieStore.set('refresh-token', authData.session.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
+      maxAge: 60 * 60 * 24 * 7 // 7 days
     });
     
     return response;
