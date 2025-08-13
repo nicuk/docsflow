@@ -559,7 +559,7 @@ Create a JSON response with:
         access_level: 5,
         tenant_id: tenant.id
       },
-      redirectUrl: `https://${tenant.subdomain}.docsflow.app/dashboard`,
+      redirectUrl: `/domain-created?subdomain=${tenant.subdomain}&company=${encodeURIComponent(businessName || tenant.display_name || 'Your Business')}`,
       message: 'Onboarding completed successfully! You are now the admin of your tenant.'
     }, {
       userEmail: email, // Use REAL user email
@@ -568,7 +568,7 @@ Create a JSON response with:
       onboardingComplete: true
     });
     
-    console.log('🎯 Response created with redirect to:', `https://${tenant.subdomain}.docsflow.app/dashboard`);
+    console.log('🎯 Response created with redirect to transition page:', `/domain-created?subdomain=${tenant.subdomain}&company=${encodeURIComponent(businessName || tenant.display_name || 'Your Business')}`);
 
     return response;
 
