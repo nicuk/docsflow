@@ -40,20 +40,52 @@ export default function OnboardingFlow() {
       try {
         console.log('🔍 Checking user authentication...');
         
-        // FIXED: Single Supabase client instance, no retry loop
-        const { createSupabaseClient } = await import('@/lib-frontend/supabase');
-        const supabase = createSupabaseClient();
+        // COOKIE FIX: Check for auth cookies first (set during registration)
+        const authToken = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('auth-token='))
+          ?.split('=')[1];
+          
+        const userSession = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('user-session='))
+          ?.split('=')[1];
+          
+        console.log('🍪 Auth cookies found:', { 
+          hasAuthToken: !!authToken, 
+          hasUserSession: !!userSession 
+        });
         
-        // Get current user from Supabase
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        
-        if (authError || !user) {
-          console.log('❌ No authenticated user found, redirecting to login');
+        if (!authToken || !userSession) {
+          console.log('❌ No auth cookies found, redirecting to login');
           if (isMounted) {
             window.location.href = '/login';
           }
           return;
         }
+        
+        // FIXED: Single Supabase client instance, no retry loop
+        const { createSupabaseClient } = await import('@/lib-frontend/supabase');
+        const supabase = createSupabaseClient();
+        
+        // Set the session from cookies
+        const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+          access_token: authToken,
+          refresh_token: document.cookie
+            .split('; ')
+            .find(row => row.startsWith('refresh-token='))
+            ?.split('=')[1] || ''
+        });
+        
+        if (sessionError || !sessionData.user) {
+          console.log('❌ Failed to restore session from cookies:', sessionError);
+          if (isMounted) {
+            window.location.href = '/login';
+          }
+          return;
+        }
+        
+        const user = sessionData.user;
         
         console.log('✅ User authenticated:', user.email);
         
@@ -853,7 +885,26 @@ const tenantAssignment = {
   }
 
   // Define variables for current question step
-  // Security: Block all rendering until auth is verified
+  // HYDRATION FIX: Prevent server/client mismatch
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Block rendering until client-side hydration is complete
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Security: Block rendering until auth is verified
   if (isAuthChecking) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
