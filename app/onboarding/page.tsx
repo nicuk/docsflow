@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -33,157 +33,90 @@ export default function OnboardingFlow() {
   const [onboardingData, setOnboardingData] = useState<any>(null);
 
   // Authentication and onboarding data loading
-  React.useEffect(() => {
+  useEffect(() => {
+    let isMounted = true; // Prevent state updates if component unmounts
+    
     const checkAuthAndLoadData = async () => {
       try {
-        // First, verify user is authenticated
         console.log('🔍 Checking user authentication...');
         
-        // Add retry logic for session persistence issues
-        let response: Response | null = null;
-        let retryCount = 0;
-        const maxRetries = 3;
+        // FIXED: Single Supabase client instance, no retry loop
+        const { createSupabaseClient } = await import('@/lib-frontend/supabase');
+        const supabase = createSupabaseClient();
         
-        while (retryCount < maxRetries) {
-          // FIXED: Use direct Supabase instead of custom API
-          const { createSupabaseClient } = await import('@/lib-frontend/supabase');
-          const supabase = createSupabaseClient();
-          
-          // Get current user from Supabase
-          const { data: { user }, error: authError } = await supabase.auth.getUser();
-          
-          // Create a mock response object for compatibility with existing code
-          response = {
-            ok: !authError && !!user,
-            status: (!authError && !!user) ? 200 : 401,
-            json: async () => {
-              if (authError || !user) {
-                throw new Error('Authentication failed');
-              }
-              
-              // Get user profile from database
-              const { data: userProfile } = await supabase
-                .from('users')
-                .select('id, email, name, tenant_id, tenants(subdomain)')
-                .eq('id', user.id)
-                .single();
-              
-              return {
-                user: {
-                  id: user.id,
-                  email: user.email,
-                  name: userProfile?.name
-                },
-                onboardingComplete: !!userProfile?.tenant_id,
-                tenantId: userProfile?.tenant_id,
-                tenant: userProfile?.tenant_id ? {
-                  subdomain: (userProfile.tenants as any)?.subdomain
-                } : null
-              };
-            }
-          } as Response;
-          
-          console.log(`🔍 Auth check attempt ${retryCount + 1}:`, {
-            status: response?.status,
-            ok: response?.ok
-          });
-          
-          if (response?.ok) {
-            break;
-          }
-          
-          // If 401 and we have retries left, wait and retry
-          if (response?.status === 401 && retryCount < maxRetries - 1) {
-            console.log(`⏳ Auth failed, retrying in ${(retryCount + 1) * 500}ms...`);
-            await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 500));
-            retryCount++;
-            continue;
-          }
-          
-          break;
-        }
+        // Get current user from Supabase
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
         
-        if (!response || !response.ok) {
-          // Get error details for debugging
-          let errorText = 'No response received';
-          let errorData = null;
-          
-          if (response) {
-            try {
-              const responseClone = response.clone();
-              errorText = await response.text();
-              
-              // Try to parse as JSON for more details
-              if (errorText.startsWith('{')) {
-                errorData = JSON.parse(errorText);
-              }
-            } catch (e) {
-              console.error('🔍 Error parsing response:', e);
-            }
-          }
-          
-          // Security: Minimal logging for production
-          console.error('Authentication required');
-          
-          // Security: Set auth states and redirect immediately
-          setIsAuthChecking(false);
-          setIsAuthenticated(false);
-          
-          // Check if we're already on login page to prevent redirect loop
-          if (window.location.pathname !== '/login') {
-            // Security: Immediate redirect, no delays
+        if (authError || !user) {
+          console.log('❌ No authenticated user found, redirecting to login');
+          if (isMounted) {
             window.location.href = '/login';
           }
           return;
         }
-
-        const userData = await response.json();
         
-        // Security: Set authenticated state
+        console.log('✅ User authenticated:', user.email);
+        
+        // Get user profile from database
+        const { data: userProfile, error: profileError } = await supabase
+          .from('users')
+          .select('id, email, name, tenant_id, tenants(subdomain)')
+          .eq('id', user.id)
+          .single();
+        
+        if (profileError) {
+          console.log('⚠️ Profile not found, user may need to complete registration');
+        }
+        
+        const onboardingData = {
+          user: {
+            id: user.id,
+            email: user.email,
+            name: userProfile?.name
+          },
+          onboardingComplete: !!userProfile?.tenant_id,
+          tenantId: userProfile?.tenant_id,
+          tenant: userProfile?.tenant_id ? {
+            subdomain: (userProfile.tenants as any)?.subdomain
+          } : null
+        };
+        
+        console.log('📊 Onboarding data loaded:', onboardingData);
+        
+        if (!isMounted) return; // Component unmounted, don't update state
+        
+        setOnboardingData(onboardingData);
         setIsAuthenticated(true);
-        setIsAuthChecking(false);
         
-        // Check if user already completed onboarding
-        if (userData.onboardingComplete && userData.tenantId) {
-          window.location.href = '/dashboard';
+        // If user already has a tenant, redirect to dashboard
+        if (onboardingData.onboardingComplete && onboardingData.tenant?.subdomain) {
+          console.log('🏢 User already has tenant, redirecting to dashboard');
+          window.location.href = `https://${onboardingData.tenant.subdomain}.docsflow.app/dashboard`;
           return;
         }
-
-        // Load onboarding data from localStorage or user data (client-side only)
-        const storedData = typeof window !== 'undefined' ? localStorage.getItem('onboarding-data') : null;
-        const signupData = typeof window !== 'undefined' ? localStorage.getItem('signup-data') : null;
         
-        if (storedData) {
-          setOnboardingData(JSON.parse(storedData));
-        } else if (signupData) {
-          // Use signup data if no onboarding data exists
-          const parsedSignupData = JSON.parse(signupData);
-          setOnboardingData({
-            displayName: parsedSignupData.companyName,
-            subdomain: parsedSignupData.companyName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'company',
-            industry: 'technology', // Default to technology instead of generic 'general'
-            email: parsedSignupData.email || userData.email,
-            userId: userData.id
-          });
-        } else {
-          // Fallback to user data from backend
-          setOnboardingData({
-            displayName: userData.tenant?.name || 'Your Company',
-            subdomain: userData.tenant?.subdomain || 'company',
-            industry: userData.tenant?.industry || 'technology',
-            email: userData.email,
-            userId: userData.id
-          });
-        }
+        // User needs onboarding - continue with flow
+        console.log('📝 User needs onboarding, continuing with flow');
         
       } catch (error) {
-        console.error('Authentication check failed:', error);
-        // On error, redirect to login
-        window.location.href = '/login';
+        console.error('❌ Auth check failed:', error);
+        if (isMounted) {
+          // Don't redirect immediately on error - user might just need to wait for session
+          setIsAuthenticated(false);
+        }
+      } finally {
+        if (isMounted) {
+          setIsAuthChecking(false);
+        }
       }
     };
 
     checkAuthAndLoadData();
+    
+    // Cleanup function to prevent state updates on unmounted component
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Variables moved to render section to avoid duplication
