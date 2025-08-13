@@ -14,7 +14,7 @@ export function getCORSHeaders(origin?: string | null) {
   return {
     'Access-Control-Allow-Origin': origin || '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-tenant-subdomain, x-tenant-id',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Tenant-Subdomain, x-tenant-subdomain, X-Tenant-Id, x-tenant-id',
     'Access-Control-Allow-Credentials': 'true',
   }
 }
