@@ -17,6 +17,11 @@ import { smartIndustryDetection, generateSubdomain } from '@/lib/industry-detect
 // Questions data moved to /lib/onboarding-questions.ts
 
 export default function OnboardingFlow() {
+  // CRITICAL FIX: ALL HOOKS MUST BE AT TOP LEVEL - BEFORE ANY EARLY RETURNS
+  // COMPREHENSIVE HYDRATION FIX: Prevent server/client mismatch
+  const [isClient, setIsClient] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  
   // Security: Block rendering until auth is verified
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -31,6 +36,12 @@ export default function OnboardingFlow() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [customPersonality, setCustomPersonality] = useState<any>(null);
   const [onboardingData, setOnboardingData] = useState<any>(null);
+
+  // HYDRATION FIX: Set client-side flag
+  useEffect(() => {
+    setIsClient(true);
+    setMounted(true);
+  }, []);
 
   // COMPREHENSIVE AUTH AND DATA LOADING
   useEffect(() => {
@@ -149,7 +160,19 @@ export default function OnboardingFlow() {
     };
   }, []);
 
-  // Variables moved to render section to avoid duplication
+  // HYDRATION CHECK: Block rendering until client-side hydration is complete
+  if (!isClient || !mounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is joining an existing tenant, skip questions and go straight to completion
   const isLastQuestion = currentQuestion === GENERIC_QUESTIONS.length - 1;
 
   const handleNext = () => {
@@ -882,27 +905,7 @@ const tenantAssignment = {
     );
   }
 
-  // Define variables for current question step
-  // COMPREHENSIVE HYDRATION FIX: Prevent server/client mismatch
-  const [isClient, setIsClient] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  
-  useEffect(() => {
-    setIsClient(true);
-    setMounted(true);
-  }, []);
 
-  // Block rendering until client-side hydration is complete
-  if (!isClient || !mounted) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   // Security: Block rendering until auth is verified
   if (isAuthChecking) {
