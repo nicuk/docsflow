@@ -546,6 +546,8 @@ Create a JSON response with:
       onboardingComplete: true
     });
 
+    return response;
+
   } catch (error) {
     console.error('❌ Onboarding completion error:', error);
     console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
