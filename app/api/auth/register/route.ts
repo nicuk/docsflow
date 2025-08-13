@@ -138,58 +138,68 @@ export async function POST(request: NextRequest) {
 
     // CRITICAL FIX: Set session cookies when session exists (email verification disabled)
     if (authData.session) {
+      console.log('🍪 Setting authentication cookies...');
+      
+      // Create response
       const response = NextResponse.json({
         success: true,
         user: {
           id: authData.user?.id,
           email: authData.user?.email,
+          name: companyName,
           access_token: authData.session.access_token,
           refresh_token: authData.session.refresh_token,
-          tenant_id: tenantId,
-          access_level: accessLevel,
-          tenant: userProfile?.tenants,
-          name: companyName
         },
-        message: 'User registered successfully'
+        onboardingComplete: !!userProfile?.tenant_id,
+        tenantId: userProfile?.tenant_id,
+        tenant: userProfile?.tenant_id ? {
+          subdomain: (userProfile.tenants as any)?.subdomain,
+          name: (userProfile.tenants as any)?.name,
+          industry: (userProfile.tenants as any)?.industry
+        } : null,
+        message: 'Registration successful! Redirecting to onboarding.',
+        nextStep: 'onboarding'
       }, { headers: corsHeaders });
 
-      // FIXED: Use standard auth cookie names that subdomain/check expects
-      const cookieOptions = {
+      // CRITICAL: Set cookies properly with cookieStore
+      cookieStore.set('auth-token', authData.session.access_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax' as const,
+        sameSite: 'lax',
         path: '/',
-        domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined
-      };
-
-      // Set standard auth cookies that all endpoints expect
-      response.cookies.set('auth-token', authData.session.access_token, {
-        ...cookieOptions,
+        domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
         maxAge: authData.session.expires_in || 3600
       });
 
-      response.cookies.set('refresh-token', authData.session.refresh_token, {
-        ...cookieOptions,
-        maxAge: authData.session.expires_in || 3600
+      cookieStore.set('refresh-token', authData.session.refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
+        maxAge: 60 * 60 * 24 * 7 // 7 days
       });
 
-      // Set user session data
-      response.cookies.set('user-session', JSON.stringify({
-        id: authData.user?.id,
-        email: authData.user?.email,
-        tenant_id: tenantId,
-        access_level: accessLevel
-      }), {
-        ...cookieOptions,
-        maxAge: authData.session.expires_in || 3600
+      // Set user info cookies (accessible to client)
+      cookieStore.set('user-email', email, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
+        maxAge: 60 * 60 * 24 * 7
       });
 
-      console.log('🍪 Registration cookies set:', {
-        authToken: !!authData.session.access_token,
-        refreshToken: !!authData.session.refresh_token,
-        userSession: !!authData.user?.id
+      cookieStore.set('onboarding-complete', 'false', {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
+        maxAge: 60 * 60 * 24 * 7
       });
 
+      console.log('✅ Authentication cookies set successfully');
       return response;
     }
 

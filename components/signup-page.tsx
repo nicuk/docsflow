@@ -138,21 +138,43 @@ export default function SignupPage() {
     setErrors({})
 
     try {
-      // Use the auth client to register the user with company data
-      const { authClient } = await import('@/lib/auth-client');
-      const result = await authClient.register(
-        formData.email, 
-        formData.password, 
-        formData.companyName, // Pass company name
-        3
-      );
-
-      // Store user data and token for session
-      localStorage.setItem('user-session', JSON.stringify({
-        user: result.user,
-        token: result.user.access_token,
-        timestamp: new Date().toISOString()
-      }));
+      // COMPREHENSIVE FIX: Direct API call with proper cookie handling
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // CRITICAL: Include cookies
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          companyName: formData.companyName,
+          accessLevel: 3,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Registration failed");
+      }
+      
+      console.log("✅ Registration API response:", data);
+      
+      // CRITICAL: Set client-side cookies as backup/supplement
+      if (data.user?.access_token) {
+        // Import cookie utilities
+        const { setAuthCookies } = await import('@/lib/cookies');
+        
+        // Store in localStorage as backup
+        localStorage.setItem("access_token", data.user.access_token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        
+        // Set client-side auth cookies
+        setAuthCookies(
+          data.user.access_token,
+          data.user.refresh_token || "",
+          formData.email
+        );
+      }
       
       // Generate subdomain suggestion from company name
       const suggestedSubdomain = generateSubdomainFromCompany(formData.companyName);
@@ -179,16 +201,21 @@ export default function SignupPage() {
         subdomain: suggestedSubdomain,
         displayName: formData.companyName,
         industry: 'general', // Will be determined in onboarding
-        tenantId: result.user.tenant?.id,
+        tenantId: data.user?.tenant_id,
         accessLevel: 1, // First user gets admin (level 1)
         onboardingComplete: false,
         isNewTenant: true
       };
       localStorage.setItem('tenant-context', JSON.stringify(tenantContext));
       
-      // Redirect to onboarding to create personalized AI persona FIRST
+      console.log("✅ Signup successful, auth cookies set");
+      
+      // CRITICAL: Small delay to ensure cookies are set
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Use window.location for full page navigation to ensure cookies are sent
       window.location.href = '/onboarding';
-      console.log("Signup successful, redirecting to onboarding for persona creation:", { tenantContext, result })
+      console.log("Signup successful, redirecting to onboarding for persona creation:", { tenantContext, data })
     } catch (error) {
       setErrors({
         general: error instanceof Error ? error.message : "An error occurred during signup",

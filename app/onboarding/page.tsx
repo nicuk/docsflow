@@ -32,7 +32,7 @@ export default function OnboardingFlow() {
   const [customPersonality, setCustomPersonality] = useState<any>(null);
   const [onboardingData, setOnboardingData] = useState<any>(null);
 
-  // Authentication and onboarding data loading
+  // COMPREHENSIVE AUTH AND DATA LOADING
   useEffect(() => {
     let isMounted = true; // Prevent state updates if component unmounts
     
@@ -40,52 +40,50 @@ export default function OnboardingFlow() {
       try {
         console.log('🔍 Checking user authentication...');
         
-        // COOKIE FIX: Check for auth cookies first (set during registration)
-        const authToken = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('auth-token='))
-          ?.split('=')[1];
-          
-        const userSession = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('user-session='))
-          ?.split('=')[1];
-          
-        console.log('🍪 Auth cookies found:', { 
-          hasAuthToken: !!authToken, 
-          hasUserSession: !!userSession 
-        });
+        // COMPREHENSIVE COOKIE CHECK: Use utility function
+        const { getAuthState } = await import('@/lib/cookies');
+        const authState = getAuthState();
         
-        if (!authToken || !userSession) {
-          console.log('❌ No auth cookies found, redirecting to login');
+        console.log('🍪 Auth state:', authState);
+        
+        if (!authState.isAuthenticated || !authState.authToken) {
+          console.log('❌ No auth token found, redirecting to login');
           if (isMounted) {
             window.location.href = '/login';
           }
           return;
         }
         
-        // FIXED: Single Supabase client instance, no retry loop
+        // COMPREHENSIVE SESSION RESTORATION
         const { createSupabaseClient } = await import('@/lib-frontend/supabase');
         const supabase = createSupabaseClient();
         
-        // Set the session from cookies
+        // Get refresh token for session restoration
+        const { getCookie } = await import('@/lib/cookies');
+        const refreshToken = getCookie('refresh-token');
+        
+        // Set the session from cookies with proper error handling
         const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-          access_token: authToken,
-          refresh_token: document.cookie
-            .split('; ')
-            .find(row => row.startsWith('refresh-token='))
-            ?.split('=')[1] || ''
+          access_token: authState.authToken,
+          refresh_token: refreshToken || ''
         });
         
         if (sessionError || !sessionData.user) {
           console.log('❌ Failed to restore session from cookies:', sessionError);
-          if (isMounted) {
-            window.location.href = '/login';
+          // Try to get user directly as fallback
+          const { data: { user }, error: userError } = await supabase.auth.getUser();
+          if (userError || !user) {
+            console.log('❌ Complete auth failure, redirecting to login');
+            if (isMounted) {
+              window.location.href = '/login';
+            }
+            return;
           }
-          return;
+          // Use fallback user
+          console.log('✅ Using fallback user authentication');
         }
         
-        const user = sessionData.user;
+        const user = sessionData?.user || (await supabase.auth.getUser()).data.user;
         
         console.log('✅ User authenticated:', user.email);
         
@@ -885,15 +883,17 @@ const tenantAssignment = {
   }
 
   // Define variables for current question step
-  // HYDRATION FIX: Prevent server/client mismatch
+  // COMPREHENSIVE HYDRATION FIX: Prevent server/client mismatch
   const [isClient, setIsClient] = useState(false);
+  const [mounted, setMounted] = useState(false);
   
   useEffect(() => {
     setIsClient(true);
+    setMounted(true);
   }, []);
 
   // Block rendering until client-side hydration is complete
-  if (!isClient) {
+  if (!isClient || !mounted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
         <div className="text-center">
