@@ -1,15 +1,27 @@
 import { NextResponse } from 'next/server';
 
 /**
- * Cookie configuration for cross-subdomain session persistence
+ * Cookie configurations for different types of data
  */
 export const COOKIE_CONFIG = {
-  domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
-  maxAge: 60 * 60 * 24 * 7, // 7 days
-  path: '/'
+  // For sensitive auth tokens (httpOnly)
+  AUTH: {
+    domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+    path: '/'
+  },
+  // For user display data (readable by JavaScript)
+  USER: {
+    domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
+    httpOnly: false, // Allow JavaScript access for UI display
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+    path: '/'
+  }
 };
 
 /**
@@ -38,22 +50,26 @@ export function createResponseWithSessionCookies(
   );
   
   // Set cookies using Set-Cookie headers (the proper way)
-  const cookieOptions = `; Path=${COOKIE_CONFIG.path}; Max-Age=${COOKIE_CONFIG.maxAge}; SameSite=${COOKIE_CONFIG.sameSite}${COOKIE_CONFIG.httpOnly ? '; HttpOnly' : ''}${COOKIE_CONFIG.secure ? '; Secure' : ''}${COOKIE_CONFIG.domain ? `; Domain=${COOKIE_CONFIG.domain}` : ''}`;
+  // Use USER config for display data (readable by JavaScript)
+  const userCookieOptions = `; Path=${COOKIE_CONFIG.USER.path}; Max-Age=${COOKIE_CONFIG.USER.maxAge}; SameSite=${COOKIE_CONFIG.USER.sameSite}${COOKIE_CONFIG.USER.httpOnly ? '; HttpOnly' : ''}${COOKIE_CONFIG.USER.secure ? '; Secure' : ''}${COOKIE_CONFIG.USER.domain ? `; Domain=${COOKIE_CONFIG.USER.domain}` : ''}`;
+  
+  // Use AUTH config for sensitive data (httpOnly)
+  const authCookieOptions = `; Path=${COOKIE_CONFIG.AUTH.path}; Max-Age=${COOKIE_CONFIG.AUTH.maxAge}; SameSite=${COOKIE_CONFIG.AUTH.sameSite}${COOKIE_CONFIG.AUTH.httpOnly ? '; HttpOnly' : ''}${COOKIE_CONFIG.AUTH.secure ? '; Secure' : ''}${COOKIE_CONFIG.AUTH.domain ? `; Domain=${COOKIE_CONFIG.AUTH.domain}` : ''}`;
   
   if (cookies.userEmail) {
-    response.headers.append('Set-Cookie', `user-email=${cookies.userEmail}${cookieOptions}`);
+    response.headers.append('Set-Cookie', `user-email=${cookies.userEmail}${userCookieOptions}`);
   }
   
   if (cookies.userName) {
-    response.headers.append('Set-Cookie', `user-name=${encodeURIComponent(cookies.userName)}${cookieOptions}`);
+    response.headers.append('Set-Cookie', `user-name=${encodeURIComponent(cookies.userName)}${userCookieOptions}`);
   }
   
   if (cookies.tenantId) {
-    response.headers.append('Set-Cookie', `tenant-id=${cookies.tenantId}${cookieOptions}`);
+    response.headers.append('Set-Cookie', `tenant-id=${cookies.tenantId}${authCookieOptions}`);
   }
   
   if (cookies.onboardingComplete) {
-    response.headers.append('Set-Cookie', `onboarding-complete=true${cookieOptions}`);
+    response.headers.append('Set-Cookie', `onboarding-complete=true${userCookieOptions}`);
   }
   
   // Add any additional headers
