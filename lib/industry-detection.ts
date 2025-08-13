@@ -109,10 +109,46 @@ export const determineIndustry = (businessOverview: string): string => {
   return 'general';
 };
 
-export const extractCompanyName = (businessOverview: string): string => {
-  // Extract company name from business overview or use first few words
-  const words = businessOverview.split(' ').slice(0, 3);
-  return words.join(' ').replace(/[^a-zA-Z0-9\s]/g, '').trim() || 'Company';
+export const extractCompanyName = (businessOverview: string, fallbackName?: string): string => {
+  if (!businessOverview || businessOverview.trim().length === 0) {
+    return fallbackName || 'Your Business';
+  }
+
+  // Enhanced business name extraction with multiple strategies
+  const text = businessOverview.trim();
+  
+  // Strategy 1: Look for "I work at/for [Company]" or "We are [Company]"
+  const workAtMatch = text.match(/(?:I work (?:at|for)|We are|Our company is|My company is)\s+([A-Z][a-zA-Z0-9\s&.-]{1,30})/i);
+  if (workAtMatch) {
+    return workAtMatch[1].trim();
+  }
+  
+  // Strategy 2: Look for company-like patterns (capitalized words)
+  const companyPattern = /\b([A-Z][a-zA-Z0-9]*(?:\s+[A-Z&][a-zA-Z0-9]*){0,2})\b/g;
+  const matches = text.match(companyPattern);
+  if (matches && matches.length > 0) {
+    // Filter out common non-company words
+    const filtered = matches.filter(match => 
+      !['I', 'We', 'Our', 'My', 'The', 'This', 'That', 'They', 'It'].includes(match.trim())
+    );
+    if (filtered.length > 0) {
+      return filtered[0].trim();
+    }
+  }
+  
+  // Strategy 3: Use first meaningful sentence up to 4 words
+  const sentences = text.split(/[.!?]/);
+  if (sentences.length > 0) {
+    const firstSentence = sentences[0].trim();
+    const words = firstSentence.split(/\s+/).slice(0, 4);
+    const cleaned = words.join(' ').replace(/[^a-zA-Z0-9\s&.-]/g, '').trim();
+    if (cleaned.length > 0 && cleaned.length <= 50) {
+      return cleaned;
+    }
+  }
+  
+  // Fallback: Use provided fallback or default
+  return fallbackName || 'Your Business';
 };
 
 export const generateSubdomain = (businessOverview: string): string => {

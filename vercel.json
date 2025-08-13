@@ -36,5 +36,18 @@
       "source": "/app/:tenant",
       "destination": "/app/[tenant]/page"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/((?!api).*)",
+      "destination": "https://docsflow.app/$1",
+      "permanent": false,
+      "has": [
+        {
+          "type": "host",
+          "value": "api.docsflow.app"
+        }
+      ]
+    }
   ]
 }

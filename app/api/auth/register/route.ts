@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { getCORSHeaders } from '@/lib/utils';
+import { createCORSResponse } from '@/lib/cookie-utils';
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin');

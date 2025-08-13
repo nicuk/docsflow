@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { getCORSHeaders } from '@/lib/utils';
+import { createResponseWithSessionCookies } from '@/lib/cookie-utils';
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin');
@@ -139,31 +140,16 @@ export async function POST(request: NextRequest) {
       user: {
         id: authData.user.id,
         email: authData.user.email,
-        fullName: userProfile?.name,
         tenant_id: userProfile?.tenant_id,
-        access_level: userProfile?.access_level,
         role: userProfile?.role,
-        tenant: userProfile?.tenants && Array.isArray(userProfile.tenants) && userProfile.tenants.length > 0 ? {
-          id: userProfile.tenants[0].id,
-          subdomain: userProfile.tenants[0].subdomain,
-          name: userProfile.tenants[0].name,
-          industry: userProfile.tenants[0].industry,
-          businessType: userProfile.tenants[0].industry
-        } : null,
-        onboardingComplete: hasCompletedOnboarding
+        access_level: userProfile?.access_level,
+        onboarding_complete: hasCompletedOnboarding
       },
       message: 'Login successful'
-    }, { headers: corsHeaders });
-    
-    // Set onboarding completion cookie for middleware
-    if (hasCompletedOnboarding) {
-      response.cookies.set('onboarding-complete', 'true', {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 30 // 30 days
-      });
-    }
+    }, {
+      // Set onboarding completion cookie for middleware if completed
+      onboardingComplete: hasCompletedOnboarding
+    });
     
     return response;
 

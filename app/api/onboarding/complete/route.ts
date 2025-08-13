@@ -1,7 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
+import { extractCompanyName } from '@/lib/industry-detection';
+import { createResponseWithSessionCookies } from '@/lib/cookie-utils';
 import { Redis } from '@upstash/redis';
 import { verifyTenantAdmin, logAdminAction } from '@/lib/auth/admin-verification';
 import { getCORSHeaders } from '@/lib/utils';
@@ -33,17 +33,24 @@ export async function POST(request: NextRequest) {
     const success_metrics = responses.success_metrics || '';
     const information_needs = responses.information_needs || '';
     
-    // Fix: Check multiple possible business name fields from frontend
-    const businessName = tenantAssignment.companyName || 
-                         tenantAssignment.businessName || 
-                         tenantAssignment.businessType || 
-                         tenantAssignment.name ||
-                         responses.company_name ||
-                         responses.business_name ||
-                         '';
-    
     const industry = tenantAssignment.industry || responses.industry || 'technology';
     const subdomain = tenantAssignment.subdomain || '';
+    
+    // Fix: Check multiple possible business name fields from frontend
+    const businessNameFromFrontend = tenantAssignment.companyName || 
+                                    tenantAssignment.businessName || 
+                                    tenantAssignment.businessType || 
+                                    tenantAssignment.name ||
+                                    responses.company_name ||
+                                    responses.business_name ||
+                                    '';
+    
+    // Validate subdomain format first
+    const subdomainRegex = /^[a-z0-9][a-z0-9-]*[a-z0-9]$/;
+    const cleanSubdomain = subdomain.toLowerCase().trim();
+    
+    // Use enhanced business name extraction with fallback
+    const businessName = businessNameFromFrontend || extractCompanyName(business_overview, cleanSubdomain);
     
     console.log('📊 Extracted data:', {
       businessName,
@@ -525,57 +532,21 @@ Create a JSON response with:
       console.warn('⚠️ Session refresh attempt failed (non-critical):', refreshErr);
     }
 
-    // Step 9: Return success response with complete session data for frontend storage
-    const response = NextResponse.json({
+    // Step 9: Return success response with session cookies using proper Set-Cookie headers
+    const response = createResponseWithSessionCookies({
       success: true,
       tenant: {
         id: tenant.id,
         subdomain: tenant.subdomain,
-        name: tenant.name,
-        industry: tenant.industry,
-        custom_persona: customPersona
+        displayName: businessName || tenant.display_name || 'Your Business'
       },
-      // CRITICAL: Include REAL user session data for frontend storage
-      user: {
-        userId: userId,
-        email: email, // Use the REAL user email, not fake admin email
-        name: businessName || 'Admin',
-        tenant_id: tenant.subdomain, // Use subdomain as tenant_id for frontend
-        access_level: 5,
-        onboarding_complete: true
-      },
-      // Redirect directly to tenant dashboard
-      redirect_url: `https://${tenant.subdomain}.docsflow.app/dashboard`,
-      message: 'Tenant created successfully. You are now the admin. Redirecting to your dashboard.'
-    }, { headers: corsHeaders });
-
-    // CRITICAL: Set session cookies for immediate dashboard access
-    response.cookies.set('user-email', email, { // Use REAL user email 
-      path: '/', 
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
+      redirect: `https://${tenant.subdomain}.docsflow.app/dashboard`
+    }, {
+      userEmail: email, // Use REAL user email
+      userName: businessName || 'Admin',
+      tenantId: tenant.subdomain,
+      onboardingComplete: true
     });
-    response.cookies.set('user-name', businessName || 'Admin', { 
-      path: '/', 
-      maxAge: 60 * 60 * 24 * 7,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
-    });
-    response.cookies.set('tenant-id', tenant.subdomain, { 
-      path: '/', 
-      maxAge: 60 * 60 * 24 * 7,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
-    });
-    response.cookies.set('onboarding-complete', 'true', { 
-      path: '/', 
-      maxAge: 60 * 60 * 24 * 7,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
-    });
-
-    return response;
 
   } catch (error) {
     console.error('❌ Onboarding completion error:', error);

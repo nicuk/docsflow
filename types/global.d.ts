@@ -44,23 +44,8 @@ declare module 'react' {
   export interface ReactElement {}
 }
 
-// Next.js types
-declare module 'next/server' {
-  export class NextRequest {
-    headers: { get(name: string): string | null };
-    json(): Promise<any>;
-  }
-  export class NextResponse {
-    static json(body: any, init?: { status?: number; headers?: any }): NextResponse;
-  }
-}
-
-declare module 'next/headers' {
-  export function cookies(): Promise<{
-    getAll(): Array<{name: string, value: string}>;
-    set(name: string, value: string, options?: any): void;
-  }>;
-}
+// Note: Removed custom Next.js type extensions that were masking API incompatibilities
+// Using official Next.js types instead
 
 // Lucide React types
 declare module 'lucide-react' {
