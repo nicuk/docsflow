@@ -57,6 +57,11 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [tenantContext, setTenantContext] = useState<TenantContext | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [realStats, setRealStats] = useState({
+    documentsCount: 0,
+    questionsCount: 0,
+    hoursSaved: 0
+  })
 
   // Load tenant context and check onboarding completion
   useEffect(() => {
@@ -104,6 +109,9 @@ export default function DashboardPage() {
         // Store context in localStorage for faster subsequent loads
         localStorage.setItem(`tenant-${userData.tenantId}`, JSON.stringify(context));
         
+        // Fetch real data from backend
+        await fetchRealData(userData.tenantId);
+        
       } catch (error) {
         console.error('Failed to load tenant context:', error);
         // On error, redirect to login to re-authenticate
@@ -115,6 +123,54 @@ export default function DashboardPage() {
 
     loadTenantContext();
   }, [])
+
+  // Fetch real data from backend APIs
+  const fetchRealData = async (tenantId: string) => {
+    try {
+      // Fetch documents
+      const docsResponse = await fetch('/api/documents', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-subdomain': tenantId
+        },
+        credentials: 'include'
+      });
+      
+      if (docsResponse.ok) {
+        const docsData = await docsResponse.json();
+        const documentsCount = docsData.documents?.length || 0;
+        
+        // Fetch conversations/questions
+        const conversationsResponse = await fetch('/api/conversations', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-tenant-subdomain': tenantId
+          },
+          credentials: 'include'
+        });
+        
+        let questionsCount = 0;
+        if (conversationsResponse.ok) {
+          const convData = await conversationsResponse.json();
+          questionsCount = convData.conversations?.length || 0;
+        }
+        
+        // Calculate hours saved (estimate: 15 min per document, 5 min per question)
+        const hoursSaved = Math.round((documentsCount * 0.25 + questionsCount * 0.083) * 10) / 10;
+        
+        setRealStats({
+          documentsCount,
+          questionsCount,
+          hoursSaved
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching real data:', error);
+      // Keep using mock data on error
+    }
+  }
 
   // Industry-specific welcome messages
   const getWelcomeMessage = () => {
@@ -240,8 +296,12 @@ export default function DashboardPage() {
       { title: "Hours Saved", value: "0", icon: BarChart3 },
     ]
 
-    // Load analytics from localStorage
-    const analytics = JSON.parse(localStorage.getItem('docuintel-analytics') || '{}')
+    // Use real stats from backend instead of localStorage
+    const analytics = {
+      documentsUploaded: realStats.documentsCount,
+      totalQuestions: realStats.questionsCount,
+      timesSaved: realStats.hoursSaved
+    }
     
     switch (tenantContext.industry) {
       case 'motorcycle_dealer':

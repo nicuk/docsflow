@@ -67,7 +67,7 @@ export function getSecureCORSHeaders(origin?: string | null, config: SecurityCon
   return {
     'Access-Control-Allow-Origin': isAllowedOrigin ? origin! : config.allowedOrigins[0],
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Tenant-ID, X-HMAC-Signature',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Tenant-ID, X-Tenant-Subdomain, X-HMAC-Signature',
     'Access-Control-Allow-Credentials': 'true',
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
