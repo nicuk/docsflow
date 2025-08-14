@@ -19,13 +19,17 @@ export default function DomainCreatedPage() {
     const darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
     setIsDarkMode(darkMode);
 
+    // Store tenant info for success page
+    localStorage.setItem('tenant_name', companyName);
+    localStorage.setItem('tenant_subdomain', subdomain);
+    
     // Countdown timer
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          // Redirect to the custom subdomain signup
-          window.location.href = `https://${subdomain}.docsflow.app/register`;
+          // Redirect to success page instead of directly to register
+          router.push('/onboarding-success');
           return 0;
         }
         return prev - 1;
@@ -201,7 +205,7 @@ export default function DomainCreatedPage() {
             {/* Manual redirect button */}
             <motion.button
               variants={itemVariants}
-              onClick={() => window.location.href = `https://${subdomain}.docsflow.app/register`}
+              onClick={() => router.push('/onboarding-success')}
               className={`mt-6 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
                 isDarkMode 
                   ? 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-600' 

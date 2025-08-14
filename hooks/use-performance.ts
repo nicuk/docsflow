@@ -22,12 +22,8 @@ export function usePerformanceMonitoring() {
 
     window.getComputedStyle = function(element: Element, pseudoElt?: string | null) {
       reflowCount++
-      if (reflowCount > 10) {
-        console.warn('⚠️ Potential forced reflow detected:', {
-          element: element.tagName,
-          reflowCount,
-          stack: new Error().stack
-        })
+      // Disabled excessive logging - only track metrics silently
+      if (reflowCount > 100) { // Increased threshold to reduce noise
         metricsRef.current.forcedReflows++
       }
       return originalGetComputedStyle.call(this, element, pseudoElt)
