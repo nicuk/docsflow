@@ -272,6 +272,18 @@ class AuthClient {
   // Redirect to Google OAuth using Supabase
   async signInWithGoogle(): Promise<void> {
     try {
+      // CRITICAL FIX: Store current subdomain before OAuth redirect
+      const hostname = window.location.hostname;
+      const parts = hostname.split('.');
+      const isSubdomain = parts.length > 2 || (parts.length === 2 && !parts[0].includes('localhost'));
+      const currentSubdomain = isSubdomain ? parts[0] : null;
+      
+      // Store subdomain for restoration after OAuth callback
+      if (currentSubdomain && currentSubdomain !== 'www') {
+        localStorage.setItem('oauth-subdomain', currentSubdomain);
+        console.log(`📝 Stored OAuth subdomain: ${currentSubdomain}`);
+      }
+      
       // Import Supabase client
       const { createSupabaseClient } = await import('@/lib-frontend/supabase');
       const supabase = createSupabaseClient();

@@ -58,7 +58,7 @@ function AuthCallbackHandler() {
         // Check if user exists in our database
         const { data: existingUser } = await supabase
           .from('users')
-          .select('id, tenant_id, tenants(subdomain)')
+          .select('id, email, tenant_id, role, created_at, updated_at, tenants(subdomain)')
           .eq('id', data.user.id)
           .single();
 
@@ -68,15 +68,13 @@ function AuthCallbackHandler() {
           email: data.user.email || '',
           access_token: data.session?.access_token || '',
           refresh_token: data.session?.refresh_token || '',
-          tenant_id: existingUser?.tenant_id || null,
           access_level: 3
         };
 
-        // Store user data
+        // Store user session
         localStorage.setItem('access_token', user.access_token);
         localStorage.setItem('refresh_token', user.refresh_token);
-        localStorage.setItem('user', JSON.stringify(user));
-        localStorage.setItem('user-email', user.email);
+        localStorage.setItem('user_email', user.email);
         
         // If user doesn't exist in our database, create them and go to onboarding
         if (!existingUser) {
@@ -94,7 +92,40 @@ function AuthCallbackHandler() {
           setTimeout(() => {
             router.push('/onboarding');
           }, 1500);
+          return;
+        }
+        
+        // Store user session data for existing user
+        const userSession = {
+          id: existingUser.id,
+          email: existingUser.email,
+          tenant_id: existingUser.tenant_id,
+          role: existingUser.role,
+          created_at: existingUser.created_at,
+          updated_at: existingUser.updated_at
+        };
+        
+        localStorage.setItem('user-session', JSON.stringify(userSession));
+        
+        // CRITICAL FIX: Check for subdomain in the referrer or stored state
+        // OAuth callbacks lose the subdomain context, so we need to restore it
+        const referrer = document.referrer;
+        const referrerUrl = referrer ? new URL(referrer) : null;
+        const referrerParts = referrerUrl?.hostname.split('.') || [];
+        const isReferrerSubdomain = referrerParts.length > 2 || (referrerParts.length === 2 && !referrerParts[0].includes('localhost'));
+        const referrerSubdomain = isReferrerSubdomain ? referrerParts[0] : null;
+        
+        // Check localStorage for intended subdomain (set during OAuth initiation)
+        const intendedSubdomain = localStorage.getItem('oauth-subdomain');
+        const targetSubdomain = intendedSubdomain || referrerSubdomain;
+        
+        if (targetSubdomain && targetSubdomain !== 'www') {
+          console.log(`🔐 OAuth callback: Redirecting to subdomain ${targetSubdomain}`);
+          // Set the tenant-id cookie to match target subdomain
+          document.cookie = `tenant-id=${targetSubdomain}; path=/; domain=.docsflow.app; secure; samesite=strict`;
+          window.location.href = `https://${targetSubdomain}.docsflow.app/dashboard`;
         } else {
+          // Fallback to user's default tenant from database
           // Existing user - redirect to their tenant dashboard or main dashboard
           const tenantSubdomain = (existingUser.tenants as any)?.subdomain;
           

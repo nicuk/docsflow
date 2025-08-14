@@ -131,17 +131,34 @@ export default function LoginPage() {
           return
         }
         
-        // Redirect to tenant dashboard if available
-        const tenantSubdomain = (userProfile.tenants as any)?.subdomain
-        if (tenantSubdomain) {
+        // CRITICAL FIX: Respect the current subdomain, not the stored tenant
+        // Extract current subdomain from hostname
+        const hostname = window.location.hostname
+        const parts = hostname.split('.')
+        const isSubdomain = parts.length > 2 || (parts.length === 2 && !parts[0].includes('localhost'))
+        const currentSubdomain = isSubdomain ? parts[0] : null
+        
+        // If we're on a subdomain, stay on it after login
+        if (currentSubdomain && currentSubdomain !== 'www') {
+          console.log(`🔐 Logging into current subdomain: ${currentSubdomain}`)
+          // Set the tenant-id cookie to match current subdomain
+          document.cookie = `tenant-id=${currentSubdomain}; path=/; domain=.docsflow.app; secure; samesite=strict`
           setTimeout(() => {
-            window.location.href = `https://${tenantSubdomain}.docsflow.app/dashboard`
+            window.location.href = `https://${currentSubdomain}.docsflow.app/dashboard`
           }, 1500)
         } else {
-          // Fallback to main dashboard
-          setTimeout(() => {
-            router.push('/dashboard')
-          }, 1500)
+          // We're on the main domain, redirect to user's default tenant
+          const tenantSubdomain = (userProfile.tenants as any)?.subdomain
+          if (tenantSubdomain) {
+            setTimeout(() => {
+              window.location.href = `https://${tenantSubdomain}.docsflow.app/dashboard`
+            }, 1500)
+          } else {
+            // Fallback to main dashboard
+            setTimeout(() => {
+              router.push('/dashboard')
+            }, 1500)
+          }
         }
       }
       

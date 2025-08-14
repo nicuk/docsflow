@@ -143,20 +143,37 @@ export default async function middleware(request: NextRequest) {
         return NextResponse.redirect(mainDomainUrl);
       }
 
+      // CRITICAL FIX: Check if stored tenant-id cookie matches current subdomain
+      const storedTenantId = request.cookies.get('tenant-id')?.value;
+      const userEmail = request.cookies.get('user_email')?.value;
+      const authToken = request.cookies.get('access_token')?.value;
+      
+      // If user has a different tenant stored, clear it for proper isolation
+      if (storedTenantId && storedTenantId !== tenant) {
+        console.log(`⚠️ Tenant mismatch detected! Stored: ${storedTenantId}, Current: ${tenant}`);
+        // User is trying to access a different tenant - need to re-authenticate
+        const response = NextResponse.rewrite(new URL(`/login`, request.url));
+        response.headers.set('x-tenant-id', tenant);
+        response.headers.set('x-tenant-subdomain', tenant);
+        // Clear the mismatched tenant cookie
+        response.cookies.delete('tenant-id');
+        response.cookies.delete('access_token');
+        response.cookies.delete('refresh_token');
+        response.cookies.delete('user_email');
+        console.log(`🔄 Cleared cookies for tenant switch from ${storedTenantId} to ${tenant}`);
+        return createSecureResponse(response, origin);
+      }
+
       // If root path, check if user is authenticated
       if (pathname === '/' || pathname === '') {
-        // Check if user is authenticated via cookies
-        const userEmail = request.cookies.get('user_email')?.value;
-        const authToken = request.cookies.get('access_token')?.value;
-        
-        if (userEmail && authToken) {
-          // User is authenticated - show dashboard
+        if (userEmail && authToken && storedTenantId === tenant) {
+          // User is authenticated AND on the correct tenant - show dashboard
           const response = NextResponse.rewrite(new URL(`/dashboard`, request.url));
           response.headers.set('x-tenant-id', tenant);
           response.headers.set('x-tenant-subdomain', tenant);
           return createSecureResponse(response, origin);
         } else {
-          // User is NOT authenticated - redirect to LOGIN for this existing tenant
+          // User is NOT authenticated or tenant mismatch - redirect to LOGIN for this tenant
           // CRITICAL: Don't send to onboarding for existing tenants!
           const response = NextResponse.rewrite(new URL(`/login`, request.url));
           response.headers.set('x-tenant-id', tenant);
