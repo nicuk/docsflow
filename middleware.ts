@@ -119,6 +119,15 @@ export default async function middleware(request: NextRequest) {
 
 
 
+    // CRITICAL: Handle API subdomain separately - it's NOT a tenant
+    if (hostname === 'api.docsflow.app' || hostname === 'api.localhost') {
+      // API subdomain should pass through without tenant context
+      const response = NextResponse.next();
+      // Explicitly DO NOT set any tenant headers for API subdomain
+      console.log('API subdomain detected - bypassing tenant validation');
+      return createSecureResponse(response, origin);
+    }
+
     // Extract tenant from hostname
     const tenant = extractTenantFromHostname(hostname);
 

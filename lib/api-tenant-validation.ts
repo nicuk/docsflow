@@ -77,6 +77,19 @@ export async function validateTenantContext(
       tenantSubdomain = fallbackTenant;
     }
 
+    // CRITICAL: Filter out system subdomains that should never be treated as tenants
+    const systemSubdomains = ['api', 'www', 'admin', 'cdn', 'mail', 'support', 'docs', 'app'];
+    if (tenantSubdomain && systemSubdomains.includes(tenantSubdomain.toLowerCase())) {
+      console.log(`System subdomain '${tenantSubdomain}' detected - not a tenant`);
+      return {
+        isValid: false,
+        tenantId: null,
+        tenantData: null,
+        error: `System subdomain '${tenantSubdomain}' is not a valid tenant`,
+        statusCode: 400
+      };
+    }
+
     // Validate tenant subdomain exists
     if (!tenantSubdomain) {
       return {
