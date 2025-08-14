@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { extractTenantFromRequest } from '@/lib/auth-helpers';
+import { validateTenantContext } from '@/lib/api-tenant-validation';
 import { getCORSHeaders } from '@/lib/utils';
 
 function getSupabaseClient() {
@@ -24,8 +24,23 @@ export async function GET(
   const corsHeaders = getCORSHeaders(origin);
   const params = await context.params;
   try {
+    // Validate tenant context first
+    const tenantValidation = await validateTenantContext(request, {
+      requireAuth: false // Set to true for production
+    });
+
+    if (!tenantValidation.isValid) {
+      return NextResponse.json(
+        { 
+          error: tenantValidation.error,
+          security_violation: 'Invalid tenant context'
+        },
+        { status: tenantValidation.statusCode || 400, headers: corsHeaders }
+      );
+    }
+
+    const tenantId = tenantValidation.tenantId!; // This is the UUID
     const supabase = getSupabaseClient();
-    const tenantId = extractTenantFromRequest(request);
     const conversationId = params.id;
 
     // For now, use demo user ID since we don't have full auth yet

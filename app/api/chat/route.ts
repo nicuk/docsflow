@@ -156,10 +156,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const tenantSubdomain = tenantValidation.tenantId!;
+    const tenantId = tenantValidation.tenantId!;  // This is the UUID
+    const tenantSubdomain = tenantValidation.tenantData?.subdomain || 'unknown';
     const isDemoMode = tenantValidation.tenantData?.isDemo || false;
     
-    console.log('Chat API - Demo mode:', isDemoMode, 'Subdomain:', tenantSubdomain, 'Authenticated:', isAuthenticated);
+    console.log('Chat API - Demo mode:', isDemoMode, 'Subdomain:', tenantSubdomain, 'Tenant UUID:', tenantId, 'Authenticated:', isAuthenticated);
     
     // Initialize demo tenant if needed
     if (isDemoMode) {
@@ -188,8 +189,7 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
     
-    // Get tenant from subdomain
-    const tenantId = extractTenantFromRequest(request);
+    // REMOVED: extractTenantFromRequest - we already have the UUID from validation
 
     // Parse request body
     const { message, documentIds, conversationId } = await request.json();

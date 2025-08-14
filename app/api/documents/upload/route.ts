@@ -8,7 +8,8 @@ const loadPdfParse = () => import('pdf-parse');
 const loadMammoth = () => import('mammoth'); 
 const loadXLSX = () => import('xlsx');
 import { createClient } from '@supabase/supabase-js';
-import { getUserAccessLevel, extractTenantFromRequest } from '@/lib/auth-helpers';
+import { getUserAccessLevel } from '@/lib/auth-helpers';
+import { validateTenantContext } from '@/lib/api-tenant-validation';
 import { EnhancedChunking } from '@/lib/enhanced-chunking';
 import { getCORSHeaders } from '@/lib/utils';
 
@@ -40,12 +41,25 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Check if services are available using the centralized provider
-    if (!isRealAIAvailable()) {
-      console.error('❌ Upload failed: GOOGLE_AI_API_KEY is not configured.');
-      return NextResponse.json({ error: 'AI service not configured' }, { status: 500, headers: getCORSHeaders(origin) });
+    // Validate tenant context first
+    const tenantValidation = await validateTenantContext(request, {
+      requireAuth: false // Set to true for production
+    });
+
+    if (!tenantValidation.isValid) {
+      return NextResponse.json(
+        { 
+          error: tenantValidation.error,
+          security_violation: 'Invalid tenant context'
+        },
+        { status: tenantValidation.statusCode || 400, headers: getCORSHeaders(origin) }
+      );
     }
 
+    const tenantId = tenantValidation.tenantId!; // This is the UUID
+    const tenantSubdomain = tenantValidation.tenantData?.subdomain || 'unknown';
+    
+    // Initialize Supabase
     let supabase;
     try {
       supabase = getSupabaseClient();
@@ -54,14 +68,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Database service not available' }, { status: 500, headers: getCORSHeaders(origin) });
     }
     
-    // Get tenant from subdomain and user access level
-    const tenantId = extractTenantFromRequest(request);
+    // Get user access level
     let userAccessLevel;
     try {
       userAccessLevel = await getUserAccessLevel(request, tenantId);
     } catch (error) {
       console.error('Auth error:', error);
       userAccessLevel = 1; // Default to level 1
+    }
+
+    // Check if services are available using the centralized provider
+    if (!isRealAIAvailable()) {
+      console.error('❌ Upload failed: GOOGLE_AI_API_KEY is not configured.');
+      return NextResponse.json({ error: 'AI service not configured' }, { status: 500, headers: getCORSHeaders(origin) });
     }
 
     // Parse multipart form data with error handling
