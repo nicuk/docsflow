@@ -9,6 +9,8 @@ export function isValidIcon(str: string) {
 }
 
 type SubdomainData = {
+  id: string; // UUID of the tenant
+  subdomain: string; // Subdomain string
   emoji: string;
   createdAt: number;
   leadCount: number;
@@ -50,6 +52,8 @@ export async function getSubdomainData(
     }
     
     return {
+      id: tenant.id, // CRITICAL: Include the UUID
+      subdomain: tenant.subdomain,
       emoji: '🏢',
       createdAt: new Date(tenant.created_at).getTime(),
       leadCount: 0, // TODO: Query actual lead count
