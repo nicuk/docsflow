@@ -72,10 +72,6 @@ export default function OnboardingFlow() {
             }
           }
         }
-        
-        // Initialize auth state and check authentication
-        const initializeAuth = async () => {
-          try {
             // CRITICAL: Check if we were redirected here after domain selection
             const onboardingStateStr = localStorage.getItem('onboarding-state');
             if (onboardingStateStr) {
@@ -133,70 +129,69 @@ export default function OnboardingFlow() {
               refresh_token: refreshToken || ''
             });
         
-        if (sessionError || !sessionData.user) {
-          console.log('❌ Failed to restore session from cookies:', sessionError);
-          // Try to get user directly as fallback
-          const { data: { user }, error: userError } = await supabase.auth.getUser();
-          if (userError || !user) {
-            console.log('❌ Complete auth failure, redirecting to login');
-            if (isMounted) {
-              window.location.href = '/login';
+            if (sessionError || !sessionData.user) {
+              console.log('❌ Failed to restore session from cookies:', sessionError);
+              // Try to get user directly as fallback
+              const { data: { user }, error: userError } = await supabase.auth.getUser();
+              if (userError || !user) {
+                console.log('❌ Complete auth failure, redirecting to login');
+                if (isMounted) {
+                  window.location.href = '/login';
+                }
+                return;
+              }
+              // Use fallback user
+              console.log('✅ Using fallback user authentication');
             }
-            return;
-          }
-          // Use fallback user
-          console.log('✅ Using fallback user authentication');
-        }
-        
-        const user = sessionData?.user || (await supabase.auth.getUser()).data.user;
-        
-        console.log('✅ User authenticated:', user.email);
-        
-        // Get user profile from database
-        const { data: userProfile, error: profileError } = await supabase
-          .from('users')
-          .select('id, email, name, tenant_id, tenants(subdomain)')
-          .eq('id', user.id)
-          .single();
-        
-        if (profileError) {
-          console.log('⚠️ Profile not found, user may need to complete registration');
-        }
-        
-        const onboardingData = {
-          user: {
-            id: user.id,
-            email: user.email,
-            name: userProfile?.name
-          },
-          onboardingComplete: !!userProfile?.tenant_id,
-          tenantId: userProfile?.tenant_id,
-          tenant: userProfile?.tenant_id ? {
-            subdomain: (userProfile.tenants as any)?.subdomain
-          } : null
-        };
-        
-        console.log('📊 Onboarding data loaded:', onboardingData);
-        
-        if (!isMounted) return; // Component unmounted, don't update state
-        
-        setOnboardingData(onboardingData);
-        setIsAuthenticated(true);
-        
-        // If user already has a tenant, redirect to dashboard
-        if (onboardingData.onboardingComplete && onboardingData.tenant?.subdomain) {
-          console.log('🏢 User already has tenant, redirecting to dashboard');
-          window.location.href = `https://${onboardingData.tenant.subdomain}.docsflow.app/dashboard`;
-          return;
-        }
-        
-        // User needs onboarding - continue with flow
-        console.log('📝 User needs onboarding, continuing with flow');
-        
+            
+            const user = sessionData?.user || (await supabase.auth.getUser()).data.user;
+            
+            console.log('✅ User authenticated:', user.email);
+            
+            // Get user profile from database
+            const { data: userProfile, error: profileError } = await supabase
+              .from('users')
+              .select('id, email, name, tenant_id, tenants(subdomain)')
+              .eq('id', user.id)
+              .single();
+            
+            if (profileError) {
+              console.log('⚠️ Profile not found, user may need to complete registration');
+            }
+            
+            const onboardingData = {
+              user: {
+                id: user.id,
+                email: user.email,
+                name: userProfile?.name
+              },
+              onboardingComplete: !!userProfile?.tenant_id,
+              tenantId: userProfile?.tenant_id,
+              tenant: userProfile?.tenant_id ? {
+                subdomain: (userProfile.tenants as any)?.subdomain
+              } : null
+            };
+            
+            console.log('📊 Onboarding data loaded:', onboardingData);
+            
+            if (!isMounted) return; // Component unmounted, don't update state
+            
+            setOnboardingData(onboardingData);
+            setIsAuthenticated(true);
+            
+            // If user already has a tenant, redirect to dashboard
+            if (onboardingData.onboardingComplete && onboardingData.tenant?.subdomain) {
+              console.log('🏢 User already has tenant, redirecting to dashboard');
+              window.location.href = `https://${onboardingData.tenant.subdomain}.docsflow.app/dashboard`;
+              return;
+            }
+            
+            // User needs onboarding - continue with flow
+            console.log('📝 User needs onboarding, continuing with flow');
+            
       } catch (error) {
         console.error('❌ Auth check failed:', error);
         if (isMounted) {
-          // Don't redirect immediately on error - user might just need to wait for session
           setIsAuthenticated(false);
         }
       } finally {
