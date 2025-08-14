@@ -73,33 +73,65 @@ export default function OnboardingFlow() {
           }
         }
         
-        // COMPREHENSIVE COOKIE CHECK: Use utility function
-        const { getAuthState } = await import('@/lib/cookies');
-        const authState = getAuthState();
+        // Initialize auth state and check authentication
+        const initializeAuth = async () => {
+          try {
+            // CRITICAL: Check if we were redirected here after domain selection
+            const onboardingStateStr = localStorage.getItem('onboarding-state');
+            if (onboardingStateStr) {
+              const onboardingState = JSON.parse(onboardingStateStr);
+              console.log('📋 Restoring onboarding state after redirect:', onboardingState);
+              
+              // Restore the state
+              setSelectedDomain(onboardingState.domain);
+              setUserRole(onboardingState.userRole);
+              setCurrentStep(onboardingState.step);
+              
+              // Update onboarding data
+              setOnboardingData((prev: any) => ({
+                ...prev,
+                subdomain: onboardingState.domain,
+                isNewTenant: !onboardingState.joinExisting,
+                userRole: onboardingState.userRole
+              }));
+              
+              // Clear the stored state
+              localStorage.removeItem('onboarding-state');
+              
+              // If joining existing, trigger the join flow
+              if (onboardingState.joinExisting) {
+                // Will be triggered after auth check completes
+                console.log('Will join existing tenant after auth check:', onboardingState.domain);
+              }
+            }
+            
+            // Check if we have auth tokens in cookies
+            const authState = {
+              authToken: document.cookie.split('; ').find(row => row.startsWith('access_token='))?.split('=')[1],
+              userEmail: document.cookie.split('; ').find(row => row.startsWith('user_email='))?.split('=')[1]
+            };
+            
+            if (!authState.authToken || !authState.userEmail) {
+              console.log('❌ No auth tokens found in cookies, redirecting to login');
+              if (isMounted) {
+                window.location.href = '/login';
+              }
+              return;
+            }
         
-        console.log('🍪 Auth state:', authState);
-        
-        if (!authState.isAuthenticated || !authState.authToken) {
-          console.log('❌ No auth token found, redirecting to login');
-          if (isMounted) {
-            window.location.href = '/login';
-          }
-          return;
-        }
-        
-        // COMPREHENSIVE SESSION RESTORATION
-        const { createSupabaseClient } = await import('@/lib-frontend/supabase');
-        const supabase = createSupabaseClient();
-        
-        // Get refresh token for session restoration
-        const { getCookie } = await import('@/lib/cookies');
-        const refreshToken = getCookie('refresh-token');
-        
-        // Set the session from cookies with proper error handling
-        const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-          access_token: authState.authToken,
-          refresh_token: refreshToken || ''
-        });
+            // COMPREHENSIVE SESSION RESTORATION
+            const { createSupabaseClient } = await import('@/lib-frontend/supabase');
+            const supabase = createSupabaseClient();
+            
+            // Get refresh token for session restoration
+            const { getCookie } = await import('@/lib/cookies');
+            const refreshToken = getCookie('refresh-token');
+            
+            // Set the session from cookies with proper error handling
+            const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+              access_token: authState.authToken,
+              refresh_token: refreshToken || ''
+            });
         
         if (sessionError || !sessionData.user) {
           console.log('❌ Failed to restore session from cookies:', sessionError);
@@ -221,6 +253,30 @@ export default function OnboardingFlow() {
     // Store domain selection for later use
     localStorage.setItem('selected-domain', domain);
     localStorage.setItem('joining-existing', joinExisting.toString());
+    
+    // CRITICAL FIX: Redirect to the selected subdomain immediately
+    // This ensures all onboarding actions happen on the correct tenant subdomain
+    const currentHostname = window.location.hostname;
+    const currentParts = currentHostname.split('.');
+    const currentSubdomain = currentParts.length > 2 ? currentParts[0] : null;
+    
+    // Only redirect if we're not already on the selected subdomain
+    if (currentSubdomain !== domain) {
+      console.log(`🔄 Redirecting from ${currentSubdomain || 'main'} to ${domain} for onboarding`);
+      
+      // Store onboarding state before redirect
+      localStorage.setItem('onboarding-state', JSON.stringify({
+        domain,
+        joinExisting,
+        userRole: joinExisting ? 'technician' : 'admin',
+        step: joinExisting ? 0 : 1,
+        redirectedFrom: currentSubdomain || 'main'
+      }));
+      
+      // Redirect to the selected subdomain's onboarding page
+      window.location.href = `https://${domain}.docsflow.app/onboarding`;
+      return; // Stop execution here, page will reload on new subdomain
+    }
     
     if (joinExisting) {
       // Joining existing domain - user becomes TECHNICIAN/USER
