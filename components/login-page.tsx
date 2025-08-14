@@ -131,23 +131,38 @@ export default function LoginPage() {
           return
         }
         
-        // CRITICAL FIX: Always redirect to the user's actual tenant from database
-        // The user's tenant association is the source of truth, not cookies or current subdomain
+        // CRITICAL FIX: Respect login context - don't force tenant redirect from root domain
         const userTenantSubdomain = (userProfile.tenants as any)?.subdomain
+        const currentHostname = typeof window !== 'undefined' ? window.location.hostname : ''
+        const isRootDomain = currentHostname === 'docsflow.app' || currentHostname === 'localhost'
         
         if (userTenantSubdomain) {
           console.log(`🔐 User belongs to tenant: ${userTenantSubdomain}`)
           
-          // Clear any existing mismatched tenant-id cookie
-          document.cookie = 'tenant-id=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-          
-          // Set the correct tenant-id cookie
-          document.cookie = `tenant-id=${userTenantSubdomain}; path=/; domain=.docsflow.app; secure; samesite=strict`
-          
-          // Always redirect to the user's actual tenant subdomain
-          setTimeout(() => {
-            window.location.href = `https://${userTenantSubdomain}.docsflow.app/dashboard`
-          }, 1500)
+          // If user is on root domain, stay on root domain and go to dashboard
+          if (isRootDomain) {
+            console.log(`📍 User logged in from root domain - staying on root domain`)
+            // Clear any tenant cookies to prevent middleware redirects
+            document.cookie = 'tenant-id=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+            
+            setTimeout(() => {
+              router.push('/dashboard') // Stay on root domain
+            }, 1500)
+          } else {
+            // User is on tenant subdomain - redirect to their tenant
+            console.log(`📍 User logged in from tenant subdomain - redirecting to their tenant`)
+            
+            // Clear any existing mismatched tenant-id cookie
+            document.cookie = 'tenant-id=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+            
+            // Set the correct tenant-id cookie
+            document.cookie = `tenant-id=${userTenantSubdomain}; path=/; domain=.docsflow.app; secure; samesite=strict`
+            
+            // Redirect to the user's actual tenant subdomain
+            setTimeout(() => {
+              window.location.href = `https://${userTenantSubdomain}.docsflow.app/dashboard`
+            }, 1500)
+          }
         } else {
           // User has no tenant - needs onboarding
           console.log('❌ User has no tenant association, redirecting to onboarding')

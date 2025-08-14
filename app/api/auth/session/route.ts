@@ -23,10 +23,10 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    // Get the session from Supabase
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    // SECURITY FIX: Use getUser() instead of getSession() for authenticated data
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     
-    if (!session || sessionError) {
+    if (!user || userError) {
       return NextResponse.json({
         authenticated: false,
         user: null,
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
           created_at
         )
       `)
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single();
 
     if (profileError || !userProfile) {
@@ -62,8 +62,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         authenticated: true,
         user: {
-          id: session.user.id,
-          email: session.user.email,
+          id: user.id,
+          email: user.email,
           name: null,
           role: 'user'
         },

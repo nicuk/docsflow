@@ -115,31 +115,31 @@ function useUserSession() {
         const { createSupabaseClient } = await import('@/lib-frontend/supabase');
         const supabase = createSupabaseClient();
         
-        // Get the current session from Supabase
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // SECURITY FIX: Use getUser() instead of getSession() for authenticated data
+        const { data: { user }, error } = await supabase.auth.getUser();
         
-        if (!error && session?.user) {
-          console.log('Found Supabase session for user:', session.user.email);
+        if (!error && user) {
+          console.log('Found authenticated user:', user.email);
           
           // Get user profile from database
           const { data: userProfile } = await supabase
             .from('users')
             .select('name, email')
-            .eq('id', session.user.id)
+            .eq('id', user.id)
             .single();
           
           if (userProfile) {
             setUser({
-              name: userProfile.name || session.user.email?.split('@')[0] || 'User',
-              email: userProfile.email || session.user.email || 'user@example.com',
+              name: userProfile.name || user.email?.split('@')[0] || 'User',
+              email: userProfile.email || user.email || 'user@example.com',
               avatar: '/placeholder.svg',
             });
             return;
           } else {
             // User exists in auth but not in users table yet
             setUser({
-              name: session.user.email?.split('@')[0] || 'User',
-              email: session.user.email || 'user@example.com',
+              name: user.email?.split('@')[0] || 'User',
+              email: user.email || 'user@example.com',
               avatar: '/placeholder.svg',
             });
             return;
