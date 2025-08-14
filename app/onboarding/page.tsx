@@ -101,75 +101,30 @@ export default function OnboardingFlow() {
               }
             }
             
-            // Check if we have auth tokens in cookies
-            const authState = {
-              authToken: document.cookie.split('; ').find(row => row.startsWith('access-token='))?.split('=')[1],
-              userEmail: document.cookie.split('; ').find(row => row.startsWith('user-email='))?.split('=')[1]
-            };
+            // Use server-side session check (can read HttpOnly cookies)
+            console.log('🔍 Checking authentication via server...');
+            const sessionResponse = await fetch('/api/auth/session');
+            const sessionData = await sessionResponse.json();
             
-            if (!authState.authToken || !authState.userEmail) {
-              console.log('❌ No auth tokens found in cookies, redirecting to login');
+            if (!sessionData.authenticated || !sessionData.user) {
+              console.log('❌ No authenticated session found, redirecting to login');
               if (isMounted) {
                 window.location.href = '/login';
               }
               return;
             }
-        
-            // COMPREHENSIVE SESSION RESTORATION
-            const { createSupabaseClient } = await import('@/lib-frontend/supabase');
-            const supabase = createSupabaseClient();
             
-            // Get refresh token for session restoration
-            const { getCookie } = await import('@/lib/cookies');
-            const refreshToken = getCookie('refresh-token');
-            
-            // Set the session from cookies with proper error handling
-            const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-              access_token: authState.authToken,
-              refresh_token: refreshToken || ''
-            });
-        
-            if (sessionError || !sessionData.user) {
-              console.log('❌ Failed to restore session from cookies:', sessionError);
-              // Try to get user directly as fallback
-              const { data: { user }, error: userError } = await supabase.auth.getUser();
-              if (userError || !user) {
-                console.log('❌ Complete auth failure, redirecting to login');
-                if (isMounted) {
-                  window.location.href = '/login';
-                }
-                return;
-              }
-              // Use fallback user
-              console.log('✅ Using fallback user authentication');
-            }
-            
-            const user = sessionData?.user || (await supabase.auth.getUser()).data.user;
-            
-            console.log('✅ User authenticated:', user.email);
-            
-            // Get user profile from database
-            const { data: userProfile, error: profileError } = await supabase
-              .from('users')
-              .select('id, email, name, tenant_id, tenants(subdomain)')
-              .eq('id', user.id)
-              .single();
-            
-            if (profileError) {
-              console.log('⚠️ Profile not found, user may need to complete registration');
-            }
+            console.log('✅ User authenticated:', sessionData.user.email);
             
             const onboardingData = {
               user: {
-                id: user.id,
-                email: user.email,
-                name: userProfile?.name
+                id: sessionData.user.id,
+                email: sessionData.user.email,
+                name: sessionData.user.name
               },
-              onboardingComplete: !!userProfile?.tenant_id,
-              tenantId: userProfile?.tenant_id,
-              tenant: userProfile?.tenant_id ? {
-                subdomain: (userProfile.tenants as any)?.subdomain
-              } : null
+              onboardingComplete: sessionData.onboardingComplete,
+              tenantId: sessionData.tenantId,
+              tenant: sessionData.tenant
             };
             
             console.log('📊 Onboarding data loaded:', onboardingData);
@@ -362,20 +317,18 @@ const tenantAssignment = {
         responses: allResponses
       };
 
-      // Call backend to create tenant and assign user with authentication
-      const { authClient } = await import('@/lib/auth-client');
-      const authHeaders = authClient.getAuthHeaders();
-      
-      const response = await fetch('/api/onboarding/complete', {
+      // Use atomic endpoint for guaranteed consistency
+      const response = await fetch('/api/onboarding/complete-atomic', {
         method: 'POST',
         headers: {
-          ...authHeaders,
           'Content-Type': 'application/json'
         },
+        credentials: 'include', // Include cookies for session
         body: JSON.stringify({
-          responses: allResponses,
-          tenantAssignment,
-          timestamp: new Date().toISOString()
+          subdomain: tenantAssignment.subdomain,
+          industry: tenantAssignment.industry,
+          businessName: tenantAssignment.businessType || tenantAssignment.companyName || tenantAssignment.subdomain,
+          responses: allResponses
         })
       });
 

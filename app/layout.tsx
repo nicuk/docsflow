@@ -5,6 +5,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { PerformanceMonitor } from "@/components/performance-monitor"
 import { TenantProvider } from "@/components/providers/tenant-provider"
+import { AuthProvider } from "@/contexts/AuthContext"
 import { headers } from 'next/headers'
 
 const inter = Inter({ subsets: ["latin"] })
@@ -71,12 +72,14 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <TenantProvider tenantId={tenantId}>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            <PerformanceMonitor />
-            {children}
-          </ThemeProvider>
-        </TenantProvider>
+        <AuthProvider>
+          <TenantProvider tenantId={tenantId}>
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+              <PerformanceMonitor />
+              {children}
+            </ThemeProvider>
+          </TenantProvider>
+        </AuthProvider>
       </body>
     </html>
   )
