@@ -11,8 +11,14 @@ import {
   getSecurityHeaders 
 } from './lib/security-enhancements';
 import { redis, safeRedisOperation } from './lib/redis';
+import { createClient } from '@supabase/supabase-js';
 
-// PERFORMANCE FIX: Use Redis for tenant verification instead of database calls
+// Initialize Supabase client for middleware
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+
+// PERFORMANCE FIX: Use Redis for tenant verification with Supabase fallback
 async function verifyTenantExists(subdomain: string): Promise<boolean> {
   try {
     // First try Redis cache (fast)
@@ -42,25 +48,37 @@ async function verifyTenantExists(subdomain: string): Promise<boolean> {
     // This is essential for tenants created through the database
     console.log(`🔍 Redis cache MISS for tenant: ${subdomain}, checking Supabase...`);
     
-    try {
-      const { supabase } = await import('@/lib/supabase');
-      const { data: tenant, error } = await supabase!
-        .from('tenants')
-        .select('id')
-        .eq('subdomain', subdomain)
-        .maybeSingle();
-      
-      if (tenant) {
-        console.log(`✅ Tenant found in Supabase: ${subdomain}`);
-        // Cache it in Redis for next time
-        await safeRedisOperation(
-          () => redis!.set(tenantCacheKey, JSON.stringify({ id: tenant.id }), { ex: 3600 }),
-          null
-        );
-        return true;
+    if (supabase) {
+      try {
+        const { data: tenant, error } = await supabase
+          .from('tenants')
+          .select('id, subdomain, name')
+          .eq('subdomain', subdomain)
+          .maybeSingle();
+        
+        if (error) {
+          console.error(`❌ Supabase query error for ${subdomain}:`, error);
+        } else if (tenant) {
+          console.log(`✅ Tenant found in Supabase: ${subdomain} (ID: ${tenant.id})`);
+          // Cache it in Redis for next time
+          await safeRedisOperation(
+            () => redis!.set(tenantCacheKey, JSON.stringify({ 
+              id: tenant.id,
+              subdomain: tenant.subdomain,
+              name: tenant.name,
+              exists: true 
+            }), { ex: 3600 }),
+            null
+          );
+          return true;
+        } else {
+          console.log(`❌ Tenant ${subdomain} not found in Supabase`);
+        }
+      } catch (dbError) {
+        console.error('Supabase tenant check error:', dbError);
       }
-    } catch (dbError) {
-      console.error('Supabase tenant check error:', dbError);
+    } else {
+      console.warn('⚠️ Supabase client not initialized in middleware');
     }
     
     console.log(`❌ Tenant not found anywhere: ${subdomain}`);

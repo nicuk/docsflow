@@ -1,6 +1,5 @@
 import { createBrowserClient, createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
 
 // Browser client for client-side operations with proper cookie configuration
 export const createSupabaseClient = () => {
