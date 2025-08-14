@@ -10,14 +10,23 @@ export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies();
     
-    // Create Supabase client with cookie access
+    // Create Supabase client with proper SSR cookie configuration
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              );
+            } catch (error) {
+              // Ignore cookie set errors in server components
+            }
           },
         },
       }

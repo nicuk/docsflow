@@ -109,8 +109,8 @@ CREATE TABLE public.document_chunks (
   embedding USER-DEFINED,
   tenant_id uuid,
   CONSTRAINT document_chunks_pkey PRIMARY KEY (id),
-  CONSTRAINT document_chunks_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id),
-  CONSTRAINT document_chunks_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id)
+  CONSTRAINT document_chunks_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id),
+  CONSTRAINT document_chunks_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
 );
 CREATE TABLE public.document_processing_jobs (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -144,6 +144,7 @@ CREATE TABLE public.documents (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   document_category text DEFAULT 'general'::text,
+  access_level text DEFAULT 'private'::text CHECK (access_level = ANY (ARRAY['private'::text, 'public'::text, 'restricted'::text, 'shared'::text])),
   CONSTRAINT documents_pkey PRIMARY KEY (id),
   CONSTRAINT documents_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
 );

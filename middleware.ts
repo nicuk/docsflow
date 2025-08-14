@@ -128,7 +128,8 @@ export default async function middleware(request: NextRequest) {
       // This is essential for subdomain availability checks during onboarding
       if (pathname.startsWith('/api')) {
         const response = NextResponse.next();
-        response.headers.set('x-tenant-id', tenant);
+        // Only set x-tenant-subdomain, not x-tenant-id (which needs UUID)
+        // The actual tenant UUID will be resolved by the API routes
         response.headers.set('x-tenant-subdomain', tenant);
         return createSecureResponse(response, origin);
       }
@@ -138,7 +139,6 @@ export default async function middleware(request: NextRequest) {
       
       if (!tenantExists) {
         // Tenant doesn't exist - redirect to main domain for onboarding
-        console.log(`🚨 Tenant '${tenant}' not found, redirecting to main domain`);
         const mainDomainUrl = new URL('https://docsflow.app/onboarding');
         return NextResponse.redirect(mainDomainUrl);
       }
