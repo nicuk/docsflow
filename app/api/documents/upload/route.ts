@@ -10,6 +10,7 @@ const loadXLSX = () => import('xlsx');
 import { createClient } from '@supabase/supabase-js';
 import { getUserAccessLevel } from '@/lib/auth-helpers';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
+import { suggestClassification, getAllowedUploadClassifications, type DocumentClassification } from '@/lib/document-access-control';
 import { EnhancedChunking } from '@/lib/enhanced-chunking';
 import { getCORSHeaders } from '@/lib/utils';
 
@@ -173,8 +174,27 @@ export async function POST(request: NextRequest) {
     }
 
     // Store document metadata in Supabase
-    // Determine access level for the document (default to user's level, can be overridden)
-    const documentAccessLevel = userAccessLevel; // Users can only upload at their access level or lower
+    // Get classification from request or auto-suggest
+    const requestedClassification = formData.get('classification') as DocumentClassification | null;
+    
+    // Get allowed classifications for this user
+    const allowedClassifications = getAllowedUploadClassifications(userAccessLevel);
+    
+    // Determine final classification
+    let documentAccessLevel: DocumentClassification;
+    if (requestedClassification && allowedClassifications.includes(requestedClassification)) {
+      // Use requested classification if user is allowed
+      documentAccessLevel = requestedClassification;
+    } else {
+      // Auto-suggest based on content
+      documentAccessLevel = suggestClassification(file.name, textContent, file.type);
+      
+      // Ensure user can upload at this level
+      if (!allowedClassifications.includes(documentAccessLevel)) {
+        // Downgrade to highest allowed level for user
+        documentAccessLevel = allowedClassifications[allowedClassifications.length - 1] || 'public';
+      }
+    }
     
     const { data: document, error: dbError } = await supabase
       .from('documents')
