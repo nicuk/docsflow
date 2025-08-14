@@ -27,7 +27,57 @@ let lastHealthCheck = 0;
 const HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
 
 export const apiClient = {
-  // Health check function
+  // Get comprehensive auth headers with tenant context
+  getAuthHeaders() {
+    const headers: any = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    };
+    
+    // Get auth token from cookies or localStorage
+    const authToken = this.getAccessToken();
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
+    // Add tenant subdomain from URL - CRITICAL for proper tenant context
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      const subdomain = hostname.split('.')[0];
+      
+      // Only add tenant headers for actual subdomains (not www, docsflow, or localhost)
+      if (subdomain && 
+          subdomain !== 'www' && 
+          subdomain !== 'docsflow' && 
+          subdomain !== 'localhost' &&
+          hostname.includes('.docsflow.app')) {
+        headers['X-Tenant-Subdomain'] = subdomain;
+        headers['X-Tenant-ID'] = subdomain; // Also add tenant ID for compatibility
+        console.log(`🏢 Adding tenant context: ${subdomain}`);
+      }
+    }
+    
+    return headers;
+  },
+
+  // Get access token from multiple sources
+  getAccessToken() {
+    if (typeof window === 'undefined') return null;
+    
+    // Try cookies first
+    const authCookie = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('auth-token='))
+      ?.split('=')[1];
+    
+    if (authCookie) return authCookie;
+    
+    // Fallback to localStorage
+    return localStorage.getItem('access_token');
+  },
+
+  // Enhanced health check with tenant context
   async checkBackendHealth() {
     const now = Date.now();
     if (now - lastHealthCheck < HEALTH_CHECK_INTERVAL) {
@@ -40,9 +90,8 @@ export const apiClient = {
       
       const response = await fetch(`${API_BASE_URL}/health`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(),
+        credentials: 'include', // Important for cross-origin cookies
         signal: controller.signal,
       });
       
@@ -58,38 +107,6 @@ export const apiClient = {
     }
   },
 
-  // Authentication headers
-  getAuthHeaders() {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-    };
-    
-    // 🔥 CRITICAL: Add Bearer token authentication
-    if (typeof window !== 'undefined') {
-      const accessToken = localStorage.getItem('access_token');
-      if (accessToken) {
-        headers['Authorization'] = `Bearer ${accessToken}`;
-      }
-    }
-    
-    // Extract tenant from subdomain for enterprise multi-tenancy
-    if (typeof window !== 'undefined') {
-      const hostname = window.location.hostname;
-      const subdomain = hostname.split('.')[0];
-      
-      // Only add tenant headers if we have a valid subdomain
-      if (subdomain && subdomain !== 'www' && subdomain !== 'docsflow') {
-        headers['X-Tenant-Subdomain'] = subdomain;
-        console.log('🏢 Enterprise tenant detected:', subdomain);
-      } else {
-        console.log('🔍 No tenant subdomain detected - using main domain');
-      }
-    }
-    
-    return headers;
-  },
-
   // Enhanced sendMessage with conversation support
   async sendMessage(data: { 
     message: string; 
@@ -100,6 +117,7 @@ export const apiClient = {
       const response = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
+        credentials: 'include', // Critical for cross-origin cookies
         body: JSON.stringify(data),
       });
       
