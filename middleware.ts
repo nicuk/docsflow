@@ -198,14 +198,33 @@ export default async function middleware(request: NextRequest) {
       return createSecureResponse(response, origin);
     }
 
-    // These routes should be handled by the backend project itself
-    // when this middleware runs on the backend domain
-    if ((hostname === 'docsflow.app' || hostname === 'www.docsflow.app') && 
-        (pathname.startsWith('/onboarding') || pathname.startsWith('/api'))) {
-
-      // Continue to the backend route handler
-      const response = NextResponse.next();
-      return createSecureResponse(response, origin);
+    // Handle root domain (docsflow.app) access
+    if (hostname === 'docsflow.app' || hostname === 'www.docsflow.app' || hostname === 'localhost') {
+      // CRITICAL FIX: Check if user has a tenant cookie but is on root domain
+      const storedTenantId = request.cookies.get('tenant-id')?.value;
+      
+      // If user is on root domain but has a tenant cookie from previous session
+      if (storedTenantId && pathname === '/login') {
+        // User explicitly wants to access root login - clear tenant cookies
+        console.log(`🔄 User accessing root login, clearing tenant cookie: ${storedTenantId}`);
+        const response = NextResponse.next();
+        response.cookies.delete('tenant-id');
+        response.cookies.delete('access_token'); 
+        response.cookies.delete('refresh_token');
+        response.cookies.delete('user_email');
+        return createSecureResponse(response, origin);
+      }
+      
+      // Allow these routes on root domain
+      if (pathname.startsWith('/onboarding') || 
+          pathname.startsWith('/api') || 
+          pathname.startsWith('/login') ||
+          pathname.startsWith('/register') ||
+          pathname === '/') {
+        // Continue to the backend route handler
+        const response = NextResponse.next();
+        return createSecureResponse(response, origin);
+      }
     }
 
     // Handle backend domain access - redirect to main domain for non-API routes

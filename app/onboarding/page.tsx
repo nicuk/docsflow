@@ -26,12 +26,12 @@ export default function OnboardingFlow() {
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   
-  const [currentStep, setCurrentStep] = useState(0); // 0 = domain selection, 1 = questions (only for new tenants)
+  const [currentStep, setCurrentStep] = useState(0); // 0 = domain, 1 = questions, 2 = success
   const [selectedDomain, setSelectedDomain] = useState('');
   const [isJoiningExisting, setIsJoiningExisting] = useState(false);
   const [userRole, setUserRole] = useState<'admin' | 'user' | 'technician'>('admin');
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [responses, setResponses] = useState({});
+  const [responses, setResponses] = useState<Record<string, string>>({});
   const [currentResponse, setCurrentResponse] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [customPersonality, setCustomPersonality] = useState<any>(null);
@@ -398,10 +398,14 @@ const tenantAssignment = {
           accessLevel: tenantAssignment.accessLevel
         });
         
-        // Redirect to selected domain after successful onboarding
+        // Show success message before redirect
+        setCurrentStep(2);
+        
+        // Auto-redirect to dashboard after showing success
         setTimeout(() => {
+          // Redirect directly to dashboard - session is already set
           window.location.href = `https://${selectedDomain}.docsflow.app/dashboard`;
-        }, 2000);
+        }, 3000);
       } else {
         throw new Error('Failed to complete onboarding');
       }
@@ -861,7 +865,7 @@ const tenantAssignment = {
     return <OnboardingLoading />;
   }
 
-// Show domain selection on step 0 (FIRST STEP per Enterprise Architecture Plan)
+  // Show domain selection on step 0 (FIRST STEP per Enterprise Architecture Plan)
   if (currentStep === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -931,7 +935,133 @@ const tenantAssignment = {
     );
   }
 
+  // Show questions on step 1
+  if (currentStep === 1) {
+    const questions = GENERIC_QUESTIONS;
+    const currentQuestionData = questions[currentQuestion];
+    const isLastQuestion = currentQuestion === questions.length - 1;
+    const totalSteps = questions.length;
 
+    const handleAnswer = (value: string) => {
+      setResponses(prev => ({
+        ...prev,
+        [currentQuestionData.id]: value
+      }));
+      setCurrentResponse(value);
+    };
+
+    const handleNext = async () => {
+      if (isLastQuestion) {
+        // Complete onboarding
+        setIsGenerating(true);
+        try {
+          const response = await fetch('/api/onboarding/complete-atomic', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              subdomain: selectedDomain,
+              displayName: onboardingData?.displayName || selectedDomain,
+              industry: onboardingData?.industry || 'general',
+              responses,
+              userRole,
+            }),
+          });
+          if (response.ok) {
+            setCurrentStep(2);
+            setTimeout(() => {
+              window.location.href = `https://${selectedDomain}.docsflow.app/dashboard`;
+            }, 3000);
+          }
+        } catch (error) {
+          console.error('Onboarding error:', error);
+        } finally {
+          setIsGenerating(false);
+        }
+      } else {
+        setCurrentQuestion(prev => prev + 1);
+        setCurrentResponse(responses[questions[currentQuestion + 1]?.id] || '');
+      }
+    };
+
+    const handleBack = () => {
+      if (currentQuestion > 0) {
+        setCurrentQuestion(prev => prev - 1);
+        setCurrentResponse(responses[questions[currentQuestion - 1]?.id] || '');
+      } else {
+        setCurrentStep(0);
+      }
+    };
+
+    return (
+      <OnboardingQuestionStep
+        currentQuestion={currentQuestion}
+        questionData={currentQuestionData}
+        currentResponse={responses[currentQuestionData.id] || ''}
+        onResponseChange={handleAnswer}
+        onNext={handleNext}
+        onBack={handleBack}
+        onboardingData={onboardingData}
+        totalSteps={totalSteps}
+        currentStep={currentQuestion}
+        userRole={userRole}
+        isLastQuestion={isLastQuestion}
+      />
+    );
+  }
+
+  // Show success page on step 2
+  if (currentStep === 2) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-2xl text-center">
+          <div className="bg-white rounded-2xl shadow-xl p-12">
+            <div className="mb-8">
+              <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                Welcome to DocsFlow!
+              </h1>
+              <p className="text-xl text-gray-600 mb-2">
+                Your workspace is ready at
+              </p>
+              <p className="text-2xl font-semibold text-blue-600 mb-6">
+                {selectedDomain}.docsflow.app
+              </p>
+              <div className="space-y-3 text-left max-w-md mx-auto mb-8">
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 text-green-500 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-gray-700">AI-powered lead routing configured</span>
+                </div>
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 text-green-500 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-gray-700">Team workspace created</span>
+                </div>
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 text-green-500 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-gray-700">Admin access granted</span>
+                </div>
+              </div>
+              <p className="text-sm text-gray-500 mb-8">
+                Redirecting to your dashboard in a moment...
+              </p>
+              <div className="flex justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Security: Block rendering until auth is verified
   if (isAuthChecking) {
@@ -977,7 +1107,7 @@ const tenantAssignment = {
       onBack={handleBack}
       onboardingData={onboardingData}
       totalSteps={totalSteps}
-      currentStep={currentStep}
+      currentStep={currentQuestionIndex}
       userRole={userRole}
       isLastQuestion={isLastQuestion}
     />
