@@ -38,7 +38,32 @@ async function verifyTenantExists(subdomain: string): Promise<boolean> {
       return true;
     }
     
-    console.log(`❌ Redis cache MISS for tenant: ${subdomain}`);
+    // CRITICAL: Also check Supabase database if Redis misses
+    // This is essential for tenants created through the database
+    console.log(`🔍 Redis cache MISS for tenant: ${subdomain}, checking Supabase...`);
+    
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { data: tenant, error } = await supabase!
+        .from('tenants')
+        .select('id')
+        .eq('subdomain', subdomain)
+        .maybeSingle();
+      
+      if (tenant) {
+        console.log(`✅ Tenant found in Supabase: ${subdomain}`);
+        // Cache it in Redis for next time
+        await safeRedisOperation(
+          () => redis!.set(tenantCacheKey, JSON.stringify({ id: tenant.id }), { ex: 3600 }),
+          null
+        );
+        return true;
+      }
+    } catch (dbError) {
+      console.error('Supabase tenant check error:', dbError);
+    }
+    
+    console.log(`❌ Tenant not found anywhere: ${subdomain}`);
     return false;
   } catch (error) {
     console.error('Tenant verification error:', error);
@@ -81,11 +106,16 @@ export default async function middleware(request: NextRequest) {
 
     // Route tenant subdomains to the tenant-specific dashboard
     if (tenant) {
-      // CRITICAL FIX: Verify tenant exists before allowing subdomain access
-      // If tenant doesn't exist, redirect to main domain for onboarding
+      // CRITICAL: Allow API routes to pass through even if tenant doesn't exist yet
+      // This is essential for subdomain availability checks during onboarding
+      if (pathname.startsWith('/api')) {
+        const response = NextResponse.next();
+        response.headers.set('x-tenant-id', tenant);
+        response.headers.set('x-tenant-subdomain', tenant);
+        return createSecureResponse(response, origin);
+      }
       
-      // Check if tenant exists by making a quick database lookup
-      // This prevents showing onboarding/dashboard on non-existent subdomains
+      // For non-API routes, verify tenant exists before allowing subdomain access
       const tenantExists = await verifyTenantExists(tenant);
       
       if (!tenantExists) {
