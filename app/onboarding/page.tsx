@@ -51,6 +51,28 @@ export default function OnboardingFlow() {
       try {
         console.log('🔍 Checking user authentication...');
         
+        // CRITICAL: Check if we're on a tenant subdomain
+        if (typeof window !== 'undefined') {
+          const hostname = window.location.hostname;
+          const subdomain = hostname.split('.')[0];
+          
+          // If on a tenant subdomain, check if tenant exists and redirect to login
+          if (subdomain && subdomain !== 'www' && subdomain !== 'docsflow' && hostname.includes('docsflow.app')) {
+            console.log('🏢 Detected tenant subdomain:', subdomain);
+            
+            // Check if this tenant exists
+            const response = await fetch(`/api/subdomain/check?subdomain=${subdomain}`);
+            const result = await response.json();
+            
+            if (!result.available && result.existingTenant) {
+              console.log('✅ Tenant exists, redirecting to login for:', subdomain);
+              // Tenant exists - redirect to login for this tenant
+              window.location.href = `https://${subdomain}.docsflow.app/login`;
+              return;
+            }
+          }
+        }
+        
         // COMPREHENSIVE COOKIE CHECK: Use utility function
         const { getAuthState } = await import('@/lib/cookies');
         const authState = getAuthState();

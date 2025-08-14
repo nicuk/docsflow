@@ -211,9 +211,11 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
     }
   };
 
-  const handleDomainSelect = (domain: string) => {
+  const handleDomainSelect = async (domain: string) => {
     setSelectedDomain(domain);
-    onDomainSelected(domain, false);
+    // CRITICAL: Check availability first to show modal for existing tenants
+    await checkDomainAvailability(domain);
+    // Don't call onDomainSelected here - let the user click Continue button
   };
 
   const handleJoinExisting = () => {

@@ -95,21 +95,25 @@ export default async function middleware(request: NextRequest) {
         return NextResponse.redirect(mainDomainUrl);
       }
 
-      // If root path, check if user has completed onboarding
+      // If root path, check if user is authenticated
       if (pathname === '/' || pathname === '') {
-        // Check onboarding completion from cookies
-        const onboardingComplete = request.cookies.get('onboarding-complete')?.value === 'true';
+        // Check if user is authenticated via cookies
+        const userEmail = request.cookies.get('user_email')?.value;
+        const authToken = request.cookies.get('access_token')?.value;
         
-        if (onboardingComplete) {
-          // User has completed onboarding - allow dashboard access
+        if (userEmail && authToken) {
+          // User is authenticated - show dashboard
           const response = NextResponse.rewrite(new URL(`/dashboard`, request.url));
           response.headers.set('x-tenant-id', tenant);
           response.headers.set('x-tenant-subdomain', tenant);
           return createSecureResponse(response, origin);
         } else {
-          // User hasn't completed onboarding - redirect to main domain
-          const mainDomainUrl = new URL('https://docsflow.app/onboarding');
-          return NextResponse.redirect(mainDomainUrl);
+          // User is NOT authenticated - redirect to LOGIN for this existing tenant
+          // CRITICAL: Don't send to onboarding for existing tenants!
+          const response = NextResponse.rewrite(new URL(`/login`, request.url));
+          response.headers.set('x-tenant-id', tenant);
+          response.headers.set('x-tenant-subdomain', tenant);
+          return createSecureResponse(response, origin);
         }
       }
       // Otherwise, preserve the path structure for tenant routes
