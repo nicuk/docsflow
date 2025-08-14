@@ -70,10 +70,10 @@ export async function GET(request: NextRequest) {
       .select(`
         id,
         filename,
-        file_type,
+        mime_type,
         file_size,
         processing_status,
-        access_level,
+        metadata,
         created_at,
         tenant_id
       `)

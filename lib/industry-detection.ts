@@ -117,37 +117,53 @@ export const extractCompanyName = (businessOverview: string, fallbackName?: stri
   // Enhanced business name extraction with multiple strategies
   const text = businessOverview.trim();
   
-  // Strategy 1: Look for "I work at/for [Company]" or "We are [Company]"
-  const workAtMatch = text.match(/(?:I work (?:at|for)|We are|Our company is|My company is)\s+([A-Z][a-zA-Z0-9\s&.-]{1,30})/i);
-  if (workAtMatch) {
-    return workAtMatch[1].trim();
+  // Strategy 1: Look for explicit company mentions
+  const explicitPatterns = [
+    /(?:I work (?:at|for)|We are|Our company is|My company is|Company name is|Business name is)\s+([A-Z][a-zA-Z0-9\s&.-]{1,30})/i,
+    /([A-Z][a-zA-Z0-9\s&.-]{1,30})(?:\s+(?:Inc|LLC|Ltd|Corp|Corporation|Company|Co\.|Group|Partners|Associates))/i,
+    /(?:called|named)\s+([A-Z][a-zA-Z0-9\s&.-]{1,30})/i
+  ];
+  
+  for (const pattern of explicitPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      return match[1].trim();
+    }
   }
   
-  // Strategy 2: Look for company-like patterns (capitalized words)
+  // Strategy 2: Look for quoted company names
+  const quotedMatch = text.match(/["']([A-Z][a-zA-Z0-9\s&.-]{1,30})["']/i);
+  if (quotedMatch) {
+    return quotedMatch[1].trim();
+  }
+  
+  // Strategy 3: Look for company-like patterns (capitalized words)
   const companyPattern = /\b([A-Z][a-zA-Z0-9]*(?:\s+[A-Z&][a-zA-Z0-9]*){0,2})\b/g;
   const matches = text.match(companyPattern);
   if (matches && matches.length > 0) {
-    // Filter out common non-company words
-    const filtered = matches.filter(match => 
-      !['I', 'We', 'Our', 'My', 'The', 'This', 'That', 'They', 'It'].includes(match.trim())
-    );
+    // Filter out common non-company words and sentence starters
+    const filtered = matches.filter(match => {
+      const word = match.trim();
+      const nonCompanyWords = [
+        'I', 'We', 'Our', 'My', 'The', 'This', 'That', 'They', 'It',
+        'Were', 'Was', 'Are', 'Is', 'Have', 'Has', 'Had', 'Do', 'Does',
+        'Can', 'Could', 'Would', 'Should', 'Will', 'Shall', 'May', 'Might'
+      ];
+      return !nonCompanyWords.includes(word) && word.length > 2;
+    });
     if (filtered.length > 0) {
       return filtered[0].trim();
     }
   }
   
-  // Strategy 3: Use first meaningful sentence up to 4 words
-  const sentences = text.split(/[.!?]/);
-  if (sentences.length > 0) {
-    const firstSentence = sentences[0].trim();
-    const words = firstSentence.split(/\s+/).slice(0, 4);
-    const cleaned = words.join(' ').replace(/[^a-zA-Z0-9\s&.-]/g, '').trim();
-    if (cleaned.length > 0 && cleaned.length <= 50) {
-      return cleaned;
-    }
+  // Strategy 4: Extract industry-specific terms as last resort
+  const industryTerms = text.match(/\b(Healthcare|Medical|Clinic|Hospital|Tech|Software|Retail|Manufacturing|Consulting|Agency|Studio|Services|Solutions|Systems|Enterprises)\b/gi);
+  if (industryTerms && industryTerms.length > 0) {
+    // Use the industry term with a generic suffix
+    return `${industryTerms[0]} Business`;
   }
   
-  // Fallback: Use provided fallback or default
+  // Fallback: Use provided fallback or subdomain-based name
   return fallbackName || 'Your Business';
 };
 

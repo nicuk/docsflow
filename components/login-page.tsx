@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, Loader2 } from "lucide-react"
 import DocsFlowBrand from "@/components/DocsFlowBrand"
+import { useDarkMode } from "@/hooks/use-dark-mode"
 
 interface FormData {
   email: string
@@ -28,6 +29,7 @@ interface FormErrors {
 
 export default function LoginPage() {
   const router = useRouter()
+  const { isDarkMode } = useDarkMode() // Initialize dark mode
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",

@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
 import { extractCompanyName } from '@/lib/industry-detection';
+import { scorePersona, improvePersona } from '@/lib/persona-scoring';
 import { createResponseWithSessionCookies } from '@/lib/cookie-utils';
 import { Redis } from '@upstash/redis';
 import { verifyTenantAdmin, logAdminAction } from '@/lib/auth/admin-verification';
@@ -245,8 +246,17 @@ export async function POST(request: NextRequest) {
     console.log(`🔑 Service role key configured: ${!!serviceRoleKey}`);
     
     // CRITICAL FIX: Use createClient for service role operations (no cookies)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl) {
+      console.error('❌ CRITICAL: NEXT_PUBLIC_SUPABASE_URL is missing!');
+      return NextResponse.json(
+        { error: 'Supabase URL not configured' },
+        { status: 500, headers: corsHeaders }
+      );
+    }
+    
     const adminSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      supabaseUrl,
       serviceRoleKey // Direct service role authentication
     );
 
@@ -475,8 +485,23 @@ Create a JSON response with:
         customPersona.created_from = 'ai_generated';
         customPersona.created_at = new Date().toISOString();
         
+        // Score the generated persona
+        const personaScore = scorePersona(customPersona, business_overview, tenant.industry);
+        console.log(`📊 Persona quality score: ${personaScore.overall}/10`);
+        console.log('📈 Score breakdown:', personaScore.breakdown);
+        
+        // Improve persona if score is low
+        if (personaScore.overall < 7) {
+          console.log('🔧 Improving persona based on scoring...');
+          customPersona = improvePersona(customPersona, personaScore, business_overview, tenant.industry);
+        } else {
+          customPersona.quality_score = personaScore.overall;
+          customPersona.improvement_suggestions = personaScore.suggestions;
+        }
+        
         console.log('✅ LLM persona created successfully:', customPersona.role);
         console.log('📊 Persona focus areas:', customPersona.focus_areas);
+        console.log(`⭐ Final quality score: ${customPersona.quality_score}/10`);
       } catch (parseError) {
         console.error('❌ Failed to parse AI persona response:', parseError);
         console.error('📄 Raw AI response:', personaResponse?.toString().substring(0, 200) + '...');
@@ -504,7 +529,7 @@ Create a JSON response with:
       });
       console.log('🔄 Using fallback persona due to error...');
       
-      // Fallback persona
+      // Fallback persona with scoring
       customPersona = {
         role: `${tenant.industry} Business Advisor`,
         focus_areas: ['Operations', 'Strategy', 'Growth'],
@@ -514,6 +539,11 @@ Create a JSON response with:
         created_from: 'fallback',
         created_at: new Date().toISOString()
       };
+      
+      // Score and improve fallback persona
+      const fallbackScore = scorePersona(customPersona, business_overview, tenant.industry);
+      customPersona = improvePersona(customPersona, fallbackScore, business_overview, tenant.industry);
+      console.log(`📊 Fallback persona score: ${customPersona.quality_score}/10`);
     }
     
     // Step 8: Update tenant with custom persona using service role

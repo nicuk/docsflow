@@ -32,7 +32,6 @@ export const apiClient = {
     const headers: any = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
     };
     
     // Get auth token from cookies or localStorage
