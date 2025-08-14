@@ -103,8 +103,8 @@ export default function OnboardingFlow() {
             
             // Check if we have auth tokens in cookies
             const authState = {
-              authToken: document.cookie.split('; ').find(row => row.startsWith('access_token='))?.split('=')[1],
-              userEmail: document.cookie.split('; ').find(row => row.startsWith('user_email='))?.split('=')[1]
+              authToken: document.cookie.split('; ').find(row => row.startsWith('access-token='))?.split('=')[1],
+              userEmail: document.cookie.split('; ').find(row => row.startsWith('user-email='))?.split('=')[1]
             };
             
             if (!authState.authToken || !authState.userEmail) {
