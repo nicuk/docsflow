@@ -121,8 +121,9 @@ function AuthCallbackHandler() {
         
         if (targetSubdomain && targetSubdomain !== 'www') {
           console.log(`🔐 OAuth callback: Redirecting to subdomain ${targetSubdomain}`);
-          // Set the tenant-id cookie to match target subdomain
-          document.cookie = `tenant-id=${targetSubdomain}; path=/; domain=.docsflow.app; secure; samesite=strict`;
+          // Set the tenant-id cookie ONLY for this specific subdomain
+          // CRITICAL: Don't use domain=.docsflow.app as it affects ALL subdomains
+          document.cookie = `tenant-id=${targetSubdomain}; path=/; secure; samesite=strict`;
           window.location.href = `https://${targetSubdomain}.docsflow.app/dashboard`;
         } else {
           // Fallback to user's default tenant from database

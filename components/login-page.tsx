@@ -143,7 +143,8 @@ export default function LoginPage() {
           if (isRootDomain) {
             console.log(`📍 User logged in from root domain - staying on root domain`)
             // Clear any tenant cookies to prevent middleware redirects
-            document.cookie = 'tenant-id=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+            // CRITICAL: Don't use domain=.docsflow.app as it affects ALL subdomains
+            document.cookie = 'tenant-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
             
             setTimeout(() => {
               router.push('/dashboard') // Stay on root domain
@@ -153,10 +154,11 @@ export default function LoginPage() {
             console.log(`📍 User logged in from tenant subdomain - redirecting to their tenant`)
             
             // Clear any existing mismatched tenant-id cookie
-            document.cookie = 'tenant-id=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+            document.cookie = 'tenant-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
             
-            // Set the correct tenant-id cookie
-            document.cookie = `tenant-id=${userTenantSubdomain}; path=/; domain=.docsflow.app; secure; samesite=strict`
+            // Set the correct tenant-id cookie ONLY for this subdomain
+            // CRITICAL: Don't use domain=.docsflow.app as it affects ALL subdomains
+            document.cookie = `tenant-id=${userTenantSubdomain}; path=/; secure; samesite=strict`
             
             // Redirect to the user's actual tenant subdomain
             setTimeout(() => {

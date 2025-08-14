@@ -68,6 +68,7 @@ class AuthClient {
       // Set cookies for middleware compatibility
       document.cookie = `auth-token=${data.user.access_token}; path=/; secure; samesite=strict`;
       if (data.user.tenant_id) {
+        // Set tenant cookie ONLY for current domain (not .docsflow.app)
         document.cookie = `tenant-id=${data.user.tenant_id}; path=/; secure; samesite=strict`;
       }
     }

@@ -349,7 +349,8 @@ const tenantAssignment = {
           // CRITICAL: Set cookies that dashboard layout expects (backend already sets these, but ensure they're set)
           document.cookie = `user-email=${userData.email}; path=/; max-age=${60 * 60 * 24 * 7}`;
           document.cookie = `user-name=${userData.name}; path=/; max-age=${60 * 60 * 24 * 7}`;
-          document.cookie = `tenant-id=${userData.tenant_id}; path=/; max-age=${60 * 60 * 24 * 7}`;
+          // Set tenant cookie ONLY for current domain (not .docsflow.app)
+          document.cookie = `tenant-id=${userData.tenant_id}; path=/; max-age=${60 * 60 * 24 * 7}; secure; samesite=strict`;
           document.cookie = `onboarding-complete=true; path=/; max-age=${60 * 60 * 24 * 7}`;
           
           // Also store in localStorage for persistence
@@ -385,7 +386,8 @@ const tenantAssignment = {
           // Set cookies
           document.cookie = `user-email=${userData.email}; path=/; max-age=${60 * 60 * 24 * 7}`;
           document.cookie = `user-name=${userData.name}; path=/; max-age=${60 * 60 * 24 * 7}`;
-          document.cookie = `tenant-id=${userData.tenant_id}; path=/; max-age=${60 * 60 * 24 * 7}`;
+          // Set tenant cookie ONLY for current domain (not .docsflow.app)
+          document.cookie = `tenant-id=${userData.tenant_id}; path=/; max-age=${60 * 60 * 24 * 7}; secure; samesite=strict`;
           document.cookie = `onboarding-complete=true; path=/; max-age=${60 * 60 * 24 * 7}`;
           
           console.log('✅ Fallback session data stored:', userData);
@@ -423,7 +425,8 @@ const tenantAssignment = {
 
       // Set completion cookies for frontend-only mode
       document.cookie = 'onboarding-complete=true; path=/';
-      document.cookie = `tenant-id=${tenantAssignment.subdomain}; path=/`;
+      // Set tenant cookie ONLY for current domain (not .docsflow.app)
+      document.cookie = `tenant-id=${tenantAssignment.subdomain}; path=/; secure; samesite=strict`;
       
       // Store tenant context in localStorage for dashboard
       localStorage.setItem(`tenant-${tenantAssignment.subdomain}`, JSON.stringify({
@@ -1107,7 +1110,7 @@ const tenantAssignment = {
       onBack={handleBack}
       onboardingData={onboardingData}
       totalSteps={totalSteps}
-      currentStep={currentQuestionIndex}
+      currentStep={currentQuestion + 1}
       userRole={userRole}
       isLastQuestion={isLastQuestion}
     />
