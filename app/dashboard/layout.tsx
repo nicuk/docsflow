@@ -110,7 +110,46 @@ function useUserSession() {
 
   useEffect(() => {
     const getUserData = async () => {
-      // First, try to get from cookies (fastest)
+      // CRITICAL FIX: Check Supabase auth session FIRST
+      try {
+        const { createSupabaseClient } = await import('@/lib-frontend/supabase');
+        const supabase = createSupabaseClient();
+        
+        // Get the current session from Supabase
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (!error && session?.user) {
+          console.log('Found Supabase session for user:', session.user.email);
+          
+          // Get user profile from database
+          const { data: userProfile } = await supabase
+            .from('users')
+            .select('name, email')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (userProfile) {
+            setUser({
+              name: userProfile.name || session.user.email?.split('@')[0] || 'User',
+              email: userProfile.email || session.user.email || 'user@example.com',
+              avatar: '/placeholder.svg',
+            });
+            return;
+          } else {
+            // User exists in auth but not in users table yet
+            setUser({
+              name: session.user.email?.split('@')[0] || 'User',
+              email: session.user.email || 'user@example.com',
+              avatar: '/placeholder.svg',
+            });
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking Supabase session:', error);
+      }
+      
+      // Fallback: try to get from cookies (for backwards compatibility)
       if (typeof window !== 'undefined') {
         const emailCookie = document.cookie
           .split('; ')
@@ -126,44 +165,6 @@ function useUserSession() {
           });
           return;
         }
-      }
-      
-      // Second, try session storage
-      try {
-        const userData = typeof window !== 'undefined' ? sessionStorage.getItem('user') : null;
-        if (userData) {
-          const parsedUser = JSON.parse(userData);
-          
-          if (parsedUser.email && parsedUser.email !== 'user@example.com') {
-            setUser({
-              name: parsedUser.name || parsedUser.email?.split('@')[0] || 'User',
-              email: parsedUser.email,
-              avatar: '/placeholder.svg',
-            });
-            return;
-          }
-        }
-      } catch (error) {
-        console.error('Error getting user from session:', error);
-      }
-      
-      // Third, try localStorage backup
-      try {
-        const userSession = typeof window !== 'undefined' ? localStorage.getItem('user-session') : null;
-        if (userSession) {
-          const parsedUser = JSON.parse(userSession);
-          
-          if (parsedUser.email && parsedUser.email !== 'user@example.com') {
-            setUser({
-              name: parsedUser.name || parsedUser.email?.split('@')[0] || 'User',
-              email: parsedUser.email,
-              avatar: '/placeholder.svg',
-            });
-            return;
-          }
-        }
-      } catch (error) {
-        console.error('Error getting user from localStorage:', error);
       }
       
       // Final fallback - but this indicates a session issue
