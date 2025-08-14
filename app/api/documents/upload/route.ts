@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { google } from '@ai-sdk/google';
 import { embed } from 'ai';
+import { aiProvider, isRealAIAvailable } from '@/lib/ai/providers';
 import formidable from 'formidable';
 import { promises as fs } from 'fs';
 // Dynamic imports to prevent build hangs
@@ -13,8 +13,6 @@ import { EnhancedChunking } from '@/lib/enhanced-chunking';
 import { getCORSHeaders } from '@/lib/utils';
 
 // Initialize services - only when environment variables are available
-const googleAI = process.env.GOOGLE_AI_API_KEY ? google('gemini-1.5-flash') : null;
-
 function getSupabaseClient() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error('Supabase configuration not available');
@@ -42,8 +40,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Check if services are available
-    if (!googleAI) {
+    // Check if services are available using the centralized provider
+    if (!isRealAIAvailable()) {
+      console.error('❌ Upload failed: GOOGLE_AI_API_KEY is not configured.');
       return NextResponse.json({ error: 'AI service not configured' }, { status: 500, headers: getCORSHeaders(origin) });
     }
 
@@ -189,9 +188,8 @@ export async function POST(request: NextRequest) {
         file.name, 
         file.type, 
         tenantId, 
-googleAI,
         supabase, 
-        documentAccessLevel
+        userAccessLevel
       );
       
       // Update status to completed
@@ -235,18 +233,13 @@ async function processDocumentContentEnhanced(
   filename: string,
   mimeType: string,
   tenantId: string, 
-googleAI: any,
   supabase: any, 
   accessLevel: number = 1
 ) {
-  if (!process.env.GOOGLE_AI_API_KEY) {
-    throw new Error('Google AI API key not configured');
-  }
-
   // Initialize enhanced chunking with error handling
   let enhancedChunking;
   try {
-    enhancedChunking = new EnhancedChunking(process.env.GOOGLE_AI_API_KEY);
+    enhancedChunking = new EnhancedChunking(aiProvider.getApiKey());
   } catch (error) {
     console.error('EnhancedChunking initialization error:', error);
     throw new Error('Failed to initialize document processing');
@@ -275,8 +268,9 @@ googleAI: any,
   for (const chunk of contextualChunks) {
     try {
       // Generate embedding using contextual content (not just raw content)
+      // Use the centralized provider for embeddings
       const { embedding } = await embed({
-        model: google.textEmbedding('text-embedding-004'),
+        model: aiProvider.getEmbeddingModel(), // Use shared model
         value: chunk.contextual_content,
       });
       

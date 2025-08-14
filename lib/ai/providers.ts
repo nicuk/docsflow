@@ -14,38 +14,37 @@ const isTestEnvironment = Boolean(
 const mockProvider = {
   generatePersona: async (prompt: string) => {
     console.log('🔄 Using mock AI provider (no GOOGLE_GENERATIVE_AI_API_KEY)');
-    // SURGICAL FIX: Return JSON string, not object (API expects string for JSON.parse)
     return JSON.stringify({
       role: "Business Intelligence Assistant",
-      tone: "Professional and helpful", 
+      tone: "Professional and helpful",
       focus_areas: ["document analysis", "business insights", "decision support"],
       business_context: "AI-powered business intelligence",
       prompt_template: "You are an AI assistant focused on providing helpful, accurate information.",
       industry: "general",
       created_from: "onboarding_answers_fallback"
     });
-  }
+  },
+  getApiKey: () => 'mock-api-key-for-testing',
+  getEmbeddingModel: () => null as any // Mock will not be called if key is absent
 };
 
 // Real Gemini provider (like working aichatbot)
 const realProvider = {
   generatePersona: async (prompt: string) => {
     try {
-      // Add timeout wrapper to prevent Vercel serverless timeout
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('AI generation timeout')), 25000); // 25s limit
+        setTimeout(() => reject(new Error('AI generation timeout')), 25000);
       });
 
       const generatePromise = generateText({
         model: google('gemini-1.5-flash'),
         prompt,
-        maxTokens: 500, // Reduced for faster response
+        maxTokens: 500,
         temperature: 0.7,
       });
 
       const result = await Promise.race([generatePromise, timeoutPromise]) as any;
       
-      // Extract JSON from response
       const jsonMatch = result.text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
@@ -53,7 +52,6 @@ const realProvider = {
           ...parsed,
           created_from: "onboarding_answers"
         };
-        // CRITICAL FIX: Return JSON string, not object (onboarding route expects string)
         return JSON.stringify(enhancedResponse);
       }
       
@@ -62,7 +60,9 @@ const realProvider = {
       console.error('Gemini API Error:', error);
       throw error;
     }
-  }
+  },
+  getApiKey: () => process.env.GOOGLE_GENERATIVE_AI_API_KEY!,
+  getEmbeddingModel: () => google.textEmbedding('text-embedding-004'),
 };
 
 // Export the provider based on environment (like working aichatbot)
