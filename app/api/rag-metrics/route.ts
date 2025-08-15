@@ -10,14 +10,15 @@ export async function GET(request: NextRequest) {
     if (!tenantValidation.isValid) {
       return NextResponse.json(
         { error: tenantValidation.error },
-        { status: tenantValidation.status }
+        { status: tenantValidation.statusCode || 400 }
       );
     }
 
-    const { tenantId, userId } = tenantValidation;
+    const { tenantId } = tenantValidation;
+    const userId = 'system'; // TODO: Extract from auth when available
 
     // Check if user is admin (access level 1)
-    const accessLevel = await getUserAccessLevel(userId, tenantId);
+    const accessLevel = await getUserAccessLevel(request, tenantId);
     if (accessLevel > 1) {
       return NextResponse.json(
         { error: 'Admin access required to view metrics' },
@@ -92,14 +93,15 @@ export async function DELETE(request: NextRequest) {
     if (!tenantValidation.isValid) {
       return NextResponse.json(
         { error: tenantValidation.error },
-        { status: tenantValidation.status }
+        { status: tenantValidation.statusCode || 400 }
       );
     }
 
-    const { tenantId, userId } = tenantValidation;
+    const { tenantId } = tenantValidation;
+    const userId = 'system'; // TODO: Extract from auth when available
 
     // Check if user is admin
-    const accessLevel = await getUserAccessLevel(userId, tenantId);
+    const accessLevel = await getUserAccessLevel(request, tenantId);
     if (accessLevel > 1) {
       return NextResponse.json(
         { error: 'Admin access required to clear metrics' },

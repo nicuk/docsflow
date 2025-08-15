@@ -67,8 +67,7 @@ export class RAGMetricsCollector {
           JSON.stringify(metrics)
         );
       },
-      undefined,
-      'record query metrics'
+      undefined
     );
 
     // Update aggregated metrics
@@ -187,8 +186,7 @@ export class RAGMetricsCollector {
 
         await redis?.set(key, JSON.stringify(current));
       },
-      undefined,
-      'update tenant metrics'
+      {}
     );
   }
 
@@ -201,8 +199,7 @@ export class RAGMetricsCollector {
         const data = await redis?.get(`${this.metricsPrefix}${this.systemMetricsKey}`);
         return data ? JSON.parse(data as string) : null;
       },
-      null,
-      'get system metrics'
+      {}
     );
 
     return result;
@@ -217,8 +214,7 @@ export class RAGMetricsCollector {
         const data = await redis?.get(`${this.metricsPrefix}${this.tenantMetricsPrefix}${tenantId}`);
         return data ? JSON.parse(data as string) : null;
       },
-      null,
-      'get tenant metrics'
+      {}
     );
 
     return result;
@@ -434,8 +430,7 @@ export class RAGMetricsCollector {
           console.log(`Cleared ${keys.length} metric entries`);
         }
       },
-      undefined,
-      'clear metrics'
+      undefined
     );
 
     this.recentLatencies = [];

@@ -125,8 +125,7 @@ export class EmbeddingCache {
           return null;
         }
       },
-      null,
-      'get embedding from cache'
+      null
     );
 
     return result;
@@ -175,14 +174,9 @@ export class EmbeddingCache {
     
     await safeRedisOperation(
       async () => {
-        await redis?.setex(
-          key,
-          this.ttlSeconds,
-          JSON.stringify(cached)
-        );
+        await redis?.setex(key, this.ttlSeconds, JSON.stringify(cached));
       },
-      undefined,
-      'update hit count'
+      undefined
     );
   }
 
