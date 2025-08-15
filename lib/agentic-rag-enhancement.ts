@@ -91,10 +91,19 @@ Focus on creating sub-queries that can be answered independently and then synthe
 
     try {
       const result = await this.reasoningModel.generateContent(analysisPrompt);
-      const response = result.response.text();
+      let response = result.response.text();
+      
+      // Clean the response - remove markdown code blocks if present
+      response = response.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+      
+      // Extract JSON from the response (handle cases where there's text before/after JSON)
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No valid JSON found in response');
+      }
       
       // Parse JSON response
-      const analysisData = JSON.parse(response);
+      const analysisData = JSON.parse(jsonMatch[0]);
       
       return {
         originalQuery: query,
@@ -158,8 +167,18 @@ Return JSON format:
 
     try {
       const result = await this.reasoningModel.generateContent(correctionPrompt);
-      const response = result.response.text();
-      const correctionData = JSON.parse(response);
+      let response = result.response.text();
+      
+      // Clean the response - remove markdown code blocks if present
+      response = response.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+      
+      // Extract JSON from the response
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No valid JSON found in response');
+      }
+      
+      const correctionData = JSON.parse(jsonMatch[0]);
       
       return {
         needsCorrection: correctionData.needsCorrection || false,

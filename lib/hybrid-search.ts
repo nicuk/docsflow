@@ -121,11 +121,12 @@ export class HybridSearch {
     const queryEmbedding = result.embedding.values;
 
     // Search using Supabase function
+    // Convert tenantId string to UUID format if needed
     const { data, error } = await this.supabase.rpc('similarity_search', {
       query_embedding: queryEmbedding,
       match_threshold: threshold,
       match_count: maxResults * 2, // Get more results for fusion
-      tenant_filter: tenantId,
+      tenant_filter: tenantId ? tenantId : null, // Pass as UUID or null
       access_level_filter: accessLevel
     });
 
@@ -168,10 +169,6 @@ export class HybridSearch {
         .textSearch('content', searchQuery)
         .eq('tenant_id', tenantId)
         .lte('access_level', accessLevel)
-        .order('ts_rank(to_tsvector(content), plainto_tsquery($1))', { 
-          ascending: false,
-          foreignTable: undefined
-        })
         .limit(maxResults * 2);
 
       if (error) {
