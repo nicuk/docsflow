@@ -159,9 +159,14 @@ export class RAGMetricsCollector {
     await safeRedisOperation(
       async () => {
         const existing = await redis?.get(key);
-        const current: TenantMetrics = existing 
-          ? JSON.parse(existing as string)
-          : {
+        let current: TenantMetrics;
+        
+        if (existing) {
+          try {
+            current = typeof existing === 'string' ? JSON.parse(existing) : existing;
+          } catch (error) {
+            console.warn('Invalid JSON in tenant metrics, resetting:', error);
+            current = {
               tenant_id: metrics.tenant_id,
               query_count: 0,
               avg_latency_ms: 0,
@@ -171,6 +176,19 @@ export class RAGMetricsCollector {
               storage_mb: 0,
               last_active: Date.now()
             };
+          }
+        } else {
+          current = {
+            tenant_id: metrics.tenant_id,
+            query_count: 0,
+            avg_latency_ms: 0,
+            cache_hit_rate: 0,
+            total_tokens_used: 0,
+            total_api_calls: 0,
+            storage_mb: 0,
+            last_active: Date.now()
+          };
+        }
 
         // Update metrics
         const totalLatency = current.avg_latency_ms * current.query_count + metrics.latency_ms;
@@ -185,7 +203,7 @@ export class RAGMetricsCollector {
 
         await redis?.set(key, JSON.stringify(current));
       },
-      {}
+      undefined
     );
   }
 
@@ -196,7 +214,14 @@ export class RAGMetricsCollector {
     const result = await safeRedisOperation(
       async () => {
         const data = await redis?.get(`${this.metricsPrefix}${this.systemMetricsKey}`);
-        return data ? JSON.parse(data as string) : null;
+        if (!data) return null;
+        
+        try {
+          return typeof data === 'string' ? JSON.parse(data) : data;
+        } catch (error) {
+          console.warn('Invalid JSON in system metrics:', error);
+          return null;
+        }
       },
       {}
     );
@@ -211,7 +236,14 @@ export class RAGMetricsCollector {
     const result = await safeRedisOperation(
       async () => {
         const data = await redis?.get(`${this.metricsPrefix}${this.tenantMetricsPrefix}${tenantId}`);
-        return data ? JSON.parse(data as string) : null;
+        if (!data) return null;
+        
+        try {
+          return typeof data === 'string' ? JSON.parse(data) : data;
+        } catch (error) {
+          console.warn('Invalid JSON in tenant metrics:', error);
+          return null;
+        }
       },
       {}
     );
@@ -235,7 +267,12 @@ export class RAGMetricsCollector {
         for (const key of sortedKeys) {
           const data = await redis?.get(key);
           if (data) {
-            queries.push(JSON.parse(data as string));
+            try {
+              const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+              queries.push(parsed);
+            } catch (error) {
+              console.warn(`Invalid JSON in query ${key}, skipping:`, error);
+            }
           }
         }
         
@@ -263,15 +300,19 @@ export class RAGMetricsCollector {
     // Get top tenants by query count
     const tenantKeys = await safeRedisOperation(
       async () => await redis?.keys(`${this.metricsPrefix}${this.tenantMetricsPrefix}*`),
-      [],
-      'get tenant keys'
+      []
     );
 
     const tenants: TenantMetrics[] = [];
     for (const key of tenantKeys || []) {
       const data = await redis?.get(key);
       if (data) {
-        tenants.push(JSON.parse(data as string));
+        try {
+          const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+          tenants.push(parsed);
+        } catch (error) {
+          console.warn(`Invalid JSON in tenant key ${key}, skipping:`, error);
+        }
       }
     }
     

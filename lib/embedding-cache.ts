@@ -260,8 +260,7 @@ export class EmbeddingCache {
 
         console.log(`Cleaned up ${toDelete.length} cached embeddings`);
       },
-      undefined,
-      'manage cache size'
+      undefined
     );
   }
 

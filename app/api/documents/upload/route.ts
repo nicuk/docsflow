@@ -171,10 +171,16 @@ export async function POST(request: NextRequest) {
       }
     } catch (extractionError) {
       console.error('Text extraction error:', extractionError);
-      return NextResponse.json(
-        { error: 'Failed to extract text from document' },
-        { status: 500 }
-      );
+      
+      // Check if it's an empty document
+      if (!textContent || textContent.trim().length === 0) {
+        // For empty documents, create a placeholder
+        textContent = `[Empty or unreadable ${file.type} document: ${file.name}]`;
+        console.warn(`Document appears empty or unreadable, using placeholder: ${file.name}`);
+      } else {
+        // If we have some content but extraction partially failed, log and continue
+        console.warn(`Partial extraction error for ${file.name}, continuing with available content`);
+      }
     }
 
     // Store document metadata in Supabase

@@ -9,8 +9,8 @@ export class ImageProcessor {
   
   async extractImageContent(buffer: Buffer, mimeType: string): Promise<string> {
     try {
-      // Use Gemini Pro Vision for image analysis
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-pro-vision' });
+      // Use Gemini 2.0 Flash which supports vision
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
       
       // Convert buffer to base64
       const base64Image = buffer.toString('base64');
@@ -41,8 +41,10 @@ Be thorough and specific.`;
       
     } catch (error) {
       console.error('Image processing error:', error);
-      // Fallback to basic description
-      return `Image content could not be extracted. Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      // Return a basic placeholder instead of throwing
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.warn(`Falling back to placeholder for image due to: ${errorMessage}`);
+      return `[Image file: ${mimeType}] - Content extraction temporarily unavailable`;
     }
   }
 }
