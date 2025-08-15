@@ -223,7 +223,7 @@ export class RAGMetricsCollector {
           return null;
         }
       },
-      {}
+      null
     );
 
     return result;
@@ -245,7 +245,7 @@ export class RAGMetricsCollector {
           return null;
         }
       },
-      {}
+      null
     );
 
     return result;
