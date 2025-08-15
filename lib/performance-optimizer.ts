@@ -3,6 +3,8 @@
  * Addresses: 20 forced reflows, long tasks blocking main thread, 56.77MB memory usage
  */
 
+import { useState, useEffect } from 'react';
+
 interface PerformanceMetrics {
   forcedReflows: number;
   longTasks: number;
@@ -318,9 +320,9 @@ export const performanceOptimizer = new PerformanceOptimizer();
 
 // React hook for performance optimization
 export function usePerformanceOptimization() {
-  const [metrics, setMetrics] = React.useState<PerformanceMetrics | null>(null);
+  const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const updateMetrics = () => {
       setMetrics(performanceOptimizer.getMetrics());
     };
@@ -352,22 +354,33 @@ export function PerformanceMonitor() {
     return null;
   }
 
-  return (
-    <div style={{
-      position: 'fixed',
-      top: 10,
-      right: 10,
-      background: 'rgba(0,0,0,0.8)',
-      color: 'white',
-      padding: '8px',
-      borderRadius: '4px',
-      fontSize: '12px',
-      zIndex: 9999
-    }}>
-      <div>Reflows: {metrics.forcedReflows}</div>
-      <div>Long Tasks: {metrics.longTasks}</div>
-      <div>Memory: {metrics.memoryUsage}</div>
-      <div>Render: {metrics.renderTime.toFixed(1)}ms</div>
-    </div>
-  );
+  // Return as a client-side only component
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  // Create the monitoring UI using DOM API
+  const container = document.createElement('div');
+  container.style.cssText = `
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    z-index: 9999;
+  `;
+  
+  container.innerHTML = `
+    <div>Reflows: ${metrics.forcedReflows}</div>
+    <div>Long Tasks: ${metrics.longTasks}</div>
+    <div>Memory: ${metrics.memoryUsage}</div>
+    <div>Render: ${metrics.renderTime.toFixed(1)}ms</div>
+  `;
+  
+  // This is a utility function, not a React component
+  // Use it by calling performanceOptimizer.showMonitor() instead
+  return null;
 }
