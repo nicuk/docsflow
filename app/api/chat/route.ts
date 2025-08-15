@@ -158,20 +158,8 @@ export async function POST(request: NextRequest) {
 
     const tenantId = tenantValidation.tenantId!;  // This is the UUID
     const tenantSubdomain = tenantValidation.tenantData?.subdomain || 'unknown';
-    const isDemoMode = tenantValidation.tenantData?.isDemo || false;
     
-    console.log('Chat API - Demo mode:', isDemoMode, 'Subdomain:', tenantSubdomain, 'Tenant UUID:', tenantId, 'Authenticated:', isAuthenticated);
-    
-    // Initialize demo tenant if needed
-    if (isDemoMode) {
-      const demoSetup = await fetch(`${request.url.replace('/chat', '/demo')}`, {
-        method: 'GET',
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest'
-        }
-      });
-      console.log('Demo setup response:', demoSetup.status);
-    }
+    console.log('Chat API - Subdomain:', tenantSubdomain, 'Tenant UUID:', tenantId, 'Authenticated:', isAuthenticated);
 
     // Check if services are available
     if (!googleAI) {
