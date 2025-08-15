@@ -40,11 +40,11 @@ export class HybridSearch {
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    if (!process.env.GOOGLE_AI_API_KEY) {
+    if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
       throw new Error('Google AI API key not configured');
     }
 
-    this.genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+    this.genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY);
     this.embeddingModel = this.genAI.getGenerativeModel({ model: 'text-embedding-004' });
   }
 

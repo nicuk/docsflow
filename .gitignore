@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# test files with API keys
+test-gemini-*.js
+test-*-with-key.js

@@ -36,11 +36,11 @@ export class AgenticRAGEnhancement {
   private reasoningModel: any;
 
   constructor() {
-    if (!process.env.GOOGLE_AI_API_KEY) {
+    if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
       throw new Error('Google AI API key required');
     }
     
-    this.genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+    this.genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY);
     this.reasoningModel = this.genAI.getGenerativeModel({ 
       model: 'gemini-2.0-flash',
       systemInstruction: `You are an expert RAG reasoning agent. Your role is to:

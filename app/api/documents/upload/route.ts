@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
 
     // Check if services are available using the centralized provider
     if (!isRealAIAvailable()) {
-      console.error('❌ Upload failed: GOOGLE_AI_API_KEY is not configured.');
+      console.error('❌ Upload failed: GOOGLE_GENERATIVE_AI_API_KEY is not configured.');
       return NextResponse.json({ error: 'AI service not configured' }, { status: 500, headers: getCORSHeaders(origin) });
     }
 

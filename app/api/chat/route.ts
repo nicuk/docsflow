@@ -16,13 +16,13 @@ import { validateTenantContext } from '@/lib/api-tenant-validation';
 const loadHybridSearch = () => import('@/lib/hybrid-search');
 
 // Initialize Google AI models
-const googleAI = process.env.GOOGLE_AI_API_KEY 
+const googleAI = process.env.GOOGLE_GENERATIVE_AI_API_KEY 
   ? google('gemini-2.0-flash')
   : null;
 
 // Initialize GoogleGenerativeAI for legacy functions
-const genAI = process.env.GOOGLE_AI_API_KEY 
-  ? new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY)
+const genAI = process.env.GOOGLE_GENERATIVE_AI_API_KEY 
+  ? new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY)
   : null;
 
 function getSupabaseClient() {
