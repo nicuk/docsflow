@@ -225,9 +225,8 @@ export const apiClient = {
     try {
       const response = await fetch(`${API_BASE_URL}/documents`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(),
+        credentials: 'include',
       });
       
       if (!response.ok) {

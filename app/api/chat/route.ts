@@ -17,7 +17,7 @@ const loadHybridSearch = () => import('@/lib/hybrid-search');
 
 // Initialize Google AI models
 const googleAI = process.env.GOOGLE_AI_API_KEY 
-  ? google('gemini-1.5-flash')
+  ? google('gemini-2.0-flash')
   : null;
 
 // Initialize GoogleGenerativeAI for legacy functions
@@ -401,7 +401,7 @@ Content: ${ctx.content}
 
     // Initialize chat model with tenant-specific system prompt
     const { text: answerText } = await generateText({
-        model: googleAI || google('gemini-1.5-flash'),
+        model: googleAI || google('gemini-2.0-flash'),
         system: promptConfig.systemPrompt,
         prompt: prompt,
     });

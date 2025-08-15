@@ -287,7 +287,7 @@ async function processDocumentContentEnhanced(
   // Determine document type for better context
   const documentType = getDocumentType(mimeType, filename);
   
-  // Create contextual chunks (49% accuracy improvement)
+  // Create contextual chunks (49% accuracy improvement) with fallback
   console.log(`Creating contextual chunks for ${filename}...`);
   let contextualChunks;
   try {
@@ -297,8 +297,11 @@ async function processDocumentContentEnhanced(
       documentType
     );
   } catch (error) {
-    console.error('Chunk creation error:', error);
-    throw new Error('Failed to process document content into chunks');
+    console.error('AI chunking failed, using fallback basic chunking:', error);
+    
+    // Fallback to basic chunking when AI fails
+    contextualChunks = createBasicChunks(textContent, filename);
+    console.log(`Generated ${contextualChunks.length} basic fallback chunks`);
   }
   
   console.log(`Generated ${contextualChunks.length} contextual chunks`);
@@ -314,7 +317,7 @@ async function processDocumentContentEnhanced(
       });
       
       // Store enhanced chunk in database
-      await supabase
+      const { error: chunkError } = await supabase
         .from('document_chunks')
         .insert({
           document_id: documentId,
@@ -333,6 +336,10 @@ async function processDocumentContentEnhanced(
             enhanced_chunking: true // Flag for enhanced chunks
           }
         });
+      
+      if (chunkError) {
+        throw new Error(`Failed to insert chunk: ${chunkError.message}`);
+      }
         
       console.log(`Processed chunk ${chunk.chunk_index} with context: ${chunk.context_summary.slice(0, 50)}...`);
         
@@ -341,6 +348,30 @@ async function processDocumentContentEnhanced(
       // Continue with other chunks even if one fails
     }
   }
+}
+
+// Fallback basic chunking when AI fails
+function createBasicChunks(textContent: string, filename: string) {
+  const chunkSize = 1000;
+  const overlap = 200;
+  const chunks = [];
+  
+  for (let i = 0; i < textContent.length; i += chunkSize - overlap) {
+    const chunk = textContent.slice(i, i + chunkSize);
+    chunks.push({
+      chunk_index: chunks.length,
+      content: chunk,
+      contextual_content: chunk, // Same as content for basic chunks
+      context_summary: `Chunk ${chunks.length + 1} from ${filename}`,
+      confidence_indicators: {
+        semantic_coherence: 0.5, // Basic fallback score
+        context_relevance: 0.5,
+        information_density: chunk.length / chunkSize
+      }
+    });
+  }
+  
+  return chunks;
 }
 
 function getDocumentType(mimeType: string, filename: string): string {

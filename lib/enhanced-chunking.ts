@@ -21,7 +21,7 @@ export class EnhancedChunking {
   constructor(apiKey: string) {
     this.genAI = new GoogleGenerativeAI(apiKey);
     this.embeddingModel = this.genAI.getGenerativeModel({ model: 'text-embedding-004' });
-    this.textModel = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    this.textModel = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
   }
 
   /**

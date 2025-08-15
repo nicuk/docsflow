@@ -72,6 +72,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { apiClient } from "@/lib/api-client"
+import { useEffect } from "react"
 
 // Document types and interfaces
 type DocumentStatus = "processing" | "ready" | "error"
@@ -318,7 +319,8 @@ const sampleDocuments: Document[] = [
 
 export default function DocumentsPage() {
   // State for documents and UI
-  const [documents, setDocuments] = useState<Document[]>(sampleDocuments)
+  const [documents, setDocuments] = useState<Document[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([])
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([])
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
@@ -332,6 +334,44 @@ export default function DocumentsPage() {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+
+  // Fetch documents from API on mount
+  useEffect(() => {
+    fetchDocuments()
+  }, [])
+
+  const fetchDocuments = async () => {
+    try {
+      setIsLoading(true)
+      const response = await apiClient.getDocuments()
+      
+      if (response.documents && Array.isArray(response.documents)) {
+        // Map backend documents to frontend format
+        const mappedDocuments: Document[] = response.documents.map((doc: any) => ({
+          id: doc.id,
+          name: doc.filename,
+          type: getFileType(doc.filename),
+          size: doc.file_size || 0,
+          uploadDate: new Date(doc.created_at),
+          status: doc.processing_status === 'completed' ? 'ready' : 
+                  doc.processing_status === 'failed' ? 'error' : 'processing',
+          category: doc.metadata?.category || 'uncategorized',
+          tags: doc.metadata?.tags || [],
+          favorite: false,
+          processingTime: doc.metadata?.processing_time,
+          errorMessage: doc.metadata?.error_message,
+          pages: doc.metadata?.pages,
+          wordCount: doc.metadata?.word_count,
+        }))
+        
+        setDocuments(mappedDocuments)
+      }
+    } catch (error) {
+      console.error('Failed to fetch documents:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   // Dropzone configuration
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -399,6 +439,11 @@ export default function DocumentsPage() {
 
       // Add the new document to the list
       setDocuments((prevDocs) => [newDocument, ...prevDocs])
+      
+      // Refresh documents list to get accurate data
+      setTimeout(() => {
+        fetchDocuments()
+      }, 2000)
       
       // Remove from uploading files after a short delay for UX
       setTimeout(() => {

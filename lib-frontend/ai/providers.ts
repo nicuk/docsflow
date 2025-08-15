@@ -31,7 +31,7 @@ const realProvider = {
   generatePersona: async (prompt: string) => {
     try {
       const result = await generateText({
-        model: google('gemini-1.5-flash'),
+        model: google('gemini-2.0-flash'),
         prompt,
         maxTokens: 1000,
         temperature: 0.7,

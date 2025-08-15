@@ -153,7 +153,7 @@ async function findDocumentRelationship(
   const doc2Content = doc2Chunks.map(c => c.content).join(' ').substring(0, 1000);
   
   // Use LLM to identify relationships
-  const analysisModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const analysisModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
   const relationshipPrompt = `
 Analyze the relationship between these two document excerpts in the context of the query: "${query}"
 

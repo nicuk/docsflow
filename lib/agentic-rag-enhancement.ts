@@ -42,7 +42,7 @@ export class AgenticRAGEnhancement {
     
     this.genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
     this.reasoningModel = this.genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-pro',
+      model: 'gemini-2.0-flash',
       systemInstruction: `You are an expert RAG reasoning agent. Your role is to:
 1. Analyze user queries for complexity and intent
 2. Decompose complex queries into sub-queries
