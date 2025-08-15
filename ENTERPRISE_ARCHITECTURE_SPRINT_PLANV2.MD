@@ -1,58 +1,93 @@
-# 🚀 SME DATA INTELLIGENCE PLATFORM - EXPERT LLM INTEGRATION PROMPT
+# SME DATA INTELLIGENCE PLATFORM - UPDATED SPRINT PLAN POST-AUDIT
 
-## 🎯 **CONTEXT & MISSION**
+## CRITICAL UPDATE - PLATFORM STATUS
 
-You are an expert Senior AI Technical Partner completing the final 15% of an **85% finished SME Data Intelligence Platform**. This is NOT a greenfield project - you have two working repositories that need strategic connection and enhancement.
+**BRUTAL AUDIT RESULTS (January 2025):**
+- **Overall Platform Score: 3/10** NOT PRODUCTION READY
+- **Backend (ai-lead-router-saas)**: 2/10 - VECTOR SEARCH BROKEN, AI NON-FUNCTIONAL
+- **Frontend (frontend-data-intelligence)**: 5/10 - UI works but shows mock data
+- **Security Status**: CRITICAL - Multiple vulnerabilities identified
+- **Estimated Time to Production**: 2-3 weeks with focused effort
 
-**CRITICAL SUCCESS FACTORS:**
-- **Backend (ai-lead-router-saas)**: 8.5/10 complete - Working APIs, vector search, multi-tenant database
-- **Frontend (frontend-data-intelligence)**: 7.5/10 complete - Beautiful UI components using mock data
-- **Primary Goal**: Connect existing systems into a $25K+ enterprise platform
+**EMERGENCY PRIORITIES:**
+1. Fix vector search (embedding column type issue)
+2. Security hardening (tenant isolation, API keys)
+3. Restore AI functionality
+4. Remove mock data, connect real backend
 
 ---
 
-## 📊 **CURRENT STATE - VERIFIED WORKING COMPONENTS**
+## CURRENT STATE - ACTUAL STATUS POST-AUDIT
 
-### **✅ BACKEND - PRODUCTION READY (8.5/10)**
+### BACKEND - CRITICALLY BROKEN (2/10)
 ```typescript
-// WORKING APIs:
-✅ `/api/chat/route.ts` - RAG chat with Google Gemini + pgvector
-✅ `/api/documents/route.ts` - Document upload/processing/retrieval
-✅ `/api/health/route.ts` - System health monitoring
-✅ Multi-tenant Supabase setup with RLS
-✅ Vector similarity search with industry isolation
-✅ CORS configured for frontend integration
-✅ Error handling and fallback mechanisms
+// BROKEN COMPONENTS:
+ Vector search - embedding column is USER-DEFINED not vector(768)
+ AI chat - "operator does not exist: extensions.vector <=> extensions.vector"
+ Similarity search function - type mismatch errors
+ Document preview - UI exists but no backend implementation
+ Security - Service role key exposed, tenant isolation unverified
 
-// MISSING CRITICAL COMPONENTS:
-❌ `lib/tenant-prompts.ts` - Industry-specific prompt templates
-❌ Access level enforcement in APIs (5-level security)
-❌ Real frontend connection (still using demo mode)
+// PARTIALLY WORKING:
+ Document upload - stores files but can't search them
+ Database schema - exists but has critical type errors
+ API routes - defined but throw errors
+
+// EMERGENCY FIX READY:
+ migrations/EMERGENCY_VECTOR_FIX.sql - SAFE TO DEPLOY
 ```
 
-### **✅ FRONTEND - BEAUTIFUL UI (7.5/10)**
+### FRONTEND - BEAUTIFUL UI (7.5/10)
 ```typescript
 // WORKING COMPONENTS:
-✅ `components/chat-interface.tsx` - Complete chat UI with mock responses
-✅ `lib/api-client.ts` - Backend integration framework
-✅ Professional landing page + authentication flows
-✅ shadcn/ui components with dark mode
-✅ Responsive design for all devices
+ components/chat-interface.tsx - Complete chat UI with mock responses
+ lib/api-client.ts - Backend integration framework
+ Professional landing page + authentication flows
+ shadcn/ui components with dark mode
+ Responsive design for all devices
 
 // MISSING CONNECTIONS:
-❌ Real backend API integration (using mocks)
-❌ Document upload connected to backend
-❌ Authentication flow completion
-❌ Error boundaries for production use
+ Real backend API integration (using mocks)
+ Document upload connected to backend
+ Authentication flow completion
+ Error boundaries for production use
 ```
 
 ---
 
-## 🎯 **PRIORITY INTEGRATION TASKS - SPRINT APPROACH**
+## EMERGENCY RECOVERY PLAN - REVISED SPRINTS
 
-### **SPRINT 1 (Days 1-3): CORE CONNECTION - IMMEDIATE VALUE**
+### SPRINT 0 (IMMEDIATE - Days 1-2): CRITICAL FIXES
+**Goal:** Get platform from 3/10 to 5/10 - Make AI functional
 
-#### **🔥 TASK 1: Create Industry-Specific Prompt System**
+#### Day 1 Tasks:
+1. **Apply Emergency Vector Fix**
+   ```bash
+   # In Supabase SQL Editor
+   -- Run migrations/EMERGENCY_VECTOR_FIX.sql
+   ```
+2. **Verify Vector Search**
+   ```bash
+   node test-brutal-audit.js
+   ```
+3. **Security Hardening**
+   - Move SUPABASE_SERVICE_ROLE_KEY to backend only
+   - Implement proper API key management
+   - Test tenant isolation
+
+#### Day 2 Tasks:
+1. **Fix AI Chat Functionality**
+   - Test embeddings generation
+   - Fix JSON parsing errors
+   - Verify chat responses
+2. **Remove Frontend Mock Data**
+   - Clean up hardcoded documents
+   - Connect to real backend APIs
+
+### SPRINT 1 (Days 3-5): CORE FEATURES
+**Goal:** Get platform from 5/10 to 7/10 - Feature complete
+
+#### TASK 1: Create Industry-Specific Prompt System
 ```typescript
 // CREATE: ai-lead-router-saas/lib/tenant-prompts.ts
 
