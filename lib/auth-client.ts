@@ -155,7 +155,26 @@ class AuthClient {
   }
 
   // Logout user
-  logout(): void {
+  async logout(): Promise<void> {
+    try {
+      // Step 1: Call backend logout endpoint to clear server-side session
+      const response = await fetch(`${this.baseUrl}/api/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies
+      });
+      
+      if (!response.ok) {
+        console.warn('⚠️ Server logout failed, proceeding with client cleanup');
+      }
+      
+    } catch (error) {
+      console.warn('⚠️ Server logout error:', error);
+    }
+    
+    // Step 2: Clear localStorage regardless of server response
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
@@ -169,6 +188,9 @@ class AuthClient {
         localStorage.removeItem(key);
       }
     });
+    
+    // Step 3: Force redirect to login
+    window.location.href = '/login';
   }
 
   // Create authenticated request headers

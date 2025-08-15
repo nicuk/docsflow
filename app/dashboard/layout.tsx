@@ -210,18 +210,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const user = useUserSession() // Dynamic user session restoration
 
   // Add logout functionality
-  const handleLogout = () => {
-    // Clear all authentication cookies
-    document.cookie = 'auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;'
-    document.cookie = 'onboarding-complete=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;'
-    document.cookie = 'tenant-id=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;'
-    
-    // Clear all localStorage data
-    localStorage.clear()
-    
-    // Redirect to login page
-    window.location.href = '/login'
-  }
+  const handleLogout = async () => {
+    try {
+      // Use the auth client's logout method which calls backend
+      const { authClient } = await import('@/lib/auth-client');
+      await authClient.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force redirect even if logout fails
+      window.location.href = '/login';
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
