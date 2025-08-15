@@ -155,8 +155,7 @@ export class EmbeddingCache {
         );
         console.log(`Cached embedding for model ${model}, key: ${key.split(':')[2]}`);
       },
-      undefined,
-      'store embedding in cache'
+      undefined
     );
 
     // Manage cache size
@@ -313,8 +312,7 @@ export class EmbeddingCache {
           console.log(`Cleared ${keys.length} cached embeddings`);
         }
       },
-      undefined,
-      'clear cache'
+      undefined
     );
 
     // Reset metrics

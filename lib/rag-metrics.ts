@@ -134,8 +134,7 @@ export class RAGMetricsCollector {
           JSON.stringify(updatedMetrics)
         );
       },
-      undefined,
-      'update system metrics'
+      undefined
     );
 
     // Log metrics periodically
@@ -242,8 +241,7 @@ export class RAGMetricsCollector {
         
         return queries;
       },
-      [],
-      'get recent queries'
+      []
     );
 
     return result || [];
