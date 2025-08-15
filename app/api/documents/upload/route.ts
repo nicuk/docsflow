@@ -12,6 +12,8 @@ import { getUserAccessLevel } from '@/lib/auth-helpers';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
 import { suggestClassification, getAllowedUploadClassifications, type DocumentClassification } from '@/lib/document-access-control';
 import { EnhancedChunking } from '@/lib/enhanced-chunking';
+import { ImageProcessor } from '@/lib/image-processor';
+import { embeddingCache } from '@/lib/embedding-cache';
 import { getCORSHeaders } from '@/lib/utils';
 
 // Initialize services - only when environment variables are available
@@ -162,8 +164,10 @@ export async function POST(request: NextRequest) {
       } else if (file.type === 'text/plain') {
         textContent = buffer.toString('utf-8');
       } else if (file.type.startsWith('image/')) {
-        // For images, we'll use Google Gemini Vision API later
-        textContent = `[Image: ${file.name}]`;
+        // Process images with Gemini Vision API
+        const imageProcessor = new ImageProcessor(aiProvider.getApiKey());
+        textContent = await imageProcessor.extractImageContent(buffer, file.type);
+        console.log(`Extracted image content (${file.name}): ${textContent.slice(0, 100)}...`);
       }
     } catch (extractionError) {
       console.error('Text extraction error:', extractionError);
@@ -309,12 +313,18 @@ async function processDocumentContentEnhanced(
   // Process each contextual chunk
   for (const chunk of contextualChunks) {
     try {
-      // Generate embedding using contextual content (not just raw content)
-      // Use the centralized provider for embeddings
-      const { embedding } = await embed({
-        model: aiProvider.getEmbeddingModel(), // Use shared model
-        value: chunk.contextual_content,
-      });
+      // Generate embedding for the chunk with caching
+      const { embedding } = await embeddingCache.getEmbedding(
+        chunk.contextual_content,
+        'text-embedding-004',
+        async () => {
+          const result = await embed({
+            model: aiProvider.getEmbeddingModel(),
+            value: chunk.contextual_content,
+          });
+          return result.embedding;
+        }
+      );
       
       // Store enhanced chunk in database
       const { error: chunkError } = await supabase

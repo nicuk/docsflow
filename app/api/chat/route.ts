@@ -281,7 +281,7 @@ export async function POST(request: NextRequest) {
         
         // Final fallback to basic vector search
         try {
-          const { data, error } = await supabase.rpc('similarity_search', {
+          const { data, error } = await supabase.rpc('similarity_search_v2', {
             query_embedding: queryEmbedding,
             match_threshold: 0.85,
             match_count: 15,

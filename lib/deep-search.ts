@@ -34,7 +34,7 @@ export async function performDeepSearch(
   // Step 2: Multi-pass search with different thresholds
   const [highPrecision, mediumPrecision, broadSearch] = await Promise.all([
     // Pass 1: High precision (0.9 threshold)
-    supabase.rpc('similarity_search', {
+    supabase.rpc('similarity_search_v2', {
       query_embedding: queryEmbedding,
       match_threshold: 0.9,
       match_count: 5,
@@ -43,7 +43,7 @@ export async function performDeepSearch(
     }),
     
     // Pass 2: Medium precision (0.85 threshold)
-    supabase.rpc('similarity_search', {
+    supabase.rpc('similarity_search_v2', {
       query_embedding: queryEmbedding,
       match_threshold: 0.85,
       match_count: 10,
@@ -52,7 +52,7 @@ export async function performDeepSearch(
     }),
     
     // Pass 3: Broad search (0.75 threshold) for context
-    supabase.rpc('similarity_search', {
+    supabase.rpc('similarity_search_v2', {
       query_embedding: queryEmbedding,
       match_threshold: 0.75,
       match_count: 20,

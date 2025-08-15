@@ -1,5 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { SemanticReranker, RerankCandidate } from './semantic-reranker';
+import { queryEnhancer } from './query-enhancer';
+import { ragMetrics } from './rag-metrics';
 
 interface HybridSearchResult {
   chunks: any[];
@@ -29,6 +32,7 @@ export class HybridSearch {
   private supabase: any;
   private genAI: GoogleGenerativeAI;
   private embeddingModel: any;
+  private reranker: SemanticReranker;
 
   constructor() {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -46,6 +50,7 @@ export class HybridSearch {
 
     this.genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY);
     this.embeddingModel = this.genAI.getGenerativeModel({ model: 'text-embedding-004' });
+    this.reranker = new SemanticReranker(process.env.GOOGLE_GENERATIVE_AI_API_KEY);
   }
 
   /**
@@ -70,17 +75,39 @@ export class HybridSearch {
       fusionStrategy = 'rrf'
     } = options;
 
+    const startTime = Date.now();
     console.log(`Starting hybrid search for: "${query}" (tenant: ${tenantId}, access: ${accessLevel})`);
 
+    // Enhance query for better retrieval
+    let enhancedQuery = query;
     try {
-      // Step 1: Vector search
-      const vectorResults = await this.vectorSearch(query, tenantId, accessLevel, vectorThreshold, maxResults);
+      const enhancement = await queryEnhancer.enhanceQuery(query, {
+        expandSynonyms: true,
+        correctSpelling: true,
+        extractEntities: true,
+        classifyIntent: true
+      });
+      enhancedQuery = enhancement.enhanced;
+      if (enhancement.corrections.length > 0) {
+        console.log(`Query corrections applied: ${enhancement.corrections.join(', ')}`);
+      }
+      console.log(`Query enhanced: "${query}" → "${enhancedQuery}" (intent: ${enhancement.intent})`);
+      
+      // Track enhanced query in metrics
+      enhancedQuery = enhancement.enhanced;
+    } catch (error) {
+      console.error('Query enhancement failed, using original:', error);
+    }
+
+    try {
+      // Step 1: Vector search with enhanced query
+      const vectorResults = await this.vectorSearch(enhancedQuery, tenantId, accessLevel, vectorThreshold, maxResults);
       console.log(`Vector search found ${vectorResults.length} results`);
 
-      // Step 2: Keyword search (if enabled)
+      // Step 2: Keyword search with enhanced query (if enabled)
       let keywordResults: SearchChunk[] = [];
       if (includeKeywordSearch) {
-        keywordResults = await this.keywordSearch(query, tenantId, accessLevel, maxResults);
+        keywordResults = await this.keywordSearch(enhancedQuery, tenantId, accessLevel, maxResults);
         console.log(`Keyword search found ${keywordResults.length} results`);
       }
 
@@ -88,12 +115,76 @@ export class HybridSearch {
       const fusedResults = this.fuseResults(vectorResults, keywordResults, fusionStrategy);
       console.log(`Fusion produced ${fusedResults.length} final results`);
 
-      // Step 4: Calculate overall confidence
-      const confidence = this.calculateHybridConfidence(vectorResults, keywordResults, fusedResults);
+      // Step 4: Semantic reranking for top results
+      let finalResults = fusedResults;
+      if (fusedResults.length > 0) {
+        try {
+          const rerankCandidates: RerankCandidate[] = fusedResults.slice(0, maxResults * 2).map(chunk => ({
+            id: chunk.id,
+            content: chunk.content,
+            document_id: chunk.document_id,
+            chunk_index: chunk.chunk_index,
+            initial_score: chunk.hybrid_score || chunk.similarity || chunk.keyword_score || 0.5,
+            metadata: chunk.metadata,
+            documents: chunk.documents
+          }));
 
+          const { results: rerankedResults } = await this.reranker.rerankResults(
+            query,
+            rerankCandidates,
+            {
+              topK: maxResults,
+              includeExplanations: false,
+              minRelevanceScore: 0.4
+            }
+          );
+
+          if (rerankedResults.length > 0) {
+            finalResults = rerankedResults.map(r => ({
+              ...r,
+              similarity: r.rerank_score,
+              hybrid_score: r.rerank_score,
+              reranked: true
+            }));
+            console.log(`Semantic reranking improved top result score from ${rerankCandidates[0]?.initial_score.toFixed(3)} to ${rerankedResults[0]?.rerank_score.toFixed(3)}`);
+          }
+        } catch (error) {
+          console.error('Reranking failed, using fusion results:', error);
+        }
+      }
+
+      // Step 5: Calculate overall confidence
+      const confidence = this.calculateHybridConfidence(vectorResults, keywordResults, finalResults);
+
+      // Calculate metrics
+      const latencyMs = Date.now() - startTime;
+      const relevanceScores = finalResults.slice(0, maxResults).map(r => r.similarity || 0);
+      const avgRelevance = relevanceScores.length > 0 
+        ? relevanceScores.reduce((a, b) => a + b, 0) / relevanceScores.length 
+        : 0;
+
+      // Record metrics
+      await ragMetrics.recordQueryMetrics({
+        query,
+        enhanced_query: enhancedQuery !== query ? enhancedQuery : undefined,
+        tenant_id: tenantId,
+        timestamp: Date.now(),
+        latency_ms: latencyMs,
+        results_count: finalResults.length,
+        vector_results: vectorResults.length,
+        keyword_results: keywordResults.length,
+        reranked: finalResults.length > 0 && this.reranker !== null,
+        cache_hits: 0, // Will be updated when cache is integrated
+        cache_misses: 0,
+        relevance_scores: relevanceScores,
+        avg_relevance: avgRelevance,
+        search_strategy: this.determineStrategy(keywordResults, vectorResults, finalResults)
+      });
+
+      // Return results
       return {
-        chunks: fusedResults.slice(0, maxResults),
-        searchStrategy: keywordResults.length > 0 ? 'hybrid_fusion' : 'vector_only',
+        chunks: finalResults.slice(0, maxResults),
+        searchStrategy: this.determineStrategy(keywordResults, vectorResults, finalResults),
         vectorResults: vectorResults.length,
         keywordResults: keywordResults.length,
         fusedResults: fusedResults.length,
@@ -102,6 +193,26 @@ export class HybridSearch {
 
     } catch (error) {
       console.error('Hybrid search error:', error);
+      
+      // Record error in metrics
+      await ragMetrics.recordQueryMetrics({
+        query,
+        enhanced_query: enhancedQuery !== query ? enhancedQuery : undefined,
+        tenant_id: tenantId,
+        timestamp: Date.now(),
+        latency_ms: Date.now() - startTime,
+        results_count: 0,
+        vector_results: 0,
+        keyword_results: 0,
+        reranked: false,
+        cache_hits: 0,
+        cache_misses: 0,
+        relevance_scores: [],
+        avg_relevance: 0,
+        search_strategy: 'error',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      
       throw error;
     }
   }
@@ -122,20 +233,23 @@ export class HybridSearch {
 
     // Search using Supabase function
     // Convert tenantId string to UUID format if needed
-    const { data, error } = await this.supabase.rpc('similarity_search', {
-      query_embedding: queryEmbedding,
-      match_threshold: threshold,
-      match_count: maxResults * 2, // Get more results for fusion
-      tenant_filter: tenantId ? tenantId : null, // Pass as UUID or null
-      access_level_filter: accessLevel
-    });
+    const { data: vectorResults, error: vectorError } = await this.supabase.rpc(
+      'similarity_search',
+      {
+        query_embedding: queryEmbedding,
+        match_threshold: threshold,
+        match_count: maxResults,
+        tenant_filter: tenantId, 
+        access_level_filter: accessLevel 
+      }
+    );
 
-    if (error) {
-      console.error('Vector search error:', error);
+    if (vectorError) {
+      console.error('Vector search error:', vectorError);
       return [];
     }
 
-    return (data || []).map((chunk: any) => ({
+    return (vectorResults || []).map((chunk: any) => ({
       ...chunk,
       similarity: chunk.similarity || 0.5,
       search_type: 'vector'
@@ -245,6 +359,19 @@ export class HybridSearch {
 
     // Create OR query for flexibility
     return words.join(' | ');
+  }
+
+  /**
+   * Determine search strategy based on results
+   */
+  private determineStrategy(
+    keywordResults: SearchChunk[],
+    vectorResults: SearchChunk[],
+    finalResults: SearchChunk[]
+  ): 'vector_only' | 'keyword_only' | 'hybrid_fusion' {
+    if (keywordResults.length === 0) return 'vector_only';
+    if (vectorResults.length === 0) return 'keyword_only';
+    return 'hybrid_fusion';
   }
 
   /**
