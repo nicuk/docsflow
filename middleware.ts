@@ -226,23 +226,38 @@ export default async function middleware(request: NextRequest) {
     if (hostname === 'docsflow.app' || hostname === 'www.docsflow.app' || hostname === 'localhost') {
       // CRITICAL FIX: Check if user has a tenant cookie but is on root domain
       const storedTenantId = request.cookies.get('tenant-id')?.value;
+      const storedTenantSubdomain = request.cookies.get('tenant-subdomain')?.value;
       
       // If user is on root domain but has a tenant cookie from previous session
-      if (storedTenantId && (pathname === '/login' || pathname === '/register' || pathname === '/')) {
+      // This includes logout, login, register, or root page access
+      if ((storedTenantId || storedTenantSubdomain) && 
+          (pathname === '/login' || pathname === '/register' || pathname === '/' || pathname === '/logout')) {
         // User explicitly wants to access root domain - clear ALL tenant cookies
-        console.log(`🔄 User accessing root domain, clearing tenant cookie: ${storedTenantId}`);
+        console.log(`🔄 User accessing root domain, clearing tenant cookies: ${storedTenantId || storedTenantSubdomain}`);
         const response = NextResponse.next();
         
         // CRITICAL: Clear cookies at multiple domain levels to ensure complete cleanup
         // This handles cookies that were set with domain=.docsflow.app
         response.cookies.delete('tenant-id');
+        response.cookies.delete('tenant-subdomain');
         response.headers.append('Set-Cookie', 'tenant-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT');
         response.headers.append('Set-Cookie', 'tenant-id=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT');
         response.headers.append('Set-Cookie', 'tenant-id=; path=/; domain=docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT');
+        response.headers.append('Set-Cookie', 'tenant-subdomain=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT');
+        response.headers.append('Set-Cookie', 'tenant-subdomain=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT');
+        response.headers.append('Set-Cookie', 'tenant-subdomain=; path=/; domain=docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT');
         
+        // Also clear auth cookies to ensure clean logout
         response.cookies.delete('access_token'); 
         response.cookies.delete('refresh_token');
         response.cookies.delete('user_email');
+        response.headers.append('Set-Cookie', 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT');
+        response.headers.append('Set-Cookie', 'access_token=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT');
+        response.headers.append('Set-Cookie', 'refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT');
+        response.headers.append('Set-Cookie', 'refresh_token=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT');
+        response.headers.append('Set-Cookie', 'user_email=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT');
+        response.headers.append('Set-Cookie', 'user_email=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT');
+        
         return createSecureResponse(response, origin);
       }
       
@@ -251,6 +266,7 @@ export default async function middleware(request: NextRequest) {
           pathname.startsWith('/api') || 
           pathname.startsWith('/login') ||
           pathname.startsWith('/register') ||
+          pathname.startsWith('/logout') ||
           pathname === '/') {
         // Continue to the backend route handler
         const response = NextResponse.next();

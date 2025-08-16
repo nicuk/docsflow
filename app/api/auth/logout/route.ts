@@ -12,8 +12,9 @@ const supabaseAdmin = createClient(
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies();
-    const authToken = cookieStore.get('auth-token')?.value;
+    const authToken = cookieStore.get('auth-token')?.value || cookieStore.get('access_token')?.value;
     const tenantId = cookieStore.get('tenant-id')?.value;
+    const tenantSubdomain = cookieStore.get('tenant-subdomain')?.value;
     
     console.log('🚪 Processing logout request...');
     
@@ -47,36 +48,40 @@ export async function POST(request: NextRequest) {
     );
     
     // Clear all auth-related cookies with proper domain handling
+    const isProduction = process.env.NODE_ENV === 'production';
     const domain = request.headers.get('host')?.includes('docsflow.app') 
       ? '.docsflow.app' 
       : undefined;
     
-    // Clear cookies for current domain
-    response.cookies.set('auth-token', '', {
-      path: '/',
-      expires: new Date(0),
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      ...(domain && { domain })
-    });
+    // List of all cookies to clear
+    const cookiesToClear = [
+      'auth-token',
+      'access_token',
+      'refresh_token',
+      'tenant-id',
+      'tenant-subdomain',
+      'user-email',
+      'user_email'
+    ];
     
-    response.cookies.set('tenant-id', '', {
-      path: '/',
-      expires: new Date(0),
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      ...(domain && { domain })
-    });
-    
-    response.cookies.set('user-email', '', {
-      path: '/',
-      expires: new Date(0),
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      ...(domain && { domain })
+    // Clear each cookie at multiple domain levels to ensure complete cleanup
+    cookiesToClear.forEach(cookieName => {
+      // Clear at current path
+      response.cookies.set(cookieName, '', {
+        path: '/',
+        expires: new Date(0),
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax'
+      });
+      
+      // If in production, also clear with domain specified
+      if (domain) {
+        response.headers.append(
+          'Set-Cookie',
+          `${cookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; domain=${domain}; ${isProduction ? 'secure; ' : ''}httpOnly; sameSite=lax`
+        );
+      }
     });
     
     console.log('✅ Logout completed successfully');
@@ -93,9 +98,10 @@ export async function POST(request: NextRequest) {
     );
     
     // Force clear cookies anyway
-    response.cookies.set('auth-token', '', { path: '/', expires: new Date(0) });
-    response.cookies.set('tenant-id', '', { path: '/', expires: new Date(0) });
-    response.cookies.set('user-email', '', { path: '/', expires: new Date(0) });
+    const cookiesToClear = ['auth-token', 'access_token', 'refresh_token', 'tenant-id', 'tenant-subdomain', 'user-email', 'user_email'];
+    cookiesToClear.forEach(cookieName => {
+      response.cookies.set(cookieName, '', { path: '/', expires: new Date(0) });
+    });
     
     return response;
   }

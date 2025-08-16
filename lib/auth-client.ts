@@ -189,8 +189,33 @@ class AuthClient {
       }
     });
     
-    // Step 3: Force redirect to login
-    window.location.href = '/login';
+    // Step 3: Clear cookies at browser level
+    // Clear all auth and tenant cookies
+    const cookiesToClear = [
+      'auth-token', 'access_token', 'refresh_token', 
+      'tenant-id', 'tenant-subdomain', 'user-email', 'user_email'
+    ];
+    
+    cookiesToClear.forEach(cookieName => {
+      // Clear for current domain
+      document.cookie = `${cookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+      // Clear for parent domain (if on subdomain)
+      document.cookie = `${cookieName}=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+      // Clear without domain specification
+      document.cookie = `${cookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax`;
+    });
+    
+    // Step 4: Force redirect to main domain login (not subdomain)
+    // This ensures we go to the root domain, not a tenant subdomain
+    if (window.location.hostname.includes('.docsflow.app') && 
+        !window.location.hostname.startsWith('api.') && 
+        !window.location.hostname.startsWith('www.')) {
+      // We're on a tenant subdomain, redirect to main domain
+      window.location.href = 'https://docsflow.app/login';
+    } else {
+      // We're on main domain or localhost
+      window.location.href = '/login';
+    }
   }
 
   // Create authenticated request headers
