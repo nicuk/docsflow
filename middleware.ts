@@ -119,13 +119,7 @@ export default async function middleware(request: NextRequest) {
 
 
 
-    // DOMAIN NORMALIZATION: Redirect www to apex
-    if (hostname === 'www.docsflow.app') {
-      const url = new URL(request.url);
-      url.hostname = 'docsflow.app';
-      // Preserve path and query
-      return NextResponse.redirect(url, 301);
-    }
+    // DOMAIN NORMALIZATION: www redirect now handled by vercel.json
 
     // REGIONAL PATHS: Redirect /my or /uk to root
     if ((hostname === 'docsflow.app' || hostname === 'api.docsflow.app' || hostname === 'localhost') &&
