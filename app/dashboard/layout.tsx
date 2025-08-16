@@ -40,7 +40,7 @@ import DocsFlowBrand from '@/components/DocsFlowBrand'
 
 const navigationItems = [
   { name: 'Dashboard', href: '/dashboard', icon: Home, badge: null },
-  { name: 'Documents', href: '/dashboard/documents', icon: FileText, badge: '24' },
+  { name: 'Documents', href: '/dashboard/documents', icon: FileText, badge: null }, // Dynamic count should be fetched from API
   { name: 'Chat Assistant', href: '/dashboard/chat', icon: MessageSquare, badge: null },
   { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, badge: null },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings, badge: null },

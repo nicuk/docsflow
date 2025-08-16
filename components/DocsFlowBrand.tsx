@@ -1,62 +1,74 @@
-import DocumentFlowLogo from "./DocumentFlowLogo";
+import Image from 'next/image';
 
 interface DocsFlowBrandProps {
   size?: "sm" | "md" | "lg" | "xl";
-  variant?: "horizontal" | "stacked";
-  iconVariant?: "primary" | "secondary";
-  showIcon?: boolean;
+  variant?: "horizontal" | "stacked" | "icon-only" | "text-only";
+  className?: string;
 }
 
 export default function DocsFlowBrand({ 
   size = "md", 
   variant = "horizontal",
-  iconVariant = "primary",
-  showIcon = true 
+  className = ""
 }: DocsFlowBrandProps) {
   const sizeConfig = {
     sm: {
-      icon: 32,
-      fontSize: "text-lg",
-      spacing: "gap-2"
+      height: 32,
+      width: variant === "horizontal" ? 120 : 32,
+      iconSize: 24
     },
     md: {
-      icon: 48,
-      fontSize: "text-2xl",
-      spacing: "gap-3"
+      height: 48,
+      width: variant === "horizontal" ? 180 : 48,
+      iconSize: 32
     },
     lg: {
-      icon: 64,
-      fontSize: "text-4xl",
-      spacing: "gap-4"
+      height: 64,
+      width: variant === "horizontal" ? 240 : 64,
+      iconSize: 48
     },
     xl: {
-      icon: 80,
-      fontSize: "text-5xl",
-      spacing: "gap-5"
+      height: 80,
+      width: variant === "horizontal" ? 300 : 80,
+      iconSize: 64
     }
   };
 
   const config = sizeConfig[size];
-  const isStacked = variant === "stacked";
 
-  return (
-    <div className={`
-      flex items-center 
-      ${isStacked ? 'flex-col' : 'flex-row'} 
-      ${config.spacing}
-    `}>
-      {showIcon && (
-        <DocumentFlowLogo size={config.icon} variant={iconVariant} />
-      )}
-      
-      <div className={`
-        ${config.fontSize} 
-        font-bold tracking-tight 
-        ${isStacked ? 'text-center' : ''}
-      `}>
+  // Icon only variant
+  if (variant === "icon-only") {
+    return (
+      <Image
+        src="/logo.svg"
+        alt="DocsFlow"
+        width={config.iconSize}
+        height={config.iconSize}
+        className={`${className}`}
+        priority
+      />
+    );
+  }
+
+  // Text only variant
+  if (variant === "text-only") {
+    return (
+      <div className={`font-bold tracking-tight ${className}`}>
         <span className="text-blue-600">DOCS</span>
-        <span className="text-slate-800 dark:text-slate-200 ml-1">FLOW</span>
+        <span className="text-slate-800 dark:text-slate-200">FLOW</span>
       </div>
-    </div>
+    );
+  }
+
+  // Horizontal (default) and stacked variants use horizontal brand logo
+  return (
+    <Image
+      src="/docsflow-brand-primary-horizontal-md (1).svg"
+      alt="DocsFlow - Turn Documents Into Instant Answers"
+      width={variant === "stacked" ? config.height : config.width}
+      height={config.height}
+      className={`${className}`}
+      priority
+    />
   );
 }

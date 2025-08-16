@@ -17,10 +17,10 @@ export const metadata: Metadata = {
   keywords: "document AI, document search, AI document analysis, SOPs, contract analysis, team productivity, business efficiency",
   icons: {
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/logo.svg', type: 'image/svg+xml' },
       { url: '/favicon.ico', sizes: '32x32' }
     ],
-    apple: '/apple-touch-icon.png',
+    apple: '/logo.png',
     shortcut: '/favicon.ico'
   },
   openGraph: {
@@ -33,10 +33,10 @@ export const metadata: Metadata = {
     siteName: "DocsFlow",
     images: [
       {
-        url: "https://docsflow.app/og-image.svg",
+        url: "https://docsflow.app/logo.png",
         width: 1200,
         height: 630,
-        alt: "DocsFlow - AI Document Intelligence",
+        alt: "DocsFlow - Turn Documents Into Instant Answers",
       },
     ],
   },
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "DocsFlow | AI-Powered Document Intelligence",
     description: "Stop searching files. Start getting answers. AI that understands your business documents.",
-    images: ["https://docsflow.app/og-image.svg"],
+    images: ["https://docsflow.app/logo.png"],
   },
   robots: {
     index: true,
@@ -53,11 +53,6 @@ export const metadata: Metadata = {
   generator: 'DocsFlow',
   alternates: {
     canonical: 'https://docsflow.app',
-    languages: {
-      'en-US': 'https://docsflow.app',
-      'en-MY': 'https://docsflow.app/my',
-      'en-GB': 'https://docsflow.app/uk',
-    },
   },
 }
 

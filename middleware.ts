@@ -119,6 +119,21 @@ export default async function middleware(request: NextRequest) {
 
 
 
+    // DOMAIN NORMALIZATION: Redirect www to apex
+    if (hostname === 'www.docsflow.app') {
+      const url = new URL(request.url);
+      url.hostname = 'docsflow.app';
+      // Preserve path and query
+      return NextResponse.redirect(url, 301);
+    }
+
+    // REGIONAL PATHS: Redirect /my or /uk to root
+    if ((hostname === 'docsflow.app' || hostname === 'api.docsflow.app' || hostname === 'localhost') &&
+        (pathname === '/my' || pathname.startsWith('/my/') || pathname === '/uk' || pathname.startsWith('/uk/'))) {
+      const root = new URL('https://docsflow.app/');
+      return NextResponse.redirect(root, 301);
+    }
+
     // CRITICAL: Handle API subdomain separately - it's NOT a tenant
     if (hostname === 'api.docsflow.app' || hostname === 'api.localhost') {
       // API subdomain should pass through without tenant context
