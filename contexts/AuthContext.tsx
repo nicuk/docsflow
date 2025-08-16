@@ -81,16 +81,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } else if (data.onboardingComplete && data.tenant) {
           // User has completed onboarding and has a tenant
           const currentHost = window.location.hostname;
-          const expectedHost = `${data.tenant.subdomain}.docsflow.app`;
           
-          // Check if we're on the wrong subdomain (but not in local dev)
-          if (!currentHost.includes('localhost') && !currentHost.includes(data.tenant.subdomain)) {
-            // Redirect to correct tenant subdomain
-            window.location.href = `https://${expectedHost}/dashboard`;
-          } else if (isPublicPath) {
-            // Redirect authenticated users away from public pages
+          // Only redirect authenticated users away from public pages if they're on the same domain
+          // Don't auto-redirect to tenant subdomains from main domain
+          if (isPublicPath && currentHost.includes(data.tenant.subdomain)) {
+            // User is on their tenant subdomain and visiting public pages - redirect to dashboard
             router.push('/dashboard');
           }
+          // If user is on main domain (docsflow.app), let them stay and use the login form
         }
       } else {
         // Not authenticated

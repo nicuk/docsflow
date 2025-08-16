@@ -136,9 +136,18 @@ export default function OnboardingFlow() {
             
             // If user already has a tenant, redirect to dashboard
             if (onboardingData.onboardingComplete && onboardingData.tenant?.subdomain) {
-              console.log('🏢 User already has tenant, redirecting to dashboard');
-              window.location.href = `https://${onboardingData.tenant.subdomain}.docsflow.app/dashboard`;
-              return;
+              const currentHostname = window.location.hostname;
+              
+              // Only auto-redirect if user is already on a tenant subdomain
+              // If they're on main domain (docsflow.app), respect their choice to stay
+              if (currentHostname !== 'docsflow.app' && currentHostname !== 'localhost') {
+                console.log('🏢 User already has tenant, redirecting to dashboard');
+                window.location.href = `https://${onboardingData.tenant.subdomain}.docsflow.app/dashboard`;
+                return;
+              } else {
+                console.log('🏠 User on main domain with existing tenant - allowing manual navigation');
+                // Don't auto-redirect, let them choose where to go
+              }
             }
             
             // User needs onboarding - continue with flow

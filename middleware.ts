@@ -223,7 +223,7 @@ export default async function middleware(request: NextRequest) {
     }
 
     // Handle root domain (docsflow.app) access
-    if (hostname === 'docsflow.app' || hostname === 'www.docsflow.app' || hostname === 'localhost') {
+    if (hostname === 'docsflow.app' || hostname === 'localhost') {
       // ONLY clear cookies on explicit logout path to prevent redirect loops
       if (pathname === '/logout') {
         console.log('🔄 Logout requested, clearing all cookies');
