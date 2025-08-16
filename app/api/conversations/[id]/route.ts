@@ -43,16 +43,54 @@ export async function GET(
     const supabase = getSupabaseClient();
     const conversationId = params.id;
 
+    // Handle local conversations (frontend localStorage-based)
+    if (conversationId.startsWith('local-')) {
+      return NextResponse.json(
+        { 
+          conversation: {
+            id: conversationId,
+            title: 'Local Conversation',
+            createdAt: new Date().toISOString()
+          },
+          messages: [],
+          metadata: {
+            source: 'local',
+            tenantId
+          }
+        },
+        { headers: corsHeaders }
+      );
+    }
+
     // For now, use demo user ID since we don't have full auth yet
     const userId = '00000000-0000-0000-0000-000000000000';
 
-    // Verify conversation exists and belongs to tenant
-    const { data: conversation, error: convError } = await supabase
+    // Try both conversation tables for backward compatibility
+    let conversation, convError;
+    
+    // First try chat_conversations (new format)
+    const { data: chatConv, error: chatError } = await supabase
       .from('chat_conversations')
       .select('id, title, created_at')
       .eq('id', conversationId)
       .eq('tenant_id', tenantId)
       .single();
+    
+    if (chatConv) {
+      conversation = chatConv;
+      convError = chatError;
+    } else {
+      // Fallback to conversations table (old format)
+      const { data: oldConv, error: oldError } = await supabase
+        .from('conversations')
+        .select('id, title, created_at')
+        .eq('id', conversationId)
+        .eq('tenant_id', tenantId)
+        .single();
+      
+      conversation = oldConv;
+      convError = oldError;
+    }
 
     if (convError || !conversation) {
       return NextResponse.json(
