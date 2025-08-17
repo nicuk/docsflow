@@ -46,11 +46,14 @@ export async function POST(request: NextRequest) {
     
     // Step 3: Create response that redirects to main domain
     // CRITICAL: Redirect to main domain to escape subdomain context
-    const isOnSubdomain = request.headers.get('host')?.includes('.docsflow.app') && 
+    const isOnSubdomain = request.headers.get('host')?.includes('.docsflow.app') &&
                          !request.headers.get('host')?.startsWith('api.') &&
                          !request.headers.get('host')?.startsWith('www.');
     
-    const redirectUrl = isOnSubdomain ? 'https://docsflow.app/login' : '/login';
+    // Use query parameter to force escape from subdomain
+    const redirectUrl = isOnSubdomain 
+      ? `https://docsflow.app/login?logged_out=${Date.now()}` 
+      : `/login?logged_out=${Date.now()}`;
     
     const response = NextResponse.json(
       { success: true, message: 'Logged out successfully', redirectUrl },

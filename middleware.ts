@@ -218,8 +218,30 @@ export default async function middleware(request: NextRequest) {
 
     // Handle root domain (docsflow.app) access
     if (hostname === 'docsflow.app' || hostname === 'localhost') {
-      // Check if user has tenant cookies but is trying to access login/register
-      // This prevents forced redirects after logout
+      // ESCAPE HATCH: Check for logout query parameter FIRST
+      const { searchParams } = new URL(request.url);
+      const isLoggedOut = searchParams.get('logged_out');
+      
+      if (isLoggedOut) {
+        console.log('🚪 LOGOUT ESCAPE HATCH ACTIVATED - Clearing all cookies');
+        const response = NextResponse.next();
+        
+        // Nuclear cookie clearing
+        const cookiesToClear = [
+          'tenant-id', 'tenant-subdomain', 'access_token', 'refresh_token',
+          'user_email', 'user-email', 'auth-token', 'sb-access-token', 'sb-refresh-token'
+        ];
+        
+        cookiesToClear.forEach(cookie => {
+          response.cookies.delete(cookie);
+          response.headers.append('Set-Cookie', `${cookie}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`);
+          response.headers.append('Set-Cookie', `${cookie}=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT`);
+        });
+        
+        return createSecureResponse(response, origin);
+      }
+      
+      // Check if user has tenant cookies
       const tenantId = request.cookies.get('tenant-id')?.value;
       const tenantSubdomain = request.cookies.get('tenant-subdomain')?.value;
       const authToken = request.cookies.get('access_token')?.value;
@@ -253,6 +275,9 @@ export default async function middleware(request: NextRequest) {
         
         return createSecureResponse(response, origin);
       }
+      
+      // REMOVED: The redirect to tenant subdomain was causing infinite loops
+      // Let the frontend handle routing based on user state instead
       
       // Allow these routes on root domain without any cookie manipulation
       if (pathname.startsWith('/onboarding') || 
