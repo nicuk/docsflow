@@ -292,16 +292,14 @@ export default async function middleware(request: NextRequest) {
     }
 
     // Handle backend domain access - redirect to main domain for non-API routes
-    if (hostname.includes('ai-lead-router-saas') && hostname.includes('vercel.app')) {
-
-      
+    if (hostname.includes('ai-lead-router-saas') && hostname.includes('vercel.app') && !hostname.includes('docsflow.app')) {
       // Allow API routes and onboarding on backend domain
       if (pathname.startsWith('/api') || pathname.startsWith('/onboarding') || pathname.startsWith('/app/')) {
         const response = NextResponse.next();
         return createSecureResponse(response, origin);
       }
       
-      // Redirect non-API routes to main domain
+      // Only redirect if we're NOT already on docsflow.app domain
       return NextResponse.redirect(new URL(`https://docsflow.app${pathname}`, request.url), 301);
     }
 
