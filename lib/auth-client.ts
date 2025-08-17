@@ -156,6 +156,8 @@ class AuthClient {
 
   // Logout user
   async logout(): Promise<void> {
+    let redirectUrl: string | null = null;
+    
     try {
       // Step 1: Call backend logout endpoint to clear server-side session
       const response = await fetch(`${this.baseUrl}/api/auth/logout`, {
@@ -166,7 +168,11 @@ class AuthClient {
         credentials: 'include', // Include cookies
       });
       
-      if (!response.ok) {
+      if (response.ok) {
+        const data = await response.json();
+        redirectUrl = data.redirectUrl; // Get redirect URL from backend
+        console.log('✅ Server logout successful, redirect URL:', redirectUrl);
+      } else {
         console.warn('⚠️ Server logout failed, proceeding with client cleanup');
       }
       
@@ -206,8 +212,11 @@ class AuthClient {
     });
     
     // Step 4: Force redirect to main domain login (not subdomain)
-    // This ensures we go to the root domain, not a tenant subdomain
-    if (window.location.hostname.includes('.docsflow.app') && 
+    // Use the redirect URL from backend if available, otherwise determine based on current location
+    if (redirectUrl) {
+      // Backend provided a redirect URL (e.g., to escape subdomain)
+      window.location.href = redirectUrl;
+    } else if (window.location.hostname.includes('.docsflow.app') && 
         !window.location.hostname.startsWith('api.') && 
         !window.location.hostname.startsWith('www.')) {
       // We're on a tenant subdomain, redirect to main domain

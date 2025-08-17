@@ -218,21 +218,34 @@ export default async function middleware(request: NextRequest) {
 
     // Handle root domain (docsflow.app) access
     if (hostname === 'docsflow.app' || hostname === 'localhost') {
+      // Check if user has tenant cookies but is trying to access login/register
+      // This prevents forced redirects after logout
+      const tenantId = request.cookies.get('tenant-id')?.value;
+      const tenantSubdomain = request.cookies.get('tenant-subdomain')?.value;
+      const authToken = request.cookies.get('access_token')?.value;
+      
+      // CRITICAL: Don't redirect to tenant if user is explicitly on login/register pages
+      // This allows users to stay on main domain after logout
+      if ((pathname === '/login' || pathname === '/register') && (tenantId || tenantSubdomain)) {
+        console.log('⚠️ User on login/register with stale tenant cookies, allowing main domain access');
+        const response = NextResponse.next();
+        // Don't forcibly clear cookies here - let the login process handle it
+        return createSecureResponse(response, origin);
+      }
+      
       // ONLY clear cookies on explicit logout path to prevent redirect loops
       if (pathname === '/logout') {
         console.log('🔄 Logout requested, clearing all cookies');
-        const response = NextResponse.next();
+        const response = NextResponse.redirect(new URL('/login', request.url));
         
         // Clear all auth and tenant cookies at multiple domain levels
-        response.cookies.delete('tenant-id');
-        response.cookies.delete('tenant-subdomain');
-        response.cookies.delete('access_token'); 
-        response.cookies.delete('refresh_token');
-        response.cookies.delete('user_email');
+        const cookiesToClear = [
+          'tenant-id', 'tenant-subdomain', 'access_token', 'refresh_token', 
+          'user_email', 'user-email', 'auth-token', 'sb-access-token', 'sb-refresh-token'
+        ];
         
-        // Clear with domain variations for complete cleanup
-        const cookiesToClear = ['tenant-id', 'tenant-subdomain', 'access_token', 'refresh_token', 'user_email'];
         cookiesToClear.forEach(cookie => {
+          response.cookies.delete(cookie);
           response.headers.append('Set-Cookie', `${cookie}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`);
           response.headers.append('Set-Cookie', `${cookie}=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT`);
           response.headers.append('Set-Cookie', `${cookie}=; path=/; domain=docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT`);
