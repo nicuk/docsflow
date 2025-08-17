@@ -217,71 +217,30 @@ export default async function middleware(request: NextRequest) {
     }
 
     // Handle root domain (docsflow.app) access
-    if (hostname === 'docsflow.app' || hostname === 'localhost') {
-      // ESCAPE HATCH: Check for logout query parameter FIRST
-      const { searchParams } = new URL(request.url);
-      const isLoggedOut = searchParams.get('logged_out');
+    if (hostname === 'docsflow.app' || hostname === 'www.docsflow.app' || hostname === 'localhost') {
+      // CRITICAL FIX: Check if user has a tenant cookie but is on root domain
+      const storedTenantId = request.cookies.get('tenant-id')?.value;
       
-      if (isLoggedOut) {
-        console.log('🚪 LOGOUT ESCAPE HATCH ACTIVATED - Clearing all cookies');
+      // If user is on root domain but has a tenant cookie from previous session
+      if (storedTenantId && (pathname === '/login' || pathname === '/register' || pathname === '/')) {
+        // User explicitly wants to access root domain - clear ALL tenant cookies
+        console.log(`🔄 User accessing root domain, clearing tenant cookie: ${storedTenantId}`);
         const response = NextResponse.next();
         
-        // Nuclear cookie clearing
-        const cookiesToClear = [
-          'tenant-id', 'tenant-subdomain', 'access_token', 'refresh_token',
-          'user_email', 'user-email', 'auth-token', 'sb-access-token', 'sb-refresh-token'
-        ];
+        // CRITICAL: Clear cookies at multiple domain levels to ensure complete cleanup
+        // This handles cookies that were set with domain=.docsflow.app
+        response.cookies.delete('tenant-id');
+        response.headers.append('Set-Cookie', 'tenant-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT');
+        response.headers.append('Set-Cookie', 'tenant-id=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT');
+        response.headers.append('Set-Cookie', 'tenant-id=; path=/; domain=docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT');
         
-        cookiesToClear.forEach(cookie => {
-          response.cookies.delete(cookie);
-          response.headers.append('Set-Cookie', `${cookie}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`);
-          response.headers.append('Set-Cookie', `${cookie}=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT`);
-        });
-        
+        response.cookies.delete('access_token'); 
+        response.cookies.delete('refresh_token');
+        response.cookies.delete('user_email');
         return createSecureResponse(response, origin);
       }
       
-      // Check if user has tenant cookies
-      const tenantId = request.cookies.get('tenant-id')?.value;
-      const tenantSubdomain = request.cookies.get('tenant-subdomain')?.value;
-      const authToken = request.cookies.get('access_token')?.value;
-      
-      // CRITICAL: Don't redirect to tenant if user is explicitly on login/register pages
-      // This allows users to stay on main domain after logout
-      if ((pathname === '/login' || pathname === '/register') && (tenantId || tenantSubdomain)) {
-        console.log('⚠️ User on login/register with stale tenant cookies, allowing main domain access');
-        const response = NextResponse.next();
-        // Don't forcibly clear cookies here - let the login process handle it
-        return createSecureResponse(response, origin);
-      }
-      
-      // ONLY clear cookies on explicit logout path to prevent redirect loops
-      if (pathname === '/logout') {
-        console.log('🔄 Logout requested, clearing all cookies');
-        // FIX: Add escape hatch to logout redirect
-        const timestamp = Date.now();
-        const response = NextResponse.redirect(new URL(`/login?logged_out=${timestamp}`, request.url));
-        
-        // Clear all auth and tenant cookies at multiple domain levels
-        const cookiesToClear = [
-          'tenant-id', 'tenant-subdomain', 'access_token', 'refresh_token', 
-          'user_email', 'user-email', 'auth-token', 'sb-access-token', 'sb-refresh-token'
-        ];
-        
-        cookiesToClear.forEach(cookie => {
-          response.cookies.delete(cookie);
-          response.headers.append('Set-Cookie', `${cookie}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`);
-          response.headers.append('Set-Cookie', `${cookie}=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT`);
-          response.headers.append('Set-Cookie', `${cookie}=; path=/; domain=docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT`);
-        });
-        
-        return createSecureResponse(response, origin);
-      }
-      
-      // REMOVED: The redirect to tenant subdomain was causing infinite loops
-      // Let the frontend handle routing based on user state instead
-      
-      // Allow these routes on root domain without any cookie manipulation
+      // Allow these routes on root domain
       if (pathname.startsWith('/onboarding') || 
           pathname.startsWith('/api') || 
           pathname.startsWith('/login') ||
@@ -293,11 +252,20 @@ export default async function middleware(request: NextRequest) {
       }
     }
 
-    // REMOVED: Backend domain redirect logic that was causing infinite loops
-    // Vercel handles domain routing internally - we should NOT redirect Vercel domains
+    // Handle backend domain access - redirect to main domain for non-API routes
+    if (hostname.includes('ai-lead-router-saas') && hostname.includes('vercel.app')) {
+      
+      // Allow API routes and onboarding on backend domain
+      if (pathname.startsWith('/api') || pathname.startsWith('/onboarding') || pathname.startsWith('/app/')) {
+        const response = NextResponse.next();
+        return createSecureResponse(response, origin);
+      }
+      
+      // Redirect non-API routes to main domain
+      return NextResponse.redirect(new URL(`https://docsflow.app${pathname}`, request.url), 301);
+    }
 
     // Default - allow frontend to handle
-
     const response = NextResponse.next();
     return createSecureResponse(response, origin);
     
