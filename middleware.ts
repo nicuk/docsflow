@@ -121,11 +121,11 @@ export default async function middleware(request: NextRequest) {
 
     // DOMAIN NORMALIZATION: www redirect now handled by vercel.json
 
-    // REGIONAL PATHS: Redirect /my or /uk to root
+    // REGIONAL PATHS: Redirect /my or /uk to root ONLY if not already at root
     if ((hostname === 'docsflow.app' || hostname === 'api.docsflow.app' || hostname === 'localhost') &&
         (pathname === '/my' || pathname.startsWith('/my/') || pathname === '/uk' || pathname.startsWith('/uk/'))) {
-      const root = new URL('https://docsflow.app/');
-      return NextResponse.redirect(root, 301);
+      // FIX: Use relative redirect to avoid infinite loops
+      return NextResponse.redirect(new URL('/', request.url), 301);
     }
 
     // CRITICAL: Handle API subdomain separately - it's NOT a tenant
@@ -258,7 +258,9 @@ export default async function middleware(request: NextRequest) {
       // ONLY clear cookies on explicit logout path to prevent redirect loops
       if (pathname === '/logout') {
         console.log('🔄 Logout requested, clearing all cookies');
-        const response = NextResponse.redirect(new URL('/login', request.url));
+        // FIX: Add escape hatch to logout redirect
+        const timestamp = Date.now();
+        const response = NextResponse.redirect(new URL(`/login?logged_out=${timestamp}`, request.url));
         
         // Clear all auth and tenant cookies at multiple domain levels
         const cookiesToClear = [
@@ -291,17 +293,8 @@ export default async function middleware(request: NextRequest) {
       }
     }
 
-    // Handle backend domain access - redirect to main domain for non-API routes
-    if (hostname.includes('ai-lead-router-saas') && hostname.includes('vercel.app') && !hostname.includes('docsflow.app')) {
-      // Allow API routes and onboarding on backend domain
-      if (pathname.startsWith('/api') || pathname.startsWith('/onboarding') || pathname.startsWith('/app/')) {
-        const response = NextResponse.next();
-        return createSecureResponse(response, origin);
-      }
-      
-      // Only redirect if we're NOT already on docsflow.app domain
-      return NextResponse.redirect(new URL(`https://docsflow.app${pathname}`, request.url), 301);
-    }
+    // REMOVED: Backend domain redirect logic that was causing infinite loops
+    // Vercel handles domain routing internally - we should NOT redirect Vercel domains
 
     // Default - allow frontend to handle
 
