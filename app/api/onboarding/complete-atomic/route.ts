@@ -61,13 +61,62 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    // Start atomic transaction using Supabase RPC
+    // First create tenant if user doesn't have one
+    let tenantId;
+    
+    // Check if user already has a tenant
+    const { data: existingUser } = await supabaseAdmin
+      .from('users')
+      .select('tenant_id')
+      .eq('id', userId)
+      .single();
+    
+    if (existingUser?.tenant_id) {
+      tenantId = existingUser.tenant_id;
+    } else {
+      // Create new tenant
+      const newTenantId = crypto.randomUUID();
+      
+      // Insert tenant
+      const { error: tenantError } = await supabaseAdmin
+        .from('tenants')
+        .insert({
+          id: newTenantId,
+          subdomain: cleanSubdomain,
+          name: businessName || cleanSubdomain,
+          industry: industry || 'general'
+        });
+      
+      if (tenantError) {
+        if (tenantError.message?.includes('duplicate key')) {
+          return NextResponse.json(
+            { error: 'Subdomain already taken' },
+            { status: 409, headers: corsHeaders }
+          );
+        }
+        throw tenantError;
+      }
+      
+      // Update user with tenant_id
+      const { error: userError } = await supabaseAdmin
+        .from('users')
+        .update({ tenant_id: newTenantId, role: 'admin' })
+        .eq('id', userId);
+      
+      if (userError) throw userError;
+      
+      tenantId = newTenantId;
+    }
+
+    // Now call the 2-parameter function for onboarding responses
     const { data: result, error: transactionError } = await supabaseAdmin.rpc('complete_onboarding_atomic', {
       p_user_id: userId,
-      p_subdomain: cleanSubdomain,
-      p_business_name: businessName || cleanSubdomain,
-      p_industry: industry || 'technology',
-      p_responses: responses || {}
+      p_responses: {
+        subdomain: cleanSubdomain,
+        business_name: businessName || cleanSubdomain,
+        industry: industry || 'technology',
+        ...responses
+      }
     });
 
     if (transactionError) {
@@ -87,16 +136,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create response with updated session cookies
+    // Update result to include tenant info
     const response = createResponseWithSessionCookies(
       {
         success: true,
-        tenant: result.tenant,
+        tenant: {
+          id: tenantId,
+          subdomain: cleanSubdomain,
+          name: businessName || cleanSubdomain,
+          industry: industry || 'general'
+        },
         redirectUrl: `https://${cleanSubdomain}.docsflow.app/dashboard`
       },
       {
-        'tenant-id': result.tenant.id,
-        'tenant-subdomain': cleanSubdomain
+        tenantId: tenantId,
+        onboardingComplete: true
       }
     );
 
