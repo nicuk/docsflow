@@ -39,6 +39,38 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [message, setMessage] = useState('')
+
+  // Handle session bridge from main domain
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionBridge = urlParams.get('session_bridge');
+    const token = urlParams.get('token');
+    
+    if (sessionBridge === 'true' && token) {
+      console.log('🌉 Processing session bridge from main domain');
+      
+      // Set the authentication token for this subdomain
+      localStorage.setItem('access_token', decodeURIComponent(token));
+      
+      // Get current subdomain for tenant context
+      const hostname = window.location.hostname;
+      const subdomain = hostname.split('.')[0];
+      
+      if (subdomain && subdomain !== 'www' && subdomain !== 'api') {
+        // Set tenant context cookie for this subdomain
+        document.cookie = `tenant-id=${subdomain}; path=/; secure; samesite=lax`;
+        
+        // Clear URL parameters and redirect to dashboard
+        window.history.replaceState({}, document.title, '/dashboard');
+        
+        // Small delay to ensure cookies are set
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 500);
+      }
+    }
+  }, []);
 
   // Redirect to dashboard after successful login
   useEffect(() => {
@@ -139,30 +171,26 @@ export default function LoginPage() {
         if (userTenantSubdomain) {
           console.log(`🔐 User belongs to tenant: ${userTenantSubdomain}`)
           
-          // If user is on root domain, stay on root domain and go to dashboard
           if (isRootDomain) {
-            console.log(`📍 User logged in from root domain - staying on root domain`)
-            // Clear any tenant cookies to prevent middleware redirects
-            // CRITICAL: Don't use domain=.docsflow.app as it affects ALL subdomains
+            // SURGICAL FIX: Smooth transition from main domain to tenant
+            console.log(`📍 User logged in from main domain - redirecting to tenant with session bridge`)
+            
+            setMessage('Login successful! Redirecting to your workspace...')
+            
+            // Clear any conflicting tenant cookies
             document.cookie = 'tenant-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
             
+            // Create session bridge URL with authentication token
+            const bridgeUrl = `https://${userTenantSubdomain}.docsflow.app/login?session_bridge=true&token=${encodeURIComponent(data.user.access_token)}`
+            
             setTimeout(() => {
-              router.push('/dashboard') // Stay on root domain
+              window.location.href = bridgeUrl
             }, 1500)
           } else {
-            // User is on tenant subdomain - redirect to their tenant
-            console.log(`📍 User logged in from tenant subdomain - redirecting to their tenant`)
-            
-            // Clear any existing mismatched tenant-id cookie
-            document.cookie = 'tenant-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-            
-            // Set the correct tenant-id cookie ONLY for this subdomain
-            // CRITICAL: Don't use domain=.docsflow.app as it affects ALL subdomains
-            document.cookie = `tenant-id=${userTenantSubdomain}; path=/; secure; samesite=strict`
-            
-            // Redirect to the user's actual tenant subdomain
+            // User is on tenant subdomain already
+            console.log(`📍 User logged in from tenant subdomain - staying on tenant`)
             setTimeout(() => {
-              window.location.href = `https://${userTenantSubdomain}.docsflow.app/dashboard`
+              router.push('/dashboard')
             }, 1500)
           }
         } else {

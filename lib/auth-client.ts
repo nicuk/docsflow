@@ -212,18 +212,21 @@ class AuthClient {
     });
     
     // Step 4: Force redirect to main domain login (not subdomain)
-    // Use the redirect URL from backend if available, otherwise determine based on current location
+    // SURGICAL FIX: Use window.location.replace for more forceful redirect
     if (redirectUrl) {
       // Backend provided a redirect URL (e.g., to escape subdomain)
-      window.location.href = redirectUrl;
+      console.log('🔄 Redirecting to backend-provided URL:', redirectUrl);
+      window.location.replace(redirectUrl);
     } else if (window.location.hostname.includes('.docsflow.app') && 
         !window.location.hostname.startsWith('api.') && 
         !window.location.hostname.startsWith('www.')) {
       // We're on a tenant subdomain, redirect to main domain
-      window.location.href = 'https://docsflow.app/login';
+      console.log('🔄 Redirecting from subdomain to main domain');
+      window.location.replace('https://docsflow.app/login');
     } else {
       // We're on main domain or localhost
-      window.location.href = '/login';
+      console.log('🔄 Redirecting to login on same domain');
+      window.location.replace('/login');
     }
   }
 

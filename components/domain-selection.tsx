@@ -188,24 +188,44 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
     setRequestingAccess(true);
     
     try {
-      // Request to join existing tenant
-      const response = await fetch(`/api/tenant/${existingTenant.id}/request-access`, {
+      // Get user email from storage or auth
+      const userEmail = localStorage.getItem('user-email') || 
+                       localStorage.getItem('user_email');
+      
+      if (!userEmail) {
+        alert('Please sign in first to request access.');
+        window.location.href = '/login';
+        return;
+      }
+      
+      // SURGICAL FIX: Use existing invitation request system
+      const response = await fetch('/api/invitations/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: localStorage.getItem('user-email'), // From signup
-          message: `Requesting access to join ${existingTenant.name}`
+          subdomain: existingTenant.subdomain,
+          userEmail: userEmail,
+          companyName: existingTenant.name,
+          message: `Requesting access to join ${existingTenant.name} workspace`,
+          requestType: 'join_existing'
         })
       });
 
       if (response.ok) {
-        alert('Access request sent! The organization owner will review your request.');
+        // Show success message and redirect
+        alert('Access request sent! The organization admin will review your request and send you an invitation.');
+        
+        // Redirect to main domain to avoid subdomain issues
+        setTimeout(() => {
+          window.location.href = 'https://docsflow.app/login?message=access_requested';
+        }, 2000);
       } else {
-        throw new Error('Failed to send request');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send request');
       }
     } catch (error) {
-      console.error('Error requesting access:', error);
-      alert('Failed to send access request. Please try again.');
+      console.error('Access request error:', error);
+      alert(`Failed to send access request: ${error.message}. Please try again or contact support.`);
     } finally {
       setRequestingAccess(false);
     }

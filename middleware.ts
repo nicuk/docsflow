@@ -149,6 +149,14 @@ export default async function middleware(request: NextRequest) {
         // Only set x-tenant-subdomain, not x-tenant-id (which needs UUID)
         // The actual tenant UUID will be resolved by the API routes
         response.headers.set('x-tenant-subdomain', tenant);
+        
+        // SURGICAL FIX: Special handling for logout - clear tenant headers
+        if (pathname === '/api/auth/logout') {
+          response.headers.delete('x-tenant-id');
+          response.headers.delete('x-tenant-subdomain');
+          console.log('🚪 Logout request - clearing tenant context');
+        }
+        
         return createSecureResponse(response, origin);
       }
       
@@ -166,18 +174,33 @@ export default async function middleware(request: NextRequest) {
       const userEmail = request.cookies.get('user_email')?.value;
       const authToken = request.cookies.get('access_token')?.value;
       
-      // If user has a different tenant stored, clear it for proper isolation
+      // If user has a different tenant stored, handle gracefully
       if (storedTenantId && storedTenantId !== tenant) {
         console.log(`⚠️ Tenant mismatch detected! Stored: ${storedTenantId}, Current: ${tenant}`);
-        // User is trying to access a different tenant - need to re-authenticate
+        
+        // Check if this is a session bridge request
+        const sessionBridge = request.nextUrl.searchParams.get('session_bridge');
+        
+        if (sessionBridge === 'true') {
+          // Allow session bridge - clear old tenant context
+          const response = NextResponse.next();
+          response.cookies.delete('tenant-id');
+          response.headers.set('x-tenant-subdomain', tenant);
+          console.log(`🌉 Session bridge - clearing old tenant context`);
+          return createSecureResponse(response, origin);
+        }
+        
+        // Normal tenant mismatch - redirect to login
         const response = NextResponse.rewrite(new URL(`/login`, request.url));
         response.headers.set('x-tenant-id', tenant);
         response.headers.set('x-tenant-subdomain', tenant);
-        // Clear the mismatched tenant cookie
+        
+        // Clear mismatched cookies
         response.cookies.delete('tenant-id');
         response.cookies.delete('access_token');
         response.cookies.delete('refresh_token');
         response.cookies.delete('user_email');
+        
         console.log(`🔄 Cleared cookies for tenant switch from ${storedTenantId} to ${tenant}`);
         return createSecureResponse(response, origin);
       }
