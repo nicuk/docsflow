@@ -72,5 +72,14 @@ export const supabase = getSupabaseClient();
 // Server client for SSR operations
 export { createServerClient }
 
-// Export default browser client
-export default createSupabaseClient()
+// Export singleton browser client
+let browserClient: ReturnType<typeof createSupabaseClient> | null = null
+
+export const getSupabaseBrowserClient = () => {
+  if (!browserClient) {
+    browserClient = createSupabaseClient()
+  }
+  return browserClient
+}
+
+export default getSupabaseBrowserClient()

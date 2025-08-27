@@ -184,25 +184,18 @@ export default async function middleware(request: NextRequest) {
         if (sessionBridge === 'true') {
           // Allow session bridge - clear old tenant context
           const response = NextResponse.next();
-          response.cookies.delete('tenant-id');
+          response.headers.set('x-tenant-id', tenant);
           response.headers.set('x-tenant-subdomain', tenant);
-          console.log(`🌉 Session bridge - clearing old tenant context`);
+          
+          // Clear mismatched cookies only for real tenant switches
+          response.cookies.delete('tenant-id');
+          response.cookies.delete('access_token');
+          response.cookies.delete('refresh_token');
+          response.cookies.delete('user_email');
+          
+          console.log(`🔄 Cleared cookies for tenant switch from ${storedTenantId} to ${tenant}`);
           return createSecureResponse(response, origin);
         }
-        
-        // Normal tenant mismatch - redirect to login
-        const response = NextResponse.rewrite(new URL(`/login`, request.url));
-        response.headers.set('x-tenant-id', tenant);
-        response.headers.set('x-tenant-subdomain', tenant);
-        
-        // Clear mismatched cookies
-        response.cookies.delete('tenant-id');
-        response.cookies.delete('access_token');
-        response.cookies.delete('refresh_token');
-        response.cookies.delete('user_email');
-        
-        console.log(`🔄 Cleared cookies for tenant switch from ${storedTenantId} to ${tenant}`);
-        return createSecureResponse(response, origin);
       }
 
       // If root path, check if user is authenticated

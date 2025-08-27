@@ -65,5 +65,14 @@ export const getSupabaseClient = () => {
 // Export the client instance
 export const supabase = getSupabaseClient();
 
-// Export default browser client
-export default createSupabaseClient()
+// Export singleton browser client
+let browserClient: ReturnType<typeof createSupabaseClient> | null = null
+
+export const getSupabaseBrowserClient = () => {
+  if (!browserClient) {
+    browserClient = createSupabaseClient()
+  }
+  return browserClient
+}
+
+export default getSupabaseBrowserClient()
