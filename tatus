@@ -1,5 +1,0 @@
-[33ma5d4726[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Remove demo mode logic from backend API validation
-[33mc01701b[m fix: update forgot/reset password pages to match exact design system
-[33m4dbecef[m feat: implement forgot password and reset password functionality
-[33md71155f[m Fix login and onboarding redirect logic for dev/prod environments
-[33m8c38774[m Fix Next.js 15 API route types
