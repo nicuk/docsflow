@@ -358,23 +358,25 @@ const tenantAssignment = {
           // CRITICAL: Set cookies that dashboard layout expects (backend already sets these, but ensure they're set)
           document.cookie = `user-email=${userData.email}; path=/; max-age=${60 * 60 * 24 * 7}`;
           document.cookie = `user-name=${userData.name}; path=/; max-age=${60 * 60 * 24 * 7}`;
-          // Set tenant cookie ONLY for current domain (not .docsflow.app)
-          document.cookie = `tenant-id=${userData.tenant_id}; path=/; max-age=${60 * 60 * 24 * 7}; secure; samesite=strict`;
+          // Set tenant cookie with subdomain (not UUID) for proper redirects
+          const tenantSubdomain = personality.tenant?.subdomain || tenantAssignment.subdomain;
+          document.cookie = `tenant-id=${tenantSubdomain}; path=/; max-age=${60 * 60 * 24 * 7}; secure; samesite=strict`;
           document.cookie = `onboarding-complete=true; path=/; max-age=${60 * 60 * 24 * 7}`;
           
           // Also store in localStorage for persistence
           localStorage.setItem('user-session', JSON.stringify(userData));
           
           // Store tenant context for dashboard
+          const tenantSubdomainForStorage = personality.tenant?.subdomain || tenantAssignment.subdomain;
           const tenantContext = {
             tenantId: userData.tenant_id,
             industry: personality.tenant?.industry || tenantAssignment.industry,
             businessType: personality.tenant?.name || tenantAssignment.businessType,
             accessLevel: userData.access_level,
             onboardingComplete: true,
-            subdomain: personality.tenant?.subdomain || tenantAssignment.subdomain
+            subdomain: tenantSubdomainForStorage
           };
-          localStorage.setItem(`tenant-${userData.tenant_id}`, JSON.stringify(tenantContext));
+          localStorage.setItem(`tenant-${tenantSubdomainForStorage}`, JSON.stringify(tenantContext));
           
           console.log('✅ Session data stored successfully:', { userData, tenantContext });
         } else if (user && typeof window !== 'undefined') {
@@ -395,7 +397,7 @@ const tenantAssignment = {
           // Set cookies
           document.cookie = `user-email=${userData.email}; path=/; max-age=${60 * 60 * 24 * 7}`;
           document.cookie = `user-name=${userData.name}; path=/; max-age=${60 * 60 * 24 * 7}`;
-          // Set tenant cookie ONLY for current domain (not .docsflow.app)
+          // Set tenant cookie with subdomain (userData.tenant_id already contains subdomain from line 387)
           document.cookie = `tenant-id=${userData.tenant_id}; path=/; max-age=${60 * 60 * 24 * 7}; secure; samesite=strict`;
           document.cookie = `onboarding-complete=true; path=/; max-age=${60 * 60 * 24 * 7}`;
           

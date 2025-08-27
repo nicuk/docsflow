@@ -234,27 +234,6 @@ export default async function middleware(request: NextRequest) {
 
     // Handle root domain (docsflow.app) access
     if (hostname === 'docsflow.app' || hostname === 'www.docsflow.app' || hostname === 'localhost') {
-      // CRITICAL FIX: Check if user has a tenant cookie but is on root domain
-      const storedTenantId = request.cookies.get('tenant-id')?.value;
-      
-      // If user is on root domain but has a tenant cookie from previous session
-      if (storedTenantId && (pathname === '/login' || pathname === '/register' || pathname === '/')) {
-        // User explicitly wants to access root domain - clear ALL tenant cookies
-        console.log(`🔄 User accessing root domain, clearing tenant cookie: ${storedTenantId}`);
-        const response = NextResponse.next();
-        
-        // CRITICAL: Clear cookies at multiple domain levels to ensure complete cleanup
-        // This handles cookies that were set with domain=.docsflow.app
-        response.cookies.delete('tenant-id');
-        response.headers.append('Set-Cookie', 'tenant-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT');
-        response.headers.append('Set-Cookie', 'tenant-id=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT');
-        response.headers.append('Set-Cookie', 'tenant-id=; path=/; domain=docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT');
-        
-        response.cookies.delete('access_token'); 
-        response.cookies.delete('refresh_token');
-        response.cookies.delete('user_email');
-        return createSecureResponse(response, origin);
-      }
       
       // Allow these routes on root domain
       if (pathname.startsWith('/onboarding') || 
