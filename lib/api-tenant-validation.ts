@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSubdomainData } from '@/lib/subdomains';
 import { createClient } from '@supabase/supabase-js';
+import { getTenantManager } from './tenant-context-manager';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -45,90 +46,54 @@ export async function validateTenantContext(
       };
     }
 
-    // Extract tenant subdomain from multiple sources (priority order)
-    let tenantSubdomain: string | null = null;
-    
-    // 1. From middleware-injected header (highest priority)
-    tenantSubdomain = request.headers.get('x-tenant-subdomain');
-    
-    // 2. From custom tenant header (fallback)
-    if (!tenantSubdomain) {
-      tenantSubdomain = request.headers.get('X-Tenant-Subdomain');
-    }
-    
-    // 3. From URL path parameter (for routes like /api/tenant/[tenant]/*)
-    if (!tenantSubdomain) {
-      const url = new URL(request.url);
-      const pathSegments = url.pathname.split('/');
-      const tenantIndex = pathSegments.findIndex(segment => segment === 'tenant');
-      if (tenantIndex !== -1 && pathSegments[tenantIndex + 1]) {
-        tenantSubdomain = pathSegments[tenantIndex + 1];
+    // Get tenant subdomain and ID from headers
+    const tenantSubdomain = request.headers.get('x-tenant-subdomain') || 
+      new URL(request.url).hostname.split('.')[0];
+    const tenantId = request.headers.get('x-tenant-id');
+  
+    console.log('🔍 Tenant validation:', {
+      subdomain: tenantSubdomain,
+      tenantId,
+      requireAuth,
+      headers: {
+        'x-tenant-subdomain': request.headers.get('x-tenant-subdomain'),
+        'x-tenant-id': request.headers.get('x-tenant-id')
       }
-    }
-    
-    // 4. From query parameter (lowest priority)
-    if (!tenantSubdomain) {
-      const url = new URL(request.url);
-      tenantSubdomain = url.searchParams.get('tenant');
-    }
+    });
 
-    // If no tenant found and fallback allowed
-    if (!tenantSubdomain && fallbackTenant) {
-      tenantSubdomain = fallbackTenant;
-    }
-
-    // CRITICAL: Filter out system subdomains that should never be treated as tenants
-    const systemSubdomains = ['api', 'www', 'admin', 'cdn', 'mail', 'support', 'docs', 'app'];
-    if (tenantSubdomain && systemSubdomains.includes(tenantSubdomain.toLowerCase())) {
-      console.log(`System subdomain '${tenantSubdomain}' detected - not a tenant`);
+    if (!tenantSubdomain || tenantSubdomain === 'localhost' || tenantSubdomain === 'docsflow') {
+      console.error('❌ Invalid tenant subdomain:', tenantSubdomain);
       return {
         isValid: false,
         tenantId: null,
         tenantData: null,
-        error: `System subdomain '${tenantSubdomain}' is not a valid tenant`,
+        error: 'Invalid tenant',
         statusCode: 400
       };
     }
 
-    // Validate tenant subdomain exists
-    if (!tenantSubdomain) {
+    // HIGH-PERFORMANCE: Use TenantContextManager with multi-layer caching
+    const tenantManager = getTenantManager();
+    const tenantInfo = await tenantManager.validateAndNormalizeTenant(tenantId, tenantSubdomain);
+  
+    if (!tenantInfo) {
+      console.error('❌ Tenant lookup failed for subdomain:', tenantSubdomain);
       return {
         isValid: false,
         tenantId: null,
         tenantData: null,
-        error: 'Tenant subdomain is required',
-        statusCode: 400
+        error: 'Tenant not found',
+        statusCode: 404
       };
     }
-
-    // Validate tenant exists in system and get its UUID
-    let tenantData = null;
-    
-    // First check Redis cache
-    const cachedData = await getSubdomainData(tenantSubdomain);
-    if (cachedData) {
-      tenantData = cachedData;
-    } else {
-      // Fallback to Supabase
-      const { data: supabaseTenant, error } = await supabase
-        .from('tenants')
-        .select('*')
-        .eq('subdomain', tenantSubdomain)
-        .single();
-
-      if (error || !supabaseTenant) {
-        console.error(`Tenant lookup failed for subdomain '${tenantSubdomain}':`, error);
-        return {
-          isValid: false,
-          tenantId: null,
-          tenantData: null,
-          error: `Tenant '${tenantSubdomain}' not found`,
-          statusCode: 404
-        };
-      }
-
-      tenantData = supabaseTenant;
-    }
+  
+    // Convert TenantInfo to full tenant object for backward compatibility
+    const tenantData = {
+      id: tenantInfo.id,
+      subdomain: tenantInfo.subdomain,
+      name: tenantInfo.name,
+      created_at: tenantInfo.createdAt
+    };
 
     // At this point, tenantData must have an 'id' field which is the UUID
     const tenantUUID = tenantData?.id;

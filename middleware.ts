@@ -1,5 +1,7 @@
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getTenantManager } from './lib/tenant-context-manager';
 import { 
   extractTenantFromHostname, 
   createSecureResponse,
@@ -11,7 +13,6 @@ import {
   getSecurityHeaders 
 } from './lib/security-enhancements';
 import { redis, safeRedisOperation } from './lib/redis';
-import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client for middleware
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -146,15 +147,23 @@ export default async function middleware(request: NextRequest) {
       // This is essential for subdomain availability checks during onboarding
       if (pathname.startsWith('/api')) {
         const response = NextResponse.next();
-        // Only set x-tenant-subdomain, not x-tenant-id (which needs UUID)
-        // The actual tenant UUID will be resolved by the API routes
-        response.headers.set('x-tenant-subdomain', tenant);
         
         // SURGICAL FIX: Special handling for logout - clear tenant headers
         if (pathname === '/api/auth/logout') {
           response.headers.delete('x-tenant-id');
           response.headers.delete('x-tenant-subdomain');
           console.log('🚪 Logout request - clearing tenant context');
+          return createSecureResponse(response, origin);
+        }
+        
+        // HIGH-PERFORMANCE: Use TenantContextManager with multi-layer caching
+        const tenantManager = getTenantManager();
+        const tenantInfo = await tenantManager.getTenantBySubdomain(tenant);
+        
+        // Set both headers properly for API routes
+        response.headers.set('x-tenant-subdomain', tenant);
+        if (tenantInfo?.id) {
+          response.headers.set('x-tenant-id', tenantInfo.id);
         }
         
         return createSecureResponse(response, origin);
@@ -174,16 +183,10 @@ export default async function middleware(request: NextRequest) {
       const userEmail = request.cookies.get('user_email')?.value;
       const authToken = request.cookies.get('access_token')?.value;
       
-      // Get the actual tenant UUID from database for proper comparison
-      let tenantUUID: string | null = null;
-      if (supabase) {
-        const { data: tenantRecord } = await supabase
-          .from('tenants')
-          .select('id')
-          .eq('subdomain', tenant)
-          .maybeSingle();
-        tenantUUID = tenantRecord?.id || null;
-      }
+      // HIGH-PERFORMANCE: Use TenantContextManager with multi-layer caching
+      const tenantManager = getTenantManager();
+      const tenantInfo = await tenantManager.getTenantBySubdomain(tenant);
+      const tenantUUID = tenantInfo?.id || null;
       
       // If user has a different tenant stored, handle gracefully
       if (storedTenantId && tenantUUID && storedTenantId !== tenantUUID) {
