@@ -18,11 +18,22 @@ export async function GET(request: NextRequest) {
       );
       
       if (data) {
-        tenantData.push({
-          key,
-          subdomain: key.replace('subdomain:', ''),
-          data: JSON.parse(data as string)
-        });
+        try {
+          const parsedData = JSON.parse(data as string);
+          tenantData.push({
+            key,
+            subdomain: key.replace('subdomain:', ''),
+            data: parsedData
+          });
+        } catch (parseError) {
+          // If JSON parsing fails, store raw data
+          tenantData.push({
+            key,
+            subdomain: key.replace('subdomain:', ''),
+            data: data,
+            parse_error: 'Invalid JSON stored in cache'
+          });
+        }
       }
     }
 
@@ -37,7 +48,7 @@ export async function GET(request: NextRequest) {
     console.error('Redis cache check error:', error);
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : String(error)
     }, { status: 500 });
   }
 }
