@@ -174,9 +174,20 @@ export default async function middleware(request: NextRequest) {
       const userEmail = request.cookies.get('user_email')?.value;
       const authToken = request.cookies.get('access_token')?.value;
       
+      // Get the actual tenant UUID from database for proper comparison
+      let tenantUUID: string | null = null;
+      if (supabase) {
+        const { data: tenantRecord } = await supabase
+          .from('tenants')
+          .select('id')
+          .eq('subdomain', tenant)
+          .maybeSingle();
+        tenantUUID = tenantRecord?.id || null;
+      }
+      
       // If user has a different tenant stored, handle gracefully
-      if (storedTenantId && storedTenantId !== tenant) {
-        console.log(`⚠️ Tenant mismatch detected! Stored: ${storedTenantId}, Current: ${tenant}`);
+      if (storedTenantId && tenantUUID && storedTenantId !== tenantUUID) {
+        console.log(`⚠️ Tenant mismatch detected! Stored UUID: ${storedTenantId}, Current UUID: ${tenantUUID} (subdomain: ${tenant})`);
         
         // Check if this is a session bridge request
         const sessionBridge = request.nextUrl.searchParams.get('session_bridge');
@@ -184,7 +195,8 @@ export default async function middleware(request: NextRequest) {
         if (sessionBridge === 'true') {
           // Allow session bridge - clear old tenant context
           const response = NextResponse.next();
-          response.headers.set('x-tenant-id', tenant);
+          // Set the UUID as x-tenant-id and subdomain as x-tenant-subdomain
+          response.headers.set('x-tenant-id', tenantUUID);
           response.headers.set('x-tenant-subdomain', tenant);
           
           // Clear mismatched cookies only for real tenant switches
@@ -200,17 +212,19 @@ export default async function middleware(request: NextRequest) {
 
       // If root path, check if user is authenticated
       if (pathname === '/' || pathname === '') {
-        if (userEmail && authToken && storedTenantId === tenant) {
+        if (userEmail && authToken && storedTenantId && tenantUUID && storedTenantId === tenantUUID) {
           // User is authenticated AND on the correct tenant - show dashboard
           const response = NextResponse.rewrite(new URL(`/dashboard`, request.url));
-          response.headers.set('x-tenant-id', tenant);
+          // Set UUID as x-tenant-id and subdomain as x-tenant-subdomain
+          response.headers.set('x-tenant-id', tenantUUID);
           response.headers.set('x-tenant-subdomain', tenant);
           return createSecureResponse(response, origin);
         } else {
           // User is NOT authenticated or tenant mismatch - redirect to LOGIN for this tenant
           // CRITICAL: Don't send to onboarding for existing tenants!
           const response = NextResponse.rewrite(new URL(`/login`, request.url));
-          response.headers.set('x-tenant-id', tenant);
+          // Set UUID as x-tenant-id and subdomain as x-tenant-subdomain
+          response.headers.set('x-tenant-id', tenantUUID || '');
           response.headers.set('x-tenant-subdomain', tenant);
           return createSecureResponse(response, origin);
         }
@@ -225,8 +239,9 @@ export default async function middleware(request: NextRequest) {
       }
       const response = NextResponse.rewrite(new URL(targetPath, request.url));
 
-      // 🚨 Inject the tenant ID and subdomain into the request headers for frontend context
-      response.headers.set('x-tenant-id', tenant);
+      // 🚨 Inject the tenant UUID and subdomain into the request headers for frontend context
+      // CRITICAL: x-tenant-id should be the UUID, x-tenant-subdomain should be the subdomain
+      response.headers.set('x-tenant-id', tenantUUID || '');
       response.headers.set('x-tenant-subdomain', tenant);
 
       return createSecureResponse(response, origin);

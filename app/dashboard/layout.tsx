@@ -34,17 +34,19 @@ import {
   CreditCard,
   Moon,
   Sun,
+  Shield,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import DocsFlowBrand from '@/components/DocsFlowBrand'
 
 const navigationItems = [
-  { name: 'Dashboard', href: '/dashboard', icon: Home, badge: null },
-  { name: 'Documents', href: '/dashboard/documents', icon: FileText, badge: null }, // Dynamic count should be fetched from API
-  { name: 'Chat Assistant', href: '/dashboard/chat', icon: MessageSquare, badge: null },
-  { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, badge: null },
-  { name: 'Settings', href: '/dashboard/settings', icon: Settings, badge: null },
-  { name: 'Help & Support', href: '/support', icon: HelpCircle, badge: null },
+  { name: 'Dashboard', href: '/dashboard', icon: Home, badge: null, requiresAdmin: false },
+  { name: 'Documents', href: '/dashboard/documents', icon: FileText, badge: null, requiresAdmin: false },
+  { name: 'Chat Assistant', href: '/dashboard/chat', icon: MessageSquare, badge: null, requiresAdmin: false },
+  { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, badge: null, requiresAdmin: false },
+  { name: 'User Management', href: '/admin/users', icon: Shield, badge: null, requiresAdmin: true },
+  { name: 'Settings', href: '/dashboard/settings', icon: Settings, badge: null, requiresAdmin: false },
+  { name: 'Help & Support', href: '/support', icon: HelpCircle, badge: null, requiresAdmin: false },
 ]
 
 // Get actual user data from cookies
@@ -106,6 +108,7 @@ function useUserSession() {
     name: 'Loading...',
     email: 'loading@example.com',
     avatar: '/placeholder.svg',
+    role: 'member',
   });
 
   useEffect(() => {
@@ -124,7 +127,7 @@ function useUserSession() {
           // Get user profile from database
           const { data: userProfile } = await supabase
             .from('users')
-            .select('name, email')
+            .select('name, email, role')
             .eq('id', user.id)
             .single();
           
@@ -133,6 +136,7 @@ function useUserSession() {
               name: userProfile.name || user.email?.split('@')[0] || 'User',
               email: userProfile.email || user.email || 'user@example.com',
               avatar: '/placeholder.svg',
+              role: userProfile.role || 'member',
             });
             return;
           } else {
@@ -141,6 +145,7 @@ function useUserSession() {
               name: user.email?.split('@')[0] || 'User',
               email: user.email || 'user@example.com',
               avatar: '/placeholder.svg',
+              role: 'member',
             });
             return;
           }
@@ -162,6 +167,7 @@ function useUserSession() {
             name: name.charAt(0).toUpperCase() + name.slice(1),
             email: emailCookie,
             avatar: '/placeholder.svg',
+            role: 'member',
           });
           return;
         }
@@ -173,6 +179,7 @@ function useUserSession() {
         name: 'User',
         email: 'user@example.com',
         avatar: '/placeholder.svg',
+        role: 'member',
       });
     };
 
@@ -345,9 +352,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 function DesktopSidebar({ isOpen, setIsOpen, user }: { 
   isOpen: boolean; 
   setIsOpen: (open: boolean) => void;
-  user: { name: string; email: string; avatar: string; };
+  user: { name: string; email: string; avatar: string; role?: string; };
 }) {
   const pathname = usePathname()
+  const isAdmin = user.role === 'admin'
 
   return (
     <>
@@ -355,7 +363,7 @@ function DesktopSidebar({ isOpen, setIsOpen, user }: {
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center gap-2">
           {isOpen ? (
-            <DocsFlowBrand size="sm" variant="horizontal" iconVariant="primary" />
+            <DocsFlowBrand size="sm" variant="horizontal" />
           ) : (
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-600">
               <FileText className="h-4 w-4 text-white" />
@@ -379,7 +387,9 @@ function DesktopSidebar({ isOpen, setIsOpen, user }: {
       {/* Navigation */}
       <ScrollArea className="flex-1 px-2">
         <nav className="space-y-1">
-          {navigationItems.map((item) => {
+          {navigationItems
+            .filter(item => !item.requiresAdmin || isAdmin)
+            .map((item) => {
             const isActive = pathname === item.href
             return (
               <Link
@@ -433,20 +443,23 @@ function DesktopSidebar({ isOpen, setIsOpen, user }: {
   )
 }
 
-function MobileSidebar({ user }: { user: { name: string; email: string; avatar: string; } }) {
+function MobileSidebar({ user }: { user: { name: string; email: string; avatar: string; role?: string; } }) {
   const pathname = usePathname()
+  const isAdmin = user.role === 'admin'
 
   return (
     <div className="flex flex-col h-full">
       {/* Mobile header */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <DocsFlowBrand size="sm" variant="horizontal" iconVariant="primary" />
+        <DocsFlowBrand size="sm" variant="horizontal" />
       </div>
 
       {/* Mobile navigation */}
       <ScrollArea className="flex-1 p-4">
         <nav className="space-y-1">
-          {navigationItems.map((item) => {
+          {navigationItems
+            .filter(item => !item.requiresAdmin || isAdmin)
+            .map((item) => {
             const isActive = pathname === item.href
             return (
               <Link

@@ -594,7 +594,7 @@ Create a JSON response with:
     }, {
       userEmail: email, // Use REAL user email
       userName: businessName || 'Admin',
-      tenantId: tenant.subdomain,
+      tenantId: tenant.id,  // Use tenant UUID, not subdomain
       onboardingComplete: true
     });
     
