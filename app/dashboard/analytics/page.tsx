@@ -44,7 +44,10 @@ export default function AnalyticsPage() {
         const stored = localStorage.getItem('docuintel-analytics')
         if (stored) {
           const data = JSON.parse(stored)
+          console.log(`🔍 [ANALYTICS] Loaded stored analytics:`, data);
           setAnalytics(data)
+        } else {
+          console.log(`🔍 [ANALYTICS] No stored analytics found - showing empty state`);
         }
       } catch (error) {
         console.error('Failed to load analytics:', error)
@@ -112,12 +115,29 @@ export default function AnalyticsPage() {
           <ArrowLeft className="h-4 w-4" />
           <span className="sr-only">Go back</span>
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
           <p className="text-muted-foreground">
             Track your document intelligence usage and insights
           </p>
         </div>
+        <Button 
+          variant="outline"
+          onClick={() => {
+            localStorage.removeItem('docuintel-analytics');
+            setAnalytics({
+              totalQuestions: 0,
+              documentsUploaded: 0,
+              timesSaved: 0,
+              totalResponseTime: 0,
+              questions: [],
+              documents: []
+            });
+            console.log(`🔄 [ANALYTICS] Cache cleared - showing real state`);
+          }}
+        >
+          Clear Cache
+        </Button>
       </div>
 
       {/* Metrics grid */}

@@ -177,7 +177,11 @@ export default function DashboardPage() {
         localStorage.setItem(`tenant-${userData.tenantId}`, JSON.stringify(context));
         
         // Fetch real data from backend with subdomain
-        await fetchRealData(userData.tenantId, userData.tenant?.subdomain || '');
+        if (userData.tenant?.subdomain) {
+          await fetchRealData(userData.tenantId, userData.tenant.subdomain);
+        } else {
+          console.error('🚨 [DASHBOARD] No tenant subdomain found in user data:', userData);
+        }
         
       } catch (error) {
         console.error('Failed to load tenant context:', error);
@@ -202,15 +206,19 @@ export default function DashboardPage() {
       };
 
       // Fetch documents
+      console.log(`🔍 [DASHBOARD] Fetching documents with headers:`, tenantHeaders);
       const docsResponse = await fetch('/api/documents', {
         method: 'GET',
         headers: tenantHeaders,
         credentials: 'include'
       });
       
+      console.log(`🔍 [DASHBOARD] Documents API response status: ${docsResponse.status}`);
+      
       if (docsResponse.ok) {
         const docsData = await docsResponse.json();
         const documentsCount = docsData.documents?.length || 0;
+        console.log(`🔍 [DASHBOARD] Found ${documentsCount} documents`);
         
         // Fetch conversations/questions
         const conversationsResponse = await fetch('/api/conversations', {
@@ -233,9 +241,18 @@ export default function DashboardPage() {
           questionsCount,
           hoursSaved
         });
+        
+        console.log(`✅ [DASHBOARD] Updated real stats:`, {
+          documentsCount,
+          questionsCount, 
+          hoursSaved
+        });
+      } else {
+        const errorText = await docsResponse.text();
+        console.error(`🚨 [DASHBOARD] Documents API error: ${docsResponse.status} - ${errorText}`);
       }
     } catch (error) {
-      console.error('Error fetching real data:', error);
+      console.error('🚨 [DASHBOARD] Error fetching real data:', error);
       // Keep using mock data on error
     }
   }
