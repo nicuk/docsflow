@@ -58,11 +58,14 @@ export default function LoginPage() {
       setMessage('Welcome back! You\'ve been successfully signed in. Redirecting to your dashboard...');
       
       try {
-        // CRITICAL FIX: Set Supabase auth cookies properly
+        // ARCHITECTURAL ROOT FIX: Set cookies that MIDDLEWARE expects
         const decodedToken = decodeURIComponent(token);
         console.log(`🔍 [SESSION BRIDGE] Decoded token length: ${decodedToken.length}`);
         
-        // Set the proper Supabase auth cookies
+        // CRITICAL: Set the cookies that middleware.ts:204 expects for authentication
+        document.cookie = `access_token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
+        
+        // Also set Supabase default cookie for session API compatibility
         document.cookie = `sb-lhcopwwiqwjpzbdnjovo-auth-token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
         
         // Get current subdomain for tenant context

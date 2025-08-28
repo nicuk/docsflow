@@ -306,11 +306,12 @@ export default async function middleware(request: NextRequest) {
         return createSecureResponse(response, origin);
       }
       
-      // CRITICAL FIX: Handle authenticated users on main domain
-      // If user is authenticated and has tenant, redirect to tenant subdomain
+      // ARCHITECTURAL ROOT FIX: Standardized authentication check for main domain
+      // Use SAME cookie names as subdomain logic for consistency
       console.log(`🔍 [MIDDLEWARE] Checking auth for main domain user on: ${pathname}`);
       const cookies = request.cookies;
-      const authToken = cookies.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value;
+      // STANDARDIZED: Use same cookie names as subdomain logic (line 202-204)
+      const authToken = cookies.get('access_token')?.value;
       const userEmail = cookies.get('user_email')?.value;
       const storedTenantId = cookies.get('tenant-id')?.value;
       

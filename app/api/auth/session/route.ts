@@ -10,14 +10,36 @@ export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies();
     
-    // Create Supabase client with proper SSR cookie configuration
+    // ARCHITECTURAL ROOT FIX: Create Supabase client that reads STANDARDIZED cookies
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
           getAll() {
-            return cookieStore.getAll();
+            // Return both standardized AND Supabase default cookies for compatibility
+            const allCookies = cookieStore.getAll();
+            const standardizedCookies = [];
+            
+            // Map our standardized cookies to Supabase expected names
+            const accessToken = cookieStore.get('access_token')?.value;
+            const refreshToken = cookieStore.get('refresh_token')?.value;
+            
+            if (accessToken) {
+              standardizedCookies.push({
+                name: `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`,
+                value: accessToken
+              });
+            }
+            
+            if (refreshToken) {
+              standardizedCookies.push({
+                name: `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token-code-verifier`,
+                value: refreshToken
+              });
+            }
+            
+            return [...allCookies, ...standardizedCookies];
           },
           setAll(cookiesToSet) {
             try {
