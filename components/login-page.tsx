@@ -64,10 +64,8 @@ export default function LoginPage() {
           console.log(`🔍 [SESSION BRIDGE] Decoded token length: ${decodedToken.length}`);
           console.log(`🔍 [SESSION BRIDGE] Token preview: ${decodedToken.substring(0, 50)}...`);
           
-          // SCHEMA-ALIGNED: Use database schema aligned cookie manager
+          // SCHEMA-ALIGNED: Clear auth cookies to prevent contamination
           const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
-          
-          // First clear ALL auth cookies to prevent contamination
           SchemaAlignedCookieManager.clearAllAuthCookies();
           
           // Set schema-aligned auth tokens
@@ -116,17 +114,9 @@ export default function LoginPage() {
                   // SCHEMA-ALIGNED COOKIE FIX: Use database schema aligned cookie manager
                   const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
                   
-                  SchemaAlignedCookieManager.setSchemaAlignedCookies(
-                    {
-                      tenantId: data.tenantId,
-                      subdomain: subdomain,
-                      userEmail: data.user.email
-                    },
-                    {
-                      accessToken: decodedToken,
-                      refreshToken: undefined // Will be set by session API
-                    }
-                  );
+                  // Set the essential cookies that middleware actually reads
+                  document.cookie = `tenant-id=${data.tenantId}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
+                  document.cookie = `user_email=${data.user.email}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
                   
                   console.log(`✅ [SESSION BRIDGE] Set schema-aligned tenant context: ${subdomain} -> ${data.tenantId.substring(0, 8)}...`);
                 }

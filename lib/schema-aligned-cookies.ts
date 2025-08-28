@@ -1,17 +1,19 @@
 /**
  * SCHEMA-ALIGNED COOKIE MANAGEMENT
  * 
- * This utility ensures all cookies follow the exact database schema:
- * - tenants.id (UUID) → tenant-id cookie
- * - users.email (text) → user_email cookie  
- * - tenants.subdomain (text) → tenant-subdomain cookie
+ * This utility ensures cookies align with database schema and actual usage:
+ * - tenants.id (UUID) → tenant-id cookie (read by middleware)
+ * - users.email (text) → user_email cookie (read by middleware)
  * - Supabase session tokens → access_token/refresh_token
+ * 
+ * NOTE: tenant subdomain is handled via x-tenant-subdomain HEADER (not cookie)
+ * set by middleware for API consumption
  */
 
 interface TenantContext {
-  tenantId: string;      // UUID from tenants.id
-  subdomain: string;     // text from tenants.subdomain  
-  userEmail: string;     // text from users.email
+  tenantId: string;      // UUID from tenants.id - stored in tenant-id cookie
+  subdomain: string;     // text from tenants.subdomain - NOT stored as cookie (header only)
+  userEmail: string;     // text from users.email - stored in user_email cookie
 }
 
 interface AuthTokens {
@@ -31,7 +33,7 @@ const ALL_AUTH_COOKIE_VARIANTS = [
   'refresh_token',
   'auth-token',
   'refresh-token',
-  'tenant-subdomain',
+  // NOTE: 'tenant-subdomain' not included - it's header-only, not a cookie
   'user-name',
   'user_name',
   'onboarding-complete',
@@ -111,10 +113,10 @@ export class SchemaAlignedCookieManager {
     const cookieOptions = 'path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400';
     const tokenOptions = 'path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600';
     
-    // Set SCHEMA-ALIGNED cookies (exact database field names)
+    // Set SCHEMA-ALIGNED cookies (only those actually used by middleware)
     document.cookie = `tenant-id=${context.tenantId}; ${cookieOptions}`;
     document.cookie = `user_email=${context.userEmail}; ${cookieOptions}`;
-    document.cookie = `tenant-subdomain=${context.subdomain}; ${cookieOptions}`;
+    // NOTE: subdomain is NOT stored as cookie - middleware sets it as x-tenant-subdomain header
     
     // Set authentication tokens
     document.cookie = `access_token=${tokens.accessToken}; ${tokenOptions}`;
@@ -139,7 +141,6 @@ export class SchemaAlignedCookieManager {
   static getSchemaAlignedCookies(): {
     tenantId: string | null;
     userEmail: string | null; 
-    subdomain: string | null;
     accessToken: string | null;
     refreshToken: string | null;
   } {
@@ -152,9 +153,9 @@ export class SchemaAlignedCookieManager {
     return {
       tenantId: cookies['tenant-id'] || null,
       userEmail: cookies['user_email'] || cookies['user-email'] || null,
-      subdomain: cookies['tenant-subdomain'] || null,
       accessToken: cookies['access_token'] || cookies['auth-token'] || null,
       refreshToken: cookies['refresh_token'] || cookies['refresh-token'] || null
+      // NOTE: subdomain not returned - it's available via window.location.hostname or headers
     };
   }
   
@@ -170,7 +171,7 @@ export class SchemaAlignedCookieManager {
     console.log(`🔍 [COOKIE DEBUG] Validation:`, {
       hasValidTenantId: current.tenantId ? /^[0-9a-f-]{36}$/i.test(current.tenantId) : false,
       hasValidEmail: current.userEmail ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(current.userEmail) : false,
-      hasValidSubdomain: current.subdomain ? /^[a-zA-Z0-9-]+$/.test(current.subdomain) : false
+      currentSubdomain: window.location.hostname.split('.')[0] // subdomain from URL, not cookies
     });
   }
 }

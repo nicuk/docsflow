@@ -29,17 +29,10 @@ export default function AuthRedirectPage() {
           // SCHEMA-ALIGNED: Use database schema aligned cookie manager
           const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
           
-          SchemaAlignedCookieManager.setSchemaAlignedCookies(
-            {
-              tenantId: session.tenantId,
-              subdomain: session.tenant?.subdomain || '',
-              userEmail: session.user.email
-            },
-            {
-              accessToken: '', // Will be handled by session API
-              refreshToken: undefined
-            }
-          );
+          // Set the essential cookies that middleware actually reads
+          SchemaAlignedCookieManager.clearAllAuthCookies();
+          document.cookie = `tenant-id=${session.tenantId}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
+          document.cookie = `user_email=${session.user.email}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
           
           setProgress(100);
           
