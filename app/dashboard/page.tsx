@@ -106,9 +106,9 @@ export default function DashboardPage() {
               window.location.href = `https://${firstTenant.subdomain}.docsflow.app/dashboard`;
               return;
             } else {
-              console.warn(`⚠️ [ENTERPRISE] First tenant has invalid subdomain, redirecting to login`);
-              window.location.href = '/login';
-              return;
+              console.warn(`⚠️ [ENTERPRISE] First tenant has invalid subdomain, will check API for tenant data before redirecting to login`);
+              // Don't immediately redirect - let the API call below check for tenant data
+              // This prevents premature redirects when tenant context cookie isn't set yet
             }
           }
           
@@ -189,6 +189,14 @@ export default function DashboardPage() {
         // DEFENSIVE STORAGE: Only store valid subdomain to prevent empty string corruption
         if (userData.tenant?.subdomain && userData.tenant.subdomain.length > 0) {
           EnterpriseSessionManager.setTenantContext(userData.tenantId, userData.tenant.subdomain);
+          
+          // 🔥 CRITICAL FIX: If on main domain and have valid tenant, redirect to tenant subdomain
+          const currentHostname = window.location.hostname;
+          if ((currentHostname === 'www.docsflow.app' || currentHostname === 'docsflow.app') && userData.tenant.subdomain) {
+            console.log(`🎯 [ENTERPRISE] API provided valid tenant subdomain, redirecting from main domain to: ${userData.tenant.subdomain}`);
+            window.location.href = `https://${userData.tenant.subdomain}.docsflow.app/dashboard`;
+            return;
+          }
         }
         
         // Set user session with tenant access
