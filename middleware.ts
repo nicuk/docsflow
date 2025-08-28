@@ -138,6 +138,12 @@ export default async function middleware(request: NextRequest) {
       return createSecureResponse(response, origin);
     }
 
+    // CRITICAL FIX: Handle www subdomain redirect BEFORE tenant processing
+    if (hostname === 'www.docsflow.app') {
+      console.log('🔄 Redirecting www to main domain');
+      return NextResponse.redirect(new URL(`https://docsflow.app${pathname}`, request.url), 301);
+    }
+
     // Extract tenant from hostname
     const tenant = extractTenantFromHostname(hostname);
 
