@@ -341,6 +341,14 @@ export default async function middleware(request: NextRequest) {
       console.log(`🔍 [MIDDLEWARE] Checking auth for main domain user on: ${pathname}`);
       const cookies = request.cookies;
       
+      // SAFETY: Skip smart redirect for bot/screenshot requests
+      const userAgent = request.headers.get('user-agent') || '';
+      if (userAgent.includes('vercel-screenshot') || userAgent.includes('bot')) {
+        console.log(`🤖 [MIDDLEWARE] Bot/screenshot request detected, skipping smart redirect`);
+        const response = NextResponse.next();
+        return createSecureResponse(response, origin);
+      }
+      
       // Read MULTI-TENANT cookies (not legacy single tenant)
       const tenantContexts = cookies.get('tenant-contexts')?.value;
       const currentTenant = cookies.get('current-tenant')?.value;
@@ -357,19 +365,36 @@ export default async function middleware(request: NextRequest) {
           if (availableTenants.length === 1) {
             // Single tenant - redirect immediately (ELIMINATES 4-PAGE CHAIN)
             const tenantSubdomain = availableTenants[0];
-            const redirectUrl = `https://${tenantSubdomain}.docsflow.app/dashboard`;
-            console.log(`🚀 [SMART-REDIRECT] Single tenant user - skipping intermediate pages: ${redirectUrl}`);
-            return NextResponse.redirect(new URL(redirectUrl));
+            
+            // SAFETY CHECK: Validate subdomain format before redirect
+            if (/^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/.test(tenantSubdomain)) {
+              const redirectUrl = `https://${tenantSubdomain}.docsflow.app/dashboard`;
+              console.log(`🚀 [SMART-REDIRECT] Single tenant user - skipping intermediate pages: ${redirectUrl}`);
+              return NextResponse.redirect(new URL(redirectUrl));
+            } else {
+              console.warn(`🔄 [SMART-REDIRECT] Invalid subdomain format: ${tenantSubdomain}, proceeding normally`);
+            }
           } else if (availableTenants.length > 1) {
             // Multi-tenant - use current preference or first tenant
             const preferredTenant = (currentTenant && contexts[currentTenant]) ? currentTenant : availableTenants[0];
-            const redirectUrl = `https://${preferredTenant}.docsflow.app/dashboard`;
-            console.log(`🚀 [SMART-REDIRECT] Multi-tenant user - preferred tenant: ${redirectUrl}`);
-            return NextResponse.redirect(new URL(redirectUrl));
+            
+            // SAFETY CHECK: Validate subdomain format before redirect
+            if (/^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/.test(preferredTenant)) {
+              const redirectUrl = `https://${preferredTenant}.docsflow.app/dashboard`;
+              console.log(`🚀 [SMART-REDIRECT] Multi-tenant user - preferred tenant: ${redirectUrl}`);
+              return NextResponse.redirect(new URL(redirectUrl));
+            } else {
+              console.warn(`🔄 [SMART-REDIRECT] Invalid preferred tenant format: ${preferredTenant}, proceeding normally`);
+            }
+          } else {
+            console.log(`🔄 [SMART-REDIRECT] No available tenants found, proceeding to normal flow`);
           }
         } catch (e) {
-          console.warn(`🔄 [SMART-REDIRECT] Invalid tenant contexts, proceeding normally`);
+          console.warn(`🔄 [SMART-REDIRECT] Error parsing tenant contexts: ${e.message}, proceeding normally`);
         }
+      } else if ((pathname === '/dashboard' || pathname === '/onboarding' || pathname === '/') && 
+                 !tenantContexts && userEmail && authToken) {
+        console.log(`🔄 [SMART-REDIRECT] User authenticated but no tenant contexts yet - allowing normal onboarding flow`);
       }
       
       // Legacy fallback for backwards compatibility
