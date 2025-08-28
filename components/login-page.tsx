@@ -196,11 +196,11 @@ export default function LoginPage() {
     setErrors({})
 
     try {
-      // FIXED: Use Supabase directly instead of custom API
+      // Use Supabase directly (as designed) - this handles session cookies automatically
       const { createSupabaseClient } = await import('@/lib-frontend/supabase')
       const supabase = createSupabaseClient()
       
-      // Direct Supabase authentication - this handles session cookies automatically
+      // Direct Supabase authentication
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password
@@ -209,14 +209,33 @@ export default function LoginPage() {
       if (error) {
         console.error('Supabase auth error:', error)
         
-        // Provide more specific error messages
+        // SIMPLE FIX: Better error message mapping
         let errorMessage = "Invalid email or password"
+        
         if (error.message.includes('Invalid login credentials')) {
-          errorMessage = "User not found. Please check your email or sign up for a new account."
+          // Check if user exists to provide more specific error
+          try {
+            const { data: userExists } = await supabase
+              .from('users')
+              .select('email')
+              .eq('email', formData.email)
+              .single();
+            
+            if (userExists) {
+              errorMessage = "Incorrect password. Please check your password and try again."
+            } else {
+              errorMessage = "No account found with this email address. Please check your email or sign up for a new account."
+            }
+          } catch (checkError) {
+            // If we can't check, fall back to generic message
+            errorMessage = "Invalid email or password. Please check your credentials and try again."
+          }
         } else if (error.message.includes('Email not confirmed')) {
           errorMessage = "Please check your email and confirm your account before signing in."
         } else if (error.message.includes('Too many requests')) {
           errorMessage = "Too many login attempts. Please wait a moment and try again."
+        } else if (error.message.includes('User not found')) {
+          errorMessage = "No account found with this email address. Please check your email or sign up for a new account."
         }
         
         setErrors({
