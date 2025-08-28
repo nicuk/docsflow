@@ -138,13 +138,11 @@ export default async function middleware(request: NextRequest) {
       return createSecureResponse(response, origin);
     }
 
-    // CRITICAL FIX: Handle www subdomain redirect BEFORE tenant processing
-    if (hostname === 'www.docsflow.app') {
-      console.log('🔄 Redirecting www to main domain');
-      return NextResponse.redirect(new URL(`https://docsflow.app${pathname}`, request.url), 301);
-    }
+    // CRITICAL FIX: Accept www.docsflow.app as canonical main domain
+    // Do NOT redirect www to avoid infinite loops with DNS/Vercel configuration
+    // www is handled same as main domain (no tenant context)
 
-    // Extract tenant from hostname
+    // Extract tenant from hostname (returns null for www and main domain)
     const tenant = extractTenantFromHostname(hostname);
 
     // Route tenant subdomains to the tenant-specific dashboard
