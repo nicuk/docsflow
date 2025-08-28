@@ -1,308 +1,229 @@
 import { createClient } from '@supabase/supabase-js';
-import { Redis } from '@upstash/redis';
+import { redis } from '@/lib/redis';
 
-interface TenantInfo {
-  id: string;
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export interface TenantData {
+  uuid: string;
   subdomain: string;
   name?: string;
-  createdAt?: string;
 }
 
-interface CacheEntry {
-  data: TenantInfo;
-  timestamp: number;
-}
-
-/**
- * TenantContextManager - High-performance tenant resolution with multi-layer caching
- * 
- * Architecture:
- * 1. Memory cache (LRU, 5-minute TTL) - ~0.1ms lookup
- * 2. Redis cache (1-hour TTL) - ~5ms lookup
- * 3. Database fallback - ~50ms lookup
- * 
- * Performance: 99% of requests hit memory cache, <1% hit database
- * Score: 9/10 - Production-ready, scalable, maintainable
- */
 export class TenantContextManager {
-  private static instance: TenantContextManager;
-  private memoryCache: Map<string, CacheEntry> = new Map();
-  private readonly MEMORY_TTL = 5 * 60 * 1000; // 5 minutes
-  private readonly REDIS_TTL = 60 * 60; // 1 hour in seconds
-  private readonly MAX_MEMORY_ENTRIES = 1000; // LRU eviction after 1000 entries
+  private static cache = new Map<string, {data: TenantData, expires: number}>();
   
-  private supabase: ReturnType<typeof createClient> | null = null;
-  private redis: Redis | null = null;
-  
-  private constructor() {
-    // Initialize Supabase
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
-    if (supabaseUrl && supabaseKey) {
-      this.supabase = createClient(supabaseUrl, supabaseKey);
-    }
-    
-    // Initialize Redis
-    const redisUrl = process.env.KV_REST_API_URL;
-    const redisToken = process.env.KV_REST_API_TOKEN;
-    
-    if (redisUrl && redisToken) {
-      this.redis = new Redis({
-        url: redisUrl,
-        token: redisToken,
+  /**
+   * Resolves tenant data from subdomain string
+   * Returns both UUID and subdomain for proper context propagation
+   */
+  static async resolveTenant(subdomain: string): Promise<TenantData | null> {
+    try {
+      // Validate input - should be subdomain, not UUID
+      if (this.isUUID(subdomain)) {
+        console.error(`❌ Invalid input: UUID passed as subdomain: ${subdomain}`);
+        return null;
+      }
+
+      // 1. Check memory cache first (0ms - no I/O)
+      const cached = this.cache.get(subdomain);
+      if (cached && cached.expires > Date.now()) {
+        console.log(`✅ Memory cache hit for tenant: ${subdomain}`);
+        return cached.data;
+      }
+      
+      // 2. Check Redis with proper error handling (5-10ms)
+      try {
+        const redisKey = `tenant:subdomain:${subdomain}`;
+        const redisData = await redis?.get(redisKey);
+        if (redisData) {
+          const parsed = JSON.parse(redisData as string);
+          const tenantData: TenantData = {
+            uuid: parsed.id,
+            subdomain: parsed.subdomain,
+            name: parsed.name
+          };
+          
+          // Cache in memory for future requests
+          this.cache.set(subdomain, { 
+            data: tenantData, 
+            expires: Date.now() + 300000 // 5min cache
+          });
+          
+          console.log(`✅ Redis cache hit for tenant: ${subdomain}`);
+          return tenantData;
+        }
+      } catch (redisError) {
+        console.warn('⚠️ Redis unavailable, falling back to DB:', redisError);
+      }
+      
+      // 3. Database fallback with proper caching (50-100ms - only when needed)
+      console.log(`🔍 Database lookup for tenant: ${subdomain}`);
+      
+      const { data, error } = await supabase
+        .from('tenants')
+        .select('id, subdomain, name')
+        .eq('subdomain', subdomain)
+        .maybeSingle();
+        
+      if (error) {
+        console.error('❌ Database error during tenant lookup:', error);
+        return null;
+      }
+      
+      if (!data) {
+        console.warn(`❌ Tenant not found in database: ${subdomain}`);
+        return null;
+      }
+      
+      const tenantData: TenantData = {
+        uuid: data.id,
+        subdomain: data.subdomain,
+        name: data.name
+      };
+      
+      // Cache in both memory and Redis for future requests
+      this.cache.set(subdomain, { 
+        data: tenantData, 
+        expires: Date.now() + 300000 
       });
-    }
-  }
-  
-  public static getInstance(): TenantContextManager {
-    if (!TenantContextManager.instance) {
-      TenantContextManager.instance = new TenantContextManager();
-    }
-    return TenantContextManager.instance;
-  }
-  
-  /**
-   * Get tenant info by subdomain with multi-layer caching
-   */
-  public async getTenantBySubdomain(subdomain: string): Promise<TenantInfo | null> {
-    if (!subdomain) return null;
-    
-    // Layer 1: Memory cache
-    const memoryCached = this.getFromMemoryCache(subdomain);
-    if (memoryCached) {
-      console.log(`✅ Tenant cache hit (memory): ${subdomain}`);
-      return memoryCached;
-    }
-    
-    // Layer 2: Redis cache
-    if (this.redis) {
+      
       try {
-        const redisCached = await this.getFromRedisCache(subdomain);
-        if (redisCached) {
-          console.log(`✅ Tenant cache hit (Redis): ${subdomain}`);
-          // Populate memory cache
-          this.setMemoryCache(subdomain, redisCached);
-          return redisCached;
-        }
-      } catch (error) {
-        console.error('Redis cache error:', error);
-        // Continue to database fallback
+        const redisKey = `tenant:subdomain:${subdomain}`;
+        await redis?.set(redisKey, JSON.stringify({
+          id: data.id,
+          subdomain: data.subdomain,
+          name: data.name
+        }), { ex: 3600 }); // 1 hour Redis cache
+      } catch (redisError) {
+        console.warn('⚠️ Failed to cache in Redis:', redisError);
       }
-    }
-    
-    // Layer 3: Database fallback
-    const tenantInfo = await this.fetchFromDatabase(subdomain);
-    if (tenantInfo) {
-      console.log(`✅ Tenant fetched from database: ${subdomain}`);
-      // Populate both caches
-      await this.setCaches(subdomain, tenantInfo);
-      return tenantInfo;
-    }
-    
-    console.log(`❌ Tenant not found: ${subdomain}`);
-    return null;
-  }
-  
-  /**
-   * Get tenant info by UUID with multi-layer caching
-   */
-  public async getTenantById(id: string): Promise<TenantInfo | null> {
-    if (!id) return null;
-    
-    const cacheKey = `id:${id}`;
-    
-    // Check memory cache
-    const memoryCached = this.getFromMemoryCache(cacheKey);
-    if (memoryCached) {
-      console.log(`✅ Tenant cache hit (memory) by ID: ${id}`);
-      return memoryCached;
-    }
-    
-    // Check Redis cache
-    if (this.redis) {
-      try {
-        const redisCached = await this.getFromRedisCache(cacheKey);
-        if (redisCached) {
-          console.log(`✅ Tenant cache hit (Redis) by ID: ${id}`);
-          this.setMemoryCache(cacheKey, redisCached);
-          return redisCached;
-        }
-      } catch (error) {
-        console.error('Redis cache error:', error);
-      }
-    }
-    
-    // Database fallback
-    if (!this.supabase) return null;
-    
-    const { data, error } = await this.supabase
-      .from('tenants')
-      .select('id, subdomain, name, created_at')
-      .eq('id', id)
-      .maybeSingle() as { data: any; error: any };
-    
-    if (error || !data) {
-      console.error('Database error fetching tenant by ID:', error);
+      
+      console.log(`✅ Database lookup successful for tenant: ${subdomain} -> ${data.id}`);
+      return tenantData;
+      
+    } catch (error) {
+      console.error('❌ TenantContextManager.resolveTenant failed:', error);
       return null;
     }
-    
-    const tenantInfo: TenantInfo = {
-      id: data.id,
-      subdomain: data.subdomain,
-      name: data.name,
-      createdAt: data.created_at,
-    };
-    
-    // Cache by both ID and subdomain
-    await this.setCaches(cacheKey, tenantInfo);
-    await this.setCaches(data.subdomain, tenantInfo);
-    
-    return tenantInfo;
   }
-  
+
   /**
-   * Invalidate tenant cache (call after tenant updates)
+   * Resolves tenant data from UUID
+   * Used when we have UUID but need subdomain context
    */
-  public async invalidateTenant(subdomain: string, id?: string): Promise<void> {
-    // Clear memory cache
-    this.memoryCache.delete(subdomain);
-    if (id) {
-      this.memoryCache.delete(`id:${id}`);
+  static async resolveTenantByUUID(uuid: string): Promise<TenantData | null> {
+    try {
+      if (!this.isUUID(uuid)) {
+        console.error(`❌ Invalid UUID format: ${uuid}`);
+        return null;
+      }
+
+      // Check Redis cache first
+      try {
+        const redisKey = `tenant:uuid:${uuid}`;
+        const redisData = await redis?.get(redisKey);
+        if (redisData) {
+          const parsed = JSON.parse(redisData as string);
+          return {
+            uuid: parsed.id,
+            subdomain: parsed.subdomain,
+            name: parsed.name
+          };
+        }
+      } catch (redisError) {
+        console.warn('⚠️ Redis unavailable for UUID lookup:', redisError);
+      }
+
+      // Database lookup
+      const { data, error } = await supabase
+        .from('tenants')
+        .select('id, subdomain, name')
+        .eq('id', uuid)
+        .maybeSingle();
+
+      if (error || !data) {
+        console.error(`❌ Tenant UUID not found: ${uuid}`, error);
+        return null;
+      }
+
+      const tenantData: TenantData = {
+        uuid: data.id,
+        subdomain: data.subdomain,
+        name: data.name
+      };
+
+      // Cache the result
+      try {
+        await redis?.set(`tenant:uuid:${uuid}`, JSON.stringify({
+          id: data.id,
+          subdomain: data.subdomain,
+          name: data.name
+        }), { ex: 3600 });
+      } catch (redisError) {
+        console.warn('⚠️ Failed to cache UUID lookup:', redisError);
+      }
+
+      return tenantData;
+
+    } catch (error) {
+      console.error('❌ TenantContextManager.resolveTenantByUUID failed:', error);
+      return null;
     }
+  }
+
+  /**
+   * Clear cache for a tenant (useful during updates)
+   */
+  static async clearTenantCache(subdomain: string, uuid?: string): Promise<void> {
+    // Clear memory cache
+    this.cache.delete(subdomain);
     
     // Clear Redis cache
-    if (this.redis) {
-      try {
-        await this.redis.del(`tenant:${subdomain}`);
-        if (id) {
-          await this.redis.del(`tenant:id:${id}`);
+    try {
+      await redis?.del(`tenant:subdomain:${subdomain}`);
+      if (uuid) {
+        await redis?.del(`tenant:uuid:${uuid}`);
+      }
+    } catch (error) {
+      console.warn('⚠️ Failed to clear tenant cache:', error);
+    }
+  }
+
+  /**
+   * Check if string is a valid UUID format
+   */
+  private static isUUID(str: string): boolean {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+  }
+
+  /**
+   * Extract subdomain from hostname
+   */
+  static extractSubdomain(hostname: string): string | null {
+    try {
+      // Handle localhost development
+      if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
+        const parts = hostname.split('.');
+        if (parts.length > 1 && parts[0] !== 'www') {
+          return parts[0];
         }
-      } catch (error) {
-        console.error('Redis invalidation error:', error);
+        return null;
       }
-    }
-    
-    console.log(`🗑️ Invalidated cache for tenant: ${subdomain}`);
-  }
-  
-  /**
-   * Validate tenant headers and return normalized tenant info
-   */
-  public async validateAndNormalizeTenant(
-    tenantId?: string | null,
-    tenantSubdomain?: string | null
-  ): Promise<TenantInfo | null> {
-    // Priority 1: Use tenant ID if provided
-    if (tenantId) {
-      const tenant = await this.getTenantById(tenantId);
-      if (tenant) return tenant;
-    }
-    
-    // Priority 2: Use subdomain if provided
-    if (tenantSubdomain) {
-      const tenant = await this.getTenantBySubdomain(tenantSubdomain);
-      if (tenant) return tenant;
-    }
-    
-    return null;
-  }
-  
-  // Private helper methods
-  
-  private getFromMemoryCache(key: string): TenantInfo | null {
-    const entry = this.memoryCache.get(key);
-    if (!entry) return null;
-    
-    // Check TTL
-    if (Date.now() - entry.timestamp > this.MEMORY_TTL) {
-      this.memoryCache.delete(key);
+
+      // Handle production domains
+      const parts = hostname.split('.');
+      if (parts.length >= 3 && parts[0] !== 'www') {
+        return parts[0];
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('❌ Failed to extract subdomain from hostname:', hostname, error);
       return null;
     }
-    
-    return entry.data;
-  }
-  
-  private setMemoryCache(key: string, data: TenantInfo): void {
-    // LRU eviction
-    if (this.memoryCache.size >= this.MAX_MEMORY_ENTRIES) {
-      const firstKey = this.memoryCache.keys().next().value;
-      if (firstKey) this.memoryCache.delete(firstKey);
-    }
-    
-    this.memoryCache.set(key, {
-      data,
-      timestamp: Date.now(),
-    });
-  }
-  
-  private async getFromRedisCache(key: string): Promise<TenantInfo | null> {
-    if (!this.redis) return null;
-    
-    try {
-      const cached = await this.redis.get(`tenant:${key}`);
-      if (cached && typeof cached === 'string') {
-        return JSON.parse(cached) as TenantInfo;
-      }
-    } catch (error) {
-      console.error('Redis get error:', error);
-    }
-    
-    return null;
-  }
-  
-  private async setRedisCache(key: string, data: TenantInfo): Promise<void> {
-    if (!this.redis) return;
-    
-    try {
-      await this.redis.setex(
-        `tenant:${key}`,
-        this.REDIS_TTL,
-        JSON.stringify(data)
-      );
-    } catch (error) {
-      console.error('Redis set error:', error);
-    }
-  }
-  
-  private async fetchFromDatabase(subdomain: string): Promise<TenantInfo | null> {
-    if (!this.supabase) return null;
-    
-    const { data, error } = await this.supabase
-      .from('tenants')
-      .select('id, subdomain, name, created_at')
-      .eq('subdomain', subdomain)
-      .maybeSingle() as { data: any; error: any };
-    
-    if (error || !data) {
-      if (error) console.error('Database error fetching tenant:', error);
-      return null;
-    }
-    
-    return {
-      id: data.id,
-      subdomain: data.subdomain,
-      name: data.name,
-      createdAt: data.created_at,
-    };
-  }
-  
-  private async setCaches(key: string, data: TenantInfo): Promise<void> {
-    // Set memory cache
-    this.setMemoryCache(key, data);
-    
-    // Set Redis cache
-    await this.setRedisCache(key, data);
-  }
-  
-  /**
-   * Clear all caches (useful for testing)
-   */
-  public clearAllCaches(): void {
-    this.memoryCache.clear();
-    console.log('🗑️ Cleared all memory caches');
   }
 }
-
-// Export singleton instance getter
-export const getTenantManager = () => TenantContextManager.getInstance();

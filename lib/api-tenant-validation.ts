@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSubdomainData } from '@/lib/subdomains';
 import { createClient } from '@supabase/supabase-js';
-import { getTenantManager } from './tenant-context-manager';
+import { TenantContextManager } from './tenant-context-manager';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -73,8 +73,7 @@ export async function validateTenantContext(
     }
 
     // HIGH-PERFORMANCE: Use TenantContextManager with multi-layer caching
-    const tenantManager = getTenantManager();
-    const tenantInfo = await tenantManager.validateAndNormalizeTenant(tenantId, tenantSubdomain);
+    const tenantInfo = await TenantContextManager.resolveTenant(tenantSubdomain);
   
     if (!tenantInfo) {
       console.error('❌ Tenant lookup failed for subdomain:', tenantSubdomain);
@@ -89,10 +88,10 @@ export async function validateTenantContext(
   
     // Convert TenantInfo to full tenant object for backward compatibility
     const tenantData = {
-      id: tenantInfo.id,
+      id: tenantInfo.uuid,
       subdomain: tenantInfo.subdomain,
       name: tenantInfo.name,
-      created_at: tenantInfo.createdAt
+      created_at: new Date().toISOString() // We don't have createdAt in TenantData interface
     };
 
     // At this point, tenantData must have an 'id' field which is the UUID

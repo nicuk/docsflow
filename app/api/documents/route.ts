@@ -42,27 +42,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const tenantSubdomain = tenantValidation.tenantId!;
-    console.log('Fetching documents for validated tenant:', tenantSubdomain);
+    const tenantId = tenantValidation.tenantId!; // This is already the UUID
+    const tenantSubdomain = tenantValidation.tenantData?.subdomain || 'unknown';
+    console.log('Fetching documents for validated tenant:', tenantSubdomain, 'UUID:', tenantId);
     
-    // Get the tenant UUID - use validated data if available
-    let tenantId = tenantValidation.tenantData?.id;
-    if (!tenantId) {
-      const { data: tenant, error: tenantError } = await supabase
-        .from('tenants')
-        .select('id')
-        .eq('subdomain', tenantSubdomain)
-        .single();
-
-      if (tenantError || !tenant) {
-        console.error('Tenant not found:', tenantError);
-        return NextResponse.json(
-          { error: 'Tenant not found' },
-          { status: 404, headers: corsHeaders }
-        );
-      }
-      tenantId = tenant.id;
-    }
+    // tenantId is already the UUID from validation, no need for additional lookup
     
     // Get documents for this tenant using the actual UUID
     const { data: documents, error } = await supabase
