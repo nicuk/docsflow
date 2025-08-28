@@ -185,7 +185,7 @@ def create_contextual_chunks(document, metadata):
 
 ### **Powerful RAG-Enabled Chat Interface**
 ```typescript
-POST /api/rag-enhanced-v2
+POST /api/rag-enhanced
 {
   "query": "Show me the latest contract changes for Acme Corp from Q3 2024",
   "options": {
