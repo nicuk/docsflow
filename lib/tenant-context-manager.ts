@@ -39,20 +39,36 @@ export class TenantContextManager {
         const redisKey = `tenant:subdomain:${subdomain}`;
         const redisData = await redis?.get(redisKey);
         if (redisData) {
-          const parsed = JSON.parse(redisData as string);
+          console.log(`✅ Redis tenant cache HIT for: ${subdomain}`);
+          
+          // SECURITY FIX: Validate JSON before parsing
+          if (typeof redisData !== 'string' || redisData.includes('[object Object]')) {
+            console.warn(`⚠️ Corrupted Redis data for ${subdomain}, clearing cache`);
+            await redis?.del(redisKey);
+            throw new Error('Corrupted cache data');
+          }
+          
+          const parsed = JSON.parse(redisData);
+          
+          // Validate parsed data structure
+          if (!parsed.id || !parsed.subdomain) {
+            console.warn(`⚠️ Invalid Redis data structure for ${subdomain}, clearing cache`);
+            await redis?.del(redisKey);
+            throw new Error('Invalid cache structure');
+          }
+          
           const tenantData: TenantData = {
             uuid: parsed.id,
             subdomain: parsed.subdomain,
             name: parsed.name
           };
           
-          // Cache in memory for future requests
+          // Update memory cache
           this.cache.set(subdomain, { 
             data: tenantData, 
-            expires: Date.now() + 300000 // 5min cache
+            expires: Date.now() + 300000 
           });
           
-          console.log(`✅ Redis cache hit for tenant: ${subdomain}`);
           return tenantData;
         }
       } catch (redisError) {

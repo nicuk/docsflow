@@ -18,8 +18,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: '32x32' },
-      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' }
+      { url: '/favicon.ico', sizes: '32x32' }
     ],
     apple: '/apple-touch-icon.png',
     shortcut: '/favicon.ico'
@@ -64,12 +63,13 @@ export default async function RootLayout({
 }) {
   const heads = await headers();
   const tenantId = heads.get('x-tenant-id') || null;
+  const tenantSubdomain = heads.get('x-tenant-subdomain') || null;
 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <AuthProvider>
-          <TenantProvider tenantId={tenantId}>
+          <TenantProvider tenantId={tenantId} tenantSubdomain={tenantSubdomain}>
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
               <PerformanceMonitor />
               {children}
