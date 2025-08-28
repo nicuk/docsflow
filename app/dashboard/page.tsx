@@ -44,6 +44,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import BackendStatus from "@/components/backend-status"
 import { SecurityMonitor } from "@/components/security-monitor"
 import PersonaEditor from "@/components/persona-editor"
+import { ProgressiveStats } from "@/components/dashboard/progressive-stats"
+import { PersonaCardSkeleton } from "@/components/dashboard/stats-skeleton"
 
 // Industry-specific types
 interface TenantContext {
@@ -543,31 +545,11 @@ export default function DashboardPage() {
 
       {/* Main content grid - Optimized for viewport */}
       <div className="flex-1 flex flex-col gap-4 min-h-0">
-        {/* Stats and Quick Actions Row */}
+        {/* 🚀 PROGRESSIVE LOADING: Stats load in stages for better UX */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-fit">
-          {/* Stats - 3 columns */}
-          {stats.map((stat, index) => (
-            <Card key={index} className="h-fit">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      {stat.title}
-                    </p>
-                    {(isDocumentsLoading || isConversationsLoading) ? (
-                      <div className="mt-1 flex items-center gap-2">
-                        <div className="h-6 bg-gray-200 rounded animate-pulse w-12"></div>
-                        <div className="text-xs text-gray-400">Loading...</div>
-                      </div>
-                    ) : (
-                      <p className="text-xl font-bold mt-1">{stat.value}</p>
-                    )}
-                  </div>
-                  <stat.icon className={`h-5 w-5 ${isDocumentsLoading ? 'text-gray-400' : 'text-blue-600'}`} />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          <div className="lg:col-span-3">
+            <ProgressiveStats />
+          </div>
           
           {/* Quick Action - 1 column */}
           <Card className="h-fit">
