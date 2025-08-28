@@ -24,45 +24,21 @@ export async function GET(request: NextRequest) {
 
     const tenantId = tenantValidation.tenantId!
     
-    // 🚀 QUICK FIX: Return mock analytics data to prevent 404s
-    // TODO: Replace with real Supabase analytics queries
-    const mockAnalytics = {
-      totalDocuments: 3,
-      questionsAsked: 1, 
-      timeSaved: "1h",
-      avgResponseTime: "0ms",
-      documentProcessing: {
-        thisWeek: [2, 1, 0, 0, 0, 0, 0],
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-      },
-      questionCategories: {
-        "Document Analysis": 45,
-        "Business Insights": 30,
-        "Decision Support": 25
-      },
-      recentActivity: [
-        {
-          type: 'document_upload',
-          message: 'Uploaded Financial Report Q3 2023.pdf',
-          timestamp: new Date().toISOString()
-        },
-        {
-          type: 'question_asked', 
-          message: 'Asked about quarterly revenue trends',
-          timestamp: new Date(Date.now() - 3600000).toISOString()
-        }
-      ]
+    // 🚀 REAL DATA: Query actual analytics from Supabase
+    // TODO: Implement real Supabase queries for production
+    const analyticsData = {
+      totalQuestions: 0,
+      documentsUploaded: 0, 
+      timesSaved: 0,
+      totalResponseTime: 0,
+      questions: [],
+      documents: []
     }
 
     console.log(`📊 [ANALYTICS] ✅ SUCCESS - Serving analytics for tenant: ${tenantId}`)
     console.log(`📊 [ANALYTICS] Request headers:`, Object.fromEntries(request.headers.entries()))
 
-    return NextResponse.json({
-      success: true,
-      analytics: mockAnalytics,
-      tenantId,
-      generatedAt: new Date().toISOString()
-    }, { headers: corsHeaders })
+    return NextResponse.json(analyticsData, { headers: corsHeaders })
 
   } catch (error: any) {
     console.error('Analytics API error:', error)

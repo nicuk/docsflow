@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Send, Paperclip, RotateCcw, Download, FileText, MessageSquare, Sparkles, ChevronRight, Plus, History, Trash2 } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
 import ConfidenceIndicator from "@/components/confidence-indicator"
+import SourceViewerModal from "@/components/source-viewer-modal"
 
 interface Message {
   id: string
@@ -131,6 +132,10 @@ export default function ChatInterface() {
   const [isLoading, setIsLoading] = useState(false)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  
+  // 🚀 NEW: Source viewer modal state
+  const [selectedSource, setSelectedSource] = useState<any>(null)
+  const [isSourceModalOpen, setIsSourceModalOpen] = useState(false)
 
   const placeholderSuggestions = [
     "What were our Q3 expenses?",
@@ -528,26 +533,34 @@ Please try again in a moment. If the issue persists, you can still use the inter
 
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between shrink-0">
+      {/* 🚀 UNIFIED HEADER: Logo + Actions in single compact row */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-2 flex items-center justify-between shrink-0">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+          <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
             <MessageSquare className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h1 className="text-base font-semibold text-gray-900 dark:text-white">docsflow.app</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">AI-powered business document analysis</p>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">DocsFlow</h1>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        {/* Animated conversation context */}
+        {currentConversationId && (
+          <div className="flex-1 px-4 text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400 truncate animate-pulse">
+              Chat Assistant • AI-powered document analysis
+            </p>
+          </div>
+        )}
+
+        <div className="flex items-center space-x-1">
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={() => setShowConversationHistory(!showConversationHistory)}
-            className="text-gray-600 dark:text-gray-400"
+            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
-            <History className="h-4 w-4 mr-2" />
+            <History className="h-4 w-4 mr-1" />
             History
           </Button>
           <Button 
@@ -555,17 +568,27 @@ Please try again in a moment. If the issue persists, you can still use the inter
             size="sm" 
             onClick={createNewConversation} 
             disabled={isCreatingConversation}
-            className="text-gray-600 dark:text-gray-400"
+            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-1" />
             New Chat
           </Button>
-          <Button variant="ghost" size="sm" onClick={clearCurrentConversation} className="text-gray-600 dark:text-gray-400">
-            <RotateCcw className="h-4 w-4 mr-2" />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={clearCurrentConversation} 
+            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <RotateCcw className="h-4 w-4 mr-1" />
             Clear
           </Button>
-          <Button variant="ghost" size="sm" onClick={exportChat} className="text-gray-600 dark:text-gray-400">
-            <Download className="h-4 w-4 mr-2" />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={exportChat} 
+            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <Download className="h-4 w-4 mr-1" />
             Export
           </Button>
         </div>
@@ -652,18 +675,18 @@ Please try again in a moment. If the issue persists, you can still use the inter
           )}
 
           <div className="flex-1 flex min-h-0">
-            <div className="w-full lg:w-[70%] mx-auto flex flex-col min-h-0">
-              <ScrollArea ref={scrollAreaRef} className="flex-1 px-4 py-6">
-                <div className="space-y-6 max-w-4xl mx-auto">
+            <div className="w-full max-w-none flex flex-col min-h-0">
+              <ScrollArea ref={scrollAreaRef} className="flex-1 px-6 py-4">
+                <div className="space-y-3 max-w-none">
                   {messages.map((message) => (
                     <div key={message.id}>
                       {message.type === "user" && (
                         <div className="flex justify-end">
-                          <div className="max-w-[80%] sm:max-w-[60%]">
-                            <div className="bg-blue-600 text-white rounded-2xl rounded-br-md px-4 py-3 shadow-sm">
-                              <p className="text-sm sm:text-base">{message.content}</p>
+                          <div className="max-w-[85%] sm:max-w-[70%]">
+                            <div className="bg-blue-600 text-white rounded-xl rounded-br-md px-3 py-2 shadow-sm">
+                              <p className="text-sm leading-relaxed">{message.content}</p>
                             </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 text-right">
                               {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                             </p>
                           </div>
@@ -672,26 +695,36 @@ Please try again in a moment. If the issue persists, you can still use the inter
 
                       {message.type === "ai" && (
                         <div className="flex justify-start">
-                          <div className="max-w-[80%] sm:max-w-[70%]">
-                            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
-                              <div className="flex items-center space-x-2 mb-2">
-                                <Sparkles className="h-4 w-4 text-blue-600" />
+                          <div className="max-w-[85%] sm:max-w-[75%]">
+                            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl rounded-bl-md px-3 py-2 shadow-sm">
+                              <div className="flex items-center space-x-1 mb-1">
+                                <Sparkles className="h-3 w-3 text-blue-600" />
                                 <span className="text-xs font-medium text-blue-600 dark:text-blue-400">AI Assistant</span>
                               </div>
 
-                              <p className="text-sm sm:text-base text-gray-900 dark:text-gray-100 leading-relaxed mb-3">
+                              <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed mb-2">
                                 {message.content}
                               </p>
 
                               {/* Sources */}
                               {message.sources && message.sources.length > 0 && (
-                                <div className="border-t border-gray-100 dark:border-gray-700 pt-3 mt-3">
-                                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Sources:</p>
+                                <div className="border-t border-gray-100 dark:border-gray-700 pt-2 mt-2">
+                                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Sources:</p>
                                   <div className="space-y-2">
                                     {message.sources.map((source, idx) => (
                                       <button
                                         key={idx}
                                         className="flex items-start space-x-2 text-left w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                                        onClick={() => {
+                                          setSelectedSource({
+                                            filename: source.document,
+                                            content: source.snippet,
+                                            document_id: `doc-${idx}`,
+                                            page: source.page,
+                                            confidence: source.confidence
+                                          });
+                                          setIsSourceModalOpen(true);
+                                        }}
                                       >
                                         <FileText className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
                                         <div className="flex-1 min-w-0">
@@ -701,6 +734,11 @@ Please try again in a moment. If the issue persists, you can still use the inter
                                           <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
                                             {source.snippet}
                                           </p>
+                                          {source.confidence && (
+                                            <Badge variant="outline" className="mt-1 text-xs">
+                                              {Math.round(source.confidence * 100)}% confidence
+                                            </Badge>
+                                          )}
                                         </div>
                                       </button>
                                     ))}
@@ -748,10 +786,10 @@ Please try again in a moment. If the issue persists, you can still use the inter
 
                       {message.type === "loading" && (
                         <div className="flex justify-start">
-                          <div className="max-w-[80%] sm:max-w-[70%]">
-                            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
-                              <div className="flex items-center space-x-2 mb-2">
-                                <Sparkles className="h-4 w-4 text-blue-600" />
+                          <div className="max-w-[85%] sm:max-w-[75%]">
+                            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl rounded-bl-md px-3 py-2 shadow-sm">
+                              <div className="flex items-center space-x-1 mb-1">
+                                <Sparkles className="h-3 w-3 text-blue-600" />
                                 <span className="text-xs font-medium text-blue-600 dark:text-blue-400">AI Assistant</span>
                               </div>
                               <div className="flex items-center space-x-1">
@@ -851,6 +889,18 @@ Please try again in a moment. If the issue persists, you can still use the inter
           </div>
         </div>
       </div>
+      
+      {/* 🚀 NEW: Source Viewer Modal */}
+      {selectedSource && (
+        <SourceViewerModal
+          source={selectedSource}
+          isOpen={isSourceModalOpen}
+          onClose={() => {
+            setIsSourceModalOpen(false);
+            setSelectedSource(null);
+          }}
+        />
+      )}
     </div>
   )
 }
