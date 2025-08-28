@@ -264,6 +264,7 @@ export default async function middleware(request: NextRequest) {
           pathname.startsWith('/api') || 
           pathname.startsWith('/login') ||
           pathname.startsWith('/register') ||
+          pathname.startsWith('/dashboard') ||
           pathname === '/') {
         console.log(`🔍 [MIDDLEWARE] Allowing main domain route: ${pathname}`);
         // Continue to the backend route handler
