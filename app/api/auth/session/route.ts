@@ -8,7 +8,17 @@ import { createServerClient } from '@supabase/ssr';
  */
 export async function GET(request: NextRequest) {
   try {
+    console.log(`🔍 [SESSION API] Request received from: ${request.headers.get('referer')}`);
+    console.log(`🔍 [SESSION API] User-Agent: ${request.headers.get('user-agent')?.substring(0, 50)}...`);
+    
     const cookieStore = await cookies();
+    
+    // DEBUGGING: Log all available cookies
+    const allCookies = cookieStore.getAll();
+    console.log(`🔍 [SESSION API] Available cookies: ${allCookies.map(c => c.name).join(', ')}`);
+    console.log(`🔍 [SESSION API] access_token present: ${!!cookieStore.get('access_token')?.value}`);
+    console.log(`🔍 [SESSION API] refresh_token present: ${!!cookieStore.get('refresh_token')?.value}`);
+    console.log(`🔍 [SESSION API] sb-auth present: ${!!cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value}`);
     
     // ARCHITECTURAL ROOT FIX: Create Supabase client that reads STANDARDIZED cookies
     const supabase = createServerClient(
@@ -55,14 +65,24 @@ export async function GET(request: NextRequest) {
     );
 
     // SECURITY FIX: Use getUser() instead of getSession() for authenticated data
+    console.log(`🔍 [SESSION API] Calling supabase.auth.getUser()...`);
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
+    console.log(`🔍 [SESSION API] Supabase auth result:`, {
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      error: userError?.message
+    });
+    
     if (!user || userError) {
+      console.log(`❌ [SESSION API] Authentication failed:`, userError?.message);
       return NextResponse.json({
         authenticated: false,
         user: null,
         tenant: null,
-        onboardingComplete: false
+        onboardingComplete: false,
+        error: userError?.message
       });
     }
 
@@ -88,7 +108,8 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (profileError || !userProfile) {
-      console.error('Profile fetch error:', profileError);
+      console.error('🚨 [SESSION API] Profile fetch error:', profileError);
+      console.log(`🔍 [SESSION API] User exists but no profile - needs onboarding`);
       // User exists but profile not found - needs onboarding
       return NextResponse.json({
         authenticated: true,
@@ -99,11 +120,20 @@ export async function GET(request: NextRequest) {
           role: 'user'
         },
         tenant: null,
-        onboardingComplete: false
+        onboardingComplete: false,
+        debug: 'no_profile_found'
       });
     }
 
     // Return complete session data
+    console.log(`✅ [SESSION API] Successful authentication:`, {
+      userId: userProfile.id,
+      email: userProfile.email,
+      tenantId: userProfile.tenant_id,
+      tenantSubdomain: userProfile.tenants?.subdomain,
+      onboardingComplete: !!userProfile.tenant_id
+    });
+    
     return NextResponse.json({
       authenticated: true,
       user: {
@@ -114,7 +144,8 @@ export async function GET(request: NextRequest) {
       },
       tenant: userProfile.tenants || null,
       onboardingComplete: !!userProfile.tenant_id,
-      tenantId: userProfile.tenant_id
+      tenantId: userProfile.tenant_id,
+      debug: 'success'
     });
 
   } catch (error) {

@@ -203,6 +203,15 @@ export default async function middleware(request: NextRequest) {
       const userEmail = request.cookies.get('user_email')?.value;
       const authToken = request.cookies.get('access_token')?.value;
       
+      // DEBUGGING: Log detailed authentication state
+      console.log(`🔍 [MIDDLEWARE] ${tenant} subdomain auth check:`, {
+        pathname,
+        storedTenantId: storedTenantId ? `${storedTenantId.substring(0, 8)}...` : 'MISSING',
+        userEmail: userEmail || 'MISSING',
+        authToken: authToken ? `${authToken.substring(0, 20)}...` : 'MISSING',
+        tenantUUID: tenantUUID ? `${tenantUUID.substring(0, 8)}...` : 'MISSING'
+      });
+      
       // HIGH-PERFORMANCE: Use TenantContextManager with multi-layer caching
       const tenantInfo = await TenantContextManager.resolveTenant(tenant);
       const tenantUUID = tenantInfo?.uuid || null;
@@ -268,6 +277,7 @@ export default async function middleware(request: NextRequest) {
       
       // For authenticated users on correct tenant, allow access with proper tenant context
       if (userEmail && authToken && storedTenantId && tenantUUID && storedTenantId === tenantUUID) {
+        console.log(`✅ [MIDDLEWARE] User authenticated for tenant ${tenant} - allowing access to ${pathname}`);
         const response = NextResponse.next();
         response.headers.set('x-tenant-id', tenantUUID);
         response.headers.set('x-tenant-subdomain', tenant);
@@ -277,7 +287,13 @@ export default async function middleware(request: NextRequest) {
       // For unauthenticated users on protected pages, redirect to login (but NOT if already on login)
       if (pathname !== '/login' && pathname !== '/register') {
         const loginUrl = `https://${tenant}.docsflow.app/login`;
-        console.log(`🔐 Redirecting unauthenticated user to login: ${loginUrl}`);
+        console.log(`🔐 [MIDDLEWARE] Redirecting unauthenticated user to login: ${loginUrl}`);
+        console.log(`🔍 [MIDDLEWARE] Auth failure reason:`, {
+          hasEmail: !!userEmail,
+          hasToken: !!authToken,
+          hasTenantId: !!storedTenantId,
+          tenantMatch: storedTenantId === tenantUUID
+        });
         return NextResponse.redirect(new URL(loginUrl));
       }
       

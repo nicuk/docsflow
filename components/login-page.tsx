@@ -61,12 +61,23 @@ export default function LoginPage() {
         // ARCHITECTURAL ROOT FIX: Set cookies that MIDDLEWARE expects
         const decodedToken = decodeURIComponent(token);
         console.log(`🔍 [SESSION BRIDGE] Decoded token length: ${decodedToken.length}`);
+        console.log(`🔍 [SESSION BRIDGE] Token preview: ${decodedToken.substring(0, 50)}...`);
         
         // CRITICAL: Set the cookies that middleware.ts:204 expects for authentication
         document.cookie = `access_token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
+        console.log(`✅ [SESSION BRIDGE] Set access_token cookie`);
         
         // Also set Supabase default cookie for session API compatibility
         document.cookie = `sb-lhcopwwiqwjpzbdnjovo-auth-token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
+        console.log(`✅ [SESSION BRIDGE] Set Supabase auth cookie`);
+        
+        // DEBUGGING: Verify cookies were actually set
+        setTimeout(() => {
+          const allCookies = document.cookie;
+          console.log(`🔍 [SESSION BRIDGE] Current cookies: ${allCookies.substring(0, 200)}...`);
+          console.log(`🔍 [SESSION BRIDGE] access_token present: ${allCookies.includes('access_token')}`);
+          console.log(`🔍 [SESSION BRIDGE] sb-auth present: ${allCookies.includes('sb-lhcopwwiqwjpzbdnjovo-auth-token')}`);
+        }, 100);
         
         // Get current subdomain for tenant context
         const hostname = window.location.hostname;
@@ -84,7 +95,20 @@ export default function LoginPage() {
           // Redirect to dashboard after showing success message
           setTimeout(() => {
             console.log(`🔍 [SESSION BRIDGE] Redirecting to dashboard...`);
-            window.location.href = '/dashboard';
+            console.log(`🔍 [SESSION BRIDGE] Current URL before redirect: ${window.location.href}`);
+            console.log(`🔍 [SESSION BRIDGE] Target URL: ${window.location.origin}/dashboard`);
+            
+            // DEBUGGING: Test session state before redirect
+            fetch('/api/auth/session')
+              .then(response => response.json())
+              .then(data => {
+                console.log(`🔍 [SESSION BRIDGE] Session check before redirect:`, data);
+                window.location.href = '/dashboard';
+              })
+              .catch(error => {
+                console.error(`🚨 [SESSION BRIDGE] Session check failed:`, error);
+                window.location.href = '/dashboard'; // Continue anyway
+              });
           }, 2000);
         } else {
           console.error(`🚨 [SESSION BRIDGE] Invalid subdomain: ${subdomain}`);

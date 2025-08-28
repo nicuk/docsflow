@@ -68,15 +68,26 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadTenantContext = async () => {
       try {
+        console.log(`🔍 [DASHBOARD] Starting loadTenantContext at ${new Date().toISOString()}`);
+        
         // CRITICAL FIX: Check if on main domain and redirect before API calls
         const hostname = window.location.hostname;
+        console.log(`🔍 [DASHBOARD] Current hostname: ${hostname}`);
+        
         if (hostname === 'www.docsflow.app' || hostname === 'docsflow.app') {
-          console.log('🔍 Main domain detected, checking for tenant context...');
+          console.log('🔍 [DASHBOARD] Main domain detected, checking for tenant context...');
           
           // SECURITY FIX: Standardized tenant storage - separate UUID and subdomain
           const storedTenantUUID = localStorage.getItem('tenant-uuid');
           const storedTenantSubdomain = localStorage.getItem('tenant-subdomain');
           const authToken = document.cookie.includes('sb-lhcopwwiqwjpzbdnjovo-auth-token');
+          
+          console.log(`🔍 [DASHBOARD] Main domain auth state:`, {
+            storedTenantUUID: storedTenantUUID ? `${storedTenantUUID.substring(0, 8)}...` : 'MISSING',
+            storedTenantSubdomain: storedTenantSubdomain || 'MISSING',
+            authToken: authToken ? 'PRESENT' : 'MISSING',
+            cookieCount: document.cookie.split(';').length
+          });
           
           if (authToken && storedTenantSubdomain) {
             console.log(`🎯 Redirecting to tenant subdomain: ${storedTenantSubdomain}`);
