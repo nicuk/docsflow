@@ -6,7 +6,7 @@ import { promises as fs } from 'fs';
 // Dynamic imports to prevent build hangs
 const loadPdfParse = () => import('pdf-parse');
 const loadMammoth = () => import('mammoth'); 
-const loadXLSX = () => import('xlsx');
+const loadExcelJS = () => import('exceljs');
 import { createClient } from '@supabase/supabase-js';
 import { getUserAccessLevel } from '@/lib/auth-helpers';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
@@ -152,13 +152,22 @@ export async function POST(request: NextRequest) {
         textContent = docData.value;
       } else if (file.type === 'application/vnd.ms-excel' || 
                  file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
-        const XLSX = await loadXLSX();
-        const workbook = XLSX.read(buffer, { type: 'buffer' });
-        const sheetNames = workbook.SheetNames;
-        textContent = sheetNames.map((name: string) => {
-          const sheet = workbook.Sheets[name];
-          return XLSX.utils.sheet_to_csv(sheet);
-        }).join('\n\n');
+        const ExcelJS = await loadExcelJS();
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(buffer);
+        
+        const sheets: string[] = [];
+        workbook.eachSheet((worksheet) => {
+          const rows: string[] = [];
+          worksheet.eachRow((row) => {
+            const values = row.values as any[];
+            // Skip first element which is undefined in ExcelJS
+            const cleanValues = values.slice(1).map(v => v?.toString() || '');
+            rows.push(cleanValues.join(','));
+          });
+          sheets.push(rows.join('\n'));
+        });
+        textContent = sheets.join('\n\n');
       } else if (file.type === 'text/csv') {
         textContent = buffer.toString('utf-8');
       } else if (file.type === 'text/plain') {
