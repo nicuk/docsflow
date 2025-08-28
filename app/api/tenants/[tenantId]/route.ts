@@ -80,9 +80,10 @@ export async function GET(
     }
 
     if (error || !tenant) {
-      console.error('Tenant not found:', error);
+      console.error(`❌ Tenant lookup failed for ${tenantId}:`, error);
+      console.error(`🔍 Query type: ${tenantId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i) ? 'UUID' : 'subdomain'}`);
       return NextResponse.json(
-        { error: 'Tenant not found' },
+        { error: 'Tenant not found', tenantId, queryType: tenantId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i) ? 'UUID' : 'subdomain' },
         { status: 404 }
       );
     }

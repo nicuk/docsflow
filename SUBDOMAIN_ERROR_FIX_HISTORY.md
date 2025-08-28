@@ -13,6 +13,25 @@ Error: Tenant not found for subdomain: 2e33ba17-ad07-44b7-ae8b-937de35e91d7
 ### Attempt 1: Middleware Header Injection (Previous Sessions)
 **Location:** `middleware.ts`  
 **Approach:** Enhanced middleware to inject tenant headers from subdomain extraction  
+
+### Attempt 2: API Route .single() to .maybeSingle() Fix (August 28, 2025)
+**Location:** `app/api/tenants/[tenantId]/route.ts`  
+**Approach:** Changed Supabase query from `.single()` to `.maybeSingle()` to handle PGRST116 errors
+**Status:** ❌ FAILED - Still getting 404 errors in production
+**Root Cause:** Deployment cache invalidation issue - code changes not reflected in production
+
+### Current Status: DEPLOYMENT CACHE ISSUE
+**Problem:** The API fix was deployed but Vercel/production is still serving old cached version
+**Evidence:** 
+- Local logs show middleware working correctly
+- Database query confirms tenant exists: `2e33ba17-ad07-44b7-ae8b-937de35e91d7`
+- Production still returns 404 for same UUID
+- Browser logs show: `GET https://bitto.docsflow.app/api/tenants/2e33ba17-ad07-44b7-ae8b-937de35e91d7 404 (Not Found)`
+
+### Additional Issues Identified:
+1. **www.docsflow.app fetch failures** - Initial page load errors
+2. **Missing graceful redirect** - User redirected without transition page
+3. **Multiple GoTrueClient instances** - Supabase client conflicts
 **Result:** ❌ FAILED - Only fixed incoming requests, not outgoing API calls from frontend
 
 ```typescript
