@@ -100,16 +100,9 @@ export default function DashboardPage() {
           // Fallback: Check if user has any active tenants
           if (authToken && userSession?.activeTenants?.length) {
             const firstTenant = userSession.activeTenants[0];
-            
-            // SURGICAL FIX: Validate subdomain exists before redirect
-            if (firstTenant?.subdomain && typeof firstTenant.subdomain === 'string') {
-              console.log(`🎯 [ENTERPRISE] Redirecting to first active tenant: ${firstTenant.subdomain}`);
-              window.location.href = `https://${firstTenant.subdomain}.docsflow.app/dashboard`;
-              return;
-            } else {
-              console.error(`🚨 [ENTERPRISE] Invalid tenant subdomain:`, firstTenant);
-              console.log(`🔍 [DEBUG] Full userSession:`, userSession);
-            }
+            console.log(`🎯 [ENTERPRISE] Redirecting to first active tenant: ${firstTenant.subdomain}`);
+            window.location.href = `https://${firstTenant.subdomain}.docsflow.app/dashboard`;
+            return;
           }
           
           // CRITICAL FIX: Check if user just logged in (give login page time to execute session bridge)
@@ -177,18 +170,16 @@ export default function DashboardPage() {
         // ENTERPRISE FIX: Use proper session management instead of localStorage
         const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager');
         
-        // SURGICAL FIX: Handle both data structures (check-user vs session API)
-        const tenantSubdomain = userData.tenant?.subdomain || userData.tenantSubdomain || '';
-        
         // Set proper tenant context with UUID
-        EnterpriseSessionManager.setTenantContext(userData.tenantId, tenantSubdomain);
+        EnterpriseSessionManager.setTenantContext(userData.tenantId, userData.tenant?.subdomain || '');
         
+        // Set user session with tenant access
         EnterpriseSessionManager.setUserSession({
           userId: userData.id,
           userEmail: userData.email,
           activeTenants: [{
             tenantId: userData.tenantId,
-            subdomain: tenantSubdomain,
+            subdomain: userData.tenant?.subdomain || '',
             userEmail: userData.email,
             lastAccessed: Date.now()
           }]
@@ -197,8 +188,8 @@ export default function DashboardPage() {
         console.log(`✅ [DASHBOARD] Set enterprise session for: ${userData.email}`);
         
         // Fetch real data from backend with subdomain
-        if (tenantSubdomain) {
-          await fetchRealData(userData.tenantId, tenantSubdomain);
+        if (userData.tenant?.subdomain) {
+          await fetchRealData(userData.tenantId, userData.tenant.subdomain);
         } else {
           console.error('🚨 [DASHBOARD] No tenant subdomain found in user data:', userData);
         }
@@ -218,11 +209,26 @@ export default function DashboardPage() {
   // Fetch real data from backend APIs
   const fetchRealData = async (tenantId: string, subdomain: string) => {
     try {
-      // ENTERPRISE FIX: Proper tenant context headers with UUID validation
+      // SCHEMA VALIDATION: Ensure tenantId is UUID format (matches tenants.id)
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      
+      if (!uuidPattern.test(tenantId)) {
+        console.error(`🚨 [SCHEMA VIOLATION] tenantId must be UUID from tenants.id, got: ${tenantId}`);
+        console.error(`🔍 [DEBUG] Expected UUID format, got subdomain-like string`);
+        // Graceful degradation - don't crash the dashboard
+        return;
+      }
+
+      if (!subdomain || subdomain.length === 0) {
+        console.error(`🚨 [SCHEMA VIOLATION] subdomain required for API headers, got: ${subdomain}`);
+        return;
+      }
+
+      // ENTERPRISE FIX: Schema-aligned tenant context headers
       const tenantHeaders = {
         'Content-Type': 'application/json',
-        'x-tenant-subdomain': subdomain,  // Always subdomain string
-        'x-tenant-id': tenantId           // Always UUID
+        'x-tenant-subdomain': subdomain,  // tenants.subdomain (text)
+        'x-tenant-id': tenantId           // tenants.id (UUID) - validated
       };
       
       console.log(`🔍 [DASHBOARD] Tenant context:`, {

@@ -47,8 +47,48 @@ export async function validateTenantContext(
     }
 
     // Get tenant subdomain and ID from headers
-    const tenantSubdomain = request.headers.get('x-tenant-subdomain');
-    const tenantId = request.headers.get('x-tenant-id');
+    let tenantSubdomain = request.headers.get('x-tenant-subdomain');
+    let tenantId = request.headers.get('x-tenant-id');
+    
+    // ENTERPRISE AUTO-CORRECTION: Handle header contamination
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const subdomainPattern = /^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/;
+    
+    // AUTO-CORRECT: If tenant-id contains subdomain and subdomain is missing/invalid
+    if (tenantId && !uuidPattern.test(tenantId)) {
+      if (subdomainPattern.test(tenantId) && tenantId.length < 50) {
+        console.warn(`🔧 [AUTO-CORRECT] Moving subdomain from tenant-id to subdomain field: ${tenantId}`);
+        tenantSubdomain = tenantId;  // Move to correct field
+        tenantId = null;             // Clear invalid UUID field
+      } else {
+        console.error(`🚨 SECURITY: Invalid UUID format in tenant-id: ${tenantId}`);
+        return {
+          isValid: false,
+          tenantId: null,
+          tenantData: null,
+          error: 'Invalid tenant ID format',
+          statusCode: 400
+        };
+      }
+    }
+
+    // AUTO-CORRECT: If subdomain contains UUID and tenant-id is missing
+    if (tenantSubdomain && uuidPattern.test(tenantSubdomain)) {
+      if (!tenantId) {
+        console.warn(`🔧 [AUTO-CORRECT] Moving UUID from subdomain to tenant-id field: ${tenantSubdomain}`);
+        tenantId = tenantSubdomain;  // Move to correct field
+        tenantSubdomain = null;      // Clear invalid subdomain field
+      } else {
+        console.error(`🚨 SECURITY: UUID detected in subdomain field: ${tenantSubdomain}`);
+        return {
+          isValid: false,
+          tenantId: null,
+          tenantData: null,
+          error: 'Invalid tenant subdomain format',
+          statusCode: 400
+        };
+      }
+    }
     
     // CRITICAL FIX: No fallback hostname extraction to prevent "www" being treated as tenant
     if (!tenantSubdomain) {
@@ -62,27 +102,14 @@ export async function validateTenantContext(
       };
     }
 
-    // SECURITY FIX: Validate that subdomain is not a UUID (prevent contamination)
-    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    // Final validation: subdomain should not be UUID format
     if (uuidPattern.test(tenantSubdomain)) {
-      console.error(`🚨 SECURITY: UUID detected in subdomain field: ${tenantSubdomain}`);
+      console.error(`🚨 SECURITY: UUID still in subdomain after auto-correction: ${tenantSubdomain}`);
       return {
         isValid: false,
         tenantId: null,
         tenantData: null,
         error: 'Invalid tenant subdomain format',
-        statusCode: 400
-      };
-    }
-
-    // Validate that tenant ID is a UUID (if provided)
-    if (tenantId && !uuidPattern.test(tenantId)) {
-      console.error(`🚨 SECURITY: Invalid UUID format in tenant-id: ${tenantId}`);
-      return {
-        isValid: false,
-        tenantId: null,
-        tenantData: null,
-        error: 'Invalid tenant ID format',
         statusCode: 400
       };
     }
