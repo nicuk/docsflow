@@ -216,30 +216,40 @@ export default async function middleware(request: NextRequest) {
         tenantUUID: tenantUUID ? `${tenantUUID.substring(0, 8)}...` : 'MISSING'
       });
       
-      // If user has a different tenant stored, handle gracefully
+      // CRITICAL FIX: If user has a different tenant stored, ALWAYS clear and redirect
       if (storedTenantId && tenantUUID && storedTenantId !== tenantUUID) {
         console.log(`⚠️ Tenant mismatch detected! Stored UUID: ${storedTenantId}, Current UUID: ${tenantUUID} (subdomain: ${tenant})`);
+        console.log(`🧹 [MIDDLEWARE] NUCLEAR CLEANUP: Clearing ALL stale cookies and forcing fresh auth`);
         
-        // Check if this is a session bridge request
-        const sessionBridge = request.nextUrl.searchParams.get('session_bridge');
+        // Create clean redirect to auth-redirect page
+        const cleanAuthUrl = `https://${tenant}.docsflow.app/auth-redirect`;
+        const response = NextResponse.redirect(new URL(cleanAuthUrl));
         
-        if (sessionBridge === 'true') {
-          // Allow session bridge - clear old tenant context
-          const response = NextResponse.next();
-          // Set the UUID as x-tenant-id and subdomain as x-tenant-subdomain
-          response.headers.set('x-tenant-id', tenantUUID);
-          response.headers.set('x-tenant-subdomain', tenant);
-          
-          // SCHEMA-ALIGNED: Clear all auth cookie variants to prevent contamination
-          const cookieVariants = ['tenant-id', 'user_email', 'user-email', 'access_token', 'refresh_token', 
-                                 'auth-token', 'refresh-token', 'tenant-subdomain', 'user-name', 'user_name'];
-          cookieVariants.forEach(cookieName => {
-            response.cookies.delete(cookieName);
+        // NUCLEAR OPTION: Clear ALL possible auth cookie variants
+        const cookieVariants = [
+          'tenant-id', 'user_email', 'user-email', 'access_token', 'refresh_token', 
+          'auth-token', 'refresh-token', 'user-name', 'user_name', 'onboarding-complete',
+          'sb-lhcopwwiqwjpzbdnjovo-auth-token', 'sb-lhcopwwiqwjpzbdnjovo-refresh-token'
+        ];
+        
+        cookieVariants.forEach(cookieName => {
+          // Clear for current domain
+          response.cookies.delete(cookieName);
+          // Force expire for all domain variants
+          response.cookies.set(cookieName, '', { 
+            expires: new Date(0), 
+            path: '/', 
+            domain: '.docsflow.app' 
           });
-          
-          console.log(`🔄 Cleared cookies for tenant switch from ${storedTenantId} to ${tenant}`);
-          return createSecureResponse(response, origin);
-        }
+          response.cookies.set(cookieName, '', { 
+            expires: new Date(0), 
+            path: '/', 
+            domain: `${tenant}.docsflow.app` 
+          });
+        });
+        
+        console.log(`🔄 FORCED REDIRECT: Redirecting to clean auth flow at ${cleanAuthUrl}`);
+        return createSecureResponse(response, origin);
       }
 
       // If root path, check if user is authenticated

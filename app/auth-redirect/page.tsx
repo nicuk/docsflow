@@ -14,6 +14,13 @@ export default function AuthRedirectPage() {
   useEffect(() => {
     const handleAuthRedirect = async () => {
       try {
+        setMessage('Cleaning up previous session...');
+        setProgress(10);
+        
+        // NUCLEAR CLEANUP: Clear all possible auth cookies first
+        const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
+        SchemaAlignedCookieManager.clearAllAuthCookies();
+        
         setMessage('Verifying authentication...');
         setProgress(25);
         
