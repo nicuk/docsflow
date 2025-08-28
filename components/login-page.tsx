@@ -114,9 +114,20 @@ export default function LoginPage() {
                   // SCHEMA-ALIGNED COOKIE FIX: Use database schema aligned cookie manager
                   const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
                   
-                  // Set the essential cookies that middleware actually reads
-                  document.cookie = `tenant-id=${data.tenantId}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
-                  document.cookie = `user_email=${data.user.email}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
+                  // ENTERPRISE: Use multi-tenant cookie manager
+                  const { MultiTenantCookieManager } = await import('@/lib/multi-tenant-cookie-manager');
+                  
+                  MultiTenantCookieManager.addTenantContext(
+                    {
+                      tenantId: data.tenantId,
+                      subdomain: subdomain,
+                      userEmail: data.user.email
+                    },
+                    {
+                      accessToken: decodedToken,
+                      refreshToken: undefined
+                    }
+                  );
                   
                   console.log(`✅ [SESSION BRIDGE] Set schema-aligned tenant context: ${subdomain} -> ${data.tenantId.substring(0, 8)}...`);
                 }

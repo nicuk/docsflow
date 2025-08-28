@@ -14,12 +14,13 @@ export default function AuthRedirectPage() {
   useEffect(() => {
     const handleAuthRedirect = async () => {
       try {
-        setMessage('Cleaning up previous session...');
+        setMessage('Checking multi-tenant access...');
         setProgress(10);
         
-        // NUCLEAR CLEANUP: Clear all possible auth cookies first
-        const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
-        SchemaAlignedCookieManager.clearAllAuthCookies();
+        // ENTERPRISE: Migrate legacy cookies and check multi-tenant state
+        const { MultiTenantCookieManager } = await import('@/lib/multi-tenant-cookie-manager');
+        MultiTenantCookieManager.migrateLegacyCookies();
+        MultiTenantCookieManager.debugMultiTenantState();
         
         setMessage('Verifying authentication...');
         setProgress(25);
@@ -36,10 +37,18 @@ export default function AuthRedirectPage() {
           // SCHEMA-ALIGNED: Use database schema aligned cookie manager
           const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
           
-          // Set the essential cookies that middleware actually reads
-          SchemaAlignedCookieManager.clearAllAuthCookies();
-          document.cookie = `tenant-id=${session.tenantId}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
-          document.cookie = `user_email=${session.user.email}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
+          // ENTERPRISE: Add this tenant to user's multi-tenant context
+          MultiTenantCookieManager.addTenantContext(
+            {
+              tenantId: session.tenantId,
+              subdomain: session.tenant?.subdomain || window.location.hostname.split('.')[0],
+              userEmail: session.user.email
+            },
+            {
+              accessToken: '', // Will be handled by session API
+              refreshToken: undefined
+            }
+          );
           
           setProgress(100);
           

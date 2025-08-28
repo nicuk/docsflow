@@ -198,10 +198,27 @@ export default async function middleware(request: NextRequest) {
         return NextResponse.redirect(mainDomainUrl);
       }
 
-      // SCHEMA-ALIGNED: Use exact database schema field names as cookie names
-      const storedTenantId = request.cookies.get('tenant-id')?.value; // matches tenants.id (UUID)
-      const userEmail = request.cookies.get('user_email')?.value;     // matches users.email (text)
-      const authToken = request.cookies.get('access_token')?.value;   // Supabase token
+      // MULTI-TENANT: Read from namespaced tenant contexts
+      const currentTenant = request.cookies.get('current-tenant')?.value;
+      const tenantContexts = request.cookies.get('tenant-contexts')?.value;
+      const userEmail = request.cookies.get('user_email')?.value;
+      const authToken = request.cookies.get('access_token')?.value;
+      
+      // Extract tenant UUID from namespaced contexts
+      let storedTenantId: string | null = null;
+      if (tenantContexts && currentTenant) {
+        try {
+          const contexts = JSON.parse(tenantContexts);
+          storedTenantId = contexts[currentTenant] || null;
+        } catch (e) {
+          console.warn(`🔄 [SMART-TENANCY] Invalid tenant contexts cookie, falling back to legacy`);
+          // Fallback to legacy tenant-id cookie for backwards compatibility
+          storedTenantId = request.cookies.get('tenant-id')?.value || null;
+        }
+      } else {
+        // Fallback to legacy tenant-id cookie for backwards compatibility
+        storedTenantId = request.cookies.get('tenant-id')?.value || null;
+      }
       
       // HIGH-PERFORMANCE: Use TenantContextManager with multi-layer caching
       const tenantInfo = await TenantContextManager.resolveTenant(tenant);
@@ -216,39 +233,26 @@ export default async function middleware(request: NextRequest) {
         tenantUUID: tenantUUID ? `${tenantUUID.substring(0, 8)}...` : 'MISSING'
       });
       
-      // CRITICAL FIX: If user has a different tenant stored, ALWAYS clear and redirect
+      // ENTERPRISE SOLUTION: Smart tenant context management
       if (storedTenantId && tenantUUID && storedTenantId !== tenantUUID) {
-        console.log(`⚠️ Tenant mismatch detected! Stored UUID: ${storedTenantId}, Current UUID: ${tenantUUID} (subdomain: ${tenant})`);
-        console.log(`🧹 [MIDDLEWARE] NUCLEAR CLEANUP: Clearing ALL stale cookies and forcing fresh auth`);
+        console.log(`🔄 [SMART-TENANCY] Tenant context mismatch detected - updating gracefully`);
+        console.log(`📝 [SMART-TENANCY] Stored: ${storedTenantId.substring(0, 8)}... → Required: ${tenantUUID.substring(0, 8)}... (subdomain: ${tenant})`);
         
-        // Create clean redirect to auth-redirect page
-        const cleanAuthUrl = `https://${tenant}.docsflow.app/auth-redirect`;
-        const response = NextResponse.redirect(new URL(cleanAuthUrl));
+        // Gracefully update tenant context without destroying other tenant access
+        const response = NextResponse.next();
+        response.headers.set('x-tenant-id', tenantUUID);
+        response.headers.set('x-tenant-subdomain', tenant);
         
-        // NUCLEAR OPTION: Clear ALL possible auth cookie variants
-        const cookieVariants = [
-          'tenant-id', 'user_email', 'user-email', 'access_token', 'refresh_token', 
-          'auth-token', 'refresh-token', 'user-name', 'user_name', 'onboarding-complete',
-          'sb-lhcopwwiqwjpzbdnjovo-auth-token', 'sb-lhcopwwiqwjpzbdnjovo-refresh-token'
-        ];
-        
-        cookieVariants.forEach(cookieName => {
-          // Clear for current domain
-          response.cookies.delete(cookieName);
-          // Force expire for all domain variants
-          response.cookies.set(cookieName, '', { 
-            expires: new Date(0), 
-            path: '/', 
-            domain: '.docsflow.app' 
-          });
-          response.cookies.set(cookieName, '', { 
-            expires: new Date(0), 
-            path: '/', 
-            domain: `${tenant}.docsflow.app` 
-          });
+        // Update current tenant context (preserving other tenant contexts)
+        response.cookies.set('current-tenant', tenant, {
+          domain: '.docsflow.app',
+          path: '/',
+          secure: true,
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 7
         });
         
-        console.log(`🔄 FORCED REDIRECT: Redirecting to clean auth flow at ${cleanAuthUrl}`);
+        console.log(`✅ [SMART-TENANCY] Updated current tenant context to: ${tenant}`);
         return createSecureResponse(response, origin);
       }
 
