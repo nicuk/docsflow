@@ -89,6 +89,7 @@ interface UploadingFile {
   id: string
   file: File
   progress: number
+  phase: 'uploading' | 'processing' | 'completed' | 'error'
   error?: string
 }
 
@@ -183,6 +184,7 @@ export default function DocumentsPage() {
       id: `upload-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       file,
       progress: 0,
+      phase: 'uploading',
     }))
 
     setUploadingFiles((prev) => [...prev, ...newUploadingFiles])
@@ -197,10 +199,14 @@ export default function DocumentsPage() {
   // Real backend file upload with progress tracking
   const uploadFileToBackend = async (fileId: string, file: File) => {
     try {
-      // 🚀 ENHANCED: Real progress tracking
+      // 🚀 ENHANCED: Multi-phase progress tracking
       const response = await apiClient.uploadDocument(file, (progress) => {
         setUploadingFiles((prev) => 
-          prev.map((f) => f.id === fileId ? { ...f, progress } : f)
+          prev.map((f) => f.id === fileId ? { 
+            ...f, 
+            progress: Math.min(progress, 90), // Cap upload at 90%
+            phase: progress >= 90 ? 'processing' : 'uploading'
+          } : f)
         );
       });
       
@@ -218,6 +224,15 @@ export default function DocumentsPage() {
         favorite: false,
       }
 
+      // 🚀 ENHANCED: Show completion phase then remove
+      setUploadingFiles((prev) => 
+        prev.map((f) => f.id === fileId ? { 
+          ...f, 
+          progress: 100, 
+          phase: 'completed' 
+        } : f)
+      );
+      
       // Add the new document to the list
       setDocuments((prevDocs) => [newDocument, ...prevDocs])
       
@@ -226,10 +241,10 @@ export default function DocumentsPage() {
         fetchDocuments()
       }, 2000)
       
-      // Remove from uploading files after a short delay for UX
+      // Remove from uploading files after showing completion
       setTimeout(() => {
         setUploadingFiles((prev) => prev.filter((f) => f.id !== fileId))
-      }, 2000) // 🚀 ENHANCED: Longer delay so users can see completion
+      }, 3000) // 🚀 ENHANCED: Show completion state for 3 seconds
       
       // Poll for processing completion if status is processing
       if (newDocument.status === "processing") {
@@ -239,11 +254,15 @@ export default function DocumentsPage() {
     } catch (error) {
       console.error('Upload failed:', error)
       
-      // Update upload file with error
+      // 🚀 ENHANCED: Show error phase with clear messaging
       setUploadingFiles((prev) => 
         prev.map((f) => 
           f.id === fileId 
-            ? { ...f, error: error instanceof Error ? error.message : 'Upload failed' }
+            ? { 
+                ...f, 
+                phase: 'error',
+                error: error instanceof Error ? error.message : 'Upload failed' 
+              }
             : f
         )
       )
@@ -976,7 +995,13 @@ export default function DocumentsPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Progress value={file.progress} className="h-2" />
-                    <span className="text-xs text-muted-foreground w-10">{Math.round(file.progress)}%</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground w-10">{Math.round(file.progress)}%</span>
+                      {file.phase === 'uploading' && <span className="text-xs text-blue-600">Uploading...</span>}
+                      {file.phase === 'processing' && <span className="text-xs text-yellow-600">Processing...</span>}
+                      {file.phase === 'completed' && <span className="text-xs text-green-600">✓ Complete</span>}
+                      {file.phase === 'error' && <span className="text-xs text-red-600">✗ Failed</span>}
+                    </div>
                   </div>
                 </div>
               ))}

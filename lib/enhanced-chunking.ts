@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { withGeminiRateLimit } from '@/lib/api-rate-limiter';
 
 interface ContextualChunk {
   content: string;
@@ -137,13 +138,13 @@ export class EnhancedChunking {
   }
 
   /**
-   * Generate document-level context
+   * Generate document-level context with rate limiting
    */
-  private async generateDocumentContext(
+  private generateDocumentContext = withGeminiRateLimit(async (
     fullText: string, 
     title: string, 
     type?: string
-  ): Promise<string> {
+  ): Promise<string> => {
     const prompt = `Analyze this document and provide a brief context summary in 50 words or less.
 
 Document Title: ${title}
@@ -159,17 +160,17 @@ Context:`;
 
     const result = await this.textModel.generateContent(prompt);
     return result.response.text().trim();
-  }
+  });
 
   /**
-   * Generate chunk-specific context
+   * Generate chunk-specific context with rate limiting
    */
-  private async generateChunkContext(
+  private generateChunkContext = withGeminiRateLimit(async (
     chunkContent: string,
     documentContext: string,
     previousChunk: string,
     nextChunk: string
-  ): Promise<string> {
+  ): Promise<string> => {
     const prompt = `Explain what this section is about in 30 words or less.
 
 Document Context: ${documentContext}
@@ -184,7 +185,7 @@ Section Summary:`;
 
     const result = await this.textModel.generateContent(prompt);
     return result.response.text().trim();
-  }
+  });
 
   /**
    * Calculate confidence indicators for better ranking
