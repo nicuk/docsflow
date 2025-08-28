@@ -237,19 +237,35 @@ export default async function middleware(request: NextRequest) {
         }
       }
       
-      // CRITICAL FIX: For authenticated users on correct tenant, use REDIRECT instead of REWRITE
-      if (userEmail && authToken && storedTenantId && tenantUUID && storedTenantId === tenantUUID) {
-        // User is authenticated and on correct tenant - allow access with proper tenant context
+      // PREVENT REDIRECT LOOPS: Allow login/register pages to load normally
+      if (pathname === '/login' || pathname === '/register' || pathname.startsWith('/auth/')) {
+        console.log(`✅ Allowing auth page to load: ${pathname}`);
         const response = NextResponse.next();
         response.headers.set('x-tenant-id', tenantUUID);
         response.headers.set('x-tenant-subdomain', tenant);
         return createSecureResponse(response, origin);
       }
       
-      // For unauthenticated users or tenant mismatch, redirect to login
-      const loginUrl = `https://${tenant}.docsflow.app/login`;
-      console.log(`🔐 Redirecting unauthenticated user to login: ${loginUrl}`);
-      return NextResponse.redirect(new URL(loginUrl));
+      // For authenticated users on correct tenant, allow access with proper tenant context
+      if (userEmail && authToken && storedTenantId && tenantUUID && storedTenantId === tenantUUID) {
+        const response = NextResponse.next();
+        response.headers.set('x-tenant-id', tenantUUID);
+        response.headers.set('x-tenant-subdomain', tenant);
+        return createSecureResponse(response, origin);
+      }
+      
+      // For unauthenticated users on protected pages, redirect to login (but NOT if already on login)
+      if (pathname !== '/login' && pathname !== '/register') {
+        const loginUrl = `https://${tenant}.docsflow.app/login`;
+        console.log(`🔐 Redirecting unauthenticated user to login: ${loginUrl}`);
+        return NextResponse.redirect(new URL(loginUrl));
+      }
+      
+      // Fallback: allow the request to continue
+      const response = NextResponse.next();
+      response.headers.set('x-tenant-id', tenantUUID);
+      response.headers.set('x-tenant-subdomain', tenant);
+      return createSecureResponse(response, origin);
     }
 
     // Handle root domain (docsflow.app) access
