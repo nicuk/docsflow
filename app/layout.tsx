@@ -17,10 +17,11 @@ export const metadata: Metadata = {
   keywords: "document AI, document search, AI document analysis, SOPs, contract analysis, team productivity, business efficiency",
   icons: {
     icon: [
-      { url: '/logo.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: '32x32' }
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '32x32' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' }
     ],
-    apple: '/logo.png',
+    apple: '/apple-touch-icon.png',
     shortcut: '/favicon.ico'
   },
   openGraph: {
