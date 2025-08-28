@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import * as pdfParse from 'pdf-parse';
+
+// Dynamic import to prevent build issues with pdf-parse test files
+const loadPdfParse = () => import('pdf-parse');
 
 export interface ParsedDocument {
   text: string;
@@ -69,7 +71,8 @@ export class MultimodalDocumentParser {
   
   private async parsePDF(buffer: Buffer, fileName?: string): Promise<ParsedDocument> {
     try {
-      // Advanced PDF parsing
+      // Advanced PDF parsing with dynamic import
+      const pdfParse = (await loadPdfParse()).default;
       const data = await pdfParse(buffer);
       
       // Extract tables using pattern matching
