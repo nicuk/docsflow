@@ -106,11 +106,10 @@ export class EnterpriseSessionManager {
       
       const tenantData = JSON.parse(decodeURIComponent(tenantCookie));
       
-      // Validate tenant structure
+      // GRACEFUL SESSION VALIDATION: Return null for incomplete context instead of nuclear clear
       if (!tenantData.tenantId || !tenantData.subdomain) {
-        console.warn(`⚠️ [ENTERPRISE SESSION] Invalid tenant context, clearing`);
-        this.clearTenantContext();
-        return null;
+        console.warn(`⚠️ [ENTERPRISE SESSION] Incomplete tenant context, skipping`);
+        return null; // Return null instead of clearing everything
       }
       
       return {

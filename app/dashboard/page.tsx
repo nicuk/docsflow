@@ -91,18 +91,25 @@ export default function DashboardPage() {
             authToken: authToken ? 'PRESENT' : 'MISSING'
           });
           
-          if (authToken && tenantContext?.subdomain) {
+          // DEFENSIVE REDIRECT: Validate subdomain before redirect to prevent malformed URLs
+          if (authToken && tenantContext?.subdomain && tenantContext.subdomain.length > 0) {
             console.log(`🎯 [ENTERPRISE] Redirecting to tenant subdomain: ${tenantContext.subdomain}`);
             window.location.href = `https://${tenantContext.subdomain}.docsflow.app/dashboard`;
             return;
           }
           
-          // Fallback: Check if user has any active tenants
+          // Fallback: Check if user has any active tenants with valid subdomains
           if (authToken && userSession?.activeTenants?.length) {
             const firstTenant = userSession.activeTenants[0];
-            console.log(`🎯 [ENTERPRISE] Redirecting to first active tenant: ${firstTenant.subdomain}`);
-            window.location.href = `https://${firstTenant.subdomain}.docsflow.app/dashboard`;
-            return;
+            if (firstTenant?.subdomain && firstTenant.subdomain.length > 0) {
+              console.log(`🎯 [ENTERPRISE] Redirecting to first active tenant: ${firstTenant.subdomain}`);
+              window.location.href = `https://${firstTenant.subdomain}.docsflow.app/dashboard`;
+              return;
+            } else {
+              console.warn(`⚠️ [ENTERPRISE] First tenant has invalid subdomain, redirecting to login`);
+              window.location.href = '/login';
+              return;
+            }
           }
           
           // CRITICAL FIX: Check if user just logged in (give login page time to execute session bridge)
@@ -170,8 +177,10 @@ export default function DashboardPage() {
         // ENTERPRISE FIX: Use proper session management instead of localStorage
         const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager');
         
-        // Set proper tenant context with UUID
-        EnterpriseSessionManager.setTenantContext(userData.tenantId, userData.tenant?.subdomain || '');
+        // DEFENSIVE STORAGE: Only store valid subdomain to prevent empty string corruption
+        if (userData.tenant?.subdomain && userData.tenant.subdomain.length > 0) {
+          EnterpriseSessionManager.setTenantContext(userData.tenantId, userData.tenant.subdomain);
+        }
         
         // Set user session with tenant access
         EnterpriseSessionManager.setUserSession({

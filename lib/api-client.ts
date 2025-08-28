@@ -52,7 +52,8 @@ export const apiClient = {
           subdomain !== 'localhost' &&
           hostname.includes('.docsflow.app')) {
         headers['X-Tenant-Subdomain'] = subdomain;
-        headers['X-Tenant-ID'] = subdomain; // Also add tenant ID for compatibility
+        // NOTE: X-Tenant-ID should be UUID from tenants.id, not subdomain
+        // Removing incorrect subdomain-as-tenant-id to prevent validation errors
         console.log(`🏢 Adding tenant context: ${subdomain}`);
       }
     }
