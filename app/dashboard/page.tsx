@@ -65,6 +65,44 @@ export default function DashboardPage() {
     questionsCount: 0,
     hoursSaved: 0
   })
+  const [isDocumentsLoading, setIsDocumentsLoading] = useState(false)
+  
+  // 🚀 MAIN DOMAIN REDIRECT CHECK: Show loading immediately
+  const [isMainDomain] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.location.hostname === 'www.docsflow.app' || window.location.hostname === 'docsflow.app'
+  })
+
+  // 🎯 IMMEDIATE REDIRECT FOR MAIN DOMAIN
+  useEffect(() => {
+    if (isMainDomain) {
+      setIsRedirecting(true)
+      setRedirectMessage("Connecting to your workspace...")
+      
+      // Quick redirect without heavy loading
+      const redirectToWorkspace = async () => {
+        try {
+          const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager')
+          const userSession = EnterpriseSessionManager.getUserSession()
+          
+          if (userSession?.activeTenants?.length) {
+            const firstTenant = userSession.activeTenants[0]
+            if (firstTenant?.subdomain) {
+              window.location.replace(`https://${firstTenant.subdomain}.docsflow.app/dashboard`)
+              return
+            }
+          }
+          
+          window.location.replace('/onboarding')
+        } catch (error) {
+          console.error('Redirect error:', error)
+          window.location.replace('/onboarding')
+        }
+      }
+      
+      redirectToWorkspace()
+    }
+  }, [isMainDomain])
 
   // Load tenant context and check onboarding completion
   useEffect(() => {
@@ -218,9 +256,17 @@ export default function DashboardPage() {
         
         console.log(`✅ [DASHBOARD] Set enterprise session for: ${userData.email}`);
         
-        // Fetch real data from backend with subdomain
+        // 🚀 OPTIMISTIC UI: Set tenant context immediately, load documents in background
+        setTenantContext(context);
+        setIsLoading(false); // Show dashboard immediately
+        
+        // 🎯 BACKGROUND LOADING: Fetch documents without blocking UI
         if (userData.tenant?.subdomain) {
-          await fetchRealData(userData.tenantId, userData.tenant.subdomain);
+          setIsDocumentsLoading(true);
+          // Non-blocking document fetch
+          fetchRealData(userData.tenantId, userData.tenant.subdomain).finally(() => {
+            setIsDocumentsLoading(false);
+          });
         } else {
           console.error('🚨 [DASHBOARD] No tenant subdomain found in user data:', userData);
         }
@@ -229,8 +275,6 @@ export default function DashboardPage() {
         console.error('Failed to load tenant context:', error);
         // On error, redirect to login to re-authenticate
         window.location.href = '/login';
-      } finally {
-        setIsLoading(false);
       }
     }
 
@@ -589,13 +633,20 @@ export default function DashboardPage() {
             <Card key={index} className="h-fit">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="flex-1">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       {stat.title}
                     </p>
-                    <p className="text-xl font-bold mt-1">{stat.value}</p>
+                    {isDocumentsLoading ? (
+                      <div className="mt-1 flex items-center gap-2">
+                        <div className="h-6 bg-gray-200 rounded animate-pulse w-12"></div>
+                        <div className="text-xs text-gray-400">Loading...</div>
+                      </div>
+                    ) : (
+                      <p className="text-xl font-bold mt-1">{stat.value}</p>
+                    )}
                   </div>
-                  <stat.icon className="h-5 w-5 text-blue-600" />
+                  <stat.icon className={`h-5 w-5 ${isDocumentsLoading ? 'text-gray-400' : 'text-blue-600'}`} />
                 </div>
               </CardContent>
             </Card>
