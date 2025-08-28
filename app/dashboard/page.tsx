@@ -47,6 +47,7 @@ import PersonaEditor from "@/components/persona-editor"
 // Industry-specific types
 interface TenantContext {
   tenantId: string
+  tenantSubdomain: string
   industry: 'motorcycle_dealer' | 'warehouse_distribution' | 'general'
   businessType: string
   accessLevel: number
@@ -98,6 +99,7 @@ export default function DashboardPage() {
         // Set tenant context from backend data
         const context: TenantContext = {
           tenantId: userData.tenantId,
+          tenantSubdomain: userData.tenant?.subdomain || '',
           industry: userData.industry || 'general',
           businessType: userData.businessType || 'General Business',
           accessLevel: userData.accessLevel || 1,
@@ -109,8 +111,8 @@ export default function DashboardPage() {
         // Store context in localStorage for faster subsequent loads
         localStorage.setItem(`tenant-${userData.tenantId}`, JSON.stringify(context));
         
-        // Fetch real data from backend
-        await fetchRealData(userData.tenantId);
+        // Fetch real data from backend with subdomain
+        await fetchRealData(userData.tenantId, userData.tenant?.subdomain || '');
         
       } catch (error) {
         console.error('Failed to load tenant context:', error);
@@ -125,14 +127,15 @@ export default function DashboardPage() {
   }, [])
 
   // Fetch real data from backend APIs
-  const fetchRealData = async (tenantId: string) => {
+  const fetchRealData = async (tenantId: string, subdomain: string) => {
     try {
       // Fetch documents
       const docsResponse = await fetch('/api/documents', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'x-tenant-subdomain': tenantId
+          'x-tenant-subdomain': subdomain,
+          'x-tenant-id': tenantId
         },
         credentials: 'include'
       });
@@ -146,7 +149,8 @@ export default function DashboardPage() {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'x-tenant-subdomain': tenantId
+            'x-tenant-subdomain': subdomain,
+            'x-tenant-id': tenantId
           },
           credentials: 'include'
         });

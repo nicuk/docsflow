@@ -176,10 +176,27 @@ export async function GET(request: NextRequest) {
       provider: 'google'
     }));
 
-    // Redirect to frontend with session token
-    return NextResponse.redirect(
-      `${process.env.FRONTEND_URL || 'https://docsflow.app'}/auth/callback?token=${sessionToken}`
-    );
+    // Determine redirect URL based on tenant
+    let redirectUrl;
+    if (tenantId) {
+      // User has tenant - get subdomain and redirect there
+      const { data: tenantData } = await supabase
+        .from('tenants')
+        .select('subdomain')
+        .eq('id', tenantId)
+        .single();
+      
+      if (tenantData?.subdomain) {
+        redirectUrl = `https://${tenantData.subdomain}.docsflow.app/auth/callback?token=${sessionToken}`;
+      } else {
+        redirectUrl = `${process.env.FRONTEND_URL || 'https://docsflow.app'}/auth/callback?token=${sessionToken}`;
+      }
+    } else {
+      // No tenant - redirect to main domain for onboarding
+      redirectUrl = `${process.env.FRONTEND_URL || 'https://docsflow.app'}/auth/callback?token=${sessionToken}`;
+    }
+
+    return NextResponse.redirect(redirectUrl);
 
   } catch (error: any) {
     console.error('Google OAuth callback error:', error);

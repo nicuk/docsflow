@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getTenantManager } from './lib/tenant-context-manager';
+import { TenantContextManager } from './lib/tenant-context-manager';
 import { 
   extractTenantFromHostname, 
   createSecureResponse,
@@ -157,13 +157,12 @@ export default async function middleware(request: NextRequest) {
         }
         
         // HIGH-PERFORMANCE: Use TenantContextManager with multi-layer caching
-        const tenantManager = getTenantManager();
-        const tenantInfo = await tenantManager.getTenantBySubdomain(tenant);
+        const tenantInfo = await TenantContextManager.resolveTenant(tenant);
         
         // Set both headers properly for API routes
         response.headers.set('x-tenant-subdomain', tenant);
-        if (tenantInfo?.id) {
-          response.headers.set('x-tenant-id', tenantInfo.id);
+        if (tenantInfo?.uuid) {
+          response.headers.set('x-tenant-id', tenantInfo.uuid);
         }
         
         return createSecureResponse(response, origin);
@@ -184,9 +183,8 @@ export default async function middleware(request: NextRequest) {
       const authToken = request.cookies.get('access_token')?.value;
       
       // HIGH-PERFORMANCE: Use TenantContextManager with multi-layer caching
-      const tenantManager = getTenantManager();
-      const tenantInfo = await tenantManager.getTenantBySubdomain(tenant);
-      const tenantUUID = tenantInfo?.id || null;
+      const tenantInfo = await TenantContextManager.resolveTenant(tenant);
+      const tenantUUID = tenantInfo?.uuid || null;
       
       // If user has a different tenant stored, handle gracefully
       if (storedTenantId && tenantUUID && storedTenantId !== tenantUUID) {
@@ -216,20 +214,15 @@ export default async function middleware(request: NextRequest) {
       // If root path, check if user is authenticated
       if (pathname === '/' || pathname === '') {
         if (userEmail && authToken && storedTenantId && tenantUUID && storedTenantId === tenantUUID) {
-          // User is authenticated AND on the correct tenant - show dashboard
-          const response = NextResponse.rewrite(new URL(`/dashboard`, request.url));
-          // Set UUID as x-tenant-id and subdomain as x-tenant-subdomain
-          response.headers.set('x-tenant-id', tenantUUID);
-          response.headers.set('x-tenant-subdomain', tenant);
-          return createSecureResponse(response, origin);
+          // User is authenticated AND on the correct tenant - redirect to tenant subdomain
+          const tenantUrl = `https://${tenant}.docsflow.app/dashboard`;
+          console.log(`🎯 Redirecting authenticated user to tenant subdomain: ${tenantUrl}`);
+          return NextResponse.redirect(new URL(tenantUrl));
         } else {
-          // User is NOT authenticated or tenant mismatch - redirect to LOGIN for this tenant
-          // CRITICAL: Don't send to onboarding for existing tenants!
-          const response = NextResponse.rewrite(new URL(`/login`, request.url));
-          // Set UUID as x-tenant-id and subdomain as x-tenant-subdomain
-          response.headers.set('x-tenant-id', tenantUUID || '');
-          response.headers.set('x-tenant-subdomain', tenant);
-          return createSecureResponse(response, origin);
+          // User is NOT authenticated or tenant mismatch - redirect to LOGIN on tenant subdomain
+          const loginUrl = `https://${tenant}.docsflow.app/login`;
+          console.log(`🔐 Redirecting to tenant login: ${loginUrl}`);
+          return NextResponse.redirect(new URL(loginUrl));
         }
       }
       // Otherwise, preserve the path structure for tenant routes
