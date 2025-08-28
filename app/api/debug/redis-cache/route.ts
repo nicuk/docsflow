@@ -3,9 +3,9 @@ import { redis, safeRedisOperation } from '@/lib/redis';
 
 export async function GET(request: NextRequest) {
   try {
-    // Get all tenant keys from Redis
+    // Get all tenant keys from Redis (match middleware cache pattern)
     const tenantKeys = await safeRedisOperation(
-      () => redis!.keys('subdomain:*'),
+      () => redis!.keys('tenant:subdomain:*'),
       []
     );
 
@@ -22,14 +22,14 @@ export async function GET(request: NextRequest) {
           const parsedData = JSON.parse(data as string);
           tenantData.push({
             key,
-            subdomain: key.replace('subdomain:', ''),
+            subdomain: key.replace('tenant:subdomain:', ''),
             data: parsedData
           });
         } catch (parseError) {
           // If JSON parsing fails, store raw data
           tenantData.push({
             key,
-            subdomain: key.replace('subdomain:', ''),
+            subdomain: key.replace('tenant:subdomain:', ''),
             data: data,
             parse_error: 'Invalid JSON stored in cache'
           });
@@ -65,7 +65,7 @@ export async function DELETE(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const key = `subdomain:${subdomain}`;
+    const key = `tenant:subdomain:${subdomain}`;
     const deleted = await safeRedisOperation(
       () => redis!.del(key),
       0
