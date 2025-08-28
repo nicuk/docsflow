@@ -58,6 +58,8 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [tenantContext, setTenantContext] = useState<TenantContext | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isRedirecting, setIsRedirecting] = useState(false)
+  const [redirectMessage, setRedirectMessage] = useState("")
   const [realStats, setRealStats] = useState({
     documentsCount: 0,
     questionsCount: 0,
@@ -76,6 +78,8 @@ export default function DashboardPage() {
         
         if (hostname === 'www.docsflow.app' || hostname === 'docsflow.app') {
           console.log('🔍 [DASHBOARD] Main domain detected, checking for tenant context...');
+          // Set initial redirect state to show loading for main domain users
+          setRedirectMessage("Checking your workspace...");
           
           // ENTERPRISE FIX: Use proper session management for tenant detection
           const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager');
@@ -94,7 +98,11 @@ export default function DashboardPage() {
           // DEFENSIVE REDIRECT: Validate subdomain before redirect to prevent malformed URLs
           if (authToken && tenantContext?.subdomain && tenantContext.subdomain.length > 0) {
             console.log(`🎯 [ENTERPRISE] Redirecting to tenant subdomain: ${tenantContext.subdomain}`);
-            window.location.href = `https://${tenantContext.subdomain}.docsflow.app/dashboard`;
+            setIsRedirecting(true);
+            setRedirectMessage(`Redirecting to ${tenantContext.subdomain}...`);
+            setTimeout(() => {
+              window.location.href = `https://${tenantContext.subdomain}.docsflow.app/dashboard`;
+            }, 500); // Small delay to show loading state
             return;
           }
           
@@ -103,7 +111,11 @@ export default function DashboardPage() {
             const firstTenant = userSession.activeTenants[0];
             if (firstTenant?.subdomain && firstTenant.subdomain.length > 0) {
               console.log(`🎯 [ENTERPRISE] Redirecting to first active tenant: ${firstTenant.subdomain}`);
-              window.location.href = `https://${firstTenant.subdomain}.docsflow.app/dashboard`;
+              setIsRedirecting(true);
+              setRedirectMessage(`Connecting to ${firstTenant.subdomain}...`);
+              setTimeout(() => {
+                window.location.href = `https://${firstTenant.subdomain}.docsflow.app/dashboard`;
+              }, 500);
               return;
             } else {
               console.warn(`⚠️ [ENTERPRISE] First tenant has invalid subdomain, will check API for tenant data before redirecting to login`);
@@ -130,7 +142,11 @@ export default function DashboardPage() {
           
           // No tenant context or not authenticated - redirect to onboarding
           console.log('🔐 No tenant context on main domain, redirecting to onboarding');
-          window.location.href = '/onboarding';
+          setIsRedirecting(true);
+          setRedirectMessage("Setting up your workspace...");
+          setTimeout(() => {
+            window.location.href = '/onboarding';
+          }, 500);
           return;
         }
 
@@ -157,17 +173,25 @@ export default function DashboardPage() {
           tenantSubdomain: userData.tenant?.subdomain
         });
         
-        // Check if user has completed onboarding
+                // Check if user has completed onboarding
         if (!userData.onboardingComplete) {
           console.log('User has not completed onboarding, redirecting...');
-          window.location.href = '/onboarding';
+          setIsRedirecting(true);
+          setRedirectMessage("Completing your setup...");
+          setTimeout(() => {
+            window.location.href = '/onboarding';
+          }, 500);
           return;
         }
-
+        
         // Check if user has a tenant association
         if (!userData.tenantId) {
           console.log('User has no tenant association, redirecting to onboarding...');
-          window.location.href = '/onboarding';
+          setIsRedirecting(true);
+          setRedirectMessage("Creating your workspace...");
+          setTimeout(() => {
+            window.location.href = '/onboarding';
+          }, 500);
           return;
         }
 
@@ -194,7 +218,11 @@ export default function DashboardPage() {
           const currentHostname = window.location.hostname;
           if ((currentHostname === 'www.docsflow.app' || currentHostname === 'docsflow.app') && userData.tenant.subdomain) {
             console.log(`🎯 [ENTERPRISE] API provided valid tenant subdomain, redirecting from main domain to: ${userData.tenant.subdomain}`);
-            window.location.href = `https://${userData.tenant.subdomain}.docsflow.app/dashboard`;
+            setIsRedirecting(true);
+            setRedirectMessage(`Taking you to ${userData.tenant.subdomain}...`);
+            setTimeout(() => {
+              window.location.href = `https://${userData.tenant.subdomain}.docsflow.app/dashboard`;
+            }, 800); // Slightly longer delay for API-based redirects
             return;
           }
         }
@@ -530,6 +558,19 @@ export default function DashboardPage() {
   ]
 
   // Loading state
+  // Show redirect overlay when redirecting
+  if (isRedirecting) {
+    return (
+      <div className="fixed inset-0 bg-white bg-opacity-95 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <h2 className="text-2xl font-semibold text-gray-800 mb-2">{redirectMessage}</h2>
+          <p className="text-gray-600">Please wait while we connect you to your workspace...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (isLoading) {
     return (
       <ScrollArea className="flex-1">
