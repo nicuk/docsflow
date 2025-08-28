@@ -68,6 +68,34 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadTenantContext = async () => {
       try {
+        // CRITICAL FIX: Check if on main domain and redirect before API calls
+        const hostname = window.location.hostname;
+        if (hostname === 'www.docsflow.app' || hostname === 'docsflow.app') {
+          console.log('🔍 Main domain detected, checking for tenant context...');
+          
+          // Check for stored tenant context
+          const storedTenantId = localStorage.getItem('tenant-id');
+          const authToken = document.cookie.includes('sb-lhcopwwiqwjpzbdnjovo-auth-token');
+          
+          if (authToken && storedTenantId) {
+            // Try to get tenant subdomain from localStorage or make API call
+            const storedTenantData = localStorage.getItem(`tenant-${storedTenantId}`);
+            if (storedTenantData) {
+              const tenantInfo = JSON.parse(storedTenantData);
+              if (tenantInfo.tenantSubdomain) {
+                console.log(`🎯 Redirecting to tenant subdomain: ${tenantInfo.tenantSubdomain}`);
+                window.location.href = `https://${tenantInfo.tenantSubdomain}.docsflow.app/dashboard`;
+                return;
+              }
+            }
+          }
+          
+          // No tenant context or not authenticated - redirect to onboarding
+          console.log('🔐 No tenant context on main domain, redirecting to onboarding');
+          window.location.href = '/onboarding';
+          return;
+        }
+
         // Check user authentication and onboarding status from backend
         const response = await fetch('/api/auth/check-user', {
           method: 'GET',

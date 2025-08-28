@@ -225,10 +225,10 @@ export default async function middleware(request: NextRequest) {
       // If root path, check if user is authenticated
       if (pathname === '/' || pathname === '') {
         if (userEmail && authToken && storedTenantId && tenantUUID && storedTenantId === tenantUUID) {
-          // User is authenticated AND on the correct tenant - redirect to tenant subdomain
-          const tenantUrl = `https://${tenant}.docsflow.app/dashboard`;
-          console.log(`🎯 Redirecting authenticated user to tenant subdomain: ${tenantUrl}`);
-          return NextResponse.redirect(new URL(tenantUrl));
+          // User is authenticated AND on the correct tenant - redirect to dashboard on same tenant subdomain
+          const dashboardUrl = `https://${tenant}.docsflow.app/dashboard`;
+          console.log(`🎯 Redirecting authenticated user to dashboard: ${dashboardUrl}`);
+          return NextResponse.redirect(new URL(dashboardUrl));
         } else {
           // User is NOT authenticated or tenant mismatch - redirect to LOGIN on tenant subdomain
           const loginUrl = `https://${tenant}.docsflow.app/login`;
@@ -236,22 +236,20 @@ export default async function middleware(request: NextRequest) {
           return NextResponse.redirect(new URL(loginUrl));
         }
       }
-      // Otherwise, preserve the path structure for tenant routes
-      // Map tenant paths to actual app routes
-      let targetPath = pathname;
-      if (pathname.startsWith('/dashboard')) {
-        targetPath = pathname; // Keep dashboard paths as-is
-      } else if (pathname === '/') {
-        targetPath = '/dashboard'; // Root goes to dashboard
+      
+      // CRITICAL FIX: For authenticated users on correct tenant, use REDIRECT instead of REWRITE
+      if (userEmail && authToken && storedTenantId && tenantUUID && storedTenantId === tenantUUID) {
+        // User is authenticated and on correct tenant - allow access with proper tenant context
+        const response = NextResponse.next();
+        response.headers.set('x-tenant-id', tenantUUID);
+        response.headers.set('x-tenant-subdomain', tenant);
+        return createSecureResponse(response, origin);
       }
-      const response = NextResponse.rewrite(new URL(targetPath, request.url));
-
-      // 🚨 Inject the tenant UUID and subdomain into the request headers for frontend context
-      // CRITICAL: x-tenant-id should be the UUID, x-tenant-subdomain should be the subdomain
-      response.headers.set('x-tenant-id', tenantUUID || '');
-      response.headers.set('x-tenant-subdomain', tenant);
-
-      return createSecureResponse(response, origin);
+      
+      // For unauthenticated users or tenant mismatch, redirect to login
+      const loginUrl = `https://${tenant}.docsflow.app/login`;
+      console.log(`🔐 Redirecting unauthenticated user to login: ${loginUrl}`);
+      return NextResponse.redirect(new URL(loginUrl));
     }
 
     // Handle root domain (docsflow.app) access

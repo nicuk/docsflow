@@ -47,9 +47,20 @@ export async function validateTenantContext(
     }
 
     // Get tenant subdomain and ID from headers
-    const tenantSubdomain = request.headers.get('x-tenant-subdomain') || 
-      new URL(request.url).hostname.split('.')[0];
+    const tenantSubdomain = request.headers.get('x-tenant-subdomain');
     const tenantId = request.headers.get('x-tenant-id');
+    
+    // CRITICAL FIX: No fallback hostname extraction to prevent "www" being treated as tenant
+    if (!tenantSubdomain) {
+      console.log('🔍 No tenant subdomain in headers - main domain request');
+      return {
+        isValid: false,
+        tenantId: null,
+        tenantData: null,
+        error: 'No tenant context - main domain request',
+        statusCode: 400
+      };
+    }
   
     console.log('🔍 Tenant validation:', {
       subdomain: tenantSubdomain,
