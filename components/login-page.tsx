@@ -109,12 +109,17 @@ export default function LoginPage() {
                 .then(async (data) => {
                   console.log(`🔍 [SESSION BRIDGE] Session check before redirect:`, data);
                   
-                  if (data.authenticated && data.tenantId) {
-                    // Set proper tenant context with UUID
-                    const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager');
-                    EnterpriseSessionManager.setTenantContext(data.tenantId, subdomain);
-                    console.log(`✅ [SESSION BRIDGE] Set tenant context: ${subdomain} -> ${data.tenantId.substring(0, 8)}...`);
-                  }
+                                  if (data.authenticated && data.tenantId) {
+                  // CRITICAL FIX: Clear any stale tenant cookies before setting new ones
+                  document.cookie = 'tenant-id=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                  document.cookie = 'user_email=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                  
+                  // Set proper tenant context with UUID
+                  document.cookie = `tenant-id=${data.tenantId}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
+                  document.cookie = `user_email=${data.user.email}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
+                  
+                  console.log(`✅ [SESSION BRIDGE] Set tenant context: ${subdomain} -> ${data.tenantId.substring(0, 8)}...`);
+                }
                   
                   window.location.href = '/dashboard';
                 })
@@ -250,14 +255,11 @@ export default function LoginPage() {
             // Clear any conflicting tenant cookies
             document.cookie = 'tenant-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
             
-            // Create session bridge URL with authentication token
-            const bridgeUrl = `https://${userTenantSubdomain}.docsflow.app/login?session_bridge=true&token=${encodeURIComponent(data.session?.access_token || '')}`
-            
-            console.log(`🔍 [SESSION BRIDGE] Creating redirect to: ${bridgeUrl}`);
+            // ENTERPRISE UX: Use elegant transition page instead of direct redirect
+            console.log(`🔍 [SMOOTH TRANSITION] Redirecting via transition page for better UX`);
             
             setTimeout(() => {
-              console.log(`🔍 [SESSION BRIDGE] Executing redirect now...`);
-              window.location.href = bridgeUrl
+              window.location.href = '/auth-redirect'
             }, 1500)
           } else {
             // User is on tenant subdomain already
