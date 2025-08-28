@@ -63,7 +63,7 @@ export default function DocsFlowBrand({
   // Horizontal (default) and stacked variants use horizontal brand logo
   return (
     <Image
-      src="/docsflow-brand-primary-horizontal-md%20(1).svg"
+      src="/docsflow-brand-primary-horizontal-md.svg"
       alt="DocsFlow - Turn Documents Into Instant Answers"
       width={variant === "stacked" ? config.height : config.width}
       height={config.height}
