@@ -166,7 +166,8 @@ export async function POST(request: NextRequest) {
     const authTokenMaxAge = rememberMe ? (60 * 60 * 24 * 30) : (authData.session.expires_in || 3600); // 30 days or session
     const refreshTokenMaxAge = rememberMe ? (60 * 60 * 24 * 30) : (60 * 60 * 24 * 7); // 30 days or 7 days
     
-    authCookieStore.set('auth-token', authData.session.access_token, {
+    // STANDARDIZED: Use Supabase-standard cookie names
+    authCookieStore.set('access_token', authData.session.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -175,7 +176,7 @@ export async function POST(request: NextRequest) {
       maxAge: authTokenMaxAge
     });
 
-    authCookieStore.set('refresh-token', authData.session.refresh_token, {
+    authCookieStore.set('refresh_token', authData.session.refresh_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

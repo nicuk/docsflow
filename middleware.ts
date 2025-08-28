@@ -198,7 +198,7 @@ export default async function middleware(request: NextRequest) {
         return NextResponse.redirect(mainDomainUrl);
       }
 
-      // CRITICAL FIX: Check if stored tenant-id cookie matches current subdomain
+      // STANDARDIZED: Use Supabase and schema-aligned cookie names
       const storedTenantId = request.cookies.get('tenant-id')?.value;
       const userEmail = request.cookies.get('user_email')?.value;
       const authToken = request.cookies.get('access_token')?.value;

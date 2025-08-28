@@ -61,7 +61,8 @@ export function createResponseWithSessionCookies(
   const authCookieOptions = `; Path=${COOKIE_CONFIG.AUTH.path}; Max-Age=${cookieMaxAge}; SameSite=${COOKIE_CONFIG.AUTH.sameSite}${COOKIE_CONFIG.AUTH.httpOnly ? '; HttpOnly' : ''}${COOKIE_CONFIG.AUTH.secure ? '; Secure' : ''}${COOKIE_CONFIG.AUTH.domain ? `; Domain=${COOKIE_CONFIG.AUTH.domain}` : ''}`;
   
   if (cookies.userEmail) {
-    response.headers.append('Set-Cookie', `user-email=${cookies.userEmail}${userCookieOptions}`);
+    // STANDARDIZED: Use schema-aligned underscore format
+    response.headers.append('Set-Cookie', `user_email=${cookies.userEmail}${userCookieOptions}`);
   }
   
   if (cookies.userName) {

@@ -12,7 +12,8 @@ const supabaseAdmin = createClient(
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies();
-    const authToken = cookieStore.get('auth-token')?.value || cookieStore.get('access_token')?.value;
+    // STANDARDIZED: Use Supabase-standard cookie names
+    const authToken = cookieStore.get('access_token')?.value;
     const tenantId = cookieStore.get('tenant-id')?.value;
     const tenantSubdomain = cookieStore.get('tenant-subdomain')?.value;
     

@@ -65,13 +65,20 @@ class AuthClient {
       localStorage.setItem('refresh_token', data.user.refresh_token);
       localStorage.setItem('user', JSON.stringify(data.user));
       
-      // Set cookies for middleware compatibility
-      document.cookie = `auth-token=${data.user.access_token}; path=/; secure; samesite=strict`;
-      // Use tenant subdomain for cookie, not UUID
+      // STANDARDIZED: Use Supabase and schema-aligned cookie names
+      document.cookie = `access_token=${data.user.access_token}; path=/; secure; samesite=strict`;
+      // Set user email with standardized name
+      document.cookie = `user_email=${data.user.email}; path=/; secure; samesite=strict`;
+      // Use tenant UUID for cookie (schema-aligned)
+      const tenantId = data.user.tenant_id;
       const tenantSubdomain = data.user.tenant?.subdomain || data.tenant?.subdomain;
+      if (tenantId) {
+        // Set tenant UUID (schema primary key)
+        document.cookie = `tenant-id=${tenantId}; path=/; secure; samesite=strict`;
+      }
       if (tenantSubdomain) {
-        // Set tenant cookie with subdomain for proper redirects
-        document.cookie = `tenant-id=${tenantSubdomain}; path=/; secure; samesite=strict`;
+        // Set tenant subdomain for routing
+        document.cookie = `tenant-subdomain=${tenantSubdomain}; path=/; secure; samesite=strict`;
       }
     }
 
@@ -198,10 +205,10 @@ class AuthClient {
     });
     
     // Step 3: Clear cookies at browser level
-    // Clear all auth and tenant cookies
+    // STANDARDIZED: Clear all standardized cookies
     const cookiesToClear = [
-      'auth-token', 'access_token', 'refresh_token', 
-      'tenant-id', 'tenant-subdomain', 'user-email', 'user_email'
+      'access_token', 'refresh_token', 
+      'tenant-id', 'tenant-subdomain', 'user_email'
     ];
     
     cookiesToClear.forEach(cookieName => {
