@@ -47,14 +47,18 @@ export class TenantContextManager {
         if (redisData) {
           console.log(`✅ Redis tenant cache HIT for: ${subdomain}`);
           
-          // SECURITY FIX: Validate JSON before parsing
-          if (typeof redisData !== 'string') {
-            console.warn(`⚠️ Non-string Redis data for ${subdomain}, clearing cache`);
+          // Handle Upstash Redis auto-parsing
+          let parsed;
+          if (typeof redisData === 'string') {
+            parsed = JSON.parse(redisData);
+          } else if (typeof redisData === 'object' && redisData !== null) {
+            // Upstash Redis already parsed the JSON
+            parsed = redisData;
+          } else {
+            console.warn(`⚠️ Invalid Redis data type for ${subdomain}, clearing cache`);
             await redis?.del(redisKey);
             throw new Error('Invalid cache data type');
           }
-          
-          const parsed = JSON.parse(redisData);
           
           // Validate parsed data structure
           if (!parsed.id || !parsed.subdomain) {
