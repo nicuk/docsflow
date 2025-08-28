@@ -97,6 +97,7 @@ export default async function middleware(request: NextRequest) {
     const origin = request.headers.get('origin');
     
     console.log(`🔍 [MIDDLEWARE START] ${hostname}${pathname}`);
+    console.log(`🔍 [MIDDLEWARE] HOSTNAME DEBUG: '${hostname}' (length: ${hostname.length})`);
     console.log(`🔍 [MIDDLEWARE] User-Agent: ${request.headers.get('user-agent')?.substring(0, 50)}...`);
     console.log(`🔍 [MIDDLEWARE] Origin: ${origin}`);
     
@@ -254,8 +255,9 @@ export default async function middleware(request: NextRequest) {
     }
 
     // Handle root domain (docsflow.app) access
+    console.log(`🔍 [MIDDLEWARE] Checking main domain condition: hostname='${hostname}' vs 'docsflow.app'|'www.docsflow.app'|'localhost'`);
     if (hostname === 'docsflow.app' || hostname === 'www.docsflow.app' || hostname === 'localhost') {
-      console.log(`🔍 [MIDDLEWARE] Processing main domain: ${hostname}${pathname}`);
+      console.log(`🔍 [MIDDLEWARE] ✅ MATCHED main domain condition - Processing: ${hostname}${pathname}`);
       
       // Allow these routes on root domain
       if (pathname.startsWith('/onboarding') || 
