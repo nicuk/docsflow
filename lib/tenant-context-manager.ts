@@ -30,8 +30,14 @@ export class TenantContextManager {
       // 1. Check memory cache first (0ms - no I/O)
       const cached = this.cache.get(subdomain);
       if (cached && cached.expires > Date.now()) {
-        console.log(`✅ Memory cache hit for tenant: ${subdomain}`);
-        return cached.data;
+        // CRITICAL FIX: Validate memory cache data structure
+        if (!cached.data?.uuid || !cached.data?.subdomain) {
+          console.warn(`⚠️ Corrupted memory cache for ${subdomain}, clearing`);
+          this.cache.delete(subdomain);
+        } else {
+          console.log(`✅ Memory cache hit for tenant: ${subdomain}`);
+          return cached.data;
+        }
       }
       
       // 2. Check Redis with proper error handling (5-10ms)

@@ -61,6 +61,31 @@ export async function validateTenantContext(
         statusCode: 400
       };
     }
+
+    // SECURITY FIX: Validate that subdomain is not a UUID (prevent contamination)
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidPattern.test(tenantSubdomain)) {
+      console.error(`🚨 SECURITY: UUID detected in subdomain field: ${tenantSubdomain}`);
+      return {
+        isValid: false,
+        tenantId: null,
+        tenantData: null,
+        error: 'Invalid tenant subdomain format',
+        statusCode: 400
+      };
+    }
+
+    // Validate that tenant ID is a UUID (if provided)
+    if (tenantId && !uuidPattern.test(tenantId)) {
+      console.error(`🚨 SECURITY: Invalid UUID format in tenant-id: ${tenantId}`);
+      return {
+        isValid: false,
+        tenantId: null,
+        tenantData: null,
+        error: 'Invalid tenant ID format',
+        statusCode: 400
+      };
+    }
   
     console.log('🔍 Tenant validation:', {
       subdomain: tenantSubdomain,

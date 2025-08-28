@@ -265,6 +265,16 @@ export default async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL(loginUrl));
       }
       
+      // CRITICAL: If on login page with session bridge, allow it to process
+      const sessionBridge = request.nextUrl.searchParams.get('session_bridge');
+      if (pathname === '/login' && sessionBridge === 'true') {
+        console.log(`🌉 Session bridge detected on login page - allowing token processing`);
+        const response = NextResponse.next();
+        response.headers.set('x-tenant-id', tenantUUID);
+        response.headers.set('x-tenant-subdomain', tenant);
+        return createSecureResponse(response, origin);
+      }
+      
       // Fallback: allow the request to continue
       const response = NextResponse.next();
       response.headers.set('x-tenant-id', tenantUUID);

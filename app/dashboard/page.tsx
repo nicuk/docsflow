@@ -73,21 +73,47 @@ export default function DashboardPage() {
         if (hostname === 'www.docsflow.app' || hostname === 'docsflow.app') {
           console.log('🔍 Main domain detected, checking for tenant context...');
           
-          // Check for stored tenant context
-          const storedTenantId = localStorage.getItem('tenant-id');
+          // SECURITY FIX: Standardized tenant storage - separate UUID and subdomain
+          const storedTenantUUID = localStorage.getItem('tenant-uuid');
+          const storedTenantSubdomain = localStorage.getItem('tenant-subdomain');
           const authToken = document.cookie.includes('sb-lhcopwwiqwjpzbdnjovo-auth-token');
           
-          if (authToken && storedTenantId) {
-            // Try to get tenant subdomain from localStorage or make API call
-            const storedTenantData = localStorage.getItem(`tenant-${storedTenantId}`);
-            if (storedTenantData) {
-              const tenantInfo = JSON.parse(storedTenantData);
+          if (authToken && storedTenantSubdomain) {
+            console.log(`🎯 Redirecting to tenant subdomain: ${storedTenantSubdomain}`);
+            window.location.href = `https://${storedTenantSubdomain}.docsflow.app/dashboard`;
+            return;
+          }
+          
+          // Fallback: Check legacy storage format
+          if (authToken && storedTenantUUID) {
+            const legacyTenantData = localStorage.getItem(`tenant-${storedTenantUUID}`);
+            if (legacyTenantData) {
+              const tenantInfo = JSON.parse(legacyTenantData);
               if (tenantInfo.tenantSubdomain) {
-                console.log(`🎯 Redirecting to tenant subdomain: ${tenantInfo.tenantSubdomain}`);
+                // Migrate to new storage format
+                localStorage.setItem('tenant-subdomain', tenantInfo.tenantSubdomain);
+                localStorage.setItem('tenant-uuid', storedTenantUUID);
+                console.log(`🎯 Migrated and redirecting to: ${tenantInfo.tenantSubdomain}`);
                 window.location.href = `https://${tenantInfo.tenantSubdomain}.docsflow.app/dashboard`;
                 return;
               }
             }
+          }
+          
+          // CRITICAL FIX: Check if user just logged in (give login page time to execute session bridge)
+          const justLoggedIn = sessionStorage.getItem('just-logged-in');
+          if (justLoggedIn) {
+            console.log('⏳ User just logged in, waiting for session bridge redirect...');
+            sessionStorage.removeItem('just-logged-in');
+            // Give login page time to execute its session bridge logic
+            setTimeout(() => {
+              // If still on main domain after 3 seconds, then redirect to onboarding
+              if (window.location.hostname === 'docsflow.app' || window.location.hostname === 'www.docsflow.app') {
+                console.log('🔐 No tenant context on main domain, redirecting to onboarding');
+                window.location.href = '/onboarding';
+              }
+            }, 3000);
+            return;
           }
           
           // No tenant context or not authenticated - redirect to onboarding
@@ -157,14 +183,17 @@ export default function DashboardPage() {
   // Fetch real data from backend APIs
   const fetchRealData = async (tenantId: string, subdomain: string) => {
     try {
+      // SECURITY FIX: Use subdomain in headers, not URL paths for tenant context
+      const tenantHeaders = {
+        'Content-Type': 'application/json',
+        'x-tenant-subdomain': subdomain,
+        'x-tenant-id': tenantId
+      };
+
       // Fetch documents
       const docsResponse = await fetch('/api/documents', {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-tenant-subdomain': subdomain,
-          'x-tenant-id': tenantId
-        },
+        headers: tenantHeaders,
         credentials: 'include'
       });
       
@@ -175,11 +204,7 @@ export default function DashboardPage() {
         // Fetch conversations/questions
         const conversationsResponse = await fetch('/api/conversations', {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-tenant-subdomain': subdomain,
-            'x-tenant-id': tenantId
-          },
+          headers: tenantHeaders,
           credentials: 'include'
         });
         

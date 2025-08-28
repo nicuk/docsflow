@@ -49,32 +49,41 @@ export default function LoginPage() {
     
     if (sessionBridge === 'true' && token) {
       console.log('🌉 Processing session bridge from main domain');
+      setIsSuccess(true);
+      setMessage('Welcome back! You\'ve been successfully signed in. Redirecting to your dashboard...');
       
-      // Set the authentication token for this subdomain
-      localStorage.setItem('access_token', decodeURIComponent(token));
+      // CRITICAL FIX: Set Supabase auth cookies properly
+      const decodedToken = decodeURIComponent(token);
+      
+      // Set the proper Supabase auth cookies
+      document.cookie = `sb-lhcopwwiqwjpzbdnjovo-auth-token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
       
       // Get current subdomain for tenant context
       const hostname = window.location.hostname;
       const subdomain = hostname.split('.')[0];
       
       if (subdomain && subdomain !== 'www' && subdomain !== 'api') {
-        // Set tenant context cookie for this subdomain
-        document.cookie = `tenant-id=${subdomain}; path=/; secure; samesite=lax`;
+        // Set tenant context for this subdomain
+        localStorage.setItem('tenant-subdomain', subdomain);
         
-        // Clear URL parameters and redirect to dashboard
-        window.history.replaceState({}, document.title, '/dashboard');
+        // Clear URL parameters
+        window.history.replaceState({}, document.title, window.location.pathname);
         
-        // Small delay to ensure cookies are set
+        // Redirect to dashboard after showing success message
         setTimeout(() => {
           window.location.href = '/dashboard';
-        }, 500);
+        }, 2000);
       }
     }
   }, []);
 
-  // Redirect to dashboard after successful login
+  // Redirect to dashboard after successful login (but NOT for session bridge)
   useEffect(() => {
-    if (isSuccess) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionBridge = urlParams.get('session_bridge');
+    
+    // Only redirect if success AND not a session bridge (session bridge handles its own redirect)
+    if (isSuccess && sessionBridge !== 'true') {
       const timer = setTimeout(() => {
         router.push('/dashboard')
       }, 1500) // Reduced delay
@@ -175,13 +184,16 @@ export default function LoginPage() {
             // SURGICAL FIX: Smooth transition from main domain to tenant
             console.log(`📍 User logged in from main domain - redirecting to tenant with session bridge`)
             
+            // Mark that user just logged in to prevent dashboard redirect race condition
+            sessionStorage.setItem('just-logged-in', 'true')
+            
             setMessage('Login successful! Redirecting to your workspace...')
             
             // Clear any conflicting tenant cookies
             document.cookie = 'tenant-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
             
             // Create session bridge URL with authentication token
-            const bridgeUrl = `https://${userTenantSubdomain}.docsflow.app/login?session_bridge=true&token=${encodeURIComponent(data.user.access_token)}`
+            const bridgeUrl = `https://${userTenantSubdomain}.docsflow.app/login?session_bridge=true&token=${encodeURIComponent(data.session?.access_token || '')}`
             
             setTimeout(() => {
               window.location.href = bridgeUrl
@@ -264,7 +276,7 @@ export default function LoginPage() {
         {/* Header */}
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <DocsFlowBrand size="sm" variant="horizontal" iconVariant="primary" />
+            <DocsFlowBrand size="sm" variant="horizontal" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Sign in to DocsFlow</h1>
           <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Welcome back! Please enter your details.</p>

@@ -31,15 +31,16 @@ const TenantContext = createContext<TenantContextType | undefined>(undefined);
 // Define the props for the provider component
 interface TenantProviderProps {
   children: ReactNode;
-  tenantId: string | null; // Pass tenantId as a prop
+  tenantId: string | null; // UUID for internal context
+  tenantSubdomain?: string | null; // Subdomain for API calls
 }
 
-export function TenantProvider({ children, tenantId }: TenantProviderProps) {
+export function TenantProvider({ children, tenantId, tenantSubdomain }: TenantProviderProps) {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    if (!tenantId) {
+    if (!tenantId && !tenantSubdomain) {
       setIsLoading(false);
       return;
     }
@@ -47,9 +48,10 @@ export function TenantProvider({ children, tenantId }: TenantProviderProps) {
     const fetchTenantData = async () => {
       setIsLoading(true);
       try {
-        // Fetch tenant data from backend API - use relative URL in production
+        // SECURITY FIX: Use subdomain for API path, UUID for validation
+        const apiIdentifier = tenantSubdomain || tenantId;
         const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || (typeof window !== 'undefined' && window.location.origin) || '';
-        const response = await fetch(`${baseUrl}/api/tenants/${tenantId}`);
+        const response = await fetch(`${baseUrl}/api/tenants/${apiIdentifier}`);
         
         if (!response.ok) {
           if (response.status === 404) {
@@ -63,7 +65,7 @@ export function TenantProvider({ children, tenantId }: TenantProviderProps) {
         const tenantData: Tenant = await response.json();
         setTenant(tenantData);
         
-        console.log(`✅ Loaded tenant data for: ${tenantId}`, tenantData);
+        console.log(`✅ Loaded tenant data for: ${apiIdentifier}`, tenantData);
       } catch (error) {
         console.error('Failed to fetch tenant data:', error);
         setTenant(null);
@@ -73,7 +75,7 @@ export function TenantProvider({ children, tenantId }: TenantProviderProps) {
     };
 
     fetchTenantData();
-  }, [tenantId]);
+  }, [tenantId, tenantSubdomain]);
 
   return (
     <TenantContext.Provider value={{ tenant, isLoading }}>

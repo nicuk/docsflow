@@ -28,10 +28,54 @@ Error: Tenant not found for subdomain: 2e33ba17-ad07-44b7-ae8b-937de35e91d7
 - Production still returns 404 for same UUID
 - Browser logs show: `GET https://bitto.docsflow.app/api/tenants/2e33ba17-ad07-44b7-ae8b-937de35e91d7 404 (Not Found)`
 
-### Additional Issues Identified:
-1. **www.docsflow.app fetch failures** - Initial page load errors
-2. **Missing graceful redirect** - User redirected without transition page
-3. **Multiple GoTrueClient instances** - Supabase client conflicts
+### Attempt 3: TenantProvider Frontend Fix (August 28, 2025)
+**Location:** `components/providers/tenant-provider.tsx`  
+**Approach:** Modified TenantProvider to use subdomain for API calls instead of UUID
+**Status:** ❌ FAILED - Fixed frontend calls but API route still broken
+
+### Attempt 4: Dashboard Frontend Redirect Logic (August 28, 2025)
+**Location:** `app/dashboard/page.tsx`  
+**Approach:** Added main domain detection and redirect before API calls
+**Status:** ❌ FAILED - Prevented some errors but core API issue remained
+
+### Attempt 5: Middleware Redirect Logic Fix (August 28, 2025)
+**Location:** `middleware.ts`  
+**Approach:** Changed NextResponse.rewrite to NextResponse.redirect for proper cross-subdomain navigation
+**Status:** ✅ PARTIAL SUCCESS - Fixed infinite redirect loops but API still failing
+
+### Attempt 6: API Route .single() to .maybeSingle() Fix (August 28, 2025)
+**Location:** `app/api/tenants/[tenantId]/route.ts`  
+**Approach:** Changed Supabase query from `.single()` to `.maybeSingle()` to handle PGRST116 errors
+**Status:** ❌ FAILED - Code deployed but production cache not invalidated
+
+### Attempt 7: Enhanced Error Logging (August 28, 2025)
+**Location:** `app/api/tenants/[tenantId]/route.ts`  
+**Approach:** Added detailed logging to identify exact failure point
+**Status:** 🔄 IN PROGRESS - Waiting for deployment
+
+## ROOT CAUSE ANALYSIS: Why We Failed So Many Times
+
+### **BRUTAL ASSESSMENT SCORE: 3/10** ❌
+
+### Critical Failure Points:
+1. **Cache Invalidation Blindness (Major)** - Fixed code locally but production served stale cached API routes for hours
+2. **Multi-Layer Architecture Confusion (Major)** - Fixed frontend, middleware, validation but missed core API route bug
+3. **Deployment Pipeline Gaps (Critical)** - No verification mechanism to confirm fixes actually deployed to production
+4. **Supabase Query Edge Cases (Major)** - `.single()` vs `.maybeSingle()` behavior not understood, caused PGRST116 errors
+5. **Production vs Development Inconsistency (Critical)** - Local environment worked, production failed silently
+
+### Why We Kept Failing:
+1. **Symptom Fixing vs Root Cause** - Fixed 6 different symptoms but missed the core API query bug
+2. **No Production Verification** - Deployed fixes but never verified they actually took effect
+3. **Complex Multi-Tenant Architecture** - Too many moving parts (middleware, frontend, API, cache) made debugging difficult
+4. **Insufficient Logging** - Couldn't see exact failure points in production until attempt #7
+
+### Pattern of Failures:
+- **Attempts 1-5:** Fixed peripheral issues while core API remained broken
+- **Attempt 6:** Fixed core issue but deployment cache prevented it from working
+- **Attempt 7:** Added logging to finally see what's actually happening in production
+
+### **The Real Problem:** We were debugging a ghost - the code was correct but the deployment system wasn't serving it.
 **Result:** ❌ FAILED - Only fixed incoming requests, not outgoing API calls from frontend
 
 ```typescript
