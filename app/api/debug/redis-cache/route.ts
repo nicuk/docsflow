@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       
       if (data) {
         try {
-          const parsedData = JSON.parse(data as string);
+          const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
           tenantData.push({
             key,
             subdomain: key.replace('tenant:subdomain:', ''),
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
             key,
             subdomain: key.replace('tenant:subdomain:', ''),
             data: data,
-            parse_error: 'Invalid JSON stored in cache'
+            parse_error: `JSON parse failed: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`
           });
         }
       }
