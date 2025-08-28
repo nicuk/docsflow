@@ -25,14 +25,14 @@ export function PerformanceMonitor() {
     if (process.env.NODE_ENV === 'production') {
       const interval = setInterval(() => {
         const metrics = getMetrics()
-        if (metrics.forcedReflows > 5 || metrics.longTasks > 3) {
+        if (metrics.forcedReflows > 2 || metrics.longTasks > 1) {
           console.error('🚨 Critical performance issues detected:', {
             forcedReflows: metrics.forcedReflows,
             longTasks: metrics.longTasks,
             memoryUsage: `${metrics.memoryUsage.toFixed(2)} MB`
           })
         }
-      }, 60000) // Check every minute in production
+      }, 120000) // Check every 2 minutes in production (reduced frequency)
 
       return () => clearInterval(interval)
     }

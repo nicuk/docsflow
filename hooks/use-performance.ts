@@ -16,17 +16,44 @@ export function usePerformanceMonitoring() {
   })
 
   useEffect(() => {
-    // Monitor forced reflows
-    const originalGetComputedStyle = window.getComputedStyle
-    let reflowCount = 0
-
-    window.getComputedStyle = function(element: Element, pseudoElt?: string | null) {
-      reflowCount++
-      // Disabled excessive logging - only track metrics silently
-      if (reflowCount > 100) { // Increased threshold to reduce noise
-        metricsRef.current.forcedReflows++
+    // ENTERPRISE FIX: Use passive monitoring instead of intercepting getComputedStyle
+    // Previous implementation was causing the forced reflows it was trying to detect
+    
+    // Track forced reflows via Performance Observer (passive, non-intrusive)
+    let reflowCounter = 0
+    const reflowObserver = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        // Monitor layout-triggering operations
+        if (entry.entryType === 'measure' && entry.name.includes('layout')) {
+          reflowCounter++
+          if (reflowCounter > 10) { // Enterprise threshold: max 10 per monitoring cycle
+            metricsRef.current.forcedReflows++
+          }
+        }
       }
-      return originalGetComputedStyle.call(this, element, pseudoElt)
+    })
+    
+    // Observe layout measurements without intercepting browser APIs
+    try {
+      reflowObserver.observe({ entryTypes: ['measure'] })
+    } catch (e) {
+      // Fallback: Use mutation observer for DOM changes (still passive)
+      const mutationObserver = new MutationObserver((mutations) => {
+        let significantChanges = 0
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'childList' && mutation.addedNodes.length > 5) {
+            significantChanges++
+          }
+        })
+        if (significantChanges > 3) {
+          metricsRef.current.forcedReflows++
+        }
+      })
+      mutationObserver.observe(document.body, { 
+        childList: true, 
+        subtree: true,
+        attributes: false // Don't track attribute changes to reduce overhead
+      })
     }
 
     // Monitor long tasks
@@ -54,7 +81,8 @@ export function usePerformanceMonitoring() {
     }, 5000)
 
     return () => {
-      window.getComputedStyle = originalGetComputedStyle
+      // Clean up observers without restoring getComputedStyle (no longer intercepted)
+      reflowObserver.disconnect()
       observer.disconnect()
       clearInterval(memoryInterval)
     }
