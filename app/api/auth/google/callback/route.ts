@@ -176,27 +176,60 @@ export async function GET(request: NextRequest) {
       provider: 'google'
     }));
 
-    // Determine redirect URL based on tenant
-    let redirectUrl;
+    // DIRECT REDIRECT: Skip auth callback page entirely
     if (tenantId) {
-      // User has tenant - get subdomain and redirect there
-      const { data: tenantData } = await supabase
+      // Get tenant subdomain
+      const { data: tenantData, error: tenantError } = await supabase
         .from('tenants')
         .select('subdomain')
         .eq('id', tenantId)
         .single();
       
       if (tenantData?.subdomain) {
-        redirectUrl = `https://${tenantData.subdomain}.docsflow.app/auth/callback?token=${sessionToken}`;
+        console.log(`✅ OAuth: Redirecting user to tenant ${tenantData.subdomain}`);
+        // Existing user: redirect directly to tenant dashboard
+        const response = NextResponse.redirect(`https://${tenantData.subdomain}.docsflow.app/dashboard`);
+        
+        // Set session cookies for cross-subdomain auth
+        response.cookies.set('sb-lhcopwwiqwjpzbdnjovo-auth-token', sessionToken, {
+          domain: '.docsflow.app',
+          path: '/',
+          secure: true,
+          sameSite: 'strict',
+          maxAge: 60 * 60 * 24 * 7
+        });
+        response.cookies.set('tenant-id', tenantId, {
+          domain: '.docsflow.app',
+          path: '/',
+          secure: true,
+          sameSite: 'strict',
+          maxAge: 60 * 60 * 24 * 7
+        });
+        response.cookies.set('user_email', userData.email, {
+          domain: '.docsflow.app',
+          path: '/',
+          secure: true,
+          sameSite: 'strict',
+          maxAge: 60 * 60 * 24 * 7
+        });
+        
+        return response;
       } else {
-        redirectUrl = `${process.env.FRONTEND_URL || 'https://docsflow.app'}/auth/callback?token=${sessionToken}`;
+        console.error(`❌ OAuth: Tenant ${tenantId} has no subdomain:`, tenantError);
       }
-    } else {
-      // No tenant - redirect to main domain for onboarding
-      redirectUrl = `${process.env.FRONTEND_URL || 'https://docsflow.app'}/auth/callback?token=${sessionToken}`;
     }
-
-    return NextResponse.redirect(redirectUrl);
+    
+    // New user or no tenant: redirect to onboarding
+    console.log(`🆕 OAuth: New user redirecting to onboarding`);
+    const response = NextResponse.redirect(`${process.env.FRONTEND_URL || 'https://docsflow.app'}/onboarding`);
+    response.cookies.set('sb-lhcopwwiqwjpzbdnjovo-auth-token', sessionToken, {
+      domain: '.docsflow.app',
+      path: '/',
+      secure: true,
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 24 * 7
+    });
+    return response;
 
   } catch (error: any) {
     console.error('Google OAuth callback error:', error);

@@ -107,38 +107,43 @@ function AuthCallbackHandler() {
         
         localStorage.setItem('user-session', JSON.stringify(userSession));
         
-        // CRITICAL FIX: Check for subdomain in the referrer or stored state
-        // OAuth callbacks lose the subdomain context, so we need to restore it
-        const referrer = document.referrer;
-        const referrerUrl = referrer ? new URL(referrer) : null;
-        const referrerParts = referrerUrl?.hostname.split('.') || [];
-        const isReferrerSubdomain = referrerParts.length > 2 || (referrerParts.length === 2 && !referrerParts[0].includes('localhost'));
-        const referrerSubdomain = isReferrerSubdomain ? referrerParts[0] : null;
+        // SIMPLIFIED FIX: Always redirect existing users to their tenant subdomain
+        const tenantSubdomain = (existingUser.tenants as any)?.subdomain;
         
-        // Check localStorage for intended subdomain (set during OAuth initiation)
-        const intendedSubdomain = localStorage.getItem('oauth-subdomain');
-        const targetSubdomain = intendedSubdomain || referrerSubdomain;
+        setStatus('success');
+        setMessage('Welcome back! Redirecting to your dashboard...');
         
-        if (targetSubdomain && targetSubdomain !== 'www') {
-          console.log(`🔐 OAuth callback: Redirecting to subdomain ${targetSubdomain}`);
-          // Set the tenant-id cookie ONLY for this specific subdomain
-          // CRITICAL: Don't use domain=.docsflow.app as it affects ALL subdomains
-          document.cookie = `tenant-id=${targetSubdomain}; path=/; secure; samesite=strict`;
-          window.location.href = `https://${targetSubdomain}.docsflow.app/dashboard`;
-        } else {
-          // Fallback to user's default tenant from database
-          // Existing user - redirect to their tenant dashboard or main dashboard
-          const tenantSubdomain = (existingUser.tenants as any)?.subdomain;
+        if (tenantSubdomain) {
+          console.log(`🔐 OAuth callback: Redirecting existing user to tenant subdomain: ${tenantSubdomain}`);
           
-          setStatus('success');
-          setMessage('Welcome back! Redirecting to your dashboard...');
+          // Set cookies with verification
+          const setCookieAndVerify = (name: string, value: string) => {
+            document.cookie = `${name}=${value}; path=/; domain=.docsflow.app; secure; samesite=strict`;
+            // Verify cookie was set
+            const cookieSet = document.cookie.includes(`${name}=${value}`);
+            console.log(`🍪 Cookie ${name}: ${cookieSet ? 'SET' : 'FAILED'}`);
+            return cookieSet;
+          };
           
-          setTimeout(() => {
-            if (tenantSubdomain) {
+          // Set and verify cookies
+          const tenantCookieSet = setCookieAndVerify('tenant-id', existingUser.tenant_id);
+          const emailCookieSet = setCookieAndVerify('user_email', existingUser.email);
+          
+          if (tenantCookieSet && emailCookieSet) {
+            console.log(`✅ All cookies verified, redirecting to: https://${tenantSubdomain}.docsflow.app/dashboard`);
+            // Immediate redirect since cookies are verified
+            window.location.href = `https://${tenantSubdomain}.docsflow.app/dashboard`;
+          } else {
+            console.error('❌ Cookie setting failed, extending timeout');
+            setTimeout(() => {
               window.location.href = `https://${tenantSubdomain}.docsflow.app/dashboard`;
-            } else {
-              router.push('/dashboard');
-            }
+            }, 3000); // Extended timeout if cookies failed
+          }
+        } else {
+          // No tenant subdomain found - this shouldn't happen for existing users
+          console.error('🚨 Existing user has no tenant subdomain:', existingUser);
+          setTimeout(() => {
+            router.push('/onboarding'); // Force re-onboarding if no tenant
           }, 1500);
         }
 
