@@ -96,6 +96,18 @@ export default async function middleware(request: NextRequest) {
     const hostname = request.headers.get('host') || '';
     const origin = request.headers.get('origin');
     
+    // Skip middleware for static files and assets FIRST (before any logging)
+    if (pathname.startsWith('/_next') || 
+        pathname.startsWith('/favicon.ico') ||
+        pathname.startsWith('/favicon.svg') ||
+        pathname.startsWith('/logo.svg') ||
+        pathname.startsWith('/docsflow-brand-primary-horizontal-md.svg') ||
+        pathname.startsWith('/apple-touch-icon.png') ||
+        pathname.startsWith('/sitemap.xml') ||
+        pathname.startsWith('/robots.txt')) {
+      return NextResponse.next();
+    }
+    
     console.log(`🔍 [MIDDLEWARE START] ${hostname}${pathname}`);
     console.log(`🔍 [MIDDLEWARE] HOSTNAME DEBUG: '${hostname}' (length: ${hostname.length})`);
     console.log(`🔍 [MIDDLEWARE] User-Agent: ${request.headers.get('user-agent')?.substring(0, 50)}...`);
@@ -113,18 +125,6 @@ export default async function middleware(request: NextRequest) {
     // Rate limiting check
     if (!checkRateLimit(request, 200)) {
       return new NextResponse('Rate limit exceeded', { status: 429 });
-    }
-    
-    // Skip middleware for static files and assets
-    if (pathname.startsWith('/_next') || 
-        pathname.startsWith('/favicon.ico') ||
-        pathname.startsWith('/favicon.svg') ||
-        pathname.startsWith('/logo.svg') ||
-        pathname.startsWith('/docsflow-brand-primary-horizontal-md.svg') ||
-        pathname.startsWith('/apple-touch-icon.png') ||
-        pathname.startsWith('/sitemap.xml') ||
-        pathname.startsWith('/robots.txt')) {
-      return NextResponse.next();
     }
 
 
@@ -258,14 +258,7 @@ export default async function middleware(request: NextRequest) {
         return createSecureResponse(response, origin);
       }
       
-      // For unauthenticated users on protected pages, redirect to login (but NOT if already on login)
-      if (pathname !== '/login' && pathname !== '/register') {
-        const loginUrl = `https://${tenant}.docsflow.app/login`;
-        console.log(`🔐 Redirecting unauthenticated user to login: ${loginUrl}`);
-        return NextResponse.redirect(new URL(loginUrl));
-      }
-      
-      // CRITICAL: If on login page with session bridge, allow it to process
+      // CRITICAL: Check session bridge FIRST before any redirects
       const sessionBridge = request.nextUrl.searchParams.get('session_bridge');
       if (pathname === '/login' && sessionBridge === 'true') {
         console.log(`🌉 Session bridge detected on login page - allowing token processing`);
@@ -273,6 +266,13 @@ export default async function middleware(request: NextRequest) {
         response.headers.set('x-tenant-id', tenantUUID);
         response.headers.set('x-tenant-subdomain', tenant);
         return createSecureResponse(response, origin);
+      }
+      
+      // For unauthenticated users on protected pages, redirect to login (but NOT if already on login)
+      if (pathname !== '/login' && pathname !== '/register') {
+        const loginUrl = `https://${tenant}.docsflow.app/login`;
+        console.log(`🔐 Redirecting unauthenticated user to login: ${loginUrl}`);
+        return NextResponse.redirect(new URL(loginUrl));
       }
       
       // Fallback: allow the request to continue
