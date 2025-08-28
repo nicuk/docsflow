@@ -55,12 +55,29 @@ export async function GET(
 
     console.log(`❌ Cache MISS for tenant: ${tenantId} - fetching from database`);
 
-    // Fetch from Supabase database - query by subdomain since tenantId is actually subdomain
-    const { data: tenant, error } = await supabase
-      .from('tenants')
-      .select('*')
-      .eq('subdomain', tenantId)
-      .single();
+    // Fetch from Supabase database - support both UUID and subdomain lookup
+    let tenant, error;
+    
+    // First try by UUID (if tenantId looks like a UUID)
+    if (tenantId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      console.log(`🔍 Looking up tenant by UUID: ${tenantId}`);
+      const result = await supabase
+        .from('tenants')
+        .select('id, name, subdomain, logo_url, primary_color, secondary_color, max_users, features, created_at, updated_at')
+        .eq('id', tenantId)
+        .maybeSingle();
+      tenant = result.data;
+      error = result.error;
+    } else {
+      console.log(`🔍 Looking up tenant by subdomain: ${tenantId}`);
+      const result = await supabase
+        .from('tenants')
+        .select('id, name, subdomain, logo_url, primary_color, secondary_color, max_users, features, created_at, updated_at')
+        .eq('subdomain', tenantId)
+        .maybeSingle();
+      tenant = result.data;
+      error = result.error;
+    }
 
     if (error || !tenant) {
       console.error('Tenant not found:', error);
