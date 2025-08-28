@@ -108,10 +108,16 @@ export default async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
     
-    console.log(`🔍 [MIDDLEWARE START] ${hostname}${pathname}`);
+    console.log(`🔍 [MIDDLEWARE START] ${request.method} ${hostname}${pathname}`);
     console.log(`🔍 [MIDDLEWARE] HOSTNAME DEBUG: '${hostname}' (length: ${hostname.length})`);
     console.log(`🔍 [MIDDLEWARE] User-Agent: ${request.headers.get('user-agent')?.substring(0, 50)}...`);
     console.log(`🔍 [MIDDLEWARE] Origin: ${origin}`);
+    console.log(`🔍 [MIDDLEWARE] Request URL: ${request.url}`);
+    
+    // FETCH FAILED DEBUGGING: Log all request headers for network debugging
+    if (pathname === '/login') {
+      console.log(`🔍 [LOGIN REQUEST DEBUG] Headers:`, Object.fromEntries(request.headers.entries()));
+    }
     
     if (request.method === 'OPTIONS') {
       return handlePreflight(request);
@@ -241,7 +247,17 @@ export default async function middleware(request: NextRequest) {
         }
       }
       
-      // PREVENT REDIRECT LOOPS: Allow login/register pages to load normally
+      // CRITICAL: Check session bridge FIRST before any other logic
+      const sessionBridge = request.nextUrl.searchParams.get('session_bridge');
+      if (pathname === '/login' && sessionBridge === 'true') {
+        console.log(`🌉 Session bridge detected on login page - allowing token processing`);
+        const response = NextResponse.next();
+        response.headers.set('x-tenant-id', tenantUUID);
+        response.headers.set('x-tenant-subdomain', tenant);
+        return createSecureResponse(response, origin);
+      }
+      
+      // PREVENT REDIRECT LOOPS: Allow login/register pages to load normally (but AFTER session bridge check)
       if (pathname === '/login' || pathname === '/register' || pathname.startsWith('/auth/')) {
         console.log(`✅ Allowing auth page to load: ${pathname}`);
         const response = NextResponse.next();
@@ -252,16 +268,6 @@ export default async function middleware(request: NextRequest) {
       
       // For authenticated users on correct tenant, allow access with proper tenant context
       if (userEmail && authToken && storedTenantId && tenantUUID && storedTenantId === tenantUUID) {
-        const response = NextResponse.next();
-        response.headers.set('x-tenant-id', tenantUUID);
-        response.headers.set('x-tenant-subdomain', tenant);
-        return createSecureResponse(response, origin);
-      }
-      
-      // CRITICAL: Check session bridge FIRST before any redirects
-      const sessionBridge = request.nextUrl.searchParams.get('session_bridge');
-      if (pathname === '/login' && sessionBridge === 'true') {
-        console.log(`🌉 Session bridge detected on login page - allowing token processing`);
         const response = NextResponse.next();
         response.headers.set('x-tenant-id', tenantUUID);
         response.headers.set('x-tenant-subdomain', tenant);

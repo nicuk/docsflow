@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
 
   try {
-    const { email, password } = await request.json();
+    const { email, password, rememberMe } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -155,18 +155,24 @@ export async function POST(request: NextRequest) {
       userEmail: authData.user.email,
       userName: userProfile?.name || authData.user.email?.split('@')[0] || 'User',
       tenantId: userProfile?.tenant_id ? (userProfile.tenants as any)?.subdomain : undefined,
-      onboardingComplete: hasCompletedOnboarding
+      onboardingComplete: hasCompletedOnboarding,
+      rememberMe: rememberMe || false
     });
     
-    // Also set auth tokens with proper domain
+    // Also set auth tokens with proper domain and remember me duration
     const authCookieStore = await cookies();
+    
+    // REMEMBER ME FIX: Set cookie duration based on user preference
+    const authTokenMaxAge = rememberMe ? (60 * 60 * 24 * 30) : (authData.session.expires_in || 3600); // 30 days or session
+    const refreshTokenMaxAge = rememberMe ? (60 * 60 * 24 * 30) : (60 * 60 * 24 * 7); // 30 days or 7 days
+    
     authCookieStore.set('auth-token', authData.session.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
       domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
-      maxAge: authData.session.expires_in || 3600
+      maxAge: authTokenMaxAge
     });
 
     authCookieStore.set('refresh-token', authData.session.refresh_token, {
@@ -175,7 +181,7 @@ export async function POST(request: NextRequest) {
       sameSite: 'lax',
       path: '/',
       domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
-      maxAge: 60 * 60 * 24 * 7 // 7 days
+      maxAge: refreshTokenMaxAge
     });
     
     return response;

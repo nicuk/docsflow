@@ -47,32 +47,47 @@ export default function LoginPage() {
     const sessionBridge = urlParams.get('session_bridge');
     const token = urlParams.get('token');
     
+    console.log(`🔍 [SESSION BRIDGE CHECK] sessionBridge=${sessionBridge}, hasToken=${!!token}`);
+    
     if (sessionBridge === 'true' && token) {
       console.log('🌉 Processing session bridge from main domain');
+      console.log(`🔍 [SESSION BRIDGE] Token length: ${token.length}`);
+      console.log(`🔍 [SESSION BRIDGE] Current URL: ${window.location.href}`);
+      
       setIsSuccess(true);
       setMessage('Welcome back! You\'ve been successfully signed in. Redirecting to your dashboard...');
       
-      // CRITICAL FIX: Set Supabase auth cookies properly
-      const decodedToken = decodeURIComponent(token);
-      
-      // Set the proper Supabase auth cookies
-      document.cookie = `sb-lhcopwwiqwjpzbdnjovo-auth-token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
-      
-      // Get current subdomain for tenant context
-      const hostname = window.location.hostname;
-      const subdomain = hostname.split('.')[0];
-      
-      if (subdomain && subdomain !== 'www' && subdomain !== 'api') {
-        // Set tenant context for this subdomain
-        localStorage.setItem('tenant-subdomain', subdomain);
+      try {
+        // CRITICAL FIX: Set Supabase auth cookies properly
+        const decodedToken = decodeURIComponent(token);
+        console.log(`🔍 [SESSION BRIDGE] Decoded token length: ${decodedToken.length}`);
         
-        // Clear URL parameters
-        window.history.replaceState({}, document.title, window.location.pathname);
+        // Set the proper Supabase auth cookies
+        document.cookie = `sb-lhcopwwiqwjpzbdnjovo-auth-token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
         
-        // Redirect to dashboard after showing success message
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 2000);
+        // Get current subdomain for tenant context
+        const hostname = window.location.hostname;
+        const subdomain = hostname.split('.')[0];
+        
+        console.log(`🔍 [SESSION BRIDGE] Hostname: ${hostname}, Subdomain: ${subdomain}`);
+        
+        if (subdomain && subdomain !== 'www' && subdomain !== 'api') {
+          // Set tenant context for this subdomain
+          localStorage.setItem('tenant-subdomain', subdomain);
+          
+          // Clear URL parameters
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+          // Redirect to dashboard after showing success message
+          setTimeout(() => {
+            console.log(`🔍 [SESSION BRIDGE] Redirecting to dashboard...`);
+            window.location.href = '/dashboard';
+          }, 2000);
+        } else {
+          console.error(`🚨 [SESSION BRIDGE] Invalid subdomain: ${subdomain}`);
+        }
+      } catch (error) {
+        console.error(`🚨 [SESSION BRIDGE] Error processing token:`, error);
       }
     }
   }, []);
@@ -195,7 +210,10 @@ export default function LoginPage() {
             // Create session bridge URL with authentication token
             const bridgeUrl = `https://${userTenantSubdomain}.docsflow.app/login?session_bridge=true&token=${encodeURIComponent(data.session?.access_token || '')}`
             
+            console.log(`🔍 [SESSION BRIDGE] Creating redirect to: ${bridgeUrl}`);
+            
             setTimeout(() => {
+              console.log(`🔍 [SESSION BRIDGE] Executing redirect now...`);
               window.location.href = bridgeUrl
             }, 1500)
           } else {

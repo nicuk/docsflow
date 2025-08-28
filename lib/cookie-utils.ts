@@ -35,6 +35,7 @@ export function createResponseWithSessionCookies(
     userName?: string;
     tenantId?: string;
     onboardingComplete?: boolean;
+    rememberMe?: boolean;
   },
   status: number = 200,
   additionalHeaders: Record<string, string> = {}
@@ -50,11 +51,14 @@ export function createResponseWithSessionCookies(
   );
   
   // Set cookies using Set-Cookie headers (the proper way)
+  // REMEMBER ME FIX: Adjust cookie duration based on rememberMe preference
+  const cookieMaxAge = cookies.rememberMe ? (60 * 60 * 24 * 30) : (60 * 60 * 24 * 7); // 30 days or 7 days
+  
   // Use USER config for display data (readable by JavaScript)
-  const userCookieOptions = `; Path=${COOKIE_CONFIG.USER.path}; Max-Age=${COOKIE_CONFIG.USER.maxAge}; SameSite=${COOKIE_CONFIG.USER.sameSite}${COOKIE_CONFIG.USER.httpOnly ? '; HttpOnly' : ''}${COOKIE_CONFIG.USER.secure ? '; Secure' : ''}${COOKIE_CONFIG.USER.domain ? `; Domain=${COOKIE_CONFIG.USER.domain}` : ''}`;
+  const userCookieOptions = `; Path=${COOKIE_CONFIG.USER.path}; Max-Age=${cookieMaxAge}; SameSite=${COOKIE_CONFIG.USER.sameSite}${COOKIE_CONFIG.USER.httpOnly ? '; HttpOnly' : ''}${COOKIE_CONFIG.USER.secure ? '; Secure' : ''}${COOKIE_CONFIG.USER.domain ? `; Domain=${COOKIE_CONFIG.USER.domain}` : ''}`;
   
   // Use AUTH config for sensitive data (httpOnly)
-  const authCookieOptions = `; Path=${COOKIE_CONFIG.AUTH.path}; Max-Age=${COOKIE_CONFIG.AUTH.maxAge}; SameSite=${COOKIE_CONFIG.AUTH.sameSite}${COOKIE_CONFIG.AUTH.httpOnly ? '; HttpOnly' : ''}${COOKIE_CONFIG.AUTH.secure ? '; Secure' : ''}${COOKIE_CONFIG.AUTH.domain ? `; Domain=${COOKIE_CONFIG.AUTH.domain}` : ''}`;
+  const authCookieOptions = `; Path=${COOKIE_CONFIG.AUTH.path}; Max-Age=${cookieMaxAge}; SameSite=${COOKIE_CONFIG.AUTH.sameSite}${COOKIE_CONFIG.AUTH.httpOnly ? '; HttpOnly' : ''}${COOKIE_CONFIG.AUTH.secure ? '; Secure' : ''}${COOKIE_CONFIG.AUTH.domain ? `; Domain=${COOKIE_CONFIG.AUTH.domain}` : ''}`;
   
   if (cookies.userEmail) {
     response.headers.append('Set-Cookie', `user-email=${cookies.userEmail}${userCookieOptions}`);

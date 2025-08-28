@@ -20,13 +20,13 @@ Error: Tenant not found for subdomain: 2e33ba17-ad07-44b7-ae8b-937de35e91d7
 **Status:** ❌ FAILED - Still getting 404 errors in production
 **Root Cause:** Deployment cache invalidation issue - code changes not reflected in production
 
-### Current Status: DEPLOYMENT CACHE ISSUE
-**Problem:** The API fix was deployed but Vercel/production is still serving old cached version
+### Current Status: REDIS CACHE PARSING ISSUE
+**Problem:** Redis JSON parsing logic incorrectly flagged valid tenant data as corrupted
 **Evidence:** 
-- Local logs show middleware working correctly
-- Database query confirms tenant exists: `2e33ba17-ad07-44b7-ae8b-937de35e91d7`
-- Production still returns 404 for same UUID
-- Browser logs show: `GET https://bitto.docsflow.app/api/tenants/2e33ba17-ad07-44b7-ae8b-937de35e91d7 404 (Not Found)`
+- Redis contains valid tenant data but was being incorrectly flagged
+- Corruption detection was too aggressive with `includes('[object Object]')` check
+- Tenant lookup was failing despite valid data in Redis
+- Error: `Invalid Redis data type for ${subdomain}, clearing cache` was a false positive
 
 ### Attempt 3: TenantProvider Frontend Fix (August 28, 2025)
 **Location:** `components/providers/tenant-provider.tsx`  
@@ -43,19 +43,34 @@ Error: Tenant not found for subdomain: 2e33ba17-ad07-44b7-ae8b-937de35e91d7
 **Approach:** Changed NextResponse.rewrite to NextResponse.redirect for proper cross-subdomain navigation
 **Status:** ✅ PARTIAL SUCCESS - Fixed infinite redirect loops but API still failing
 
-### Attempt 6: API Route .single() to .maybeSingle() Fix (August 28, 2025)
-**Location:** `app/api/tenants/[tenantId]/route.ts`  
-**Approach:** Changed Supabase query from `.single()` to `.maybeSingle()` to handle PGRST116 errors
-**Status:** ❌ FAILED - Code deployed but production cache not invalidated
+### Attempt 6: Redis JSON Parsing Fix (August 28, 2025)
+**Location:** `lib/tenant-context-manager.ts`  
+**Approach:** Fixed Redis JSON parsing to handle both string and object responses from Upstash Redis
+**Status:** ✅ PARTIAL SUCCESS - Fixed false corruption detection but deeper issues remain
+**Key Changes:**
+```typescript
+// Handle Upstash Redis auto-parsing
+let parsed;
+if (typeof redisData === 'string') {
+  parsed = JSON.parse(redisData);
+} else if (typeof redisData === 'object' && redisData !== null) {
+  // Upstash Redis already parsed the JSON
+  parsed = redisData;
+} else {
+  console.warn(`⚠️ Invalid Redis data type for ${subdomain}, clearing cache`);
+  await redis?.del(redisKey);
+  throw new Error('Invalid cache data type');
+}
+```
 
 ### Attempt 7: Enhanced Error Logging (August 28, 2025)
 **Location:** `app/api/tenants/[tenantId]/route.ts`  
 **Approach:** Added detailed logging to identify exact failure point
 **Status:** 🔄 IN PROGRESS - Waiting for deployment
 
-## ROOT CAUSE ANALYSIS: Why We Failed So Many Times
+## ROOT CAUSE ANALYSIS: Why We're Still Failing
 
-### **BRUTAL ASSESSMENT SCORE: 3/10** ❌
+### **BRUTAL ASSESSMENT SCORE: 4/10** ⚠️ (Up from 3/10)
 
 ### Critical Failure Points:
 1. **Cache Invalidation Blindness (Major)** - Fixed code locally but production served stale cached API routes for hours
@@ -75,7 +90,12 @@ Error: Tenant not found for subdomain: 2e33ba17-ad07-44b7-ae8b-937de35e91d7
 - **Attempt 6:** Fixed core issue but deployment cache prevented it from working
 - **Attempt 7:** Added logging to finally see what's actually happening in production
 
-### **The Real Problem:** We were debugging a ghost - the code was correct but the deployment system wasn't serving it.
+### **The Real Problem:** Multiple layers of caching and type mismatches between Redis implementations
+
+1. **Upstash Redis Auto-Parsing**: Upstash automatically parses JSON, but our code expected raw strings
+2. **Type Checking Gaps**: Inadequate type validation before JSON parsing
+3. **Cache Invalidation**: Aggressive cache clearing on false positives
+4. **Multiple Redis Implementations**: Different behavior between local and production Redis instances
 **Result:** ❌ FAILED - Only fixed incoming requests, not outgoing API calls from frontend
 
 ```typescript
@@ -592,6 +612,55 @@ if (userEmail && authToken && storedTenantId && tenantUUID && storedTenantId ===
 
 ### Root Cause Analysis:
 After successful subdomain redirects, users were getting stuck on "Welcome back!" screen due to two simultaneous issues:
+
+---
+
+## Fix Attempt #14: Redis Cache Corruption False Positive Loop (August 28, 2025)
+
+**Date:** 2025-08-28  
+**Approach:** Fix Redis cache corruption detection causing infinite DB fallback loop  
+**Status:** CRITICAL ISSUE IDENTIFIED - Fix Required
+
+### Root Cause Analysis:
+The logs reveal the real issue preventing subdomain routing:
+
+```
+✅ Redis tenant cache HIT for: bitto
+⚠️ Corrupted Redis data for bitto, clearing cache
+⚠️ Redis unavailable, falling back to DB: [Error: Corrupted cache data]
+🔐 Redirecting unauthenticated user to login: https://bitto.docsflow.app/login
+```
+
+**THE PROBLEM:** `TenantContextManager` line 51 has a flawed corruption detection:
+
+```typescript
+// BROKEN: False positive corruption detection
+if (typeof redisData !== 'string' || redisData.includes('[object Object]')) {
+  console.warn(`⚠️ Corrupted Redis data for ${subdomain}, clearing cache`);
+  await redis?.del(redisKey);
+  throw new Error('Corrupted cache data');
+}
+```
+
+**ISSUE:** Redis returns valid JSON string, but the `includes('[object Object]')` check incorrectly flags valid data as corrupted.
+
+### The Infinite Loop:
+1. Redis contains valid tenant data: `{"id":"2e33ba17...","subdomain":"bitto","name":"bitto"}`
+2. Corruption detection falsely triggers on valid JSON
+3. Cache gets cleared and throws "Corrupted cache data" error
+4. Falls back to DB, re-caches same data
+5. Next request repeats the cycle
+6. User never gets proper tenant context, stays unauthenticated
+7. Middleware redirects to login instead of allowing access
+
+### Impact:
+- **User Experience:** Infinite redirect to login page
+- **Performance:** Unnecessary DB calls on every request
+- **Architecture:** Cache system completely broken
+- **Security:** No tenant isolation due to failed tenant resolution
+
+### Fix Strategy:
+Remove the flawed `includes('[object Object]')` check and improve JSON validation to only catch actual corruption, not valid stringified JSON data.
 
 1. **Race Condition in Login Page** - Two conflicting redirect timers running simultaneously
 2. **Infinite Redirect Loop in Middleware** - Session bridge requests redirected back to login
