@@ -111,10 +111,7 @@ export default function LoginPage() {
                   console.log(`🔍 [SESSION BRIDGE] Session check before redirect:`, data);
                   
                                   if (data.authenticated && data.tenantId) {
-                  // SCHEMA-ALIGNED COOKIE FIX: Use database schema aligned cookie manager
-                  const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
-                  
-                  // ENTERPRISE: Use multi-tenant cookie manager
+                  // ENTERPRISE: Use multi-tenant cookie manager (ONLY - no conflicts)
                   const { MultiTenantCookieManager } = await import('@/lib/multi-tenant-cookie-manager');
                   
                   MultiTenantCookieManager.addTenantContext(

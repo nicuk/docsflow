@@ -337,13 +337,42 @@ export default async function middleware(request: NextRequest) {
         return createSecureResponse(response, origin);
       }
       
-      // ARCHITECTURAL ROOT FIX: Standardized authentication check for main domain
-      // Use SAME cookie names as subdomain logic for consistency
+      // SOLUTION 1: Smart Main Domain Detection with Multi-Tenant Support
       console.log(`🔍 [MIDDLEWARE] Checking auth for main domain user on: ${pathname}`);
       const cookies = request.cookies;
-      // STANDARDIZED: Use same cookie names as subdomain logic (line 202-204)
+      
+      // Read MULTI-TENANT cookies (not legacy single tenant)
+      const tenantContexts = cookies.get('tenant-contexts')?.value;
+      const currentTenant = cookies.get('current-tenant')?.value;
       const authToken = cookies.get('access_token')?.value;
       const userEmail = cookies.get('user_email')?.value;
+      
+      // ENTERPRISE SMART REDIRECT: Bypass dashboard/onboarding for authenticated users
+      if ((pathname === '/dashboard' || pathname === '/onboarding' || pathname === '/') && 
+          tenantContexts && userEmail && authToken) {
+        try {
+          const contexts = JSON.parse(tenantContexts);
+          const availableTenants = Object.keys(contexts);
+          
+          if (availableTenants.length === 1) {
+            // Single tenant - redirect immediately (ELIMINATES 4-PAGE CHAIN)
+            const tenantSubdomain = availableTenants[0];
+            const redirectUrl = `https://${tenantSubdomain}.docsflow.app/dashboard`;
+            console.log(`🚀 [SMART-REDIRECT] Single tenant user - skipping intermediate pages: ${redirectUrl}`);
+            return NextResponse.redirect(new URL(redirectUrl));
+          } else if (availableTenants.length > 1) {
+            // Multi-tenant - use current preference or first tenant
+            const preferredTenant = (currentTenant && contexts[currentTenant]) ? currentTenant : availableTenants[0];
+            const redirectUrl = `https://${preferredTenant}.docsflow.app/dashboard`;
+            console.log(`🚀 [SMART-REDIRECT] Multi-tenant user - preferred tenant: ${redirectUrl}`);
+            return NextResponse.redirect(new URL(redirectUrl));
+          }
+        } catch (e) {
+          console.warn(`🔄 [SMART-REDIRECT] Invalid tenant contexts, proceeding normally`);
+        }
+      }
+      
+      // Legacy fallback for backwards compatibility
       const storedTenantId = cookies.get('tenant-id')?.value;
       
       console.log(`🔍 [MIDDLEWARE] Auth check - Token: ${authToken ? 'EXISTS' : 'MISSING'}, Email: ${userEmail || 'MISSING'}, TenantId: ${storedTenantId || 'MISSING'}`);

@@ -34,9 +34,6 @@ export default function AuthRedirectPage() {
           setMessage(`Welcome back to ${session.tenant?.name || 'your workspace'}!`);
           setProgress(75);
           
-          // SCHEMA-ALIGNED: Use database schema aligned cookie manager
-          const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
-          
           // ENTERPRISE: Add this tenant to user's multi-tenant context
           MultiTenantCookieManager.addTenantContext(
             {
