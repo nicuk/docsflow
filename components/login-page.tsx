@@ -206,6 +206,27 @@ export default function LoginPage() {
         password: formData.password
       })
       
+      // REMEMBER ME FIX: Handle session persistence based on user preference
+      if (data.session && !error) {
+        if (formData.rememberMe) {
+          // Store in localStorage for persistent sessions (survives browser close)
+          localStorage.setItem('supabase-remember-me', 'true')
+          // Supabase already stores session in localStorage by default
+        } else {
+          // Store in sessionStorage for temporary sessions (cleared on browser close)
+          localStorage.removeItem('supabase-remember-me')
+          // Move session to sessionStorage to be cleared on browser close
+          const sessionKey = `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('://')[1]?.split('.')[0]}-auth-token`
+          if (typeof window !== 'undefined') {
+            const sessionData = localStorage.getItem(sessionKey)
+            if (sessionData) {
+              sessionStorage.setItem(sessionKey, sessionData)
+              localStorage.removeItem(sessionKey)
+            }
+          }
+        }
+      }
+      
       if (error) {
         console.error('Supabase auth error:', error)
         
