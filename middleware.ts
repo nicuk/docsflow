@@ -114,11 +114,21 @@ export default async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
     
-    console.log(`🔍 [MIDDLEWARE START] ${request.method} ${hostname}${pathname}`);
-    console.log(`🔍 [MIDDLEWARE] HOSTNAME DEBUG: '${hostname}' (length: ${hostname.length})`);
-    console.log(`🔍 [MIDDLEWARE] User-Agent: ${request.headers.get('user-agent')?.substring(0, 50)}...`);
-    console.log(`🔍 [MIDDLEWARE] Origin: ${origin}`);
-    console.log(`🔍 [MIDDLEWARE] Request URL: ${request.url}`);
+    // Skip verbose logging for Vercel automation
+    const userAgent = request.headers.get('user-agent') || '';
+    const isVercelBot = userAgent.includes('vercel-screenshot') || 
+                       userAgent.includes('vercel-bot') ||
+                       userAgent.includes('vercel/');
+    
+    if (!isVercelBot) {
+      console.log(`🔍 [MIDDLEWARE START] ${request.method} ${hostname}${pathname}`);
+      console.log(`🔍 [MIDDLEWARE] HOSTNAME DEBUG: '${hostname}' (length: ${hostname.length})`);
+      console.log(`🔍 [MIDDLEWARE] User-Agent: ${userAgent.substring(0, 50)}...`);
+      console.log(`🔍 [MIDDLEWARE] Origin: ${origin}`);
+      console.log(`🔍 [MIDDLEWARE] Request URL: ${request.url}`);
+    } else {
+      console.log(`🤖 [AUTOMATION] ${request.method} ${hostname}${pathname} (vercel-screenshot)`);
+    }
     
 
     

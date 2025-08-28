@@ -8,17 +8,27 @@ import { createServerClient } from '@supabase/ssr';
  */
 export async function GET(request: NextRequest) {
   try {
-    console.log(`🔍 [SESSION API] Request received from: ${request.headers.get('referer')}`);
-    console.log(`🔍 [SESSION API] User-Agent: ${request.headers.get('user-agent')?.substring(0, 50)}...`);
+    // Skip verbose logging for Vercel automation
+    const userAgent = request.headers.get('user-agent') || '';
+    const isVercelBot = userAgent.includes('vercel-screenshot') || 
+                       userAgent.includes('vercel-bot') ||
+                       userAgent.includes('vercel/');
+    
+    if (!isVercelBot) {
+      console.log(`🔍 [SESSION API] Request received from: ${request.headers.get('referer')}`);
+      console.log(`🔍 [SESSION API] User-Agent: ${userAgent.substring(0, 50)}...`);
+    }
     
     const cookieStore = await cookies();
     
-    // DEBUGGING: Log all available cookies
-    const allCookies = cookieStore.getAll();
-    console.log(`🔍 [SESSION API] Available cookies: ${allCookies.map(c => c.name).join(', ')}`);
-    console.log(`🔍 [SESSION API] access_token present: ${!!cookieStore.get('access_token')?.value}`);
-    console.log(`🔍 [SESSION API] refresh_token present: ${!!cookieStore.get('refresh_token')?.value}`);
-    console.log(`🔍 [SESSION API] sb-auth present: ${!!cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value}`);
+    if (!isVercelBot) {
+      // DEBUGGING: Log all available cookies (only for real users)
+      const allCookies = cookieStore.getAll();
+      console.log(`🔍 [SESSION API] Available cookies: ${allCookies.map(c => c.name).join(', ')}`);
+      console.log(`🔍 [SESSION API] access_token present: ${!!cookieStore.get('access_token')?.value}`);
+      console.log(`🔍 [SESSION API] refresh_token present: ${!!cookieStore.get('refresh_token')?.value}`);
+      console.log(`🔍 [SESSION API] sb-auth present: ${!!cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value}`);
+    }
     
     // ARCHITECTURAL ROOT FIX: Create Supabase client that reads STANDARDIZED cookies
     const supabase = createServerClient(
@@ -65,18 +75,24 @@ export async function GET(request: NextRequest) {
     );
 
     // SECURITY FIX: Use getUser() instead of getSession() for authenticated data
-    console.log(`🔍 [SESSION API] Calling supabase.auth.getUser()...`);
+    if (!isVercelBot) {
+      console.log(`🔍 [SESSION API] Calling supabase.auth.getUser()...`);
+    }
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
-    console.log(`🔍 [SESSION API] Supabase auth result:`, {
-      hasUser: !!user,
-      userId: user?.id,
-      userEmail: user?.email,
-      error: userError?.message
-    });
+    if (!isVercelBot) {
+      console.log(`🔍 [SESSION API] Supabase auth result:`, {
+        hasUser: !!user,
+        userId: user?.id,
+        userEmail: user?.email,
+        error: userError?.message
+      });
+    }
     
     if (!user || userError) {
-      console.log(`❌ [SESSION API] Authentication failed:`, userError?.message);
+      if (!isVercelBot) {
+        console.log(`❌ [SESSION API] Authentication failed:`, userError?.message);
+      }
       return NextResponse.json({
         authenticated: false,
         user: null,
