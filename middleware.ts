@@ -216,11 +216,12 @@ export default async function middleware(request: NextRequest) {
         return NextResponse.redirect(mainDomainUrl);
       }
 
-      // MULTI-TENANT: Read from namespaced tenant contexts
+      // 🔧 SURGICAL FIX: Skip cookie auth check for tenant subdomains - let session API handle it
+      // This fixes the cookie timing issue where middleware runs before session API
       const currentTenant = request.cookies.get('current-tenant')?.value;
       const tenantContexts = request.cookies.get('tenant-contexts')?.value;
-      const userEmail = request.cookies.get('user_email')?.value;
-      const authToken = request.cookies.get('access_token')?.value;
+      const userEmail = null; // Delegate to session API
+      const authToken = null; // Delegate to session API
       
       // Extract tenant UUID from namespaced contexts
       let storedTenantId: string | null = null;
