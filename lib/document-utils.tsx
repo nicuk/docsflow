@@ -49,8 +49,7 @@ export const getFileIcon = (type: DocumentType, className?: string) => {
   return getFileTypeConfig(type).icon(className)
 }
 
-// Export fileTypeConfig for use in other files
-export { fileTypeConfig }
+// fileTypeConfig is already exported above
 
 export const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return "0 Bytes"

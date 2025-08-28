@@ -73,29 +73,17 @@ import {
 } from "@/components/ui/select"
 import { apiClient } from "@/lib/api-client"
 import { useEffect } from "react"
-
-// Document types and interfaces
-type DocumentStatus = "processing" | "ready" | "error"
-type DocumentType = "pdf" | "doc" | "docx" | "txt" | "rtf" | "xls" | "xlsx" | "csv" | "jpg" | "jpeg" | "png"
-type DocumentCategory = "contracts" | "invoices" | "reports" | "correspondence" | "uncategorized"
-
-interface Document {
-  id: string
-  name: string
-  type: DocumentType
-  size: number
-  pages?: number
-  wordCount?: number
-  uploadDate: Date
-  status: DocumentStatus
-  category: DocumentCategory
-  tags: string[]
-  favorite: boolean
-  thumbnail?: string
-  processingTime?: number
-  errorMessage?: string
-  shared?: boolean
-}
+import { 
+  DocumentType, 
+  DocumentStatus, 
+  getFileType, 
+  getFileIcon, 
+  formatFileSize, 
+  getStatusBadge,
+  getFileTypeConfig,
+  fileTypeConfig
+} from "@/lib/document-utils"
+import { Document, DocumentCategory, sampleDocuments } from "@/constants/document-sample-data"
 
 interface UploadingFile {
   id: string
@@ -104,218 +92,10 @@ interface UploadingFile {
   error?: string
 }
 
-// File type configurations
-const fileTypeConfig = {
-  documents: {
-    types: ["pdf", "doc", "docx", "txt", "rtf"],
-    maxSize: 50 * 1024 * 1024, // 50MB
-    icon: (className?: string) => <FileText className={className} />,
-  },
-  spreadsheets: {
-    types: ["xls", "xlsx", "csv"],
-    maxSize: 25 * 1024 * 1024, // 25MB
-    icon: (className?: string) => <FileSpreadsheet className={className} />,
-  },
-  images: {
-    types: ["jpg", "jpeg", "png"],
-    maxSize: 10 * 1024 * 1024, // 10MB
-    icon: (className?: string) => <FileImage className={className} />,
-  },
-}
+// ✅ EXTRACTED: Helper functions moved to @/lib/document-utils
+// ✅ EXTRACTED: Constants moved to @/constants/document-sample-data
 
-// Helper functions
-const getFileType = (filename: string): DocumentType => {
-  const extension = filename.split(".").pop()?.toLowerCase() as DocumentType
-  return extension
-}
-
-const getFileTypeConfig = (type: DocumentType) => {
-  if (fileTypeConfig.documents.types.includes(type)) return fileTypeConfig.documents
-  if (fileTypeConfig.spreadsheets.types.includes(type)) return fileTypeConfig.spreadsheets
-  if (fileTypeConfig.images.types.includes(type)) return fileTypeConfig.images
-  return fileTypeConfig.documents
-}
-
-const getFileIcon = (type: DocumentType, className?: string) => {
-  return getFileTypeConfig(type).icon(className)
-}
-
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return "0 Bytes"
-  const k = 1024
-  const sizes = ["Bytes", "KB", "MB", "GB"]
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
-}
-
-const getStatusBadge = (status: DocumentStatus) => {
-  switch (status) {
-    case "ready":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800"
-        >
-          <CheckCircle2 className="h-3 w-3 mr-1" /> Ready
-        </Badge>
-      )
-    case "processing":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800"
-        >
-          <Clock className="h-3 w-3 mr-1 animate-spin" /> Processing
-        </Badge>
-      )
-    case "error":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800"
-        >
-          <AlertCircle className="h-3 w-3 mr-1" /> Error
-        </Badge>
-      )
-  }
-}
-
-// Sample documents data
-const sampleDocuments: Document[] = [
-  {
-    id: "doc-1",
-    name: "Financial Report Q3 2023.pdf",
-    type: "pdf",
-    size: 2400000, // 2.4 MB
-    pages: 24,
-    wordCount: 5430,
-    uploadDate: new Date(2023, 9, 15), // Oct 15, 2023
-    status: "ready",
-    category: "reports",
-    tags: ["financial", "quarterly", "2023"],
-    favorite: true,
-    processingTime: 8.2,
-  },
-  {
-    id: "doc-2",
-    name: "Marketing Strategy.docx",
-    type: "docx",
-    size: 1800000, // 1.8 MB
-    pages: 15,
-    wordCount: 3200,
-    uploadDate: new Date(2023, 10, 2), // Nov 2, 2023
-    status: "ready",
-    category: "reports",
-    tags: ["marketing", "strategy"],
-    favorite: false,
-    processingTime: 5.7,
-  },
-  {
-    id: "doc-3",
-    name: "Sales Data Q4.xlsx",
-    type: "xlsx",
-    size: 3500000, // 3.5 MB
-    uploadDate: new Date(2023, 11, 10), // Dec 10, 2023
-    status: "ready",
-    category: "reports",
-    tags: ["sales", "quarterly", "2023"],
-    favorite: false,
-    processingTime: 12.3,
-  },
-  {
-    id: "doc-4",
-    name: "Product Roadmap 2024.pdf",
-    type: "pdf",
-    size: 4200000, // 4.2 MB
-    pages: 32,
-    wordCount: 7800,
-    uploadDate: new Date(2023, 11, 28), // Dec 28, 2023
-    status: "processing",
-    category: "reports",
-    tags: ["product", "roadmap", "2024"],
-    favorite: true,
-  },
-  {
-    id: "doc-5",
-    name: "Team Photo.jpg",
-    type: "jpg",
-    size: 5600000, // 5.6 MB
-    uploadDate: new Date(2024, 0, 5), // Jan 5, 2024
-    status: "ready",
-    category: "correspondence",
-    tags: ["team", "photo"],
-    favorite: false,
-    processingTime: 3.1,
-  },
-  {
-    id: "doc-6",
-    name: "Contract Draft.pdf",
-    type: "pdf",
-    size: 1200000, // 1.2 MB
-    pages: 8,
-    wordCount: 2100,
-    uploadDate: new Date(2024, 0, 15), // Jan 15, 2024
-    status: "error",
-    category: "contracts",
-    tags: ["legal", "draft"],
-    favorite: false,
-    errorMessage:
-      "Failed to extract text from document. The PDF may be password protected or contain only scanned images.",
-  },
-  {
-    id: "doc-7",
-    name: "Budget 2024.xlsx",
-    type: "xlsx",
-    size: 2100000, // 2.1 MB
-    uploadDate: new Date(2024, 0, 20), // Jan 20, 2024
-    status: "ready",
-    category: "reports",
-    tags: ["finance", "budget", "2024"],
-    favorite: true,
-    processingTime: 7.8,
-    shared: true,
-  },
-  {
-    id: "doc-8",
-    name: "Invoice #INV-2023-0042.pdf",
-    type: "pdf",
-    size: 980000, // 980 KB
-    pages: 2,
-    wordCount: 450,
-    uploadDate: new Date(2024, 0, 25), // Jan 25, 2024
-    status: "ready",
-    category: "invoices",
-    tags: ["invoice", "paid"],
-    favorite: false,
-    processingTime: 2.3,
-  },
-  {
-    id: "doc-9",
-    name: "Meeting Notes - Product Team.txt",
-    type: "txt",
-    size: 45000, // 45 KB
-    pages: 1,
-    wordCount: 850,
-    uploadDate: new Date(2024, 1, 2), // Feb 2, 2024
-    status: "ready",
-    category: "correspondence",
-    tags: ["meeting", "notes", "product"],
-    favorite: false,
-    processingTime: 1.2,
-  },
-  {
-    id: "doc-10",
-    name: "Customer Feedback Analysis.csv",
-    type: "csv",
-    size: 1500000, // 1.5 MB
-    uploadDate: new Date(2024, 1, 10), // Feb 10, 2024
-    status: "ready",
-    category: "reports",
-    tags: ["customer", "feedback", "analysis"],
-    favorite: false,
-    processingTime: 6.5,
-  },
-]
+// ✅ EXTRACTED: Sample data moved to @/constants/document-sample-data
 
 export default function DocumentsPage() {
   // State for documents and UI
@@ -425,14 +205,15 @@ export default function DocumentsPage() {
       });
       
       // Create document from backend response
+      const responseData = response as any; // Type assertion for now
       const newDocument: Document = {
-        id: response.document?.id || `doc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        name: response.document?.filename || file.name,
+        id: responseData.document?.id || `doc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        name: responseData.document?.filename || file.name,
         type: getFileType(file.name),
         size: file.size,
         uploadDate: new Date(),
-        status: response.document?.processing_status || "processing",
-        category: response.document?.document_category || "uncategorized",
+        status: responseData.document?.processing_status || "processing",
+        category: responseData.document?.document_category || "uncategorized",
         tags: [],
         favorite: false,
       }
@@ -655,12 +436,15 @@ export default function DocumentsPage() {
     {} as Record<DocumentStatus, number>,
   )
 
-  // Document type counts
+  // Document type counts - simplified to avoid import issues
   const typeCount = documents.reduce(
     (acc, doc) => {
-      const category = fileTypeConfig.documents.types.includes(doc.type)
+      const documentTypes = ["pdf", "doc", "docx", "txt", "rtf"]
+      const spreadsheetTypes = ["xls", "xlsx", "csv"]
+      
+      const category = documentTypes.includes(doc.type)
         ? "documents"
-        : fileTypeConfig.spreadsheets.types.includes(doc.type)
+        : spreadsheetTypes.includes(doc.type)
           ? "spreadsheets"
           : "images"
 

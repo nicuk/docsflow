@@ -216,12 +216,11 @@ export default async function middleware(request: NextRequest) {
         return NextResponse.redirect(mainDomainUrl);
       }
 
-      // 🔧 SURGICAL FIX: Skip cookie auth check for tenant subdomains - let session API handle it
-      // This fixes the cookie timing issue where middleware runs before session API
+      // MULTI-TENANT: Read from namespaced tenant contexts
       const currentTenant = request.cookies.get('current-tenant')?.value;
       const tenantContexts = request.cookies.get('tenant-contexts')?.value;
-      const userEmail = null; // Delegate to session API
-      const authToken = null; // Delegate to session API
+      const userEmail = request.cookies.get('user_email')?.value || request.cookies.get('user-email')?.value;
+      const authToken = request.cookies.get('access_token')?.value || request.cookies.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value;
       
       // Extract tenant UUID from namespaced contexts
       let storedTenantId: string | null = null;
@@ -371,8 +370,8 @@ export default async function middleware(request: NextRequest) {
       // Read MULTI-TENANT cookies (not legacy single tenant)
       const tenantContexts = cookies.get('tenant-contexts')?.value;
       const currentTenant = cookies.get('current-tenant')?.value;
-      const authToken = cookies.get('access_token')?.value;
-      const userEmail = cookies.get('user_email')?.value;
+      const authToken = cookies.get('access_token')?.value || cookies.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value;
+      const userEmail = cookies.get('user_email')?.value || cookies.get('user-email')?.value;
       
       // ENTERPRISE SMART REDIRECT: Bypass dashboard/onboarding for authenticated users
       if ((pathname === '/dashboard' || pathname === '/onboarding' || pathname === '/') && 

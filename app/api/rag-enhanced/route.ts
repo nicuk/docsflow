@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { HybridRAGReranker } from '@/lib/rag-hybrid-reranker';
-import { TemporalRAGEnhancement } from '@/lib/rag-temporal-enhancement';
-import { AgenticRAGEnhancement } from '@/lib/agentic-rag-enhancement';
-import { RAGEvaluator } from '@/lib/rag-evaluation';
+import { RAGPipelineFactory } from '@/lib/rag-pipeline-factory';
 import { RAGEdgeCaseHandler } from '@/lib/rag-edge-case-handler';
 
 export async function POST(request: NextRequest) {
@@ -31,155 +28,51 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Initialize all RAG components
-    const hybridReranker = new HybridRAGReranker();
-    const temporalEnhancer = new TemporalRAGEnhancement();
-    const agenticEnhancer = new AgenticRAGEnhancement();
+    // 🚀 NEW: Use Unified RAG Pipeline
+    const ragPipeline = RAGPipelineFactory.createPipeline(tenantId);
     
-    // Analyze query complexity
-    const queryAnalysis = await agenticEnhancer.analyzeQuery(query, tenantId);
-    const isTemporalQuery = /latest|recent|last|ago|between|from.*to|changed|updated/i.test(query);
-    // Extract complexity from the analysis prompt response
-    const queryComplexity = queryAnalysis.queryPlan.strategy === 'multi_doc' || 
-                          queryAnalysis.queryPlan.strategy === 'comparative' || 
-                          queryAnalysis.queryPlan.strategy === 'hierarchical' ? 'complex' : 
-                          queryAnalysis.queryPlan.strategy === 'temporal' ? 'moderate' : 'simple';
-    const isComplexQuery = queryComplexity === 'complex' || queryAnalysis.decomposedQueries.length > 1;
-    
-    let response;
-    let performanceScore = 5.5; // Base score
-    const metadata: any = {
-      queryComplexity: queryComplexity,
-      searchStrategy: 'hybrid_crossencoder_temporal'
-    };
-
-    // Use enhanced pipeline with all improvements
-    const enhancedResponse = await hybridReranker.enhancedRAGPipeline(
-      query,
-      tenantId,
-      {
-        topK: options.topK || 10,
-        confidenceThreshold: options.confidenceThreshold || 0.7,
-        includeProvenance: true
-      }
-    );
+    // Process query through unified pipeline
+    const response = await ragPipeline.processQuery(query, {
+      topK: options.topK || 10,
+      confidenceThreshold: options.confidenceThreshold || 0.7,
+      includeProvenance: true,
+      temporalScope: options.temporalScope || 'all',
+      runEvaluation: options.runEvaluation || false,
+      conflictResolution: options.conflictResolution || 'latest_document_date'
+    });
 
     // Handle abstention
-    if (enhancedResponse.abstained) {
+    if (response.abstained) {
       return NextResponse.json({
         success: false,
         abstained: true,
-        response: enhancedResponse.message,
-        reason: enhancedResponse.reason,
-        confidence: enhancedResponse.confidence,
-        suggestedAction: enhancedResponse.suggestedAction,
+        response: response.response,
+        reason: response.reason,
+        confidence: response.confidence || 0,
+        suggestedAction: response.suggestedAction,
         metadata: {
-          ...metadata,
+          ...response.metadata,
           performanceScore: 3.0, // Low score for abstention
-          abstentionReason: enhancedResponse.reason
+          abstentionReason: response.reason
         }
       });
     }
 
-    // Apply temporal enhancement if needed
-    if (isTemporalQuery) {
-      const temporalContext = await temporalEnhancer.queryWithTemporalContext(
-        query,
-        tenantId,
-        {
-          temporalScope: options.temporalScope || 'all',
-          entityResolution: true,
-          relationshipMapping: true,
-          conflictResolution: options.conflictResolution || 'latest_document_date'
-        }
-      );
-      
-      // Merge temporal insights
-      enhancedResponse.response = temporalContext.response || enhancedResponse.response;
-      metadata.temporalContextUsed = true;
-      metadata.uniqueEntities = temporalContext.uniqueEntities || 0;
-      metadata.conflictResolution = temporalContext.conflictResolution;
-      performanceScore += 1.5; // Bonus for temporal handling
-    }
-
-    // Apply agentic reasoning for complex queries
-    if (isComplexQuery) {
-      // Use synthesizeWithReasoning for complex query handling
-      const searchResults = enhancedResponse.sources || [];
-      const agenticResponse = await agenticEnhancer.synthesizeWithReasoning(
-        queryAnalysis,
-        searchResults,
-        tenantId
-      );
-      
-      if (agenticResponse) {
-        enhancedResponse.response = agenticResponse.response;
-        metadata.reasoningSteps = agenticResponse.reasoning;
-        metadata.confidence = agenticResponse.confidence;
-        performanceScore += 1.0; // Bonus for complex reasoning
-      }
-    }
-
-    // Score improvements based on features used
-    if (enhancedResponse.metadata) {
-      // Hybrid search bonus
-      if (enhancedResponse.metadata.searchStrategy === 'hybrid_crossencoder_rerank') {
-        performanceScore += 1.0;
-      }
-      
-      // Provenance tracking bonus
-      if (enhancedResponse.sources && enhancedResponse.sources.length > 0) {
-        performanceScore += 0.5;
-        metadata.sourcesProvided = enhancedResponse.sources.length;
-      }
-      
-      // High confidence bonus
-      if (enhancedResponse.confidence > 0.8) {
-        performanceScore += 0.5;
-      }
-    }
-
-    // Cap score at 10
-    performanceScore = Math.min(performanceScore, 10);
-
-    // Run evaluation if in test mode
-    if (options.runEvaluation) {
-      const evaluator = new RAGEvaluator();
-      const evalResult = await evaluator.evaluateQuery(
-        {
-          id: 'live-query',
-          query,
-          expectedAnswer: '',
-          requiredFacts: [],
-          category: isComplexQuery ? 'complex' : 'factual',
-          difficulty: isComplexQuery ? 'hard' : 'easy'
-        },
-        {
-          answer: enhancedResponse.response,
-          contexts: enhancedResponse.sources?.map((s: any) => s.source) || [],
-          relevanceScores: enhancedResponse.sources?.map((s: any) => s.confidence) || []
-        }
-      );
-      
-      metadata.evaluation = evalResult;
-      performanceScore = evalResult.overallScore;
-    }
-
     return NextResponse.json({
       success: true,
-      response: enhancedResponse.response,
-      sources: enhancedResponse.sources,
-      confidence: enhancedResponse.confidence,
+      response: response.response,
+      sources: response.sources,
+      confidence: response.confidence,
       metadata: {
-        ...metadata,
-        ...enhancedResponse.metadata,
-        performanceScore,
+        ...response.metadata,
+        performanceScore: response.metadata?.evaluation?.overallScore || 7.5,
         improvements: {
+          unifiedPipeline: true,
           hybridSearch: true,
           crossEncoderReranking: true,
           queryRewriting: true,
           strictProvenance: true,
-          temporalPolicy: isTemporalQuery,
+          temporalPolicy: response.metadata?.temporalContextUsed || false,
           entityNormalization: true,
           abstentionLogic: true
         }

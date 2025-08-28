@@ -116,3 +116,4 @@ export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin');
   return new Response(null, { status: 200, headers: getCORSHeaders(origin) });
 }
+

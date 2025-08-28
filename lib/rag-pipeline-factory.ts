@@ -96,3 +96,4 @@ export class RAGPipelineFactory {
     return this.createPipeline(tenantId, flags);
   }
 }
+

@@ -3,7 +3,7 @@
  * 
  * This utility ensures cookies align with database schema and actual usage:
  * - tenants.id (UUID) → tenant-id cookie (read by middleware)
- * - users.email (text) → user_email cookie (read by middleware)
+ * - users.email (text) → user-email cookie (read by middleware)
  * - Supabase session tokens → access_token/refresh_token
  * 
  * NOTE: tenant subdomain is handled via x-tenant-subdomain HEADER (not cookie)
@@ -13,7 +13,7 @@
 interface TenantContext {
   tenantId: string;      // UUID from tenants.id - stored in tenant-id cookie
   subdomain: string;     // text from tenants.subdomain - NOT stored as cookie (header only)
-  userEmail: string;     // text from users.email - stored in user_email cookie
+  userEmail: string;     // text from users.email - stored in user-email cookie
 }
 
 interface AuthTokens {
@@ -115,7 +115,7 @@ export class SchemaAlignedCookieManager {
     
     // Set SCHEMA-ALIGNED cookies (only those actually used by middleware)
     document.cookie = `tenant-id=${context.tenantId}; ${cookieOptions}`;
-    document.cookie = `user_email=${context.userEmail}; ${cookieOptions}`;
+    document.cookie = `user-email=${context.userEmail}; ${cookieOptions}`;  // Use dash format to match existing cookies
     // NOTE: subdomain is NOT stored as cookie - middleware sets it as x-tenant-subdomain header
     
     // Set authentication tokens

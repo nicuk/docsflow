@@ -78,3 +78,4 @@ export function PersonaCardSkeleton() {
     </Card>
   )
 }
+

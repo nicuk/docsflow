@@ -86,3 +86,4 @@ export function useProgressiveLoading({
     progress: (state.completedStages.length / stages.length) * 100
   }
 }
+
