@@ -120,31 +120,7 @@ export default async function middleware(request: NextRequest) {
     console.log(`🔍 [MIDDLEWARE] Origin: ${origin}`);
     console.log(`🔍 [MIDDLEWARE] Request URL: ${request.url}`);
     
-    // 🚀 CRITICAL FIX: Server-side redirect for main domain dashboard access
-    if ((hostname === 'www.docsflow.app' || hostname === 'docsflow.app') && pathname === '/dashboard') {
-      console.log(`🎯 [MIDDLEWARE] Main domain dashboard access detected`);
-      
-      // Check for enterprise session cookie
-      const enterpriseSession = request.cookies.get('enterprise-session')?.value;
-      
-      if (enterpriseSession) {
-        try {
-          const sessionData = JSON.parse(decodeURIComponent(enterpriseSession));
-          const firstTenant = sessionData.activeTenants?.[0];
-          
-          if (firstTenant?.subdomain) {
-            console.log(`🎯 [MIDDLEWARE] Redirecting main domain dashboard to: ${firstTenant.subdomain}`);
-            return NextResponse.redirect(new URL(`https://${firstTenant.subdomain}.docsflow.app/dashboard`, request.url));
-          }
-        } catch (error) {
-          console.error('🚨 [MIDDLEWARE] Error parsing enterprise session:', error);
-        }
-      }
-      
-      // If no valid session, redirect to onboarding
-      console.log(`🔐 [MIDDLEWARE] No valid session, redirecting to onboarding`);
-      return NextResponse.redirect(new URL('/onboarding', request.url));
-    }
+
     
     // FETCH FAILED DEBUGGING: Log all request headers for network debugging
     if (pathname === '/login') {

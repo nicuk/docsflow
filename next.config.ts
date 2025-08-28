@@ -3,6 +3,34 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Simplified configuration to avoid middleware issues
   
+  // 🚀 SURGICAL FIX: Next.js native redirects for main domain dashboard
+  async redirects() {
+    return [
+      {
+        source: '/dashboard',
+        has: [
+          {
+            type: 'host',
+            value: 'www.docsflow.app',
+          },
+        ],
+        destination: '/select-workspace',
+        permanent: false,
+      },
+      {
+        source: '/dashboard',
+        has: [
+          {
+            type: 'host', 
+            value: 'docsflow.app',
+          },
+        ],
+        destination: '/select-workspace',
+        permanent: false,
+      }
+    ]
+  },
+  
   // External packages for server components
   serverExternalPackages: ['@google/generative-ai', '@supabase/supabase-js'],
   
