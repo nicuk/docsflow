@@ -43,92 +43,96 @@ export default function LoginPage() {
 
   // Handle session bridge from main domain
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const sessionBridge = urlParams.get('session_bridge');
-    const token = urlParams.get('token');
-    
-    console.log(`🔍 [SESSION BRIDGE CHECK] sessionBridge=${sessionBridge}, hasToken=${!!token}`);
-    
-    if (sessionBridge === 'true' && token) {
-      console.log('🌉 Processing session bridge from main domain');
-      console.log(`🔍 [SESSION BRIDGE] Token length: ${token.length}`);
-      console.log(`🔍 [SESSION BRIDGE] Current URL: ${window.location.href}`);
+    const handleSessionBridge = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionBridge = urlParams.get('session_bridge');
+      const token = urlParams.get('token');
       
-      setIsSuccess(true);
-      setMessage('Welcome back! You\'ve been successfully signed in. Redirecting to your dashboard...');
+      console.log(`🔍 [SESSION BRIDGE CHECK] sessionBridge=${sessionBridge}, hasToken=${!!token}`);
       
-      try {
-        // ARCHITECTURAL ROOT FIX: Set cookies that MIDDLEWARE expects
-        const decodedToken = decodeURIComponent(token);
-        console.log(`🔍 [SESSION BRIDGE] Decoded token length: ${decodedToken.length}`);
-        console.log(`🔍 [SESSION BRIDGE] Token preview: ${decodedToken.substring(0, 50)}...`);
+      if (sessionBridge === 'true' && token) {
+        console.log('🌉 Processing session bridge from main domain');
+        console.log(`🔍 [SESSION BRIDGE] Token length: ${token.length}`);
+        console.log(`🔍 [SESSION BRIDGE] Current URL: ${window.location.href}`);
         
-        // CRITICAL: Set the cookies that middleware.ts:204 expects for authentication
-        document.cookie = `access_token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
-        console.log(`✅ [SESSION BRIDGE] Set access_token cookie`);
+        setIsSuccess(true);
+        setMessage('Welcome back! You\'ve been successfully signed in. Redirecting to your dashboard...');
         
-        // Also set Supabase default cookie for session API compatibility
-        document.cookie = `sb-lhcopwwiqwjpzbdnjovo-auth-token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
-        console.log(`✅ [SESSION BRIDGE] Set Supabase auth cookie`);
-        
-        // DEBUGGING: Verify cookies were actually set
-        setTimeout(() => {
-          const allCookies = document.cookie;
-          console.log(`🔍 [SESSION BRIDGE] Current cookies: ${allCookies.substring(0, 200)}...`);
-          console.log(`🔍 [SESSION BRIDGE] access_token present: ${allCookies.includes('access_token')}`);
-          console.log(`🔍 [SESSION BRIDGE] sb-auth present: ${allCookies.includes('sb-lhcopwwiqwjpzbdnjovo-auth-token')}`);
-        }, 100);
-        
-        // Get current subdomain for tenant context
-        const hostname = window.location.hostname;
-        const subdomain = hostname.split('.')[0];
-        
-        console.log(`🔍 [SESSION BRIDGE] Hostname: ${hostname}, Subdomain: ${subdomain}`);
-        
-        if (subdomain && subdomain !== 'www' && subdomain !== 'api') {
-          // ENTERPRISE FIX: Use proper session management instead of localStorage
-          const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager');
+        try {
+          // ARCHITECTURAL ROOT FIX: Set cookies that MIDDLEWARE expects
+          const decodedToken = decodeURIComponent(token);
+          console.log(`🔍 [SESSION BRIDGE] Decoded token length: ${decodedToken.length}`);
+          console.log(`🔍 [SESSION BRIDGE] Token preview: ${decodedToken.substring(0, 50)}...`);
           
-          // Set tenant context using enterprise session manager
-          // tenantId will be set properly when we get user data from session API
-          console.log(`🔍 [SESSION BRIDGE] Setting tenant context for subdomain: ${subdomain}`);
+          // CRITICAL: Set the cookies that middleware.ts:204 expects for authentication
+          document.cookie = `access_token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
+          console.log(`✅ [SESSION BRIDGE] Set access_token cookie`);
           
-          // Clear URL parameters
-          window.history.replaceState({}, document.title, window.location.pathname);
+          // Also set Supabase default cookie for session API compatibility
+          document.cookie = `sb-lhcopwwiqwjpzbdnjovo-auth-token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
+          console.log(`✅ [SESSION BRIDGE] Set Supabase auth cookie`);
           
-          // Redirect to dashboard after showing success message
+          // DEBUGGING: Verify cookies were actually set
           setTimeout(() => {
-            console.log(`🔍 [SESSION BRIDGE] Redirecting to dashboard...`);
-            console.log(`🔍 [SESSION BRIDGE] Current URL before redirect: ${window.location.href}`);
-            console.log(`🔍 [SESSION BRIDGE] Target URL: ${window.location.origin}/dashboard`);
+            const allCookies = document.cookie;
+            console.log(`🔍 [SESSION BRIDGE] Current cookies: ${allCookies.substring(0, 200)}...`);
+            console.log(`🔍 [SESSION BRIDGE] access_token present: ${allCookies.includes('access_token')}`);
+            console.log(`🔍 [SESSION BRIDGE] sb-auth present: ${allCookies.includes('sb-lhcopwwiqwjpzbdnjovo-auth-token')}`);
+          }, 100);
+          
+          // Get current subdomain for tenant context
+          const hostname = window.location.hostname;
+          const subdomain = hostname.split('.')[0];
+          
+          console.log(`🔍 [SESSION BRIDGE] Hostname: ${hostname}, Subdomain: ${subdomain}`);
+          
+          if (subdomain && subdomain !== 'www' && subdomain !== 'api') {
+            // ENTERPRISE FIX: Use proper session management instead of localStorage
+            const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager');
             
-            // ENTERPRISE FIX: Test session state and set proper tenant context
-            fetch('/api/auth/session')
-              .then(response => response.json())
-              .then(async (data) => {
-                console.log(`🔍 [SESSION BRIDGE] Session check before redirect:`, data);
-                
-                if (data.authenticated && data.tenantId) {
-                  // Set proper tenant context with UUID
-                  const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager');
-                  EnterpriseSessionManager.setTenantContext(data.tenantId, subdomain);
-                  console.log(`✅ [SESSION BRIDGE] Set tenant context: ${subdomain} -> ${data.tenantId.substring(0, 8)}...`);
-                }
-                
-                window.location.href = '/dashboard';
-              })
-              .catch(error => {
-                console.error(`🚨 [SESSION BRIDGE] Session check failed:`, error);
-                window.location.href = '/dashboard'; // Continue anyway
-              });
-          }, 2000);
-        } else {
-          console.error(`🚨 [SESSION BRIDGE] Invalid subdomain: ${subdomain}`);
+            // Set tenant context using enterprise session manager
+            // tenantId will be set properly when we get user data from session API
+            console.log(`🔍 [SESSION BRIDGE] Setting tenant context for subdomain: ${subdomain}`);
+            
+            // Clear URL parameters
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            // Redirect to dashboard after showing success message
+            setTimeout(() => {
+              console.log(`🔍 [SESSION BRIDGE] Redirecting to dashboard...`);
+              console.log(`🔍 [SESSION BRIDGE] Current URL before redirect: ${window.location.href}`);
+              console.log(`🔍 [SESSION BRIDGE] Target URL: ${window.location.origin}/dashboard`);
+              
+              // ENTERPRISE FIX: Test session state and set proper tenant context
+              fetch('/api/auth/session')
+                .then(response => response.json())
+                .then(async (data) => {
+                  console.log(`🔍 [SESSION BRIDGE] Session check before redirect:`, data);
+                  
+                  if (data.authenticated && data.tenantId) {
+                    // Set proper tenant context with UUID
+                    const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager');
+                    EnterpriseSessionManager.setTenantContext(data.tenantId, subdomain);
+                    console.log(`✅ [SESSION BRIDGE] Set tenant context: ${subdomain} -> ${data.tenantId.substring(0, 8)}...`);
+                  }
+                  
+                  window.location.href = '/dashboard';
+                })
+                .catch(error => {
+                  console.error(`🚨 [SESSION BRIDGE] Session check failed:`, error);
+                  window.location.href = '/dashboard'; // Continue anyway
+                });
+            }, 2000);
+          } else {
+            console.error(`🚨 [SESSION BRIDGE] Invalid subdomain: ${subdomain}`);
+          }
+        } catch (error) {
+          console.error(`🚨 [SESSION BRIDGE] Error processing token:`, error);
         }
-      } catch (error) {
-        console.error(`🚨 [SESSION BRIDGE] Error processing token:`, error);
       }
-    }
+    };
+
+    handleSessionBridge();
   }, []);
 
   // Redirect to dashboard after successful login (but NOT for session bridge)
