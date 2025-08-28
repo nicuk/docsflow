@@ -392,6 +392,8 @@ export default function DocumentsPage() {
     },
     maxFiles: 10,
     maxSize: 50 * 1024 * 1024, // 50MB max for any file
+    // 🚀 FIX: Keep dropzone active even during uploads
+    disabled: false,
   })
 
   // Handle file uploads - REAL API INTEGRATION
@@ -415,14 +417,12 @@ export default function DocumentsPage() {
   // Real backend file upload with progress tracking
   const uploadFileToBackend = async (fileId: string, file: File) => {
     try {
-      // Update progress to 10% to show upload started
-      setUploadingFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, progress: 10 } : f)))
-
-      // Upload using the API client
-      const response = await apiClient.uploadDocument(file)
-      
-      // Upload successful - set progress to 100%
-      setUploadingFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, progress: 100 } : f)))
+      // 🚀 ENHANCED: Real progress tracking
+      const response = await apiClient.uploadDocument(file, (progress) => {
+        setUploadingFiles((prev) => 
+          prev.map((f) => f.id === fileId ? { ...f, progress } : f)
+        );
+      });
       
       // Create document from backend response
       const newDocument: Document = {
@@ -448,7 +448,7 @@ export default function DocumentsPage() {
       // Remove from uploading files after a short delay for UX
       setTimeout(() => {
         setUploadingFiles((prev) => prev.filter((f) => f.id !== fileId))
-      }, 1000)
+      }, 2000) // 🚀 ENHANCED: Longer delay so users can see completion
       
       // Poll for processing completion if status is processing
       if (newDocument.status === "processing") {
@@ -1210,8 +1210,16 @@ export default function DocumentsPage() {
 
           <DialogFooter className="flex items-center justify-between">
             <div className="text-xs text-muted-foreground">Maximum 10 files, 50MB per file</div>
-            <Button type="submit" disabled={uploadingFiles.length > 0} onClick={() => setIsUploadDialogOpen(false)}>
-              Done
+            <Button 
+              type="submit" 
+              onClick={() => {
+                // 🚀 FIX: Allow closing dialog and clear completed uploads
+                setUploadingFiles(prev => prev.filter(f => f.progress < 100 && !f.error));
+                setIsUploadDialogOpen(false);
+              }}
+              variant={uploadingFiles.some(f => f.progress < 100) ? "outline" : "default"}
+            >
+              {uploadingFiles.some(f => f.progress < 100) ? "Close" : "Done"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -195,7 +195,7 @@ export const apiClient = {
     }
   },
 
-  async uploadDocument(file: File) {
+  async uploadDocument(file: File, onProgress?: (progress: number) => void) {
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -204,18 +204,49 @@ export const apiClient = {
       const authHeaders = this.getAuthHeaders();
       delete authHeaders['Content-Type']; // Let browser set this for FormData
       
-      const response = await fetch(`${API_BASE_URL}/documents/upload`, {
-        method: 'POST',
-        headers: authHeaders,
-        body: formData,
+      // 🚀 ENHANCED: Real progress tracking with XMLHttpRequest
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        
+        // Track upload progress
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable && onProgress) {
+            const progress = Math.round((event.loaded / event.total) * 100);
+            onProgress(progress);
+          }
+        });
+        
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const response = JSON.parse(xhr.responseText);
+              resolve(response);
+            } catch (error) {
+              reject(new Error('Invalid response format'));
+            }
+          } else {
+            try {
+              const errorData = JSON.parse(xhr.responseText);
+              reject(new Error(errorData.error || `Upload Error: ${xhr.status}`));
+            } catch {
+              reject(new Error(`Upload Error: ${xhr.status}`));
+            }
+          }
+        });
+        
+        xhr.addEventListener('error', () => {
+          reject(new Error('Network error during upload'));
+        });
+        
+        xhr.open('POST', `${API_BASE_URL}/documents/upload`);
+        
+        // Set headers
+        Object.entries(authHeaders).forEach(([key, value]) => {
+          xhr.setRequestHeader(key, value as string);
+        });
+        
+        xhr.send(formData);
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Upload Error: ${response.status}`);
-      }
-      
-      return await response.json();
     } catch (error) {
       console.error('Upload Error:', error);
       throw error;
