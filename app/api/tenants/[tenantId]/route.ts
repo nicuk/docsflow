@@ -63,7 +63,7 @@ export async function GET(
       console.log(`🔍 Looking up tenant by UUID: ${tenantId}`);
       const result = await supabase
         .from('tenants')
-        .select('id, name, subdomain, logo_url, primary_color, secondary_color, max_users, features, created_at, updated_at')
+        .select('id, name, subdomain, created_at, updated_at')
         .eq('id', tenantId)
         .maybeSingle();
       tenant = result.data;
@@ -72,7 +72,7 @@ export async function GET(
       console.log(`🔍 Looking up tenant by subdomain: ${tenantId}`);
       const result = await supabase
         .from('tenants')
-        .select('id, name, subdomain, logo_url, primary_color, secondary_color, max_users, features, created_at, updated_at')
+        .select('id, name, subdomain, created_at, updated_at')
         .eq('subdomain', tenantId)
         .maybeSingle();
       tenant = result.data;
@@ -94,13 +94,13 @@ export async function GET(
       name: tenant.name,
       subdomain: tenant.subdomain,
       branding: {
-        logoUrl: tenant.logo_url,
-        primaryColor: tenant.primary_color || '#3b82f6',
-        secondaryColor: tenant.secondary_color || '#1e40af',
+        logoUrl: null,
+        primaryColor: '#3b82f6',
+        secondaryColor: '#1e40af',
       },
       settings: {
-        maxUsers: tenant.max_users,
-        features: tenant.features || [],
+        maxUsers: null,
+        features: [],
       },
       createdAt: tenant.created_at,
       updatedAt: tenant.updated_at,
