@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     siteName: "DocsFlow",
     images: [
       {
-        url: "https://docsflow.app/logo.png",
+        url: "https://docsflow.app/logo.svg",
         width: 1200,
         height: 630,
         alt: "DocsFlow - Turn Documents Into Instant Answers",
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "DocsFlow | AI-Powered Document Intelligence",
     description: "Stop searching files. Start getting answers. AI that understands your business documents.",
-    images: ["https://docsflow.app/logo.png"],
+    images: ["https://docsflow.app/logo.svg"],
   },
   robots: {
     index: true,

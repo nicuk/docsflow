@@ -118,6 +118,10 @@ export default async function middleware(request: NextRequest) {
     // Skip middleware for static files and assets
     if (pathname.startsWith('/_next') || 
         pathname.startsWith('/favicon.ico') ||
+        pathname.startsWith('/favicon.svg') ||
+        pathname.startsWith('/logo.svg') ||
+        pathname.startsWith('/docsflow-brand-primary-horizontal-md.svg') ||
+        pathname.startsWith('/apple-touch-icon.png') ||
         pathname.startsWith('/sitemap.xml') ||
         pathname.startsWith('/robots.txt')) {
       return NextResponse.next();
