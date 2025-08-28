@@ -92,10 +92,14 @@ async function verifyTenantExists(subdomain: string): Promise<boolean> {
 
 export default async function middleware(request: NextRequest) {
   try {
-    const { pathname, hostname } = request.nextUrl;
+    const { pathname } = request.nextUrl;
+    const hostname = request.headers.get('host') || '';
     const origin = request.headers.get('origin');
     
-    // Handle OPTIONS preflight requests
+    console.log(`🔍 [MIDDLEWARE START] ${hostname}${pathname}`);
+    console.log(`🔍 [MIDDLEWARE] User-Agent: ${request.headers.get('user-agent')?.substring(0, 50)}...`);
+    console.log(`🔍 [MIDDLEWARE] Origin: ${origin}`);
+    
     if (request.method === 'OPTIONS') {
       return handlePreflight(request);
     }
@@ -134,7 +138,7 @@ export default async function middleware(request: NextRequest) {
       // API subdomain should pass through without tenant context
       const response = NextResponse.next();
       // Explicitly DO NOT set any tenant headers for API subdomain
-      console.log('API subdomain detected - bypassing tenant validation');
+      console.log('🔍 [MIDDLEWARE] API subdomain detected - bypassing tenant validation');
       return createSecureResponse(response, origin);
     }
 
@@ -144,9 +148,11 @@ export default async function middleware(request: NextRequest) {
 
     // Extract tenant from hostname (returns null for www and main domain)
     const tenant = extractTenantFromHostname(hostname);
+    console.log(`🔍 [MIDDLEWARE] Extracted tenant: '${tenant}' from hostname: '${hostname}'`);
 
     // Route tenant subdomains to the tenant-specific dashboard
     if (tenant) {
+      console.log(`🔍 [MIDDLEWARE] Processing tenant subdomain: ${tenant}`);
       // CRITICAL: Allow API routes to pass through even if tenant doesn't exist yet
       // This is essential for subdomain availability checks during onboarding
       if (pathname.startsWith('/api')) {
@@ -249,6 +255,7 @@ export default async function middleware(request: NextRequest) {
 
     // Handle root domain (docsflow.app) access
     if (hostname === 'docsflow.app' || hostname === 'www.docsflow.app' || hostname === 'localhost') {
+      console.log(`🔍 [MIDDLEWARE] Processing main domain: ${hostname}${pathname}`);
       
       // Allow these routes on root domain
       if (pathname.startsWith('/onboarding') || 
@@ -256,6 +263,7 @@ export default async function middleware(request: NextRequest) {
           pathname.startsWith('/login') ||
           pathname.startsWith('/register') ||
           pathname === '/') {
+        console.log(`🔍 [MIDDLEWARE] Allowing main domain route: ${pathname}`);
         // Continue to the backend route handler
         const response = NextResponse.next();
         return createSecureResponse(response, origin);
@@ -263,19 +271,28 @@ export default async function middleware(request: NextRequest) {
       
       // CRITICAL FIX: Handle authenticated users on main domain
       // If user is authenticated and has tenant, redirect to tenant subdomain
+      console.log(`🔍 [MIDDLEWARE] Checking auth for main domain user on: ${pathname}`);
       const cookies = request.cookies;
       const authToken = cookies.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value;
       const userEmail = cookies.get('user_email')?.value;
       const storedTenantId = cookies.get('tenant-id')?.value;
       
+      console.log(`🔍 [MIDDLEWARE] Auth check - Token: ${authToken ? 'EXISTS' : 'MISSING'}, Email: ${userEmail || 'MISSING'}, TenantId: ${storedTenantId || 'MISSING'}`);
+      
       if (authToken && userEmail && storedTenantId) {
+        console.log(`🔍 [MIDDLEWARE] User authenticated, resolving tenant: ${storedTenantId}`);
         // Get tenant subdomain from TenantContextManager
         const tenantInfo = await TenantContextManager.resolveTenant(storedTenantId);
+        console.log(`🔍 [MIDDLEWARE] Tenant resolution result:`, tenantInfo);
         if (tenantInfo?.subdomain) {
           const tenantUrl = `https://${tenantInfo.subdomain}.docsflow.app${pathname}`;
-          console.log(`🎯 Redirecting authenticated user from main domain to tenant: ${tenantUrl}`);
+          console.log(`🎯 [MIDDLEWARE] REDIRECTING authenticated user from main domain to tenant: ${tenantUrl}`);
           return NextResponse.redirect(new URL(tenantUrl));
+        } else {
+          console.log(`❌ [MIDDLEWARE] No tenant subdomain found for tenant ID: ${storedTenantId}`);
         }
+      } else {
+        console.log(`🔍 [MIDDLEWARE] User not authenticated or missing tenant context on main domain`);
       }
     }
 
@@ -293,8 +310,9 @@ export default async function middleware(request: NextRequest) {
     }
 
     // Default - allow frontend to handle
+    console.log(`🔍 [MIDDLEWARE] Default handler - allowing frontend to handle: ${hostname}${pathname}`);
     const response = NextResponse.next();
-    return createSecureResponse(response, origin);
+    return createSecureResponse(response, request.headers.get('origin'));
     
   } catch (error) {
     console.error('Middleware error:', error);
