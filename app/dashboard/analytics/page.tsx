@@ -37,27 +37,47 @@ export default function AnalyticsPage() {
     documents: []
   })
 
-  // Load real analytics data from localStorage
+  // ENTERPRISE FIX: Load real analytics data from API, not localStorage cache
   useEffect(() => {
-    const loadAnalytics = () => {
+    const loadAnalytics = async () => {
       try {
-        const stored = localStorage.getItem('docuintel-analytics')
-        if (stored) {
-          const data = JSON.parse(stored)
-          console.log(`🔍 [ANALYTICS] Loaded stored analytics:`, data);
-          setAnalytics(data)
+        // Get current hostname to determine tenant context
+        const hostname = window.location.hostname;
+        const subdomain = hostname.split('.')[0];
+        
+        if (subdomain && subdomain !== 'www' && subdomain !== 'docsflow') {
+          console.log(`🔍 [ANALYTICS] Loading real analytics for tenant: ${subdomain}`);
+          
+          // Fetch real analytics from backend API
+          const analyticsResponse = await fetch('/api/analytics', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-tenant-subdomain': subdomain
+            },
+            credentials: 'include'
+          });
+          
+          if (analyticsResponse.ok) {
+            const realData = await analyticsResponse.json();
+            setAnalytics(realData);
+            console.log(`✅ [ANALYTICS] Loaded real analytics:`, realData);
+          } else {
+            console.log(`🔍 [ANALYTICS] No analytics API - showing empty state`);
+          }
         } else {
-          console.log(`🔍 [ANALYTICS] No stored analytics found - showing empty state`);
+          console.log(`🔍 [ANALYTICS] Not on tenant subdomain - showing empty state`);
         }
       } catch (error) {
-        console.error('Failed to load analytics:', error)
+        console.error('Failed to load analytics:', error);
+        // Keep empty state on error
       }
     }
 
     loadAnalytics()
     
-    // Refresh every 5 seconds to show real-time updates
-    const interval = setInterval(loadAnalytics, 5000)
+    // Refresh every 30 seconds for real-time updates (not every 5 seconds - too aggressive)
+    const interval = setInterval(loadAnalytics, 30000)
     return () => clearInterval(interval)
   }, [])
 
@@ -123,20 +143,9 @@ export default function AnalyticsPage() {
         </div>
         <Button 
           variant="outline"
-          onClick={() => {
-            localStorage.removeItem('docuintel-analytics');
-            setAnalytics({
-              totalQuestions: 0,
-              documentsUploaded: 0,
-              timesSaved: 0,
-              totalResponseTime: 0,
-              questions: [],
-              documents: []
-            });
-            console.log(`🔄 [ANALYTICS] Cache cleared - showing real state`);
-          }}
+          onClick={() => window.location.reload()}
         >
-          Clear Cache
+          Refresh Data
         </Button>
       </div>
 

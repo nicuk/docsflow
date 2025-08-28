@@ -203,6 +203,10 @@ export default async function middleware(request: NextRequest) {
       const userEmail = request.cookies.get('user_email')?.value;
       const authToken = request.cookies.get('access_token')?.value;
       
+      // HIGH-PERFORMANCE: Use TenantContextManager with multi-layer caching
+      const tenantInfo = await TenantContextManager.resolveTenant(tenant);
+      const tenantUUID = tenantInfo?.uuid || null;
+      
       // DEBUGGING: Log detailed authentication state
       console.log(`🔍 [MIDDLEWARE] ${tenant} subdomain auth check:`, {
         pathname,
@@ -211,10 +215,6 @@ export default async function middleware(request: NextRequest) {
         authToken: authToken ? `${authToken.substring(0, 20)}...` : 'MISSING',
         tenantUUID: tenantUUID ? `${tenantUUID.substring(0, 8)}...` : 'MISSING'
       });
-      
-      // HIGH-PERFORMANCE: Use TenantContextManager with multi-layer caching
-      const tenantInfo = await TenantContextManager.resolveTenant(tenant);
-      const tenantUUID = tenantInfo?.uuid || null;
       
       // If user has a different tenant stored, handle gracefully
       if (storedTenantId && tenantUUID && storedTenantId !== tenantUUID) {

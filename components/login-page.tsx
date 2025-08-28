@@ -86,8 +86,12 @@ export default function LoginPage() {
         console.log(`🔍 [SESSION BRIDGE] Hostname: ${hostname}, Subdomain: ${subdomain}`);
         
         if (subdomain && subdomain !== 'www' && subdomain !== 'api') {
-          // Set tenant context for this subdomain
-          localStorage.setItem('tenant-subdomain', subdomain);
+          // ENTERPRISE FIX: Use proper session management instead of localStorage
+          const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager');
+          
+          // Set tenant context using enterprise session manager
+          // tenantId will be set properly when we get user data from session API
+          console.log(`🔍 [SESSION BRIDGE] Setting tenant context for subdomain: ${subdomain}`);
           
           // Clear URL parameters
           window.history.replaceState({}, document.title, window.location.pathname);
@@ -98,11 +102,19 @@ export default function LoginPage() {
             console.log(`🔍 [SESSION BRIDGE] Current URL before redirect: ${window.location.href}`);
             console.log(`🔍 [SESSION BRIDGE] Target URL: ${window.location.origin}/dashboard`);
             
-            // DEBUGGING: Test session state before redirect
+            // ENTERPRISE FIX: Test session state and set proper tenant context
             fetch('/api/auth/session')
               .then(response => response.json())
-              .then(data => {
+              .then(async (data) => {
                 console.log(`🔍 [SESSION BRIDGE] Session check before redirect:`, data);
+                
+                if (data.authenticated && data.tenantId) {
+                  // Set proper tenant context with UUID
+                  const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager');
+                  EnterpriseSessionManager.setTenantContext(data.tenantId, subdomain);
+                  console.log(`✅ [SESSION BRIDGE] Set tenant context: ${subdomain} -> ${data.tenantId.substring(0, 8)}...`);
+                }
+                
                 window.location.href = '/dashboard';
               })
               .catch(error => {

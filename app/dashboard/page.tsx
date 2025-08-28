@@ -77,38 +77,32 @@ export default function DashboardPage() {
         if (hostname === 'www.docsflow.app' || hostname === 'docsflow.app') {
           console.log('🔍 [DASHBOARD] Main domain detected, checking for tenant context...');
           
-          // SECURITY FIX: Standardized tenant storage - separate UUID and subdomain
-          const storedTenantUUID = localStorage.getItem('tenant-uuid');
-          const storedTenantSubdomain = localStorage.getItem('tenant-subdomain');
-          const authToken = document.cookie.includes('sb-lhcopwwiqwjpzbdnjovo-auth-token');
+          // ENTERPRISE FIX: Use proper session management for tenant detection
+          const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager');
+          
+          const userSession = EnterpriseSessionManager.getUserSession();
+          const tenantContext = EnterpriseSessionManager.getTenantContext();
+          const authToken = document.cookie.includes('access_token') || document.cookie.includes('sb-lhcopwwiqwjpzbdnjovo-auth-token');
           
           console.log(`🔍 [DASHBOARD] Main domain auth state:`, {
-            storedTenantUUID: storedTenantUUID ? `${storedTenantUUID.substring(0, 8)}...` : 'MISSING',
-            storedTenantSubdomain: storedTenantSubdomain || 'MISSING',
-            authToken: authToken ? 'PRESENT' : 'MISSING',
-            cookieCount: document.cookie.split(';').length
+            hasUserSession: !!userSession,
+            hasTenantContext: !!tenantContext,
+            activeTenants: userSession?.activeTenants?.length || 0,
+            authToken: authToken ? 'PRESENT' : 'MISSING'
           });
           
-          if (authToken && storedTenantSubdomain) {
-            console.log(`🎯 Redirecting to tenant subdomain: ${storedTenantSubdomain}`);
-            window.location.href = `https://${storedTenantSubdomain}.docsflow.app/dashboard`;
+          if (authToken && tenantContext?.subdomain) {
+            console.log(`🎯 [ENTERPRISE] Redirecting to tenant subdomain: ${tenantContext.subdomain}`);
+            window.location.href = `https://${tenantContext.subdomain}.docsflow.app/dashboard`;
             return;
           }
           
-          // Fallback: Check legacy storage format
-          if (authToken && storedTenantUUID) {
-            const legacyTenantData = localStorage.getItem(`tenant-${storedTenantUUID}`);
-            if (legacyTenantData) {
-              const tenantInfo = JSON.parse(legacyTenantData);
-              if (tenantInfo.tenantSubdomain) {
-                // Migrate to new storage format
-                localStorage.setItem('tenant-subdomain', tenantInfo.tenantSubdomain);
-                localStorage.setItem('tenant-uuid', storedTenantUUID);
-                console.log(`🎯 Migrated and redirecting to: ${tenantInfo.tenantSubdomain}`);
-                window.location.href = `https://${tenantInfo.tenantSubdomain}.docsflow.app/dashboard`;
-                return;
-              }
-            }
+          // Fallback: Check if user has any active tenants
+          if (authToken && userSession?.activeTenants?.length) {
+            const firstTenant = userSession.activeTenants[0];
+            console.log(`🎯 [ENTERPRISE] Redirecting to first active tenant: ${firstTenant.subdomain}`);
+            window.location.href = `https://${firstTenant.subdomain}.docsflow.app/dashboard`;
+            return;
           }
           
           // CRITICAL FIX: Check if user just logged in (give login page time to execute session bridge)
@@ -173,8 +167,25 @@ export default function DashboardPage() {
 
         setTenantContext(context);
         
-        // Store context in localStorage for faster subsequent loads
-        localStorage.setItem(`tenant-${userData.tenantId}`, JSON.stringify(context));
+        // ENTERPRISE FIX: Use proper session management instead of localStorage
+        const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager');
+        
+        // Set proper tenant context with UUID
+        EnterpriseSessionManager.setTenantContext(userData.tenantId, userData.tenant?.subdomain || '');
+        
+        // Set user session with tenant access
+        EnterpriseSessionManager.setUserSession({
+          userId: userData.id,
+          userEmail: userData.email,
+          activeTenants: [{
+            tenantId: userData.tenantId,
+            subdomain: userData.tenant?.subdomain || '',
+            userEmail: userData.email,
+            lastAccessed: Date.now()
+          }]
+        });
+        
+        console.log(`✅ [DASHBOARD] Set enterprise session for: ${userData.email}`);
         
         // Fetch real data from backend with subdomain
         if (userData.tenant?.subdomain) {
@@ -198,12 +209,18 @@ export default function DashboardPage() {
   // Fetch real data from backend APIs
   const fetchRealData = async (tenantId: string, subdomain: string) => {
     try {
-      // SECURITY FIX: Use subdomain in headers, not URL paths for tenant context
+      // ENTERPRISE FIX: Proper tenant context headers with UUID validation
       const tenantHeaders = {
         'Content-Type': 'application/json',
-        'x-tenant-subdomain': subdomain,
-        'x-tenant-id': tenantId
+        'x-tenant-subdomain': subdomain,  // Always subdomain string
+        'x-tenant-id': tenantId           // Always UUID
       };
+      
+      console.log(`🔍 [DASHBOARD] Tenant context:`, {
+        tenantId: tenantId ? `${tenantId.substring(0, 8)}...` : 'MISSING',
+        subdomain: subdomain || 'MISSING',
+        headers: tenantHeaders
+      });
 
       // Fetch documents
       console.log(`🔍 [DASHBOARD] Fetching documents with headers:`, tenantHeaders);
