@@ -72,14 +72,20 @@ export default function DashboardPage() {
       try {
         console.log(`🔍 [DASHBOARD] Starting loadTenantContext at ${new Date().toISOString()}`);
         
+        // Initialize redirect handler
+        const { RedirectHandler } = await import('@/utils/redirect-handler');
+        RedirectHandler.initialize(setIsRedirecting, setRedirectMessage);
+        
         // CRITICAL FIX: Check if on main domain and redirect before API calls
         const hostname = window.location.hostname;
         console.log(`🔍 [DASHBOARD] Current hostname: ${hostname}`);
         
         if (hostname === 'www.docsflow.app' || hostname === 'docsflow.app') {
           console.log('🔍 [DASHBOARD] Main domain detected, checking for tenant context...');
-          // Set initial redirect state to show loading for main domain users
-          setRedirectMessage("Checking your workspace...");
+          
+          // Check for cookie-based redirect first
+          const hasRedirected = await RedirectHandler.checkCookieRedirect();
+          if (hasRedirected) return;
           
           // ENTERPRISE FIX: Use proper session management for tenant detection
           const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager');
@@ -98,11 +104,10 @@ export default function DashboardPage() {
           // DEFENSIVE REDIRECT: Validate subdomain before redirect to prevent malformed URLs
           if (authToken && tenantContext?.subdomain && tenantContext.subdomain.length > 0) {
             console.log(`🎯 [ENTERPRISE] Redirecting to tenant subdomain: ${tenantContext.subdomain}`);
-            setIsRedirecting(true);
-            setRedirectMessage(`Redirecting to ${tenantContext.subdomain}...`);
-            setTimeout(() => {
-              window.location.href = `https://${tenantContext.subdomain}.docsflow.app/dashboard`;
-            }, 500); // Small delay to show loading state
+            await RedirectHandler.redirectWithLoading({
+              destination: `https://${tenantContext.subdomain}.docsflow.app/dashboard`,
+              message: `Redirecting to ${tenantContext.subdomain}...`
+            });
             return;
           }
           
@@ -111,11 +116,10 @@ export default function DashboardPage() {
             const firstTenant = userSession.activeTenants[0];
             if (firstTenant?.subdomain && firstTenant.subdomain.length > 0) {
               console.log(`🎯 [ENTERPRISE] Redirecting to first active tenant: ${firstTenant.subdomain}`);
-              setIsRedirecting(true);
-              setRedirectMessage(`Connecting to ${firstTenant.subdomain}...`);
-              setTimeout(() => {
-                window.location.href = `https://${firstTenant.subdomain}.docsflow.app/dashboard`;
-              }, 500);
+              await RedirectHandler.redirectWithLoading({
+                destination: `https://${firstTenant.subdomain}.docsflow.app/dashboard`,
+                message: `Connecting to ${firstTenant.subdomain}...`
+              });
               return;
             } else {
               console.warn(`⚠️ [ENTERPRISE] First tenant has invalid subdomain, will check API for tenant data before redirecting to login`);
@@ -142,11 +146,10 @@ export default function DashboardPage() {
           
           // No tenant context or not authenticated - redirect to onboarding
           console.log('🔐 No tenant context on main domain, redirecting to onboarding');
-          setIsRedirecting(true);
-          setRedirectMessage("Setting up your workspace...");
-          setTimeout(() => {
-            window.location.href = '/onboarding';
-          }, 500);
+          await RedirectHandler.redirectWithLoading({
+            destination: '/onboarding',
+            message: 'Setting up your workspace...'
+          });
           return;
         }
 
@@ -173,27 +176,9 @@ export default function DashboardPage() {
           tenantSubdomain: userData.tenant?.subdomain
         });
         
-                // Check if user has completed onboarding
-        if (!userData.onboardingComplete) {
-          console.log('User has not completed onboarding, redirecting...');
-          setIsRedirecting(true);
-          setRedirectMessage("Completing your setup...");
-          setTimeout(() => {
-            window.location.href = '/onboarding';
-          }, 500);
-          return;
-        }
-        
-        // Check if user has a tenant association
-        if (!userData.tenantId) {
-          console.log('User has no tenant association, redirecting to onboarding...');
-          setIsRedirecting(true);
-          setRedirectMessage("Creating your workspace...");
-          setTimeout(() => {
-            window.location.href = '/onboarding';
-          }, 500);
-          return;
-        }
+                // Consolidated onboarding check
+        const needsOnboarding = await RedirectHandler.checkOnboardingAndRedirect(userData);
+        if (needsOnboarding) return;
 
         // Set tenant context from backend data
         const context: TenantContext = {
@@ -214,17 +199,9 @@ export default function DashboardPage() {
         if (userData.tenant?.subdomain && userData.tenant.subdomain.length > 0) {
           EnterpriseSessionManager.setTenantContext(userData.tenantId, userData.tenant.subdomain);
           
-          // 🔥 CRITICAL FIX: If on main domain and have valid tenant, redirect to tenant subdomain
-          const currentHostname = window.location.hostname;
-          if ((currentHostname === 'www.docsflow.app' || currentHostname === 'docsflow.app') && userData.tenant.subdomain) {
-            console.log(`🎯 [ENTERPRISE] API provided valid tenant subdomain, redirecting from main domain to: ${userData.tenant.subdomain}`);
-            setIsRedirecting(true);
-            setRedirectMessage(`Taking you to ${userData.tenant.subdomain}...`);
-            setTimeout(() => {
-              window.location.href = `https://${userData.tenant.subdomain}.docsflow.app/dashboard`;
-            }, 800); // Slightly longer delay for API-based redirects
-            return;
-          }
+          // Check for tenant subdomain redirect
+          const hasRedirected = await RedirectHandler.checkTenantRedirect(userData);
+          if (hasRedirected) return;
         }
         
         // Set user session with tenant access
