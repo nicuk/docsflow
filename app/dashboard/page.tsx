@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useDocuments, useConversations } from "@/lib/queries/documents"
 import {
   BarChart3,
   Bell,
@@ -65,7 +66,10 @@ export default function DashboardPage() {
     questionsCount: 0,
     hoursSaved: 0
   })
-  const [isDocumentsLoading, setIsDocumentsLoading] = useState(false)
+  
+  // 🚀 REACT QUERY: Automatic caching and background refetch
+  const { data: documents = [], isLoading: isDocumentsLoading } = useDocuments(tenantContext?.tenantId)
+  const { data: conversations = [], isLoading: isConversationsLoading } = useConversations(tenantContext?.tenantId)
   
   // 🚀 MAIN DOMAIN REDIRECT CHECK: Show loading immediately
   const [isMainDomain] = useState(() => {
@@ -260,16 +264,9 @@ export default function DashboardPage() {
         setTenantContext(context);
         setIsLoading(false); // Show dashboard immediately
         
-        // 🎯 BACKGROUND LOADING: Fetch documents without blocking UI
-        if (userData.tenant?.subdomain) {
-          setIsDocumentsLoading(true);
-          // Non-blocking document fetch
-          fetchRealData(userData.tenantId, userData.tenant.subdomain).finally(() => {
-            setIsDocumentsLoading(false);
-          });
-        } else {
-          console.error('🚨 [DASHBOARD] No tenant subdomain found in user data:', userData);
-        }
+        // 🎯 REACT QUERY: Data will automatically load in background
+        // No manual API calls needed - React Query handles it
+        console.log('✅ [DASHBOARD] React Query will handle document loading automatically');
         
       } catch (error) {
         console.error('Failed to load tenant context:', error);
@@ -281,88 +278,8 @@ export default function DashboardPage() {
     loadTenantContext();
   }, [])
 
-  // Fetch real data from backend APIs
-  const fetchRealData = async (tenantId: string, subdomain: string) => {
-    try {
-      // SCHEMA VALIDATION: Ensure tenantId is UUID format (matches tenants.id)
-      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      
-      if (!uuidPattern.test(tenantId)) {
-        console.error(`🚨 [SCHEMA VIOLATION] tenantId must be UUID from tenants.id, got: ${tenantId}`);
-        console.error(`🔍 [DEBUG] Expected UUID format, got subdomain-like string`);
-        // Graceful degradation - don't crash the dashboard
-        return;
-      }
-
-      if (!subdomain || subdomain.length === 0) {
-        console.error(`🚨 [SCHEMA VIOLATION] subdomain required for API headers, got: ${subdomain}`);
-        return;
-      }
-
-      // ENTERPRISE FIX: Schema-aligned tenant context headers
-      const tenantHeaders = {
-        'Content-Type': 'application/json',
-        'x-tenant-subdomain': subdomain,  // tenants.subdomain (text)
-        'x-tenant-id': tenantId           // tenants.id (UUID) - validated
-      };
-      
-      console.log(`🔍 [DASHBOARD] Tenant context:`, {
-        tenantId: tenantId ? `${tenantId.substring(0, 8)}...` : 'MISSING',
-        subdomain: subdomain || 'MISSING',
-        headers: tenantHeaders
-      });
-
-      // Fetch documents
-      console.log(`🔍 [DASHBOARD] Fetching documents with headers:`, tenantHeaders);
-      const docsResponse = await fetch('/api/documents', {
-        method: 'GET',
-        headers: tenantHeaders,
-        credentials: 'include'
-      });
-      
-      console.log(`🔍 [DASHBOARD] Documents API response status: ${docsResponse.status}`);
-      
-      if (docsResponse.ok) {
-        const docsData = await docsResponse.json();
-        const documentsCount = docsData.documents?.length || 0;
-        console.log(`🔍 [DASHBOARD] Found ${documentsCount} documents`);
-        
-        // Fetch conversations/questions
-        const conversationsResponse = await fetch('/api/conversations', {
-          method: 'GET',
-          headers: tenantHeaders,
-          credentials: 'include'
-        });
-        
-        let questionsCount = 0;
-        if (conversationsResponse.ok) {
-          const convData = await conversationsResponse.json();
-          questionsCount = convData.conversations?.length || 0;
-        }
-        
-        // Calculate hours saved (estimate: 15 min per document, 5 min per question)
-        const hoursSaved = Math.round((documentsCount * 0.25 + questionsCount * 0.083) * 10) / 10;
-        
-        setRealStats({
-          documentsCount,
-          questionsCount,
-          hoursSaved
-        });
-        
-        console.log(`✅ [DASHBOARD] Updated real stats:`, {
-          documentsCount,
-          questionsCount, 
-          hoursSaved
-        });
-      } else {
-        const errorText = await docsResponse.text();
-        console.error(`🚨 [DASHBOARD] Documents API error: ${docsResponse.status} - ${errorText}`);
-      }
-    } catch (error) {
-      console.error('🚨 [DASHBOARD] Error fetching real data:', error);
-      // Keep using mock data on error
-    }
-  }
+  // 🚀 REACT QUERY: No manual data fetching needed
+  // Documents and conversations are automatically loaded via useDocuments/useConversations hooks
 
   // Industry-specific welcome messages
   const getWelcomeMessage = () => {
@@ -488,11 +405,11 @@ export default function DashboardPage() {
       { title: "Hours Saved", value: "0", icon: BarChart3 },
     ]
 
-    // Use real stats from backend instead of localStorage
+    // 🚀 REACT QUERY: Use live data from cached queries
     const analytics = {
-      documentsUploaded: realStats.documentsCount,
-      totalQuestions: realStats.questionsCount,
-      timesSaved: realStats.hoursSaved
+      documentsUploaded: documents.length,
+      totalQuestions: conversations.length,
+      timesSaved: Math.round((documents.length * 0.25 + conversations.length * 0.083) * 10) / 10
     }
     
     switch (tenantContext.industry) {
@@ -637,7 +554,7 @@ export default function DashboardPage() {
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       {stat.title}
                     </p>
-                    {isDocumentsLoading ? (
+                    {(isDocumentsLoading || isConversationsLoading) ? (
                       <div className="mt-1 flex items-center gap-2">
                         <div className="h-6 bg-gray-200 rounded animate-pulse w-12"></div>
                         <div className="text-xs text-gray-400">Loading...</div>

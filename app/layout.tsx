@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { PerformanceMonitor } from "@/components/performance-monitor"
 import { TenantProvider } from "@/components/providers/tenant-provider"
 import { AuthProvider } from "@/contexts/AuthContext"
+import { QueryProvider } from "@/components/providers/query-provider"
 import { headers } from 'next/headers'
 
 const inter = Inter({ subsets: ["latin"] })
@@ -68,14 +69,16 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <AuthProvider>
-          <TenantProvider tenantId={tenantId} tenantSubdomain={tenantSubdomain}>
-            <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-              <PerformanceMonitor />
-              {children}
-            </ThemeProvider>
-          </TenantProvider>
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <TenantProvider tenantId={tenantId} tenantSubdomain={tenantSubdomain}>
+              <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+                <PerformanceMonitor />
+                {children}
+              </ThemeProvider>
+            </TenantProvider>
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   )
