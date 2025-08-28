@@ -363,38 +363,37 @@ export default async function middleware(request: NextRequest) {
           const availableTenants = Object.keys(contexts);
           
           if (availableTenants.length === 1) {
-            // Single tenant - redirect immediately (ELIMINATES 4-PAGE CHAIN)
             const tenantSubdomain = availableTenants[0];
             
-            // SAFETY CHECK: Validate subdomain format before redirect
-            if (/^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/.test(tenantSubdomain)) {
+            // SURGICAL FIX: Comprehensive validation before redirect
+            if (tenantSubdomain && 
+                typeof tenantSubdomain === 'string' && 
+                tenantSubdomain.length > 0 &&
+                /^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/.test(tenantSubdomain)) {
               const redirectUrl = `https://${tenantSubdomain}.docsflow.app/dashboard`;
               console.log(`🚀 [SMART-REDIRECT] Single tenant user - skipping intermediate pages: ${redirectUrl}`);
               return NextResponse.redirect(new URL(redirectUrl));
             } else {
-              console.warn(`🔄 [SMART-REDIRECT] Invalid subdomain format: ${tenantSubdomain}, proceeding normally`);
+              console.error(`🚨 [SMART-REDIRECT] Invalid subdomain: '${tenantSubdomain}' (type: ${typeof tenantSubdomain})`);
             }
           } else if (availableTenants.length > 1) {
-            // Multi-tenant - use current preference or first tenant
             const preferredTenant = (currentTenant && contexts[currentTenant]) ? currentTenant : availableTenants[0];
             
-            // SAFETY CHECK: Validate subdomain format before redirect
-            if (/^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/.test(preferredTenant)) {
+            // SURGICAL FIX: Comprehensive validation before redirect  
+            if (preferredTenant && 
+                typeof preferredTenant === 'string' && 
+                preferredTenant.length > 0 &&
+                /^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/.test(preferredTenant)) {
               const redirectUrl = `https://${preferredTenant}.docsflow.app/dashboard`;
               console.log(`🚀 [SMART-REDIRECT] Multi-tenant user - preferred tenant: ${redirectUrl}`);
               return NextResponse.redirect(new URL(redirectUrl));
             } else {
-              console.warn(`🔄 [SMART-REDIRECT] Invalid preferred tenant format: ${preferredTenant}, proceeding normally`);
+              console.error(`🚨 [SMART-REDIRECT] Invalid preferred tenant: '${preferredTenant}' (type: ${typeof preferredTenant})`);
             }
-          } else {
-            console.log(`🔄 [SMART-REDIRECT] No available tenants found, proceeding to normal flow`);
           }
         } catch (e) {
-          console.warn(`🔄 [SMART-REDIRECT] Error parsing tenant contexts: ${e.message}, proceeding normally`);
+          console.error(`🚨 [SMART-REDIRECT] Error parsing tenant contexts: ${e.message}`);
         }
-      } else if ((pathname === '/dashboard' || pathname === '/onboarding' || pathname === '/') && 
-                 !tenantContexts && userEmail && authToken) {
-        console.log(`🔄 [SMART-REDIRECT] User authenticated but no tenant contexts yet - allowing normal onboarding flow`);
       }
       
       // Legacy fallback for backwards compatibility

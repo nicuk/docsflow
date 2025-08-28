@@ -100,9 +100,16 @@ export default function DashboardPage() {
           // Fallback: Check if user has any active tenants
           if (authToken && userSession?.activeTenants?.length) {
             const firstTenant = userSession.activeTenants[0];
-            console.log(`🎯 [ENTERPRISE] Redirecting to first active tenant: ${firstTenant.subdomain}`);
-            window.location.href = `https://${firstTenant.subdomain}.docsflow.app/dashboard`;
-            return;
+            
+            // SURGICAL FIX: Validate subdomain exists before redirect
+            if (firstTenant?.subdomain && typeof firstTenant.subdomain === 'string') {
+              console.log(`🎯 [ENTERPRISE] Redirecting to first active tenant: ${firstTenant.subdomain}`);
+              window.location.href = `https://${firstTenant.subdomain}.docsflow.app/dashboard`;
+              return;
+            } else {
+              console.error(`🚨 [ENTERPRISE] Invalid tenant subdomain:`, firstTenant);
+              console.log(`🔍 [DEBUG] Full userSession:`, userSession);
+            }
           }
           
           // CRITICAL FIX: Check if user just logged in (give login page time to execute session bridge)
@@ -170,16 +177,18 @@ export default function DashboardPage() {
         // ENTERPRISE FIX: Use proper session management instead of localStorage
         const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager');
         
-        // Set proper tenant context with UUID
-        EnterpriseSessionManager.setTenantContext(userData.tenantId, userData.tenant?.subdomain || '');
+        // SURGICAL FIX: Handle both data structures (check-user vs session API)
+        const tenantSubdomain = userData.tenant?.subdomain || userData.tenantSubdomain || '';
         
-        // Set user session with tenant access
+        // Set proper tenant context with UUID
+        EnterpriseSessionManager.setTenantContext(userData.tenantId, tenantSubdomain);
+        
         EnterpriseSessionManager.setUserSession({
           userId: userData.id,
           userEmail: userData.email,
           activeTenants: [{
             tenantId: userData.tenantId,
-            subdomain: userData.tenant?.subdomain || '',
+            subdomain: tenantSubdomain,
             userEmail: userData.email,
             lastAccessed: Date.now()
           }]
@@ -188,8 +197,8 @@ export default function DashboardPage() {
         console.log(`✅ [DASHBOARD] Set enterprise session for: ${userData.email}`);
         
         // Fetch real data from backend with subdomain
-        if (userData.tenant?.subdomain) {
-          await fetchRealData(userData.tenantId, userData.tenant.subdomain);
+        if (tenantSubdomain) {
+          await fetchRealData(userData.tenantId, tenantSubdomain);
         } else {
           console.error('🚨 [DASHBOARD] No tenant subdomain found in user data:', userData);
         }
