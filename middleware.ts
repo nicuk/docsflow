@@ -380,7 +380,19 @@ export default async function middleware(request: NextRequest) {
           const contexts = JSON.parse(tenantContexts);
           const availableTenants = Object.keys(contexts);
           
-          if (availableTenants.length === 1) {
+          // CRITICAL: Verify auth token is still valid before redirecting
+          // Check if user just logged out by looking for recent logout timestamp
+          const logoutTimestamp = cookies.get('logout-timestamp')?.value;
+          const recentLogout = logoutTimestamp && (Date.now() - parseInt(logoutTimestamp)) < 30000; // 30s grace
+          
+          if (recentLogout) {
+            console.log('🔄 [SMART-REDIRECT] Recent logout detected, skipping smart redirect');
+            const response = NextResponse.next();
+            return createSecureResponse(response, origin);
+          }
+          
+          // CRITICAL: Ensure we have BOTH tenant contexts AND valid auth before redirect
+          if (availableTenants.length === 1 && authToken && userEmail) {
             const tenantSubdomain = availableTenants[0];
             
             // SURGICAL FIX: Comprehensive validation before redirect
@@ -389,12 +401,12 @@ export default async function middleware(request: NextRequest) {
                 tenantSubdomain.length > 0 &&
                 /^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/.test(tenantSubdomain)) {
               const redirectUrl = `https://${tenantSubdomain}.docsflow.app/dashboard`;
-              console.log(`🚀 [SMART-REDIRECT] Single tenant user - skipping intermediate pages: ${redirectUrl}`);
+              console.log(`🚀 [SMART-REDIRECT] Single tenant user with valid auth - redirecting: ${redirectUrl}`);
               return NextResponse.redirect(new URL(redirectUrl));
             } else {
               console.error(`🚨 [SMART-REDIRECT] Invalid subdomain: '${tenantSubdomain}' (type: ${typeof tenantSubdomain})`);
             }
-          } else if (availableTenants.length > 1) {
+          } else if (availableTenants.length > 1 && authToken && userEmail) {
             const preferredTenant = (currentTenant && contexts[currentTenant]) ? currentTenant : availableTenants[0];
             
             // SURGICAL FIX: Comprehensive validation before redirect  
@@ -403,11 +415,13 @@ export default async function middleware(request: NextRequest) {
                 preferredTenant.length > 0 &&
                 /^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/.test(preferredTenant)) {
               const redirectUrl = `https://${preferredTenant}.docsflow.app/dashboard`;
-              console.log(`🚀 [SMART-REDIRECT] Multi-tenant user - preferred tenant: ${redirectUrl}`);
+              console.log(`🚀 [SMART-REDIRECT] Multi-tenant user with valid auth - redirecting: ${redirectUrl}`);
               return NextResponse.redirect(new URL(redirectUrl));
             } else {
               console.error(`🚨 [SMART-REDIRECT] Invalid preferred tenant: '${preferredTenant}' (type: ${typeof preferredTenant})`);
             }
+          } else {
+            console.log(`🔍 [SMART-REDIRECT] Skipping redirect - insufficient auth: tenants=${availableTenants.length}, token=${!!authToken}, email=${!!userEmail}`);
           }
         } catch (e) {
           console.error(`🚨 [SMART-REDIRECT] Error parsing tenant contexts: ${e.message}`);

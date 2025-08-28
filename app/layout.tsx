@@ -18,11 +18,11 @@ export const metadata: Metadata = {
   keywords: "document AI, document search, AI document analysis, SOPs, contract analysis, team productivity, business efficiency",
   icons: {
     icon: [
-      { url: '/favicon.svg?v=2', type: 'image/svg+xml' },
-      { url: '/favicon.ico?v=2', sizes: '32x32' }
+      { url: '/favicon.svg?v=3', type: 'image/svg+xml' },
+      { url: '/favicon.ico?v=3', sizes: '32x32' }
     ],
     apple: '/apple-touch-icon.png',
-    shortcut: '/favicon.ico?v=2'
+    shortcut: '/favicon.ico?v=3'
   },
   openGraph: {
     type: "website",
@@ -68,6 +68,12 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Force favicon refresh with explicit meta tags */}
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico?v=3" />
+        <link rel="shortcut icon" href="/favicon.ico?v=3" />
+      </head>
       <body className={inter.className}>
         <QueryProvider>
           <AuthProvider>

@@ -40,6 +40,49 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [message, setMessage] = useState('')
+  const [tenantContext, setTenantContext] = useState<{name?: string, subdomain?: string} | null>(null)
+
+  // Detect if user has tenant context but no auth tokens
+  useEffect(() => {
+    const detectTenantContext = async () => {
+      // Check if we're on a tenant subdomain
+      const hostname = window.location.hostname
+      const subdomain = hostname.split('.')[0]
+      
+      if (hostname.includes('.docsflow.app') && subdomain !== 'www' && subdomain !== 'api') {
+        // Check if user has tenant context cookies but no auth tokens
+        const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+          const [key, value] = cookie.trim().split('=')
+          acc[key] = value
+          return acc
+        }, {} as Record<string, string>)
+        
+        const tenantContexts = cookies['tenant-contexts']
+        const authToken = cookies['access_token']
+        const userEmail = cookies['user_email']
+        
+        if (tenantContexts && !authToken) {
+          // User has tenant context but no auth - they were logged out
+          try {
+            const contexts = JSON.parse(tenantContexts)
+            if (contexts[subdomain]) {
+              setTenantContext({ subdomain })
+              setMessage(`Welcome back! Please sign in to access your ${subdomain} workspace.`)
+              
+              // Pre-populate email if available
+              if (userEmail) {
+                setFormData(prev => ({ ...prev, email: userEmail }))
+              }
+            }
+          } catch (e) {
+            console.warn('Failed to parse tenant contexts:', e)
+          }
+        }
+      }
+    }
+    
+    detectTenantContext()
+  }, [])
 
   // Handle session bridge from main domain
   useEffect(() => {

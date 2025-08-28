@@ -204,21 +204,41 @@ class AuthClient {
       }
     });
     
-    // Step 3: Clear cookies at browser level
-    // STANDARDIZED: Clear all standardized cookies
-    const cookiesToClear = [
-      'access_token', 'refresh_token', 
-      'tenant-id', 'tenant-subdomain', 'user_email'
-    ];
+    // Step 3: Use MULTI-TENANT aware cookie clearing
+    // CRITICAL: Import dynamically to avoid circular dependencies
+    const { MultiTenantCookieManager } = await import('./multi-tenant-cookie-manager');
+    const { EnterpriseSessionManager } = await import('./enterprise-session-manager');
     
-    cookiesToClear.forEach(cookieName => {
-      // Clear for current domain
-      document.cookie = `${cookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-      // Clear for parent domain (if on subdomain)
-      document.cookie = `${cookieName}=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-      // Clear without domain specification
-      document.cookie = `${cookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax`;
-    });
+    // Check if user has multiple tenants before aggressive logout
+    const userTenants = MultiTenantCookieManager.getUserTenantList();
+    console.log(`🔍 [LOGOUT] User has ${userTenants.length} tenant(s):`, userTenants);
+    
+    // Set logout timestamp for middleware grace period
+    document.cookie = `logout-timestamp=${Date.now()}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=60`;
+    
+    if (userTenants.length > 1) {
+      // Multi-tenant user - use safe logout that preserves other tenant access
+      console.log('🏢 [LOGOUT] Multi-tenant user - preserving access to other tenants');
+      MultiTenantCookieManager.clearAuthTokensOnly(); // Preserves tenant contexts
+      EnterpriseSessionManager.clearTenantContext(); // Clear only current tenant context
+    } else {
+      // Single tenant user - full logout (legacy behavior)
+      console.log('🔒 [LOGOUT] Single tenant user - full logout');
+      const cookiesToClear = [
+        'access_token', 'refresh_token', 
+        'tenant-id', 'tenant-subdomain', 'user_email',
+        'tenant-contexts', 'current-tenant', 'enterprise-session'
+      ];
+      
+      cookiesToClear.forEach(cookieName => {
+        // Clear for current domain
+        document.cookie = `${cookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+        // Clear for parent domain (if on subdomain)
+        document.cookie = `${cookieName}=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+        // Clear without domain specification
+        document.cookie = `${cookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax`;
+      });
+    }
     
     // Step 4: Force redirect to main domain login (not subdomain)
     // SURGICAL FIX: Use window.location.replace for more forceful redirect
