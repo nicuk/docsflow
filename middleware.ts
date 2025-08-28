@@ -198,10 +198,10 @@ export default async function middleware(request: NextRequest) {
         return NextResponse.redirect(mainDomainUrl);
       }
 
-      // STANDARDIZED: Use Supabase and schema-aligned cookie names
-      const storedTenantId = request.cookies.get('tenant-id')?.value;
-      const userEmail = request.cookies.get('user_email')?.value;
-      const authToken = request.cookies.get('access_token')?.value;
+      // SCHEMA-ALIGNED: Use exact database schema field names as cookie names
+      const storedTenantId = request.cookies.get('tenant-id')?.value; // matches tenants.id (UUID)
+      const userEmail = request.cookies.get('user_email')?.value;     // matches users.email (text)
+      const authToken = request.cookies.get('access_token')?.value;   // Supabase token
       
       // HIGH-PERFORMANCE: Use TenantContextManager with multi-layer caching
       const tenantInfo = await TenantContextManager.resolveTenant(tenant);
@@ -230,11 +230,12 @@ export default async function middleware(request: NextRequest) {
           response.headers.set('x-tenant-id', tenantUUID);
           response.headers.set('x-tenant-subdomain', tenant);
           
-          // Clear mismatched cookies only for real tenant switches
-          response.cookies.delete('tenant-id');
-          response.cookies.delete('access_token');
-          response.cookies.delete('refresh_token');
-          response.cookies.delete('user_email');
+          // SCHEMA-ALIGNED: Clear all auth cookie variants to prevent contamination
+          const cookieVariants = ['tenant-id', 'user_email', 'user-email', 'access_token', 'refresh_token', 
+                                 'auth-token', 'refresh-token', 'tenant-subdomain', 'user-name', 'user_name'];
+          cookieVariants.forEach(cookieName => {
+            response.cookies.delete(cookieName);
+          });
           
           console.log(`🔄 Cleared cookies for tenant switch from ${storedTenantId} to ${tenant}`);
           return createSecureResponse(response, origin);

@@ -64,13 +64,16 @@ export default function LoginPage() {
           console.log(`🔍 [SESSION BRIDGE] Decoded token length: ${decodedToken.length}`);
           console.log(`🔍 [SESSION BRIDGE] Token preview: ${decodedToken.substring(0, 50)}...`);
           
-          // CRITICAL: Set the cookies that middleware.ts:204 expects for authentication
-          document.cookie = `access_token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
-          console.log(`✅ [SESSION BRIDGE] Set access_token cookie`);
+          // SCHEMA-ALIGNED: Use database schema aligned cookie manager
+          const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
           
-          // Also set Supabase default cookie for session API compatibility
+          // First clear ALL auth cookies to prevent contamination
+          SchemaAlignedCookieManager.clearAllAuthCookies();
+          
+          // Set schema-aligned auth tokens
+          document.cookie = `access_token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
           document.cookie = `sb-lhcopwwiqwjpzbdnjovo-auth-token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
-          console.log(`✅ [SESSION BRIDGE] Set Supabase auth cookie`);
+          console.log(`✅ [SESSION BRIDGE] Set schema-aligned auth cookies`);
           
           // DEBUGGING: Verify cookies were actually set
           setTimeout(() => {
@@ -110,15 +113,22 @@ export default function LoginPage() {
                   console.log(`🔍 [SESSION BRIDGE] Session check before redirect:`, data);
                   
                                   if (data.authenticated && data.tenantId) {
-                  // CRITICAL FIX: Clear any stale tenant cookies before setting new ones
-                  document.cookie = 'tenant-id=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-                  document.cookie = 'user_email=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                  // SCHEMA-ALIGNED COOKIE FIX: Use database schema aligned cookie manager
+                  const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
                   
-                  // Set proper tenant context with UUID
-                  document.cookie = `tenant-id=${data.tenantId}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
-                  document.cookie = `user_email=${data.user.email}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
+                  SchemaAlignedCookieManager.setSchemaAlignedCookies(
+                    {
+                      tenantId: data.tenantId,
+                      subdomain: subdomain,
+                      userEmail: data.user.email
+                    },
+                    {
+                      accessToken: decodedToken,
+                      refreshToken: undefined // Will be set by session API
+                    }
+                  );
                   
-                  console.log(`✅ [SESSION BRIDGE] Set tenant context: ${subdomain} -> ${data.tenantId.substring(0, 8)}...`);
+                  console.log(`✅ [SESSION BRIDGE] Set schema-aligned tenant context: ${subdomain} -> ${data.tenantId.substring(0, 8)}...`);
                 }
                   
                   window.location.href = '/dashboard';

@@ -26,13 +26,20 @@ export default function AuthRedirectPage() {
           setMessage(`Welcome back to ${session.tenant?.name || 'your workspace'}!`);
           setProgress(75);
           
-          // Clear any stale cookies before redirect
-          document.cookie = 'tenant-id=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-          document.cookie = 'user_email=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          // SCHEMA-ALIGNED: Use database schema aligned cookie manager
+          const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
           
-          // Set fresh tenant context
-          document.cookie = `tenant-id=${session.tenantId}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
-          document.cookie = `user_email=${session.user.email}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
+          SchemaAlignedCookieManager.setSchemaAlignedCookies(
+            {
+              tenantId: session.tenantId,
+              subdomain: session.tenant?.subdomain || '',
+              userEmail: session.user.email
+            },
+            {
+              accessToken: '', // Will be handled by session API
+              refreshToken: undefined
+            }
+          );
           
           setProgress(100);
           
