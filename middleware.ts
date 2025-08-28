@@ -260,6 +260,23 @@ export default async function middleware(request: NextRequest) {
         const response = NextResponse.next();
         return createSecureResponse(response, origin);
       }
+      
+      // CRITICAL FIX: Handle authenticated users on main domain
+      // If user is authenticated and has tenant, redirect to tenant subdomain
+      const cookies = request.cookies;
+      const authToken = cookies.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value;
+      const userEmail = cookies.get('user_email')?.value;
+      const storedTenantId = cookies.get('tenant-id')?.value;
+      
+      if (authToken && userEmail && storedTenantId) {
+        // Get tenant subdomain from TenantContextManager
+        const tenantInfo = await TenantContextManager.resolveTenant(storedTenantId);
+        if (tenantInfo?.subdomain) {
+          const tenantUrl = `https://${tenantInfo.subdomain}.docsflow.app${pathname}`;
+          console.log(`🎯 Redirecting authenticated user from main domain to tenant: ${tenantUrl}`);
+          return NextResponse.redirect(new URL(tenantUrl));
+        }
+      }
     }
 
     // Handle backend domain access - redirect to main domain for non-API routes
