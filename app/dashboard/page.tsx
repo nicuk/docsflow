@@ -135,7 +135,7 @@ export default function DashboardPage() {
         }
 
         // Check user authentication and onboarding status from backend
-        const response = await fetch('/api/auth/check-user', {
+        const response = await fetch('/api/auth/session', {
           method: 'GET',
           credentials: 'include',
         });
@@ -147,6 +147,15 @@ export default function DashboardPage() {
         }
 
         const userData = await response.json();
+        
+        // DIAGNOSTIC LOGGING: Track tenant data to find where it's lost
+        console.log(`🔍 [DASHBOARD] Raw userData from API:`, {
+          email: userData.email,
+          tenantId: userData.tenantId,
+          hasTenant: !!userData.tenant,
+          tenant: userData.tenant,
+          tenantSubdomain: userData.tenant?.subdomain
+        });
         
         // Check if user has completed onboarding
         if (!userData.onboardingComplete) {
@@ -166,9 +175,9 @@ export default function DashboardPage() {
         const context: TenantContext = {
           tenantId: userData.tenantId,
           tenantSubdomain: userData.tenant?.subdomain || '',
-          industry: userData.industry || 'general',
-          businessType: userData.businessType || 'General Business',
-          accessLevel: userData.accessLevel || 1,
+          industry: userData.tenant?.industry || 'general',
+          businessType: userData.tenant?.industry || 'General Business',
+          accessLevel: 3, // Default access level
           onboardingComplete: userData.onboardingComplete
         };
 

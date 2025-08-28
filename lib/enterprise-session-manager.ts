@@ -27,10 +27,20 @@ export class EnterpriseSessionManager {
    */
   static setUserSession(session: CrossSubdomainSession): void {
     try {
+      // SURGICAL FIX: Filter out empty subdomains to prevent cookie corruption
+      const validTenants = session.activeTenants.filter(tenant => 
+        tenant.subdomain && tenant.subdomain.length > 0 && tenant.subdomain !== ''
+      );
+      
+      if (validTenants.length === 0) {
+        console.error(`🚨 [ENTERPRISE SESSION] All tenants have invalid subdomains, not setting session:`, session.activeTenants);
+        return;
+      }
+      
       const sessionData = JSON.stringify({
         userId: session.userId,
         userEmail: session.userEmail,
-        activeTenants: session.activeTenants,
+        activeTenants: validTenants,
         timestamp: Date.now()
       });
       
@@ -38,7 +48,8 @@ export class EnterpriseSessionManager {
       document.cookie = `${this.SESSION_COOKIE}=${encodeURIComponent(sessionData)}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
       
       console.log(`✅ [ENTERPRISE SESSION] Set cross-subdomain session for user: ${session.userEmail}`);
-      console.log(`🔍 [ENTERPRISE SESSION] Active tenants:`, session.activeTenants.map(t => t.subdomain));
+      console.log(`🔍 [ENTERPRISE SESSION] Active tenants:`, validTenants.map(t => t.subdomain));
+      console.log(`🔍 [ENTERPRISE SESSION] Filtered out ${session.activeTenants.length - validTenants.length} invalid tenants`);
     } catch (error) {
       console.error(`🚨 [ENTERPRISE SESSION] Failed to set session:`, error);
     }

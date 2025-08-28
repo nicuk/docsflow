@@ -264,7 +264,7 @@ export default function OnboardingFlow() {
   const joinExistingTenant = async (domain: string) => {
     try {
       // Get user data for invitation request
-      const response = await fetch('/api/auth/check-user', {
+      const response = await fetch('/api/auth/session', {
         method: 'GET',
         credentials: 'include',
       });
