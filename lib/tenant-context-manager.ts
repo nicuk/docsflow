@@ -48,10 +48,10 @@ export class TenantContextManager {
           console.log(`✅ Redis tenant cache HIT for: ${subdomain}`);
           
           // SECURITY FIX: Validate JSON before parsing
-          if (typeof redisData !== 'string' || redisData.includes('[object Object]')) {
-            console.warn(`⚠️ Corrupted Redis data for ${subdomain}, clearing cache`);
+          if (typeof redisData !== 'string') {
+            console.warn(`⚠️ Non-string Redis data for ${subdomain}, clearing cache`);
             await redis?.del(redisKey);
-            throw new Error('Corrupted cache data');
+            throw new Error('Invalid cache data type');
           }
           
           const parsed = JSON.parse(redisData);
