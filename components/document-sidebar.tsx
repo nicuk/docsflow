@@ -322,8 +322,8 @@ export default function DocumentSidebar({
       const files = (e.target as HTMLInputElement).files
       if (!files) return
       
-      // Process each file
-      Array.from(files).forEach(async (file) => {
+      // Process files sequentially to prevent server overload
+      for (const file of Array.from(files)) {
         // Add optimistic document to UI
         const tempDoc: Document = {
           id: `temp-${Date.now()}-${Math.random()}`,
@@ -347,7 +347,7 @@ export default function DocumentSidebar({
               ? {
                   ...doc,
                   id: response.documentId || response.id,
-                  status: "processed"
+                  status: response.status === 'completed' ? "processed" : response.status
                 }
               : doc
           ))
@@ -361,7 +361,7 @@ export default function DocumentSidebar({
               : doc
           ))
         }
-      })
+      }
     }
     
     input.click()

@@ -215,6 +215,8 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    let documentId: string | null = null;
+    
     const { data: document, error: dbError } = await supabase
       .from('documents')
       .insert({
@@ -236,6 +238,8 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+    
+    documentId = document.id;
 
     // Process document with enhanced contextual chunking
     // This gives us 49% accuracy improvement over basic chunking
@@ -269,15 +273,38 @@ export async function POST(request: NextRequest) {
         .eq('id', document.id);
     }
 
+    // Get final status after processing
+    const { data: finalDocument } = await supabase
+      .from('documents')
+      .select('processing_status')
+      .eq('id', document.id)
+      .single();
+
     return NextResponse.json({
       documentId: document.id,
       filename: file.name,
-      status: 'processing',
-      message: 'Document uploaded successfully and processing started'
+      status: finalDocument?.processing_status || 'completed',
+      message: 'Document uploaded and processed successfully'
     }, { headers: getCORSHeaders(origin) });
 
   } catch (error) {
     console.error('Upload error:', error);
+    
+    // If we have a document ID, update it to error status
+    if (documentId) {
+      try {
+        await supabase
+          .from('documents')
+          .update({ 
+            processing_status: 'error',
+            error_message: error instanceof Error ? error.message : 'Upload failed'
+          })
+          .eq('id', documentId);
+      } catch (updateError) {
+        console.error('Failed to update document error status:', updateError);
+      }
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: getCORSHeaders(origin) }

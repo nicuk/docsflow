@@ -835,6 +835,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
                           const files = (e.target as HTMLInputElement).files;
                           if (files && files.length > 0) {
                             try {
+                              // Process files sequentially to prevent server overload
                               for (const file of Array.from(files)) {
                                 console.log('Uploading file:', file.name);
                                 // Use the API client to upload

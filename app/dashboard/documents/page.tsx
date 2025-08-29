@@ -279,6 +279,43 @@ export default function DocumentsPage() {
     const maxPolls = 30 // Max 5 minutes (30 * 10 seconds)
     let pollCount = 0
     
+    // Cleanup stuck processing files on page load
+    useEffect(() => {
+      const cleanupStuckFiles = async () => {
+        try {
+          const { apiClient } = await import('@/lib/api-client')
+          const documents = await apiClient.getDocuments()
+          
+          // Find files stuck in processing for more than 10 minutes
+          const stuckFiles = documents.documents?.filter((doc: any) => {
+            if (doc.processing_status === 'processing') {
+              const createdAt = new Date(doc.created_at)
+              const now = new Date()
+              const minutesSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60)
+              return minutesSinceCreation > 10 // More than 10 minutes old
+            }
+            return false
+          })
+          
+          if (stuckFiles && stuckFiles.length > 0) {
+            console.log(`Found ${stuckFiles.length} stuck processing files, marking as error`)
+            setDocuments((prev) => 
+              prev.map((doc) => {
+                const isStuck = stuckFiles.find((stuck: any) => stuck.id === doc.id)
+                return isStuck 
+                  ? { ...doc, status: "error", errorMessage: "Processing timeout - file stuck" }
+                  : doc
+              })
+            )
+          }
+        } catch (error) {
+          console.error('Failed to cleanup stuck files:', error)
+        }
+      }
+      
+      cleanupStuckFiles()
+    }, [])
+    
     const poll = async () => {
       if (pollCount >= maxPolls) {
         // Timeout - mark as error
