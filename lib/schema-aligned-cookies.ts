@@ -168,18 +168,28 @@ export class SchemaAlignedCookieManager {
   
   /**
    * SCHEMA-ALIGNED COOKIE READING: Reads cookies with fallback to variants
+   * 
+   * @param serverCookies - Optional server-side cookies for SSR compatibility
    */
-  static getSchemaAlignedCookies(): {
+  static getSchemaAlignedCookies(serverCookies?: Record<string, string>): {
     tenantId: string | null;
     userEmail: string | null; 
     accessToken: string | null;
     refreshToken: string | null;
   } {
-    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-      const [key, value] = cookie.trim().split('=');
-      acc[key] = value;
-      return acc;
-    }, {} as Record<string, string>);
+    let cookies: Record<string, string>;
+    
+    if (typeof window === 'undefined' || serverCookies) {
+      // Server-side: use provided cookies
+      cookies = serverCookies || {};
+    } else {
+      // Client-side: parse document.cookie
+      cookies = document.cookie.split(';').reduce((acc, cookie) => {
+        const [key, value] = cookie.trim().split('=');
+        acc[key] = value;
+        return acc;
+      }, {} as Record<string, string>);
+    }
     
     return {
       tenantId: cookies['tenant-id'] || null,
@@ -238,8 +248,21 @@ export class SchemaAlignedCookieManager {
   
   /**
    * DEBUG: Log current cookie state for troubleshooting
+   * 
+   * @param serverCookies - Optional server-side cookies object for SSR compatibility
    */
-  static debugCookieState(): void {
+  static debugCookieState(serverCookies?: Record<string, string>): void {
+    // Check if running server-side
+    if (typeof window === 'undefined') {
+      if (serverCookies) {
+        console.log(`🔍 [COOKIE DEBUG] Server-side cookie state:`, serverCookies);
+      } else {
+        console.log(`🔍 [COOKIE DEBUG] Server-side - no cookies provided for debugging`);
+      }
+      return;
+    }
+    
+    // Client-side debugging
     const current = this.getSchemaAlignedCookies();
     const allCookies = document.cookie;
     

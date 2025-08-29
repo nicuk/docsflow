@@ -105,7 +105,7 @@ CREATE TABLE public.document_chunks (
   chunk_index integer NOT NULL,
   content text NOT NULL,
   metadata jsonb DEFAULT '{}'::jsonb,
-  access_level integer NOT NULL DEFAULT 1 CHECK (access_level >= 1 AND access_level <= 5),
+  access_level integer NOT NULL DEFAULT 1 CHECK (access_level >= 1 AND access_level <= 2),
   created_at timestamp with time zone DEFAULT now(),
   embedding USER-DEFINED,
   tenant_id uuid,
@@ -145,7 +145,7 @@ CREATE TABLE public.documents (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   document_category text DEFAULT 'general'::text,
-  access_level text DEFAULT 'private'::text CHECK (access_level = ANY (ARRAY['private'::text, 'public'::text, 'restricted'::text, 'shared'::text])),
+  access_level text DEFAULT 'user_accessible'::text CHECK (access_level = ANY (ARRAY['admin_only'::text, 'user_accessible'::text])),
   CONSTRAINT documents_pkey PRIMARY KEY (id),
   CONSTRAINT documents_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
 );
@@ -307,7 +307,7 @@ CREATE TABLE public.user_invitations (
   tenant_id uuid NOT NULL,
   email text NOT NULL,
   role text NOT NULL DEFAULT 'user'::text CHECK (role = ANY (ARRAY['admin'::text, 'user'::text, 'viewer'::text])),
-  access_level integer NOT NULL DEFAULT 1 CHECK (access_level >= 1 AND access_level <= 5),
+  access_level integer NOT NULL DEFAULT 2 CHECK (access_level >= 1 AND access_level <= 2),
   token text NOT NULL UNIQUE,
   status text NOT NULL DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'accepted'::text, 'expired'::text, 'cancelled'::text])),
   expires_at timestamp with time zone NOT NULL,
@@ -347,7 +347,7 @@ CREATE TABLE public.users (
   avatar_url text,
   last_login_at timestamp with time zone,
   created_at timestamp with time zone DEFAULT now(),
-  access_level integer NOT NULL DEFAULT 1 CHECK (access_level >= 1 AND access_level <= 5),
+  access_level integer NOT NULL DEFAULT 2 CHECK (access_level >= 1 AND access_level <= 2),
   CONSTRAINT users_pkey PRIMARY KEY (id),
   CONSTRAINT users_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
 );

@@ -127,7 +127,7 @@ function AuthCallbackHandler() {
           
           // Set and verify cookies
           const tenantCookieSet = setCookieAndVerify('tenant-id', existingUser.tenant_id);
-          const emailCookieSet = setCookieAndVerify('user_email', existingUser.email);
+          const emailCookieSet = setCookieAndVerify('user-email', existingUser.email);
           
           if (tenantCookieSet && emailCookieSet) {
             console.log(`✅ All cookies verified, redirecting to: https://${tenantSubdomain}.docsflow.app/dashboard`);

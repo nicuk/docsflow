@@ -29,8 +29,12 @@ export async function GET(request: NextRequest) {
       const allCookies = cookieStore.getAll();
       console.log(`🔍 [SESSION API] Raw cookies: ${allCookies.map(c => c.name).join(', ')}`);
       
-      // Validate cookie integrity using schema manager
-      SchemaAlignedCookieManager.debugCookieState();
+      // Validate cookie integrity using schema manager (server-side compatible)
+      const serverCookies = allCookies.reduce((acc, cookie) => {
+        acc[cookie.name] = cookie.value;
+        return acc;
+      }, {} as Record<string, string>);
+      SchemaAlignedCookieManager.debugCookieState(serverCookies);
       
       console.log(`🔍 [SESSION API] access_token present: ${!!cookieStore.get('access_token')?.value}`);
       console.log(`🔍 [SESSION API] refresh_token present: ${!!cookieStore.get('refresh_token')?.value}`);
