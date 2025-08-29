@@ -7,8 +7,8 @@ import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Enterprise AI Platform",
-  description: "Our commitment to protecting your privacy and securing your data.",
+  title: "Privacy Policy | DocsFlow",
+  description: "Our commitment to protecting your privacy and securing your data with DocsFlow's document intelligence platform.",
 }
 
 export default function PrivacyPolicy() {
@@ -36,10 +36,10 @@ export default function PrivacyPolicy() {
             </div>
 
             <PrivacyPolicyTemplate
-              companyName="Document Intelligence"
-                      websiteUrl="https://docuintel.com"
-        contactEmail="privacy@docuintel.com"
-              contactAddress={`Document Intelligence, Inc.\n123 Tech Boulevard\nTech City, CA 94000\nUnited States`}
+              companyName="DocsFlow"
+              websiteUrl="https://docsflow.com"
+              contactEmail="privacy@docsflow.com"
+              contactAddress={`DocsFlow, Inc.\n[Insert Address]\n[Insert City, State ZIP]\nUnited States`}
               lastUpdated={currentDate}
               includeGDPR={true}
               includeCCPA={true}

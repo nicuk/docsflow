@@ -62,6 +62,13 @@ export default function PrivacyPolicyTemplate({
         <li>Comply with legal obligations</li>
       </ul>
 
+      <h3>GDPR Compliance - Lawful Basis for Processing</h3>
+      <p>If you are in the European Economic Area (EEA) or UK:</p>
+      <ul>
+        <li><strong>Lawful Basis:</strong> Processing is based on contract (to provide the Service), legitimate interest (improving features), or consent (optional analytics).</li>
+        <li><strong>Your Rights:</strong> You may request access, correction, deletion, restriction, or portability of your data, or object to certain processing. You also have the right to lodge a complaint with your Supervisory Authority.</li>
+      </ul>
+
       <h2>Data Storage and Security</h2>
       <p>
         We implement appropriate technical and organizational measures to protect the security of your personal
@@ -75,17 +82,22 @@ export default function PrivacyPolicyTemplate({
 
       <h2>Data Retention</h2>
       <p>
-        We retain personal information for as long as necessary to fulfill the purposes outlined in this privacy policy,
-        unless a longer retention period is required or permitted by law. We will retain and use your information as
-        necessary to comply with our legal obligations, resolve disputes, and enforce our agreements.
+        Uploaded documents are retained until deleted by you or your account is closed. Other data is retained only as long as necessary for the purposes stated above, typically:
       </p>
+      <ul>
+        <li>Account data: For the duration of your account plus 30 days after closure</li>
+        <li>Usage data: Up to 2 years for analytics purposes</li>
+        <li>Legal compliance data: As required by applicable law</li>
+      </ul>
 
-      <h2>Sharing Your Information</h2>
-      <p>We may share your information in the following situations:</p>
+      <h2>Data Sharing</h2>
+      <p>We do not sell personal data. We may share with:</p>
       <ul>
         <li>
-          <strong>With Service Providers:</strong> We may share your information with third-party vendors, service
-          providers, contractors, or agents who perform services for us.
+          <strong>Service providers</strong> (e.g., hosting and infrastructure).
+        </li>
+        <li>
+          <strong>Legal authorities</strong> when required by law.
         </li>
         <li>
           <strong>Business Transfers:</strong> We may share or transfer your information in connection with, or during
@@ -94,10 +106,6 @@ export default function PrivacyPolicyTemplate({
         </li>
         <li>
           <strong>With Your Consent:</strong> We may disclose your information for any other purpose with your consent.
-        </li>
-        <li>
-          <strong>Legal Requirements:</strong> We may disclose your information where required to do so by law or in
-          response to valid requests by public authorities.
         </li>
       </ul>
 
@@ -188,7 +196,7 @@ export default function PrivacyPolicyTemplate({
           </ul>
           <p>
             To exercise these rights, please contact us using the contact information provided at the end of this
-            Privacy Policy.
+            Privacy Policy. You also have the right to lodge a complaint with your local Supervisory Authority if you believe we have not complied with data protection laws.
           </p>
         </>
       )}
@@ -217,21 +225,15 @@ export default function PrivacyPolicyTemplate({
 
       <h2>Children's Privacy</h2>
       <p>
-        Our services are not intended for individuals under the age of 16. We do not knowingly collect personal
-        information from children under 16. If we learn we have collected or received personal information from a child
-        under 16 without verification of parental consent, we will delete that information.
+        The Service is not directed to children under 13. We do not knowingly collect data from minors.
       </p>
 
       <h2>International Data Transfers</h2>
       <p>
-        Your information may be transferred to, and maintained on, computers located outside of your state, province,
-        country, or other governmental jurisdiction where the data protection laws may differ from those in your
-        jurisdiction.
+        Data may be processed outside your jurisdiction. Where applicable, we rely on <strong>Standard Contractual Clauses (SCCs)</strong> to safeguard data transfers to countries without adequate data protection laws.
       </p>
       <p>
-        If you are located outside the United States and choose to provide information to us, please note that we
-        transfer the data to the United States and process it there. Your consent to this Privacy Policy followed by
-        your submission of such information represents your agreement to that transfer.
+        For transfers from the EU/UK to third countries, we ensure appropriate safeguards are in place in accordance with GDPR requirements.
       </p>
 
       <h2>Changes to This Privacy Policy</h2>
