@@ -119,10 +119,7 @@ export default function SourceViewerModal({ source, isOpen, onClose, highlightTe
               variant="ghost"
               size="sm"
               className="ml-auto"
-              onClick={() => {
-                // TODO: Implement full document viewer
-                console.log('Open full document:', source.document_id)
-              }}
+              onClick={() => window.open(`/api/documents/${source.document_id}/content`, '_blank')}
             >
               <ExternalLink className="h-4 w-4 mr-1" />
               View Document
@@ -186,6 +183,7 @@ export default function SourceViewerModal({ source, isOpen, onClose, highlightTe
           </div>
         </div>
       </DialogContent>
+
     </Dialog>
   )
 }

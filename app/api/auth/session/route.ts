@@ -36,9 +36,11 @@ export async function GET(request: NextRequest) {
       }, {} as Record<string, string>);
       SchemaAlignedCookieManager.debugCookieState(serverCookies);
       
-      console.log(`🔍 [SESSION API] access_token present: ${!!cookieStore.get('access_token')?.value}`);
-      console.log(`🔍 [SESSION API] refresh_token present: ${!!cookieStore.get('refresh_token')?.value}`);
-      console.log(`🔍 [SESSION API] sb-auth present: ${!!cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value}`);
+      const hasSupabaseAuth = !!cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value;
+      const hasAccessToken = !!cookieStore.get('access_token')?.value;
+      const hasRefreshToken = !!cookieStore.get('refresh_token')?.value;
+      
+      console.log(`🔍 [SESSION API] Auth cookies - Supabase: ${hasSupabaseAuth}, access_token: ${hasAccessToken}, refresh_token: ${hasRefreshToken}`);
     }
     
     // 🚨 SECURITY FIX #2: Create Supabase client with schema-aligned cookie reading
@@ -48,36 +50,33 @@ export async function GET(request: NextRequest) {
       {
         cookies: {
           getAll() {
-            // Use schema-aligned approach - prioritize standardized cookies
+            // SURGICAL FIX: Use existing Supabase cookies directly instead of reconstructing
             const allCookies = cookieStore.getAll();
-            const validatedCookies = [];
             
-            // Get tokens from standardized locations first
+            // Check if we have the existing Supabase session cookie
+            const existingSupabaseAuth = cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value;
+            
+            if (existingSupabaseAuth && existingSupabaseAuth.length > 50) {
+              console.log('✅ [SESSION API] Using existing Supabase auth token');
+              // Return all cookies as-is - Supabase will handle the existing session cookie
+              return allCookies;
+            }
+            
+            // Fallback: try manual token construction only if no Supabase cookie exists
             const accessToken = cookieStore.get('access_token')?.value;
             const refreshToken = cookieStore.get('refresh_token')?.value;
+            const validatedCookies = [];
             
-            // Map to Supabase expected format with validation
             if (accessToken && accessToken.length > 10) {
               validatedCookies.push({
                 name: `sb-lhcopwwiqwjpzbdnjovo-auth-token`,
                 value: accessToken
               });
-              console.log('✅ [SESSION API] Using validated access_token');
+              console.log('✅ [SESSION API] Using fallback access_token');
             } else {
-              console.warn('🚨 [SESSION API] Invalid or missing access_token');
+              console.warn('🚨 [SESSION API] No valid auth tokens found');
             }
             
-            if (refreshToken && refreshToken.length > 10) {
-              validatedCookies.push({
-                name: `sb-lhcopwwiqwjpzbdnjovo-auth-token-code-verifier`,
-                value: refreshToken
-              });
-              console.log('✅ [SESSION API] Using validated refresh_token');
-            } else {
-              console.warn('🚨 [SESSION API] Invalid or missing refresh_token');
-            }
-            
-            // Include original cookies for fallback compatibility
             return [...allCookies, ...validatedCookies];
           },
           setAll(cookiesToSet) {

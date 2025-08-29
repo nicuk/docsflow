@@ -1152,8 +1152,16 @@ export default function DocumentsPage() {
                         <p className="text-sm text-muted-foreground mb-4">
                           Preview is available for PDF and image files
                         </p>
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4 mr-2" /> View Full Document
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            if (selectedDocument?.id) {
+                              window.open(`/api/documents/${selectedDocument.id}/content`, '_blank');
+                            }
+                          }}
+                        >
+                          <Eye className="h-4 w-4 mr-2" /> View Document
                         </Button>
                       </div>
                     </div>
