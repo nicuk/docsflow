@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { OpenRouterClient, MODEL_CONFIGS } from '@/lib/openrouter-client';
 
 interface SearchResult {
   id: string;
@@ -29,6 +30,7 @@ export class HybridRAGReranker {
   private supabase: any;
   private genAI: GoogleGenerativeAI;
   private crossEncoder: any;
+  private openRouterClient: OpenRouterClient;
 
   constructor() {
     this.supabase = createClient(
@@ -42,6 +44,8 @@ export class HybridRAGReranker {
       systemInstruction: `You are a cross-encoder reranking expert. Score relevance from 0-1.
 Consider: exact match, semantic similarity, temporal relevance, entity alignment, and answer completeness.`
     });
+    
+    this.openRouterClient = new OpenRouterClient();
   }
 
   /**
@@ -394,8 +398,10 @@ Return only a number between 0 and 1.`;
       `[${i + 1}] ${r.provenance.source}: ${r.content.substring(0, 500)}`
     ).join('\n\n');
     
-    const prompt = `
-Answer this query using ONLY the provided sources. Include citations.
+    const messages = [
+      {
+        role: 'user' as const,
+        content: `Answer this query using ONLY the provided sources. Include citations.
 
 Query: ${query}
 
@@ -403,9 +409,29 @@ Sources:
 ${context}
 
 Format: Answer with [citation numbers] for each claim.
-If information is not in sources, say "Information not found in provided documents."`;
+If information is not in sources, say "Information not found in provided documents."`
+      }
+    ];
 
-    const response = await this.crossEncoder.generateContent(prompt);
-    return response.response.text();
+    try {
+      const response = await this.openRouterClient.generateWithFallback(
+        MODEL_CONFIGS.RAG_PIPELINE,
+        messages,
+        {
+          max_tokens: 800,
+          temperature: 0.2
+        }
+      );
+      
+      console.log(`📄 RAG synthesis using ${response.modelUsed}`);
+      return response.response;
+      
+    } catch (error) {
+      console.warn('OpenRouter failed for RAG synthesis, using Gemini fallback:', error);
+      
+      // Fallback to Gemini
+      const response = await this.crossEncoder.generateContent(messages[0].content);
+      return response.response.text();
+    }
   }
 }

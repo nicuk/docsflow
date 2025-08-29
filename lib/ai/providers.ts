@@ -1,6 +1,7 @@
 // Backend AI Provider - Based on working aichatbot implementation
 import { google } from '@ai-sdk/google';
 import { generateText } from 'ai';
+import { OpenRouterClient, MODEL_CONFIGS } from '@/lib/openrouter-client';
 
 // Environment-based configuration like the working aichatbot
 const isTestEnvironment = Boolean(
@@ -28,36 +29,81 @@ const mockProvider = {
   getEmbeddingModel: () => null as any // Mock will not be called if key is absent
 };
 
-// Real Gemini provider (like working aichatbot)
-const realProvider = {
+// Enhanced provider with OpenRouter + Gemini fallback
+const enhancedProvider = {
   generatePersona: async (prompt: string) => {
     try {
+      const openRouterClient = new OpenRouterClient();
+      
+      const messages = [
+        {
+          role: 'system' as const,
+          content: 'You are an expert at creating business personas. Generate a comprehensive persona in valid JSON format with the specified fields.'
+        },
+        {
+          role: 'user' as const,
+          content: prompt
+        }
+      ];
+
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('AI generation timeout')), 25000);
       });
 
-      const generatePromise = generateText({
-        model: google('gemini-2.0-flash'),
-        prompt,
-        maxTokens: 500,
-        temperature: 0.7,
-      });
+      try {
+        // Try OpenRouter models first (Llama-4 Maverick for creativity)
+        const openRouterPromise = openRouterClient.generateWithFallback(
+          MODEL_CONFIGS.PERSONA_GENERATION,
+          messages,
+          {
+            max_tokens: 800,
+            temperature: 0.8,
+            response_format: { type: 'json_object' }
+          }
+        );
 
-      const result = await Promise.race([generatePromise, timeoutPromise]) as any;
-      
-      const jsonMatch = result.text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
+        const result = await Promise.race([openRouterPromise, timeoutPromise]);
+        console.log(`🧠 Persona generated using ${result.modelUsed} (${result.fallbackCount} fallbacks)`);
+        
+        // Parse and enhance the response
+        const parsed = JSON.parse(result.response);
         const enhancedResponse = {
           ...parsed,
-          created_from: "onboarding_answers"
+          created_from: "onboarding_answers",
+          model_used: result.modelUsed
         };
+        
         return JSON.stringify(enhancedResponse);
+        
+      } catch (openRouterError) {
+        console.warn('OpenRouter failed for persona generation, using Gemini fallback:', openRouterError);
+        
+        // Fallback to Gemini
+        const generatePromise = generateText({
+          model: google('gemini-2.0-pro'),
+          prompt: messages.map(m => m.content).join('\n\n'),
+          maxTokens: 800,
+          temperature: 0.8,
+        });
+
+        const result = await Promise.race([generatePromise, timeoutPromise]) as any;
+        
+        const jsonMatch = result.text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          const enhancedResponse = {
+            ...parsed,
+            created_from: "onboarding_answers",
+            model_used: "gemini-2.0-pro (fallback)"
+          };
+          return JSON.stringify(enhancedResponse);
+        }
+        
+        throw new Error('Failed to parse AI response from both OpenRouter and Gemini');
       }
       
-      throw new Error('Failed to parse AI response');
     } catch (error) {
-      console.error('Gemini API Error:', error);
+      console.error('Persona Generation Error:', error);
       throw error;
     }
   },
@@ -72,15 +118,15 @@ export const aiProvider = (() => {
     return mockProvider;
   }
   
-  // If no API key, use mock
-  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-    console.warn('⚠️ GOOGLE_GENERATIVE_AI_API_KEY not found - using mock AI provider');
+  // If no API keys, use mock
+  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY && !process.env.OPENROUTER_API_KEY) {
+    console.warn('⚠️ No AI API keys found - using mock AI provider');
     return mockProvider;
   }
   
-  // Use real Gemini
-  console.log('✅ Using real Gemini AI provider');
-  return realProvider;
+  // Use enhanced provider with OpenRouter + Gemini
+  console.log('✅ Using enhanced AI provider (OpenRouter + Gemini fallback)');
+  return enhancedProvider;
 })();
 
 // Helper function to check if real AI is available

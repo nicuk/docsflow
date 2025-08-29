@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { OpenRouterClient, MODEL_CONFIGS } from '@/lib/openrouter-client';
 
 function getSupabaseClient() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -152,10 +153,13 @@ async function findDocumentRelationship(
   const doc1Content = doc1Chunks.map(c => c.content).join(' ').substring(0, 1000);
   const doc2Content = doc2Chunks.map(c => c.content).join(' ').substring(0, 1000);
   
-  // Use LLM to identify relationships
-  const analysisModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-  const relationshipPrompt = `
-Analyze the relationship between these two document excerpts in the context of the query: "${query}"
+  // Use OpenRouter for deep analysis with fallback to Gemini
+  const openRouterClient = new OpenRouterClient();
+  
+  const messages = [
+    {
+      role: 'user' as const,
+      content: `Analyze the relationship between these two document excerpts in the context of the query: "${query}"
 
 Document 1: ${doc1Content}
 
@@ -172,12 +176,23 @@ Return only: RELATIONSHIP_TYPE|STRENGTH_0_TO_1|EVIDENCE_PHRASE
 Examples:
 COMPLEMENTARY|0.8|Both discuss torque specifications for the same model
 SEQUENTIAL|0.9|Document 1 describes preparation, Document 2 describes execution
-NONE|0.2|Documents discuss unrelated topics
-`;
+NONE|0.2|Documents discuss unrelated topics`
+    }
+  ];
 
   try {
-    const result = await analysisModel.generateContent(relationshipPrompt);
-    const response = result.response.text().trim();
+    // Try OpenRouter models for deep analysis
+    const result = await openRouterClient.generateWithFallback(
+      MODEL_CONFIGS.DEEP_SEARCH,
+      messages,
+      {
+        max_tokens: 100,
+        temperature: 0.3
+      }
+    );
+    
+    console.log(`🔍 Deep search analysis using ${result.modelUsed}`);
+    const response = result.response.trim();
     const [type, strengthStr, evidence] = response.split('|');
     
     return {
@@ -185,9 +200,26 @@ NONE|0.2|Documents discuss unrelated topics
       strength: parseFloat(strengthStr) || 0,
       evidence: [evidence || 'No clear relationship found']
     };
-  } catch (error) {
-    console.error('Relationship analysis error:', error);
-    return { type: 'NONE', strength: 0, evidence: [] };
+    
+  } catch (openRouterError) {
+    console.warn('OpenRouter failed for deep search, using Gemini fallback:', openRouterError);
+    
+    try {
+      // Fallback to Gemini
+      const analysisModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      const result = await analysisModel.generateContent(messages[0].content);
+      const response = result.response.text().trim();
+      const [type, strengthStr, evidence] = response.split('|');
+      
+      return {
+        type: type || 'NONE',
+        strength: parseFloat(strengthStr) || 0,
+        evidence: [evidence || 'No clear relationship found']
+      };
+    } catch (error) {
+      console.error('Deep search relationship analysis failed:', error);
+      return { type: 'NONE', strength: 0, evidence: [] };
+    }
   }
 }
 

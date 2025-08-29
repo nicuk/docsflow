@@ -9,8 +9,12 @@ import { validateTenantContext } from '@/lib/api-tenant-validation';
 import { CitationEnhancer } from '@/lib/citation-enhancer';
 import { CircuitBreakerFactory } from '@/lib/circuit-breaker';
 import { degradationManager } from '@/lib/emergency-degradation';
+import { OpenRouterClient, MODEL_CONFIGS } from '@/lib/openrouter-client';
 
-// Initialize Google AI model
+// Initialize OpenRouter client for chat
+const openRouterClient = new OpenRouterClient();
+
+// Initialize Google AI model (keep as fallback)
 const googleAI = process.env.GOOGLE_GENERATIVE_AI_API_KEY 
   ? google('gemini-2.0-flash')
   : null;
@@ -111,20 +115,61 @@ export async function POST(request: NextRequest) {
     // Get tenant-specific prompt
     const tenantPrompt = await getTenantPrompt(tenantSubdomain);
     
-    // Generate final answer using LLM
-    const { text: answerText } = await generateText({
-      model: googleAI,
-      prompt: `${tenantPrompt}
-
-Context from documents:
-${context.map(ctx => `Source: ${ctx.source}\nContent: ${ctx.content}`).join('\n\n')}
+    // Generate final answer using OpenRouter with fallback
+    const contextText = context.map(ctx => `Source: ${ctx.source}\nContent: ${ctx.content}`).join('\n\n');
+    
+    const messages = [
+      {
+        role: 'system' as const,
+        content: tenantPrompt
+      },
+      {
+        role: 'user' as const,
+        content: `Context from documents:
+${contextText}
 
 User Question: ${message}
 
-Provide a helpful, accurate answer based ONLY on the provided context. If the context doesn't contain enough information, say so clearly. Include relevant details and be specific.`,
-      maxTokens: 500,
-      temperature: 0.1,
-    });
+Provide a helpful, accurate answer based ONLY on the provided context. If the context doesn't contain enough information, say so clearly. Include relevant details and be specific.`
+      }
+    ];
+
+    let answerText: string;
+    let modelUsed: string;
+    
+    try {
+      const llmResponse = await openRouterClient.generateWithFallback(
+        MODEL_CONFIGS.CHAT,
+        messages,
+        {
+          max_tokens: 500,
+          temperature: 0.1
+        }
+      );
+      
+      answerText = llmResponse.response;
+      modelUsed = llmResponse.modelUsed;
+      console.log(`🤖 Chat response generated using ${modelUsed} (${llmResponse.fallbackCount} fallbacks)`);
+      
+    } catch (openRouterError) {
+      console.warn('OpenRouter fallback chain failed, using Gemini:', openRouterError);
+      
+      // Fallback to Gemini if all OpenRouter models fail
+      if (!googleAI) {
+        throw new Error('No AI models available');
+      }
+      
+      const { text } = await generateText({
+        model: googleAI,
+        prompt: messages.map(m => m.content).join('\n\n'),
+        maxTokens: 500,
+        temperature: 0.1,
+      });
+      
+      answerText = text;
+      modelUsed = 'gemini-2.0-flash (emergency fallback)';
+      console.log('🚨 Used Gemini emergency fallback');
+    }
 
     // This section has been moved inside the circuit breaker logic above
 

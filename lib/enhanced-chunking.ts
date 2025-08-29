@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { withGeminiRateLimit } from '@/lib/api-rate-limiter';
+import { OpenRouterClient, MODEL_CONFIGS } from '@/lib/openrouter-client';
 
 interface ContextualChunk {
   content: string;
@@ -18,11 +19,13 @@ export class EnhancedChunking {
   private genAI: GoogleGenerativeAI;
   private embeddingModel: any;
   private textModel: any;
+  private openRouterClient: OpenRouterClient;
 
   constructor(apiKey: string) {
     this.genAI = new GoogleGenerativeAI(apiKey);
     this.embeddingModel = this.genAI.getGenerativeModel({ model: 'text-embedding-004' });
     this.textModel = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    this.openRouterClient = new OpenRouterClient();
   }
 
   /**
@@ -138,14 +141,17 @@ export class EnhancedChunking {
   }
 
   /**
-   * Generate document-level context with rate limiting
+   * Generate document-level context using OpenRouter with fallback
    */
-  private generateDocumentContext = withGeminiRateLimit(async (
+  private async generateDocumentContext(
     fullText: string, 
     title: string, 
     type?: string
-  ): Promise<string> => {
-    const prompt = `Analyze this document and provide a brief context summary in 50 words or less.
+  ): Promise<string> {
+    const messages = [
+      {
+        role: 'user' as const,
+        content: `Analyze this document and provide a brief context summary in 50 words or less.
 
 Document Title: ${title}
 Document Type: ${type || 'Unknown'}
@@ -156,22 +162,45 @@ Provide context that would help understand any section of this document. Focus o
 - Key topics or subjects covered
 - Document purpose or function
 
-Context:`;
+Context:`
+      }
+    ];
 
-    const result = await this.textModel.generateContent(prompt);
-    return result.response.text().trim();
-  });
+    try {
+      const response = await this.openRouterClient.generateWithFallback(
+        MODEL_CONFIGS.DOCUMENT_PROCESSING,
+        messages,
+        {
+          max_tokens: 100,
+          temperature: 0.3
+        }
+      );
+      
+      console.log(`📄 Document context generated using ${response.modelUsed}`);
+      return response.response.trim();
+      
+    } catch (error) {
+      console.warn('OpenRouter failed for document context, using Gemini fallback:', error);
+      
+      // Fallback to Gemini
+      const result = await this.textModel.generateContent(messages[0].content);
+      return result.response.text().trim();
+    }
+  }
 
   /**
-   * Generate chunk-specific context with rate limiting
+   * Generate chunk-specific context using OpenRouter with fallback
    */
-  private generateChunkContext = withGeminiRateLimit(async (
+  private async generateChunkContext(
     chunkContent: string,
     documentContext: string,
     previousChunk: string,
     nextChunk: string
-  ): Promise<string> => {
-    const prompt = `Explain what this section is about in 30 words or less.
+  ): Promise<string> {
+    const messages = [
+      {
+        role: 'user' as const,
+        content: `Explain what this section is about in 30 words or less.
 
 Document Context: ${documentContext}
 
@@ -181,11 +210,33 @@ Next section: ${nextChunk}
 
 What is this section specifically about? Focus on the main topic or purpose.
 
-Section Summary:`;
+Section Summary:`
+      }
+    ];
 
-    const result = await this.textModel.generateContent(prompt);
-    return result.response.text().trim();
-  });
+    try {
+      const response = await this.openRouterClient.generateWithFallback(
+        MODEL_CONFIGS.DOCUMENT_PROCESSING,
+        messages,
+        {
+          max_tokens: 50,
+          temperature: 0.2
+        }
+      );
+      
+      return response.response.trim();
+      
+    } catch (error) {
+      console.warn('OpenRouter failed for chunk context, using Gemini fallback:', error);
+      
+      // Fallback to Gemini with rate limiting
+      const result = await withGeminiRateLimit(async () => {
+        return await this.textModel.generateContent(messages[0].content);
+      })();
+      
+      return result.response.text().trim();
+    }
+  }
 
   /**
    * Calculate confidence indicators for better ranking

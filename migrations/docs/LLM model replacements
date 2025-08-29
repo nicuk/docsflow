@@ -1,0 +1,100 @@
+
+example of how to implement via typescript. but preferably we implement it via vercel, via API using same method as gemini.
+
+
+fetch("https://openrouter.ai/api/v1/chat/completions", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer <OPENROUTER_API_KEY>",
+    "HTTP-Referer": "<YOUR_SITE_URL>", // Optional. Site URL for rankings on openrouter.ai.
+    "X-Title": "<YOUR_SITE_NAME>", // Optional. Site title for rankings on openrouter.ai.
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    "model": "deepseek/deepseek-r1-distill-qwen-14b:free",
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is the meaning of life?"
+      }
+    ]
+  })
+});
+
+
+
+---
+
+## 1. 🤖 Chat Interface (User Q\&A)
+
+* **DeepSeek R1-Distill (7B–14B)** → **9/10**
+  Fast, free, good at simple Q\&A with reasoning inherited from R1. Best for high-volume, low-latency queries.
+* **Mistral 24B Instruct (96k ctx)** → **8.5/10**
+  Free, strong synthesis, large context, but slightly slower. Good mid-tier fallback.
+* **Gemini 2.0 Flash (paid fallback)** → **8/10**
+  Reliable baseline. Keep only for edge-cases or failover.
+
+---
+
+## 2. 🧠 Persona Generation (Onboarding)
+
+* **Gemini 2.0 Pro (paid)** → **9.5/10**
+  Still best for creativity + business context. Low usage volume makes cost negligible.
+* **Llama-4 Maverick (400B MoE)** → **8.5/10**
+  Free, very capable, creative, but heavier (slower). Can replace Gemini with testing.
+* **DeepHermes-3 (Llama-3 8B DPO)** → **7.5/10**
+  Aligned for role/persona tasks, but limited depth vs bigger models.
+
+---
+
+## 3. 🔍 Document Processing (Classification, Chunking, Metadata)
+
+* **DeepSeek R1-Distill Qwen-14B** → **9.5/10**
+  Free, efficient, excellent at structured outputs (JSON, tags). Ideal Gemini replacement.
+* **Optimus Alpha (OpenRouter tuned)** → **8.5/10**
+  Optimized for short API-like responses, good for metadata extraction.
+* **Mistral 7B Instruct** → **8/10**
+  Fast, good for classification + chunking, less reasoning depth than DeepSeek distill.
+
+---
+
+## 4. 🖼️ Image Processing (OCR, Diagrams)
+
+* **Gemini Vision (paid)** → **9.5/10**
+  Only proven reliable OCR + diagram parser at enterprise level. Volume is low (\~5%).
+* **Llama-4 Maverick (vision)** → **7.5/10**
+  Has multimodal support, can attempt simple image reasoning, unproven on OCR-heavy docs.
+* **Qwen-2.5-VL-3B** → **7/10**
+  Lightweight vision-text, decent for simple OCR, too weak for complex forms.
+
+---
+
+## 5. 📈 RAG Pipeline (Search + Answer)
+
+* **Quasar Alpha (OpenRouter reasoning)** → **9/10**
+  Great for reranking and query-context matching. Free + reasoning-tuned.
+* **Mistral 24B Instruct (96k ctx)** → **8.5/10**
+  Handles final synthesis over large doc sets, free and reliable.
+* **DeepSeek V3 Chat** → **8/10**
+  Tuned for multi-turn dialogue and context carryover, good for RAG answer generation.
+
+---
+
+## 6. 🎯 Deep Search (Complex Multi-Doc Analysis)
+
+* **DeepSeek R1T2 Chimera (671B MoE)** → **9.5/10**
+  State-of-the-art reasoning, 128k context, free. Perfect for multi-doc comparisons.
+* **Llama-4 Maverick (400B MoE, 256k ctx)** → **9/10**
+  Massive context window, high-quality analysis, free. Good for whole-document ingestion.
+* **Gemini 2.0 Pro (paid fallback)** → **8/10**
+  Reliable and consistent, but high cost. Keep as last resort.
+
+---
+
+✅ **Overall Strategy**:
+
+* High-volume tasks → **DeepSeek R1-Distill & Mistral 7B/24B**
+* Mid-complexity → **Quasar Alpha / Mistral 24B**
+* Heavy reasoning → **DeepSeek R1T2 / Llama-4 Maverick**
+* Gemini only for **personas + vision + failover**
+
