@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
                 value: accessToken
               });
               console.log('✅ [SESSION API] Using fallback access_token');
-            } else {
+            } else if (!isVercelBot) {
               console.warn('🚨 [SESSION API] No valid auth tokens found');
             }
             
