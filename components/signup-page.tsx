@@ -147,7 +147,7 @@ export default function SignupPage() {
           email: formData.email,
           password: formData.password,
           companyName: formData.companyName,
-          accessLevel: 3,
+          accessLevel: 2,
         }),
       });
       

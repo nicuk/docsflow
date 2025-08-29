@@ -20,11 +20,8 @@ interface InviteUserModalProps {
 }
 
 const ACCESS_LEVELS = {
-  1: { name: 'Public Access', description: 'Basic documents and info', color: 'bg-green-100 text-green-800' },
-  2: { name: 'Customer Access', description: 'Customer-specific content', color: 'bg-blue-100 text-blue-800' },
-  3: { name: 'Employee Access', description: 'Internal procedures and data', color: 'bg-purple-100 text-purple-800' },
-  4: { name: 'Manager Access', description: 'Financial and operational data', color: 'bg-orange-100 text-orange-800' },
-  5: { name: 'Executive Access', description: 'All sensitive information', color: 'bg-red-100 text-red-800' }
+  1: { name: 'Admin Access', description: 'Full system access and user management', color: 'bg-red-100 text-red-800' },
+  2: { name: 'User Access', description: 'Standard document access and features', color: 'bg-blue-100 text-blue-800' }
 };
 
 const DEPARTMENTS = [
@@ -33,7 +30,7 @@ const DEPARTMENTS = [
 
 export default function InviteUserModal({ isOpen, onClose, tenantInfo }: InviteUserModalProps) {
   const [email, setEmail] = useState('');
-  const [accessLevel, setAccessLevel] = useState<number>(3);
+  const [accessLevel, setAccessLevel] = useState<number>(2);
   const [department, setDepartment] = useState('');
   const [role, setRole] = useState('user');
   const [isLoading, setIsLoading] = useState(false);

@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
 
   try {
-    const { email, password, tenantId, accessLevel = 3, companyName } = await request.json();
+    const { email, password, tenantId, accessLevel = 2, companyName } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json(

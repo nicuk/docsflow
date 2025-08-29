@@ -39,7 +39,7 @@ class AuthClient {
   }
 
   // Register a new user
-  async register(email: string, password: string, companyName?: string, accessLevel: number = 3): Promise<AuthResponse> {
+  async register(email: string, password: string, companyName?: string, accessLevel: number = 2): Promise<AuthResponse> {
     const response = await fetch(`${this.baseUrl}/api/auth/register`, {
       method: 'POST',
       headers: {

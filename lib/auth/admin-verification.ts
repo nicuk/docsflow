@@ -106,13 +106,13 @@ export async function verifyTenantAdmin(
     const authIsAdmin = (
       authMetadata?.role === 'admin' &&
       authMetadata?.tenant_id === tenantId &&
-      (authMetadata?.access_level || 0) >= 5
+      (authMetadata?.access_level || 0) === 1
     );
 
     const dbIsAdmin = (
       dbRecord?.role === 'admin' &&
       dbRecord?.tenant_id === tenantId &&
-      (dbRecord?.access_level || 0) >= 5
+      (dbRecord?.access_level || 0) === 1
     );
 
     console.log('📊 Verification results:', {

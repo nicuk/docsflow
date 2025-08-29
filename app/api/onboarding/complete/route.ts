@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
         const { error: authUpdateError } = await supabase.auth.admin.updateUserById(userId, {
           user_metadata: {
             tenant_id: existingTenant.id,
-            access_level: 5,
+            access_level: 1,
             role: 'admin',
             onboarding_complete: true
           }
@@ -326,7 +326,7 @@ export async function POST(request: NextRequest) {
         .update({ 
           tenant_id: tenant.id,
           role: 'admin',
-          access_level: 5 // Admin level
+          access_level: 1 // Admin level
           // onboarding_complete tracked in user_metadata instead
         })
         .eq('id', userId)
@@ -353,7 +353,7 @@ export async function POST(request: NextRequest) {
       const { data: authUpdateData, error: authUpdateError } = await adminSupabase.auth.admin.updateUserById(userId, {
         user_metadata: {
           tenant_id: tenant.id,
-          access_level: 5,
+          access_level: 1,
           role: 'admin',
           onboarding_complete: true
         }
@@ -586,7 +586,7 @@ Create a JSON response with:
         id: userId,
         email: email,
         role: 'admin',
-        access_level: 5,
+        access_level: 1,
         tenant_id: tenant.id
       },
       redirectUrl: `/domain-created?subdomain=${tenant.subdomain}&company=${encodeURIComponent(businessName || tenant.display_name || 'Your Business')}`,

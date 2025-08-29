@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
 
     let userId;
     let tenantId;
-    let accessLevel = 3;
+    let accessLevel = 2;
 
     if (existingUser) {
       // User exists, sign them in

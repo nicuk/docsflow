@@ -318,7 +318,7 @@ const tenantAssignment = {
         industryConfidence: industryAnalysis.confidence,
         industryReason: industryAnalysis.reason,
         subdomain: selectedDomain || finalDomain, // Use user's selected domain, not industry-based
-        accessLevel: userRole === 'admin' ? 1 : 3, // Level 1 for admin, Level 3 for technician
+        accessLevel: userRole === 'admin' ? 1 : 2, // Level 1 for admin, Level 2 for user
         userRole: userRole,
         isNewTenant: !isJoiningExisting,
         onboardingComplete: true,
@@ -430,7 +430,7 @@ const tenantAssignment = {
         businessType: onboardingData?.displayName || allResponses.business_overview?.substring(0, 100) + "...",
         industry: onboardingData?.industry || determineIndustry(allResponses.business_overview || ''),
         subdomain: selectedDomain, // Use selected domain in fallback too
-        accessLevel: 3,
+        accessLevel: 2,
         onboardingComplete: true
       };
 
@@ -611,7 +611,7 @@ const tenantAssignment = {
               tenantId: customPersonality.tenantDomain,
               industry: customPersonality.industry || 'general',
               businessType: customPersonality.businessType || 'Business Intelligence Platform',
-              accessLevel: customPersonality.accessLevel || 3,
+              accessLevel: customPersonality.accessLevel || 2,
               onboardingComplete: true,
               responses: responses // Store actual responses for dashboard use
             };
@@ -845,7 +845,7 @@ const tenantAssignment = {
                     tenantId: customPersonality.tenantDomain,
                     industry: customPersonality.industry || 'general',
                     businessType: customPersonality.businessType || 'Business Intelligence Platform',
-                    accessLevel: customPersonality.accessLevel || 3,
+                    accessLevel: customPersonality.accessLevel || 2,
                     onboardingComplete: true,
                     responses: responses // Store actual responses for dashboard use
                   };

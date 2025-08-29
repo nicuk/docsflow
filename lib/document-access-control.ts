@@ -3,9 +3,9 @@
  * Provides real organizational value through role-based access
  */
 
-export type DocumentClassification = 'public' | 'private' | 'shared' | 'restricted';
+export type DocumentClassification = 'admin_only' | 'user_accessible';
 
-export type UserRole = 'guest' | 'employee' | 'team_lead' | 'manager' | 'admin';
+export type UserRole = 'admin' | 'user';
 
 export interface DocumentAccessPolicy {
   classification: DocumentClassification;
@@ -19,10 +19,8 @@ export interface DocumentAccessPolicy {
  * Access matrix: minimum level required for each classification
  */
 const ACCESS_MATRIX: Record<DocumentClassification, number> = {
-  'public': 1,        // Everyone including guests
-  'private': 2,       // Document owner and above
-  'shared': 3,        // Team leads and above
-  'restricted': 4     // Managers and above
+  'admin_only': 1,      // Only admins can access
+  'user_accessible': 2  // All users can access
 };
 
 /**
@@ -83,46 +81,28 @@ export function suggestClassification(
   const lowerContent = content.toLowerCase();
   const lowerFilename = filename.toLowerCase();
   
-  // Restricted indicators (highest sensitivity)
+  // Admin-only indicators (sensitive/restricted content)
   if (
     lowerContent.includes('confidential') ||
     lowerContent.includes('secret') ||
     lowerContent.includes('restricted') ||
     lowerContent.includes('sensitive') ||
+    lowerContent.includes('private') ||
+    lowerContent.includes('personal') ||
     lowerFilename.includes('contract') ||
     lowerFilename.includes('legal') ||
     lowerFilename.includes('financial') ||
     lowerFilename.includes('hr') ||
     lowerFilename.includes('salary') ||
-    lowerFilename.includes('performance')
+    lowerFilename.includes('performance') ||
+    lowerFilename.includes('admin') ||
+    lowerFilename.includes('internal')
   ) {
-    return 'restricted';
+    return 'admin_only';
   }
   
-  // Private indicators (personal/owner only)
-  if (
-    lowerContent.includes('private') ||
-    lowerContent.includes('personal') ||
-    lowerFilename.includes('draft') ||
-    lowerFilename.includes('temp') ||
-    lowerFilename.includes('wip')
-  ) {
-    return 'private';
-  }
-  
-  // Public indicators
-  if (
-    lowerFilename.includes('public') ||
-    lowerFilename.includes('marketing') ||
-    lowerFilename.includes('blog') ||
-    lowerFilename.includes('press') ||
-    lowerFilename.includes('announcement')
-  ) {
-    return 'public';
-  }
-  
-  // Default to shared for general documents
-  return 'shared';
+  // Default to user accessible for all other documents
+  return 'user_accessible';
 }
 
 /**

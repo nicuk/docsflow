@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Shield, ArrowLeft } from "lucide-react"
 import BackendStatus from "@/components/backend-status"
 import { SecurityMonitor } from "@/components/security-monitor"
+import { SystemHealthMonitor } from "@/components/system-health-monitor"
+import { UserAccessManager } from "@/components/admin/user-access-manager"
 import Link from "next/link"
 
 interface TenantContext {
@@ -139,6 +141,16 @@ export default function AdminDashboard() {
           <div>
             <SecurityMonitor />
           </div>
+        </div>
+
+        {/* User Access Management */}
+        <div className="mt-6">
+          <UserAccessManager />
+        </div>
+
+        {/* System Health Monitor */}
+        <div className="mt-6">
+          <SystemHealthMonitor />
         </div>
 
         {/* Admin Actions */}

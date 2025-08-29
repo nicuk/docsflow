@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { FileText, MessageSquare, Clock, TrendingUp } from "lucide-react"
 import { useProgressiveLoading } from "@/hooks/use-progressive-loading"
 import { useEffect, useState } from "react"
+import { useDocuments, useConversations } from "@/lib/queries/documents"
 
 interface StatsData {
   totalDocuments: number
@@ -20,11 +21,15 @@ const loadingStages = [
   { id: 'insights', name: 'Generating insights', delay: 1200, priority: 4 }
 ]
 
-export function ProgressiveStats() {
+export function ProgressiveStats({ tenantId }: { tenantId?: string }) {
   const { isStageComplete, isStageActive } = useProgressiveLoading({ 
     stages: loadingStages,
     autoStart: true 
   })
+  
+  // 🚀 PERFORMANCE FIX: Use cached React Query data instead of separate API calls
+  const { data: documents = [] } = useDocuments(tenantId)
+  const { data: conversations = [] } = useConversations(tenantId)
   
   const [stats, setStats] = useState<StatsData>({
     totalDocuments: 0,

@@ -198,30 +198,44 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
         return;
       }
       
-      // SURGICAL FIX: Use existing invitation request system
-      const response = await fetch('/api/invitations/request', {
+      // Use enhanced access request system with admin dashboard integration  
+      const userName = localStorage.getItem('user-name') || 
+                      localStorage.getItem('user_name') || 
+                      companyName || 'Unknown User';
+      
+      const response = await fetch('/api/access-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          subdomain: existingTenant.subdomain,
+          tenantSubdomain: existingTenant.subdomain,
           userEmail: userEmail,
-          companyName: existingTenant.name,
-          message: `Requesting access to join ${existingTenant.name} workspace`,
-          requestType: 'join_existing'
+          userName: userName,
+          requestedRole: 'user',
+          requestedAccessLevel: 3,
+          requestReason: `Requesting access to join ${existingTenant.name} workspace during onboarding`
         })
       });
 
-      if (response.ok) {
-        // Show success message and redirect
-        alert('Access request sent! The organization admin will review your request and send you an invitation.');
+      const responseData = await response.json();
+
+      if (response.ok && responseData.success) {
+        // Show success message based on response
+        if (responseData.status === 'submitted') {
+          alert('✅ Access request submitted successfully! The organization admin will review your request and notify you via email.');
+        } else if (responseData.status === 'pending') {
+          alert('ℹ️ You already have a pending access request for this organization. Please wait for admin approval.');
+        }
         
-        // Redirect to main domain to avoid subdomain issues
+        // Redirect to main domain with success message
         setTimeout(() => {
           window.location.href = 'https://docsflow.app/login?message=access_requested';
         }, 2000);
+      } else if (responseData.status === 'already_member') {
+        // User is already a member - redirect to login
+        alert('You are already a member of this organization. Please sign in.');
+        window.location.href = responseData.redirectUrl || `https://${existingTenant.subdomain}.docsflow.app/login`;
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to send request');
+        throw new Error(responseData.error || 'Failed to send request');
       }
     } catch (error) {
       console.error('Access request error:', error);

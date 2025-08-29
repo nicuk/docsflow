@@ -230,7 +230,7 @@ export default function DashboardPage() {
           tenantSubdomain: userData.tenant?.subdomain || '',
           industry: userData.tenant?.industry || 'general',
           businessType: userData.tenant?.industry || 'General Business',
-          accessLevel: 3, // Default access level
+          accessLevel: 2, // Default access level (user)
           onboardingComplete: userData.onboardingComplete
         };
 
@@ -633,9 +633,8 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <Label className="text-sm font-medium">Access Level</Label>
-                      <Badge variant={tenantContext?.accessLevel === 2 ? "default" : "secondary"}>
-                        {tenantContext?.accessLevel === 1 ? 'Admin' : 
-                         tenantContext?.accessLevel === 2 ? 'Manager' : 'User'}
+                      <Badge variant={tenantContext?.accessLevel === 1 ? "destructive" : "default"}>
+                        {tenantContext?.accessLevel === 1 ? 'Admin' : 'User'}
                       </Badge>
                     </div>
                   </div>
@@ -648,13 +647,6 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   {tenantContext?.accessLevel === 2 && (
-                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                      <p className="text-sm text-blue-700">
-                        <strong>Manager Access:</strong> You can view the AI configuration. Contact your admin to request persona modifications.
-                      </p>
-                    </div>
-                  )}
-                  {tenantContext?.accessLevel === 3 && (
                     <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                       <p className="text-sm text-gray-600">
                         <strong>User Access:</strong> You can view and use the AI assistant. Speak with management for configuration changes.

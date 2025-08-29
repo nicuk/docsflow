@@ -1,0 +1,28 @@
+[33mcommit 62c1b9c1bfa277d5a3a7a195898be4c04be9c006[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: nicuk <38361528+nicuk@users.noreply.github.com>
+Date:   Fri Aug 29 06:33:22 2025 +0800
+
+    Fix cookie name mismatch in middleware - add fallbacks for user-email and sb-auth-token
+
+BRUTAL_ARCHITECTURE_ANALYSIS.md
+ENTERPRISE_ARCHITECTURE_SPRINT_PLANV2.MD
+ENTERPRISE_ARCHITECTURE_SPRINT_PLANV3.md
+INTEGRATION_TEST_PROMPT_V2.md
+RAG_INTEGRATION_STRATEGY.md
+app/api/documents/[id]/content/route.ts
+app/api/rag-enhanced/route.ts
+app/dashboard/documents/page.tsx
+components/dashboard/progressive-stats.tsx
+components/dashboard/stats-skeleton.tsx
+components/documents/upload-zone.tsx
+constants/document-sample-data.ts
+hooks/use-progressive-loading.ts
+lib/citation-enhancer.ts
+lib/document-utils.tsx
+lib/rag-pipeline-factory.ts
+lib/schema-aligned-cookies.ts
+middleware.ts
+next-env.d.ts
+test-tenant-lookup.js
+test-tenant-manager.js
+test-tenant-validation-fix.js

@@ -7,6 +7,8 @@ import { ConfidenceScoring } from '@/lib/confidence-scoring';
 import { RAGPipelineFactory } from '@/lib/rag-pipeline-factory';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
 import { CitationEnhancer } from '@/lib/citation-enhancer';
+import { CircuitBreakerFactory } from '@/lib/circuit-breaker';
+import { degradationManager } from '@/lib/emergency-degradation';
 
 // Initialize Google AI model
 const googleAI = process.env.GOOGLE_GENERATIVE_AI_API_KEY 
@@ -42,6 +44,9 @@ export async function POST(request: NextRequest) {
     if (!googleAI) {
       return NextResponse.json({ error: 'AI service not configured' }, { status: 500 });
     }
+
+    // 🚨 CIRCUIT BREAKER: Get AI circuit breaker
+    const aiCircuitBreaker = CircuitBreakerFactory.getGoogleAI();
 
     // Parse request body
     const { message, documentIds, conversationId } = await request.json();
@@ -121,48 +126,7 @@ Provide a helpful, accurate answer based ONLY on the provided context. If the co
       temperature: 0.1,
     });
 
-    // Calculate enhanced confidence
-    const enhancedConfidence = ConfidenceScoring.calculateEnhancedConfidence(
-      context,
-      message,
-      answerText
-    );
-
-    // 🚀 ENHANCE: Add inline citations to response
-    const citedResponse = CitationEnhancer.enhanceWithCitations(
-      answerText,
-      context.map((ctx: any) => ({
-        filename: ctx.source,
-        content: ctx.content,
-        document_id: ctx.document_id,
-        confidence: enhancedConfidence.score
-      }))
-    );
-
-    const responseTime = Date.now() - startTime;
-
-    return NextResponse.json({
-      answer: citedResponse.text, // ✅ Now includes [1], [2] citations
-      citations: citedResponse.citations, // ✅ Structured citations data
-      sources: context.map((ctx: any) => ({
-        filename: ctx.source,
-        content: ctx.content.substring(0, 200) + '...',
-        document_id: ctx.document_id
-      })),
-      confidence: enhancedConfidence.score,
-      confidence_level: enhancedConfidence.level,
-      confidence_explanation: enhancedConfidence.explanation,
-      confidence_factors: enhancedConfidence.factors,
-      recommendations: enhancedConfidence.recommendations,
-      responseTime,
-      metadata: {
-        chunksFound: context.length,
-        strategy: ragResponse.metadata?.strategy || 'unified_rag',
-        unifiedPipeline: true,
-        inlineCitations: true, // ✅ Feature flag
-        improvements: ragResponse.metadata?.improvements || {}
-      }
-    }, { headers: corsHeaders });
+    // This section has been moved inside the circuit breaker logic above
 
   } catch (error: any) {
     console.error('Chat API error:', error);

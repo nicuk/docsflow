@@ -717,9 +717,9 @@ Please try again in a moment. If the issue persists, you can still use the inter
                                         className="flex items-start space-x-2 text-left w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                                         onClick={() => {
                                           setSelectedSource({
-                                            filename: source.filename || source.document || 'Unknown Document',
-                                            content: source.content || source.snippet || '',
-                                            document_id: source.document_id || `temp-${idx}`, // 🔧 FIX: Use real document ID
+                                            filename: source.document || 'Unknown Document',
+                                            content: source.snippet || '',
+                                            document_id: `temp-${idx}`, // Use temp ID since document_id not available
                                             page: source.page,
                                             confidence: source.confidence
                                           });
