@@ -548,7 +548,7 @@ export default function DashboardPage() {
         {/* 🚀 PROGRESSIVE LOADING: Stats load in stages for better UX */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-fit">
           <div className="lg:col-span-3">
-            <ProgressiveStats />
+            <ProgressiveStats tenantId={tenantContext?.tenantId} />
           </div>
           
           {/* Quick Action - 1 column */}

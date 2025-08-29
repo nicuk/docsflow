@@ -3,11 +3,20 @@
  * 
  * This utility ensures cookies align with database schema and actual usage:
  * - tenants.id (UUID) → tenant-id cookie (read by middleware)
- * - users.email (text) → user-email cookie (read by middleware)
+ * - users.email (text) → user-email cookie (read by middleware)  
  * - Supabase session tokens → access_token/refresh_token
  * 
- * NOTE: tenant subdomain is handled via x-tenant-subdomain HEADER (not cookie)
- * set by middleware for API consumption
+ * 🔒 CRITICAL SECURITY PRINCIPLE:
+ * Access levels should come from database queries, NOT cookies
+ * - users.access_level: Stored in database only
+ * - users.role: Fetched via /api/auth/session endpoint
+ * - Frontend should NEVER trust localStorage/cookies for access control
+ * 
+ * 🏗️ ARCHITECTURE NOTES:
+ * - tenant subdomain: Handled via x-tenant-subdomain HEADER (not cookie)
+ * - middleware.ts: Reads tenant-id cookie for routing decisions  
+ * - Database schema: tenants.id is UUID, tenants.subdomain is text
+ * - Cookie format: tenant-id=<UUID> (matches tenants.id exactly)
  */
 
 interface TenantContext {
@@ -15,6 +24,27 @@ interface TenantContext {
   subdomain: string;     // text from tenants.subdomain - NOT stored as cookie (header only)
   userEmail: string;     // text from users.email - stored in user-email cookie
 }
+
+/**
+ * 🚨 SECURITY WARNING: ACCESS CONTROL IMPLEMENTATION
+ * 
+ * Access levels are NEVER stored in cookies or localStorage for security reasons:
+ * 
+ * ✅ CORRECT APPROACH:
+ * 1. Store only tenant-id (UUID) and user-email in cookies
+ * 2. Fetch user.role and access_level from database via /api/auth/session
+ * 3. Map role to access level: 'admin' = 1, 'user' = 2
+ * 
+ * ❌ NEVER DO THIS:
+ * - localStorage.setItem('accessLevel', '1') // Can be manipulated
+ * - document.cookie = 'access_level=1' // Client-side modifiable
+ * - Trust frontend context for admin checks // Major security flaw
+ * 
+ * 📊 DATABASE SCHEMA REFERENCE:
+ * - users.access_level: integer NOT NULL DEFAULT 2 CHECK (>= 1 AND <= 2)
+ * - users.role: text DEFAULT 'user' CHECK (role IN ('admin', 'user', 'viewer'))
+ * - tenants.id: uuid (PRIMARY KEY) - what goes in tenant-id cookie
+ */
 
 interface AuthTokens {
   accessToken: string;
@@ -131,7 +161,8 @@ export class SchemaAlignedCookieManager {
       tenantId: context.tenantId.substring(0, 8) + '...',
       subdomain: context.subdomain,
       email: context.userEmail,
-      hasTokens: !!tokens.accessToken
+      hasTokens: !!tokens.accessToken,
+      note: 'Access levels fetched from database, not cookies'
     });
   }
   
@@ -160,6 +191,52 @@ export class SchemaAlignedCookieManager {
   }
   
   /**
+   * 🔒 SECURE ACCESS LEVEL FETCHER
+   * 
+   * Use this instead of localStorage or cookie-based access checks
+   * Always fetches fresh data from database to prevent privilege escalation
+   */
+  static async getSecureUserAccess(): Promise<{
+    isAdmin: boolean;
+    accessLevel: number;
+    role: string;
+    tenantId: string | null;
+    error?: string;
+  }> {
+    try {
+      const response = await fetch('/api/auth/session');
+      const sessionData = await response.json();
+      
+      if (!sessionData.authenticated || !sessionData.user) {
+        return {
+          isAdmin: false,
+          accessLevel: 2,
+          role: 'user',
+          tenantId: null,
+          error: 'Not authenticated'
+        };
+      }
+      
+      const isAdmin = sessionData.user.role === 'admin';
+      return {
+        isAdmin,
+        accessLevel: isAdmin ? 1 : 2, // Map role to access level
+        role: sessionData.user.role,
+        tenantId: sessionData.tenantId || null
+      };
+    } catch (error) {
+      console.error('🚨 [SECURITY] Failed to fetch secure access data:', error);
+      return {
+        isAdmin: false,
+        accessLevel: 2,
+        role: 'user', 
+        tenantId: null,
+        error: 'Session fetch failed'
+      };
+    }
+  }
+  
+  /**
    * DEBUG: Log current cookie state for troubleshooting
    */
   static debugCookieState(): void {
@@ -171,7 +248,8 @@ export class SchemaAlignedCookieManager {
     console.log(`🔍 [COOKIE DEBUG] Validation:`, {
       hasValidTenantId: current.tenantId ? /^[0-9a-f-]{36}$/i.test(current.tenantId) : false,
       hasValidEmail: current.userEmail ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(current.userEmail) : false,
-      currentSubdomain: window.location.hostname.split('.')[0] // subdomain from URL, not cookies
+      currentSubdomain: window.location.hostname.split('.')[0], // subdomain from URL, not cookies
+      securityNote: 'Use getSecureUserAccess() for access control, not these cookies!'
     });
   }
 }

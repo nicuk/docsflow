@@ -65,20 +65,24 @@ class AuthClient {
       localStorage.setItem('refresh_token', data.user.refresh_token);
       localStorage.setItem('user', JSON.stringify(data.user));
       
-      // STANDARDIZED: Use Supabase and schema-aligned cookie names
-      document.cookie = `access_token=${data.user.access_token}; path=/; secure; samesite=strict`;
-      // Set user email with standardized name
-      document.cookie = `user_email=${data.user.email}; path=/; secure; samesite=strict`;
-      // Use tenant UUID for cookie (schema-aligned)
+      // SCHEMA-ALIGNED: Use SchemaAlignedCookieManager
+      const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
+      
       const tenantId = data.user.tenant_id;
       const tenantSubdomain = data.user.tenant?.subdomain || data.tenant?.subdomain;
-      if (tenantId) {
-        // Set tenant UUID (schema primary key)
-        document.cookie = `tenant-id=${tenantId}; path=/; secure; samesite=strict`;
-      }
-      if (tenantSubdomain) {
-        // Set tenant subdomain for routing
-        document.cookie = `tenant-subdomain=${tenantSubdomain}; path=/; secure; samesite=strict`;
+      
+      if (tenantId && tenantSubdomain && data.user.email) {
+        SchemaAlignedCookieManager.setSchemaAlignedCookies(
+          {
+            tenantId: tenantId,
+            subdomain: tenantSubdomain, 
+            userEmail: data.user.email
+          },
+          {
+            accessToken: data.user.access_token,
+            refreshToken: data.user.refresh_token
+          }
+        );
       }
     }
 

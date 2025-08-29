@@ -43,7 +43,7 @@ const navigationItems = [
   { name: 'Dashboard', href: '/dashboard', icon: Home, badge: null, requiresAdmin: false },
   { name: 'Documents', href: '/dashboard/documents', icon: FileText, badge: null, requiresAdmin: false },
   { name: 'Chat Assistant', href: '/dashboard/chat', icon: MessageSquare, badge: null, requiresAdmin: false },
-  { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, badge: null, requiresAdmin: false },
+
   { name: 'System Health', href: '/dashboard/health', icon: Shield, badge: null, requiresAdmin: true },
   { name: 'User Access', href: '/dashboard/admin', icon: Users, badge: null, requiresAdmin: true },
   { name: 'User Management', href: '/admin/users', icon: Shield, badge: null, requiresAdmin: true },

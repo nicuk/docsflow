@@ -29,36 +29,41 @@ export default function AdminDashboard() {
   useEffect(() => {
     const checkAdminAccess = () => {
       try {
-        // Get tenant ID from cookie
+        // SCHEMA-ALIGNED: Get tenant ID from cookie (UUID format)
         const tenantId = document.cookie
           .split('; ')
           .find(row => row.startsWith('tenant-id='))
           ?.split('=')[1]
 
         if (tenantId) {
-          const storedContext = localStorage.getItem(`tenant-${tenantId}`)
-          
-          if (storedContext) {
-            const context = JSON.parse(storedContext)
-            setTenantContext(context)
-            
-            // Check if user has admin access (accessLevel 1)
-            if (context.accessLevel === 1) {
-              setIsAuthorized(true)
-            } else {
-              // Redirect non-admin users
-              router.push('/dashboard')
-              return
-            }
-          } else {
-            // No context, redirect to login
-            router.push('/login')
-            return
-          }
+          // SECURITY: Use schema-aligned secure access checker
+          import('@/lib/schema-aligned-cookies').then(({ SchemaAlignedCookieManager }) => {
+            SchemaAlignedCookieManager.getSecureUserAccess().then(userAccess => {
+              if (userAccess.error || !userAccess.isAdmin) {
+                console.log('❌ [ADMIN] Access denied:', userAccess.error || 'Not an admin');
+                router.push('/dashboard');
+                return;
+              }
+              
+              const context = {
+                tenantId: userAccess.tenantId || tenantId,
+                subdomain: 'unknown', // Will be populated by header from middleware
+                accessLevel: userAccess.accessLevel,
+                onboardingComplete: !!userAccess.tenantId
+              };
+              
+              setTenantContext(context);
+              setIsAuthorized(true);
+              console.log('✅ [ADMIN] Access granted:', { role: userAccess.role, level: userAccess.accessLevel });
+            });
+          }).catch(error => {
+            console.error('Failed to check admin access:', error);
+            router.push('/login');
+          });
         } else {
           // No tenant ID, redirect to login
-          router.push('/login')
-          return
+          router.push('/login');
+          return;
         }
       } catch (error) {
         console.error('Failed to check admin access:', error)

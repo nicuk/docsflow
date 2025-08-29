@@ -358,9 +358,11 @@ const tenantAssignment = {
           // CRITICAL: Set cookies that dashboard layout expects (backend already sets these, but ensure they're set)
           document.cookie = `user-email=${userData.email}; path=/; max-age=${60 * 60 * 24 * 7}`;
           document.cookie = `user-name=${userData.name}; path=/; max-age=${60 * 60 * 24 * 7}`;
-          // Set tenant cookie with subdomain (not UUID) for proper redirects
-          const tenantSubdomain = personality.tenant?.subdomain || tenantAssignment.subdomain;
-          document.cookie = `tenant-id=${tenantSubdomain}; path=/; max-age=${60 * 60 * 24 * 7}; secure; samesite=strict`;
+          // SCHEMA-ALIGNED: Set tenant cookie with UUID (matches schema)
+          const tenantId = userData.tenant_id || personality.tenant?.id;
+          if (tenantId) {
+            document.cookie = `tenant-id=${tenantId}; path=/; max-age=${60 * 60 * 24 * 7}; secure; samesite=strict`;
+          }
           document.cookie = `onboarding-complete=true; path=/; max-age=${60 * 60 * 24 * 7}`;
           
           // Also store in localStorage for persistence
