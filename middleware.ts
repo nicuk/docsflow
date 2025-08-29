@@ -435,8 +435,8 @@ export default async function middleware(request: NextRequest) {
       
       if (authToken && userEmail && storedTenantId) {
         console.log(`🔍 [MIDDLEWARE] User authenticated, resolving tenant: ${storedTenantId}`);
-        // Get tenant subdomain from TenantContextManager
-        const tenantInfo = await TenantContextManager.resolveTenant(storedTenantId);
+        // Get tenant subdomain from TenantContextManager using UUID (tenant-id cookie contains UUID)
+        const tenantInfo = await TenantContextManager.resolveTenantByUUID(storedTenantId);
         console.log(`🔍 [MIDDLEWARE] Tenant resolution result:`, tenantInfo);
         if (tenantInfo?.subdomain) {
           const tenantUrl = `https://${tenantInfo.subdomain}.docsflow.app${pathname}`;
