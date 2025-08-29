@@ -25,6 +25,18 @@ WHERE access_level NOT IN (1, 2) OR
       (role = 'admin' AND access_level != 1) OR
       (role IN ('user', 'viewer') AND access_level != 2);
 
+-- CRITICAL FIX: Document chunks defaulting to admin-only (level 1) makes them inaccessible
+-- Update existing document chunks to user-accessible level (2) unless explicitly admin-only
+UPDATE document_chunks 
+SET access_level = 2 
+WHERE access_level = 1 
+  AND NOT EXISTS (
+    -- Keep admin-only if document is explicitly admin-only
+    SELECT 1 FROM documents d 
+    WHERE d.id = document_chunks.document_id 
+    AND d.access_level = 'admin_only'
+  );
+
 -- Audit: Log the changes
 INSERT INTO analytics_events (
   tenant_id, 

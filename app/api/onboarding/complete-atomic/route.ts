@@ -97,10 +97,14 @@ export async function POST(request: NextRequest) {
         throw tenantError;
       }
       
-      // Update user with tenant_id
+      // Update user with tenant_id and admin access level
       const { error: userError } = await supabaseAdmin
         .from('users')
-        .update({ tenant_id: newTenantId, role: 'admin' })
+        .update({ 
+          tenant_id: newTenantId, 
+          role: 'admin',
+          access_level: 1  // Admin level in 1-2 system
+        })
         .eq('id', userId);
       
       if (userError) throw userError;
@@ -108,35 +112,30 @@ export async function POST(request: NextRequest) {
       tenantId = newTenantId;
     }
 
-    // Now call the 2-parameter function for onboarding responses
-    const { data: result, error: transactionError } = await supabaseAdmin.rpc('complete_onboarding_atomic', {
-      p_user_id: userId,
-      p_responses: {
-        subdomain: cleanSubdomain,
-        business_name: businessName || cleanSubdomain,
-        industry: industry || 'technology',
-        ...responses
-      }
-    });
+    // Store onboarding responses directly (no database function needed)
+    if (responses && Object.keys(responses).length > 0) {
+      const { error: responsesError } = await supabaseAdmin
+        .from('onboarding_responses')
+        .insert({
+          user_id: userId,
+          tenant_id: tenantId,
+          responses: {
+            subdomain: cleanSubdomain,
+            business_name: businessName || cleanSubdomain,
+            industry: industry || 'technology',
+            ...responses
+          }
+        })
+        .select()
+        .single();
 
-    if (transactionError) {
-      console.error('Transaction error:', transactionError);
-      
-      // Handle specific error cases
-      if (transactionError.message?.includes('already exists')) {
-        return NextResponse.json(
-          { error: 'Subdomain already taken' },
-          { status: 409, headers: corsHeaders }
-        );
+      if (responsesError) {
+        console.warn('Failed to store onboarding responses:', responsesError.message);
+        // Don't fail the entire onboarding for this
       }
-      
-      return NextResponse.json(
-        { error: 'Failed to complete onboarding', details: transactionError.message },
-        { status: 500, headers: corsHeaders }
-      );
     }
 
-    // Update result to include tenant info
+    // Create success result
     const response = createResponseWithSessionCookies(
       {
         success: true,
