@@ -131,42 +131,60 @@ export async function POST(request: NextRequest) {
     // Since onboarding_complete column doesn't exist, check if user has tenant_id
     const hasCompletedOnboarding = userProfile?.tenant_id ? true : false;
     
-    // CRITICAL FIX: Use cookie utility for proper domain handling
-    const { createResponseWithSessionCookies } = await import('@/lib/cookie-utils');
+    // 🚨 SECURITY FIX #1: Use schema-aligned cookie management
+    const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
     
-    const response = createResponseWithSessionCookies({
+    if (!userProfile?.tenant_id || !userProfile.tenants) {
+      return NextResponse.json(
+        { error: 'User profile incomplete - tenant information missing' },
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    const tenantContext = {
+      tenantId: userProfile.tenant_id,
+      subdomain: (userProfile.tenants as any).subdomain,
+      userEmail: authData.user.email!
+    };
+
+    const tokens = {
+      accessToken: authData.session.access_token,
+      refreshToken: authData.session.refresh_token
+    };
+
+    // Clear any existing contaminated cookies first
+    SchemaAlignedCookieManager.clearAllAuthCookies();
+    
+    // Set standardized, validated cookies
+    SchemaAlignedCookieManager.setSchemaAlignedCookies(tenantContext, tokens);
+    
+    const response = NextResponse.json({
       success: true,
       user: {
         id: authData.user.id,
         email: authData.user.email,
-        tenant_id: userProfile?.tenant_id,
-        role: userProfile?.role,
-        access_level: userProfile?.access_level,
+        tenant_id: userProfile.tenant_id,
+        role: userProfile.role,
+        access_level: userProfile.access_level,
         onboarding_complete: hasCompletedOnboarding
       },
-      tenant: userProfile?.tenant_id && userProfile.tenants ? {
+      tenant: {
         id: (userProfile.tenants as any).id,
         subdomain: (userProfile.tenants as any).subdomain,
         name: (userProfile.tenants as any).name,
         industry: (userProfile.tenants as any).industry
-      } : null,
-      message: 'Login successful'
-    }, {
-      userEmail: authData.user.email,
-      userName: userProfile?.name || authData.user.email?.split('@')[0] || 'User',
-      tenantId: userProfile?.tenant_id ? (userProfile.tenants as any)?.subdomain : undefined,
-      onboardingComplete: hasCompletedOnboarding,
-      rememberMe: rememberMe || false
-    });
+      },
+      message: 'Login successful - schema-aligned cookies set'
+    }, { headers: corsHeaders });
     
-    // Also set auth tokens with proper domain and remember me duration
+    // Also set server-side cookies for immediate session compatibility
     const authCookieStore = await cookies();
     
     // REMEMBER ME FIX: Set cookie duration based on user preference
-    const authTokenMaxAge = rememberMe ? (60 * 60 * 24 * 30) : (authData.session.expires_in || 3600); // 30 days or session
-    const refreshTokenMaxAge = rememberMe ? (60 * 60 * 24 * 30) : (60 * 60 * 24 * 7); // 30 days or 7 days
+    const authTokenMaxAge = rememberMe ? (60 * 60 * 24 * 30) : (authData.session.expires_in || 3600);
+    const refreshTokenMaxAge = rememberMe ? (60 * 60 * 24 * 30) : (60 * 60 * 24 * 7);
     
-    // STANDARDIZED: Use Supabase-standard cookie names
+    // Set server-side cookies in standardized format
     authCookieStore.set('access_token', authData.session.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

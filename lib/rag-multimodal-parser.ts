@@ -108,8 +108,12 @@ export class MultimodalDocumentParser {
     try {
       // Use Gemini Vision for OCR and understanding
       const base64Image = buffer.toString('base64');
+      
+      // Get business context for enhanced extraction
+      const businessPrompt = await this.getBusinessContextPrompt();
+      
       const result = await this.model.generateContent([
-        'Extract all text from this image. If there are tables, format them clearly. If there are diagrams, describe them.',
+        businessPrompt,
         {
           inlineData: {
             mimeType,
@@ -295,5 +299,69 @@ export class MultimodalDocumentParser {
     }
     
     return chunks;
+  }
+
+  /**
+   * Get business-context aware prompt for vision processing
+   */
+  private async getBusinessContextPrompt(): Promise<string> {
+    try {
+      // Get tenant information for business context
+      const { data: tenant } = await this.supabase
+        .from('tenants')
+        .select('industry, name')
+        .eq('id', this.tenantId)
+        .single();
+
+      if (tenant?.industry) {
+        const industryPrompts = {
+          motorcycle_dealer: `Extract text from this motorcycle dealership document image. Focus on:
+- Part numbers, model numbers, VIN numbers
+- Service specifications, torque values, maintenance schedules  
+- Warranty information, coverage periods
+- Customer and vehicle information
+- Inventory counts, pricing data
+
+Format: [TEXT]: (all visible text) [BUSINESS_DATA]: (structured: parts, specs, warranty, etc.)`,
+
+          warehouse_distribution: `Extract text from this warehouse/distribution document image. Focus on:
+- SKU numbers, product codes, item descriptions
+- Safety compliance markings (OSHA, DOT, EPA)
+- Quantity counts, measurements, weights
+- Supplier information, shipping details
+- Hazmat classifications, handling instructions
+
+Format: [TEXT]: (all visible text) [BUSINESS_DATA]: (structured: SKUs, quantities, compliance, etc.)`,
+
+          general: `Extract text from this business document image. Focus on:
+- Key business data: numbers, codes, references
+- Structured information: tables, forms, lists
+- Important dates, amounts, contact information
+- Process steps, procedures, requirements
+
+Format: [TEXT]: (all visible text) [BUSINESS_DATA]: (structured data and key info)`
+        };
+
+        return industryPrompts[tenant.industry as keyof typeof industryPrompts] || industryPrompts.general;
+      }
+    } catch (error) {
+      console.warn('Failed to get business context for vision parsing:', error);
+    }
+
+    // Fallback to enhanced generic prompt
+    return `Extract ALL text from this image with business intelligence focus:
+
+EXTRACTION PRIORITIES:
+1. Complete OCR of all visible text
+2. Structured data: numbers, codes, IDs, dates
+3. Tables and forms (preserve formatting)
+4. Key business identifiers and metrics
+
+OUTPUT FORMAT:
+[TEXT]: (complete text extraction)
+[STRUCTURED_DATA]: (numbers, codes, key data points)  
+[CONTEXT]: (document type and purpose)
+
+Be thorough and preserve all business-relevant information.`;
   }
 }

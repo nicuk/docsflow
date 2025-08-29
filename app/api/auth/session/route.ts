@@ -21,45 +21,60 @@ export async function GET(request: NextRequest) {
     
     const cookieStore = await cookies();
     
+    // 🚨 SECURITY FIX #2: Use schema-aligned cookie validation
+    const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
+    
     if (!isVercelBot) {
-      // DEBUGGING: Log all available cookies (only for real users)
+      // DEBUGGING: Enhanced cookie state logging
       const allCookies = cookieStore.getAll();
-      console.log(`🔍 [SESSION API] Available cookies: ${allCookies.map(c => c.name).join(', ')}`);
+      console.log(`🔍 [SESSION API] Raw cookies: ${allCookies.map(c => c.name).join(', ')}`);
+      
+      // Validate cookie integrity using schema manager
+      SchemaAlignedCookieManager.debugCookieState();
+      
       console.log(`🔍 [SESSION API] access_token present: ${!!cookieStore.get('access_token')?.value}`);
       console.log(`🔍 [SESSION API] refresh_token present: ${!!cookieStore.get('refresh_token')?.value}`);
       console.log(`🔍 [SESSION API] sb-auth present: ${!!cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value}`);
     }
     
-    // ARCHITECTURAL ROOT FIX: Create Supabase client that reads STANDARDIZED cookies
+    // 🚨 SECURITY FIX #2: Create Supabase client with schema-aligned cookie reading
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
           getAll() {
-            // Return both standardized AND Supabase default cookies for compatibility
+            // Use schema-aligned approach - prioritize standardized cookies
             const allCookies = cookieStore.getAll();
-            const standardizedCookies = [];
+            const validatedCookies = [];
             
-            // Map our standardized cookies to Supabase expected names
+            // Get tokens from standardized locations first
             const accessToken = cookieStore.get('access_token')?.value;
             const refreshToken = cookieStore.get('refresh_token')?.value;
             
-            if (accessToken) {
-              standardizedCookies.push({
-                name: `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`,
+            // Map to Supabase expected format with validation
+            if (accessToken && accessToken.length > 10) {
+              validatedCookies.push({
+                name: `sb-lhcopwwiqwjpzbdnjovo-auth-token`,
                 value: accessToken
               });
+              console.log('✅ [SESSION API] Using validated access_token');
+            } else {
+              console.warn('🚨 [SESSION API] Invalid or missing access_token');
             }
             
-            if (refreshToken) {
-              standardizedCookies.push({
-                name: `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token-code-verifier`,
+            if (refreshToken && refreshToken.length > 10) {
+              validatedCookies.push({
+                name: `sb-lhcopwwiqwjpzbdnjovo-auth-token-code-verifier`,
                 value: refreshToken
               });
+              console.log('✅ [SESSION API] Using validated refresh_token');
+            } else {
+              console.warn('🚨 [SESSION API] Invalid or missing refresh_token');
             }
             
-            return [...allCookies, ...standardizedCookies];
+            // Include original cookies for fallback compatibility
+            return [...allCookies, ...validatedCookies];
           },
           setAll(cookiesToSet) {
             try {
