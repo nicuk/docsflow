@@ -39,6 +39,7 @@ import {
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import DocsFlowBrand from '@/components/DocsFlowBrand'
+import { SchemaAlignedCookieManager } from '@/lib/schema-aligned-cookies'
 
 const navigationItems = [
   { name: 'Dashboard', href: '/dashboard', icon: Home, badge: null, requiresAdmin: false },
@@ -157,22 +158,34 @@ function useUserSession() {
         console.error('Error checking Supabase session:', error);
       }
       
-      // Fallback: try to get from cookies (for backwards compatibility)
+      // SECURITY FIX: Use schema-aligned cookie manager instead of direct parsing
       if (typeof window !== 'undefined') {
-        const emailCookie = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('user-email='))
-          ?.split('=')[1];
-        
-        if (emailCookie && emailCookie !== 'user@example.com') {
-          const name = emailCookie.split('@')[0];
-          setUser({
-            name: name.charAt(0).toUpperCase() + name.slice(1),
-            email: emailCookie,
-            avatar: '/placeholder.svg',
-            role: 'member',
-          });
-          return;
+        try {
+          const cookies = SchemaAlignedCookieManager.getSchemaAlignedCookies();
+          const secureAccess = await SchemaAlignedCookieManager.getSecureUserAccess();
+          
+          if (cookies.userEmail && cookies.tenantId && secureAccess.tenantId) {
+            console.log('✅ [SECURITY] Using validated session data:', {
+              email: cookies.userEmail,
+              tenantId: cookies.tenantId.substring(0, 8) + '...',
+              role: secureAccess.role,
+              isAdmin: secureAccess.isAdmin
+            });
+            
+            setUser({
+              name: cookies.userEmail.split('@')[0].charAt(0).toUpperCase() + cookies.userEmail.split('@')[0].slice(1),
+              email: cookies.userEmail,
+              avatar: '/placeholder.svg',
+              role: secureAccess.role, // From database, not hardcoded
+            });
+            return;
+          } else {
+            console.warn('🚨 [SECURITY] Invalid cookie state - clearing contaminated cookies');
+            SchemaAlignedCookieManager.clearAllAuthCookies();
+          }
+        } catch (error) {
+          console.error('🚨 [SECURITY] Cookie validation failed:', error);
+          SchemaAlignedCookieManager.clearAllAuthCookies();
         }
       }
       
