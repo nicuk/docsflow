@@ -31,6 +31,7 @@ import {
   ChevronRight,
   LogOut,
   User,
+  Users,
   CreditCard,
   Moon,
   Sun,
