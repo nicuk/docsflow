@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // CORS headers for cross-origin requests
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://docsflow.app',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };

@@ -23,7 +23,7 @@ export function getCORSHeaders(origin?: string | null): HeadersInit {
     'http://localhost:3003',
   ];
 
-  let allowOrigin = '*'; // Default fallback
+  let allowOrigin = 'https://docsflow.app'; // Secure default - no wildcard!
   
   if (origin) {
     // Check if origin matches any allowed pattern

@@ -14,10 +14,8 @@ import {
 } from './lib/security-enhancements';
 import { redis, safeRedisOperation } from './lib/redis';
 
-// Initialize Supabase client for middleware
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+// SECURITY FIX: Remove direct service role access from middleware
+// Service role operations now handled by secure backend APIs
 
 // PERFORMANCE FIX: Use Redis for tenant verification with Supabase fallback
 async function verifyTenantExists(subdomain: string): Promise<boolean> {
@@ -45,22 +43,26 @@ async function verifyTenantExists(subdomain: string): Promise<boolean> {
       return true;
     }
     
-    // CRITICAL: Also check Supabase database if Redis misses
-    // This is essential for tenants created through the database
-    console.log(`🔍 Redis cache MISS for tenant: ${subdomain}, checking Supabase...`);
+    // SECURITY FIX: Use secure internal API instead of direct database access
+    console.log(`🔍 Redis cache MISS for tenant: ${subdomain}, checking via secure API...`);
     
-    if (supabase) {
-      try {
-        const { data: tenant, error } = await supabase
-          .from('tenants')
-          .select('id, subdomain, name')
-          .eq('subdomain', subdomain)
-          .maybeSingle();
-        
-        if (error) {
-          console.error(`❌ Supabase query error for ${subdomain}:`, error);
-        } else if (tenant) {
-          console.log(`✅ Tenant found in Supabase: ${subdomain} (ID: ${tenant.id})`);
+    try {
+      // Call internal secure API endpoint
+      const apiUrl = new URL('/api/internal/tenant-lookup', 'https://docsflow.app');
+      apiUrl.searchParams.set('subdomain', subdomain);
+      
+      const response = await fetch(apiUrl.toString(), {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'DocsFlow-Middleware/1.0',
+        },
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.tenant) {
+          const tenant = result.tenant;
+          console.log(`✅ Tenant found via secure API: ${subdomain} (ID: ${tenant.id})`);
           // Cache it in Redis for next time
           await safeRedisOperation(
             () => redis!.set(tenantCacheKey, JSON.stringify({ 
@@ -73,13 +75,13 @@ async function verifyTenantExists(subdomain: string): Promise<boolean> {
           );
           return true;
         } else {
-          console.log(`❌ Tenant ${subdomain} not found in Supabase`);
+          console.log(`❌ Tenant ${subdomain} not found via secure API`);
         }
-      } catch (dbError) {
-        console.error('Supabase tenant check error:', dbError);
+      } else {
+        console.error(`❌ Secure API error for ${subdomain}: ${response.status}`);
       }
-    } else {
-      console.warn('⚠️ Supabase client not initialized in middleware');
+    } catch (apiError) {
+      console.error('Secure API tenant check error:', apiError);
     }
     
     console.log(`❌ Tenant not found anywhere: ${subdomain}`);
@@ -146,9 +148,17 @@ export default async function middleware(request: NextRequest) {
       return new NextResponse('Forbidden', { status: 403 });
     }
 
-    // Rate limiting check
-    if (!checkRateLimit(request, 200)) {
-      return new NextResponse('Rate limit exceeded', { status: 429 });
+    // SECURITY FIX: Enhanced rate limiting with audit logging
+    if (!checkRateLimit(request, 100)) { // Reduced from 200 to 100 requests/minute
+      console.warn(`🚨 Rate limit exceeded for ${hostname}${pathname} from IP: ${request.headers.get('x-forwarded-for') || 'unknown'}`);
+      return new NextResponse('Rate limit exceeded', { 
+        status: 429,
+        headers: {
+          'Retry-After': '60',
+          'X-RateLimit-Limit': '100',
+          'X-RateLimit-Remaining': '0'
+        }
+      });
     }
 
 
