@@ -122,7 +122,7 @@ export const MODEL_CONFIGS = {
   // 🤖 Chat Interface - Fast, efficient Q&A
   CHAT: [
     'deepseek/deepseek-r1-distill-qwen-14b:free',
-    'mistralai/mistral-7b-instruct:free'
+    'mistralai/mistral-small-3.2-24b-instruct:free'  // ⬆️ UPGRADED: 24B params, 131k context, vision
   ] as string[],
   
   // 🔍 Document Processing - Structured outputs, metadata extraction
@@ -134,8 +134,8 @@ export const MODEL_CONFIGS = {
   // 📈 RAG Pipeline - Search, reranking, synthesis
   RAG_PIPELINE: [
     'openrouter/quasar-alpha',
-    'mistralai/mistral-24b-instruct:free',
-    'deepseek/deepseek-v3-chat:free'
+    'deepseek/deepseek-v3-chat:free',                        // ⬆️ PROMOTED: Latest generation
+    'mistralai/mistral-small-3.2-24b-instruct:free'         // ⬆️ UPGRADED: Better than old 24B
   ] as string[],
   
   // 🧠 Persona Generation - Creative, business context
