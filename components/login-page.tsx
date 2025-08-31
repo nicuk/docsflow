@@ -360,7 +360,10 @@ export default function LoginPage() {
         console.log('🔍 [LOGIN-DEBUG] Auth response received:', { 
           hasData: !!authResult.data, 
           hasError: !!authResult.error, 
-          userId: authResult.data?.user?.id 
+          userId: authResult.data?.user?.id,
+          hasSession: !!authResult.data?.session,
+          hasAccessToken: !!authResult.data?.session?.access_token,
+          tokenPreview: authResult.data?.session?.access_token?.substring(0, 50) + '...'
         });
       } catch (authTimeout) {
         console.error('🚨 [LOGIN-DEBUG] Supabase auth timed out or failed:', authTimeout);
@@ -370,10 +373,34 @@ export default function LoginPage() {
         return;
       }
       
-      const { data, error } = authResult;
-      
-      if (error) {
-        console.error('Supabase auth error:', error)
+              const { data, error } = authResult;
+        
+        // DEBUG: Immediately set auth cookies after successful authentication
+        if (data.session?.access_token) {
+          console.log('🔧 [LOGIN-DEBUG] Setting auth cookies immediately after login...');
+          
+          const token = data.session.access_token;
+          const refreshToken = data.session.refresh_token;
+          
+          // Set cookies immediately (not waiting for user profile fetch)
+          document.cookie = `sb-lhcopwwiqwjpzbdnjovo-auth-token=${token}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
+          document.cookie = `docsflow_auth_token=${token}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
+          document.cookie = `access_token=${token}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
+          
+          if (refreshToken) {
+            document.cookie = `docsflow_refresh_token=${refreshToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
+            document.cookie = `refresh_token=${refreshToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
+          }
+          
+          console.log('✅ [LOGIN-DEBUG] Auth cookies set immediately:', {
+            tokenLength: token.length,
+            tokenPreview: token.substring(0, 50) + '...',
+            hasRefresh: !!refreshToken
+          });
+        }
+        
+        if (error) {
+          console.error('Supabase auth error:', error)
         
         // SIMPLE FIX: Better error message mapping
         let errorMessage = "Invalid email or password"
