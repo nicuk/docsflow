@@ -1,135 +1,112 @@
-2025-08-31T17:11:21.259Z [info] 🔍 [MIDDLEWARE START] GET www.docsflow.app/select-workspace
-2025-08-31T17:11:21.259Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'www.docsflow.app' (length: 16)
-2025-08-31T17:11:21.259Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T17:11:21.259Z [info] 🔍 [MIDDLEWARE] Origin: null
-2025-08-31T17:11:21.259Z [info] 🔍 [MIDDLEWARE] Request URL: https://www.docsflow.app/select-workspace
-2025-08-31T17:11:21.260Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'null' from hostname: 'www.docsflow.app'
-2025-08-31T17:11:21.260Z [info] 🔍 [MIDDLEWARE] Checking main domain condition: hostname='www.docsflow.app' vs 'docsflow.app'|'www.docsflow.app'|'localhost'
-2025-08-31T17:11:21.260Z [info] 🔍 [MIDDLEWARE] ✅ MATCHED main domain condition - Processing: www.docsflow.app/select-workspace
-2025-08-31T17:11:21.260Z [info] 🔍 [MIDDLEWARE] Checking auth for main domain user on: /select-workspace
-2025-08-31T17:11:21.260Z [info] 🔍 [MIDDLEWARE] Auth check - Token: EXISTS, Email: support@bitto.tech, TenantId: 122928f6-f34e-484b-9a69-7e1f25caf45c, Subdomain: MISSING
-2025-08-31T17:11:21.260Z [info] 🔍 [MIDDLEWARE] User not authenticated or missing tenant context on main domain
-2025-08-31T17:11:21.260Z [info] 🔍 [MIDDLEWARE] Default handler - allowing frontend to handle: www.docsflow.app/select-workspace
-
-
-2025-08-31T17:11:22.693Z [info] 🔍 [SESSION API] Request received from: https://www.docsflow.app/select-workspace
-2025-08-31T17:11:22.693Z [info] 🔍 [SESSION API] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T17:11:22.696Z [info] 🔍 [SESSION API] Raw cookies: user-email, tenant-context, tenant-id, sb-lhcopwwiqwjpzbdnjovo-auth-token, docsflow_auth_token, access_token
-2025-08-31T17:11:22.696Z [info] 🔍 [SESSION API] Multi-tenant auth state: {
+2025-08-31T18:28:10.175Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/api/auth/session
+2025-08-31T18:28:10.175Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-08-31T18:28:10.175Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T18:28:10.175Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-08-31T18:28:10.175Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/api/auth/session
+2025-08-31T18:28:10.175Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-08-31T18:28:10.175Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-08-31T18:28:10.176Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-08-31T18:28:10.176Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
+2025-08-31T18:28:11.499Z [info] 🔍 [SESSION API] Request received from: https://bitto.docsflow.app/select-workspace
+2025-08-31T18:28:11.500Z [info] 🔍 [SESSION API] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T18:28:11.502Z [info] 🔍 [SESSION API] Raw cookies: user-email, tenant-context, tenant-id, tenant-subdomain, docsflow_auth_token, sb-lhcopwwiqwjpzbdnjovo-auth-token, access_token, docsflow_refresh_token, refresh_token
+2025-08-31T18:28:11.503Z [info] 🔍 [SESSION API] Multi-tenant auth state: {
   hasAuthToken: true,
   currentTenant: undefined,
   totalTenants: 0,
   availableTenants: []
 }
-2025-08-31T17:11:22.701Z [info] 🔍 [COOKIE-BRIDGE] Debug: {
-  hasUnifiedToken: true,
-  unifiedTokenPreview: 'eyJhbGciOiJIUzI1NiIs...',
-  existingSupabaseCookie: true,
-  allCookieNames: [
+2025-08-31T18:28:11.508Z [info] 🔍 [SESSION API] Natural cookie flow - letting Supabase handle auth: {
+  totalCookies: 9,
+  hasSupabaseAuth: true,
+  cookieNames: [
     'user-email',
     'tenant-context',
     'tenant-id',
-    'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+    'tenant-subdomain',
     'docsflow_auth_token',
-    'access_token'
+    'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+    'access_token',
+    'docsflow_refresh_token',
+    'refresh_token'
   ]
 }
-2025-08-31T17:11:22.702Z [info] 🔗 [SESSION API] Providing Supabase with unified tokens: {
-  authToken: 'eyJhbGciOiJIUzI1NiIs...',
-  hasRefreshToken: false,
-  totalCookies: 6
-}
-2025-08-31T17:11:22.707Z [info] 🔍 [COOKIE-BRIDGE] Debug: {
-  hasUnifiedToken: true,
-  unifiedTokenPreview: 'eyJhbGciOiJIUzI1NiIs...',
-  existingSupabaseCookie: true,
-  allCookieNames: [
+2025-08-31T18:28:11.509Z [info] 🔍 [SESSION API] Natural cookie flow - letting Supabase handle auth: {
+  totalCookies: 9,
+  hasSupabaseAuth: true,
+  cookieNames: [
     'user-email',
     'tenant-context',
     'tenant-id',
-    'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+    'tenant-subdomain',
     'docsflow_auth_token',
-    'access_token'
+    'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+    'access_token',
+    'docsflow_refresh_token',
+    'refresh_token'
   ]
 }
-2025-08-31T17:11:22.707Z [info] 🔗 [SESSION API] Providing Supabase with unified tokens: {
-  authToken: 'eyJhbGciOiJIUzI1NiIs...',
-  hasRefreshToken: false,
-  totalCookies: 6
-}
-2025-08-31T17:11:22.708Z [info] 🔍 [COOKIE-BRIDGE] Debug: {
-  hasUnifiedToken: true,
-  unifiedTokenPreview: 'eyJhbGciOiJIUzI1NiIs...',
-  existingSupabaseCookie: true,
-  allCookieNames: [
+2025-08-31T18:28:11.509Z [info] 🔍 [SESSION API] Natural cookie flow - letting Supabase handle auth: {
+  totalCookies: 9,
+  hasSupabaseAuth: true,
+  cookieNames: [
     'user-email',
     'tenant-context',
     'tenant-id',
-    'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+    'tenant-subdomain',
     'docsflow_auth_token',
-    'access_token'
+    'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+    'access_token',
+    'docsflow_refresh_token',
+    'refresh_token'
   ]
 }
-2025-08-31T17:11:22.708Z [info] 🔗 [SESSION API] Providing Supabase with unified tokens: {
-  authToken: 'eyJhbGciOiJIUzI1NiIs...',
-  hasRefreshToken: false,
-  totalCookies: 6
-}
-2025-08-31T17:11:22.710Z [info] 🔍 [COOKIE-BRIDGE] Debug: {
-  hasUnifiedToken: true,
-  unifiedTokenPreview: 'eyJhbGciOiJIUzI1NiIs...',
-  existingSupabaseCookie: true,
-  allCookieNames: [
+2025-08-31T18:28:11.510Z [info] 🔍 [SESSION API] Natural cookie flow - letting Supabase handle auth: {
+  totalCookies: 9,
+  hasSupabaseAuth: true,
+  cookieNames: [
     'user-email',
     'tenant-context',
     'tenant-id',
-    'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+    'tenant-subdomain',
     'docsflow_auth_token',
-    'access_token'
+    'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+    'access_token',
+    'docsflow_refresh_token',
+    'refresh_token'
   ]
 }
-2025-08-31T17:11:22.710Z [info] 🔗 [SESSION API] Providing Supabase with unified tokens: {
-  authToken: 'eyJhbGciOiJIUzI1NiIs...',
-  hasRefreshToken: false,
-  totalCookies: 6
-}
-2025-08-31T17:11:22.713Z [info] 🔍 [COOKIE-BRIDGE] Debug: {
-  hasUnifiedToken: true,
-  unifiedTokenPreview: 'eyJhbGciOiJIUzI1NiIs...',
-  existingSupabaseCookie: true,
-  allCookieNames: [
+2025-08-31T18:28:11.512Z [info] 🔍 [SESSION API] Natural cookie flow - letting Supabase handle auth: {
+  totalCookies: 9,
+  hasSupabaseAuth: true,
+  cookieNames: [
     'user-email',
     'tenant-context',
     'tenant-id',
-    'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+    'tenant-subdomain',
     'docsflow_auth_token',
-    'access_token'
+    'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+    'access_token',
+    'docsflow_refresh_token',
+    'refresh_token'
   ]
 }
-2025-08-31T17:11:22.726Z [info] 🔗 [SESSION API] Providing Supabase with unified tokens: {
-  authToken: 'eyJhbGciOiJIUzI1NiIs...',
-  hasRefreshToken: false,
-  totalCookies: 6
-}
-2025-08-31T17:11:22.727Z [info] 🔍 [COOKIE-BRIDGE] Debug: {
-  hasUnifiedToken: true,
-  unifiedTokenPreview: 'eyJhbGciOiJIUzI1NiIs...',
-  existingSupabaseCookie: true,
-  allCookieNames: [
+2025-08-31T18:28:11.512Z [info] 🔍 [SESSION API] Natural cookie flow - letting Supabase handle auth: {
+  totalCookies: 9,
+  hasSupabaseAuth: true,
+  cookieNames: [
     'user-email',
     'tenant-context',
     'tenant-id',
-    'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+    'tenant-subdomain',
     'docsflow_auth_token',
-    'access_token'
+    'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+    'access_token',
+    'docsflow_refresh_token',
+    'refresh_token'
   ]
 }
-2025-08-31T17:11:22.727Z [info] 🔗 [SESSION API] Providing Supabase with unified tokens: {
-  authToken: 'eyJhbGciOiJIUzI1NiIs...',
-  hasRefreshToken: false,
-  totalCookies: 6
-}
-2025-08-31T17:11:22.733Z [info] 🔍 [SESSION API] Supabase auth result: {
+2025-08-31T18:28:11.513Z [info] 🔍 [SESSION API] Supabase auth result: {
   hasUser: false,
   userId: undefined,
   userEmail: undefined,
@@ -138,40 +115,139 @@
   userError: 'Auth session missing!',
   sessionError: undefined
 }
-2025-08-31T17:11:22.733Z [info] ❌ [SESSION API] Authentication failed: Auth session missing!
-2025-08-31T17:11:22.084Z [info] 🔍 [MIDDLEWARE START] GET www.docsflow.app/api/auth/session
-2025-08-31T17:11:22.084Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'www.docsflow.app' (length: 16)
-2025-08-31T17:11:22.084Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T17:11:22.084Z [info] 🔍 [MIDDLEWARE] Origin: null
-2025-08-31T17:11:22.084Z [info] 🔍 [MIDDLEWARE] Request URL: https://www.docsflow.app/api/auth/session
-2025-08-31T17:11:22.084Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'null' from hostname: 'www.docsflow.app'
-2025-08-31T17:11:22.084Z [info] 🔍 [MIDDLEWARE] Checking main domain condition: hostname='www.docsflow.app' vs 'docsflow.app'|'www.docsflow.app'|'localhost'
-2025-08-31T17:11:22.084Z [info] 🔍 [MIDDLEWARE] ✅ MATCHED main domain condition - Processing: www.docsflow.app/api/auth/session
-2025-08-31T17:11:22.084Z [info] 🔍 [MIDDLEWARE] Allowing main domain route: /api/auth/session
+2025-08-31T18:28:11.513Z [info] ❌ [SESSION API] Authentication failed: Auth session missing!
 
+2025-08-31T18:28:13.154Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/api/subdomain/check
+2025-08-31T18:28:13.154Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-08-31T18:28:13.154Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T18:28:13.154Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-08-31T18:28:13.154Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/api/subdomain/check?subdomain=bitto
+2025-08-31T18:28:13.154Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-08-31T18:28:13.154Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-08-31T18:28:13.154Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-08-31T18:28:13.154Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
+2025-08-31T18:28:14.331Z [error] Error fetching tenant data: ReferenceError: supabase is not defined
+    at d (.next/server/app/api/subdomain/check/route.js:1:9725)
+    at async y (.next/server/app/api/subdomain/check/route.js:1:2033)
+    at async k (.next/server/app/api/subdomain/check/route.js:1:6742)
+    at async g (.next/server/app/api/subdomain/check/route.js:1:7745)
+    at async F (.next/server/app/api/subdomain/check/route.js:1:8867)
 
-2025-08-31T17:11:23.237Z [info] 🔍 [MIDDLEWARE START] GET www.docsflow.app/onboarding
-2025-08-31T17:11:23.237Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'www.docsflow.app' (length: 16)
-2025-08-31T17:11:23.238Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T17:11:23.238Z [info] 🔍 [MIDDLEWARE] Origin: null
-2025-08-31T17:11:23.238Z [info] 🔍 [MIDDLEWARE] Request URL: https://www.docsflow.app/onboarding
-2025-08-31T17:11:23.238Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'null' from hostname: 'www.docsflow.app'
-2025-08-31T17:11:23.238Z [info] 🔍 [MIDDLEWARE] Checking main domain condition: hostname='www.docsflow.app' vs 'docsflow.app'|'www.docsflow.app'|'localhost'
-2025-08-31T17:11:23.238Z [info] 🔍 [MIDDLEWARE] ✅ MATCHED main domain condition - Processing: www.docsflow.app/onboarding
-2025-08-31T17:11:23.238Z [info] 🔍 [MIDDLEWARE] Allowing main domain route: /onboarding
-
-2025-08-31T17:11:24.006Z [info] 🔍 [MIDDLEWARE START] POST www.docsflow.app/api/subdomain/check
-2025-08-31T17:11:24.006Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'www.docsflow.app' (length: 16)
-2025-08-31T17:11:24.006Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T17:11:24.006Z [info] 🔍 [MIDDLEWARE] Origin: https://www.docsflow.app
-2025-08-31T17:11:24.006Z [info] 🔍 [MIDDLEWARE] Request URL: https://www.docsflow.app/api/subdomain/check
-2025-08-31T17:11:24.006Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'null' from hostname: 'www.docsflow.app'
-2025-08-31T17:11:24.006Z [info] 🔍 [MIDDLEWARE] Checking main domain condition: hostname='www.docsflow.app' vs 'docsflow.app'|'www.docsflow.app'|'localhost'
-2025-08-31T17:11:24.006Z [info] 🔍 [MIDDLEWARE] ✅ MATCHED main domain condition - Processing: www.docsflow.app/api/subdomain/check
-2025-08-31T17:11:24.006Z [info] 🔍 [MIDDLEWARE] Allowing main domain route: /api/subdomain/check
-2025-08-31T17:11:25.240Z [error] Error fetching tenant data: ReferenceError: supabase is not defined
-    at d (.next/server/app/api/subdomain/check/route.js:1:10748)
-    at async z (.next/server/app/api/subdomain/check/route.js:1:4468)
-    at async k (.next/server/app/api/subdomain/check/route.js:1:7765)
-    at async g (.next/server/app/api/subdomain/check/route.js:1:8768)
-    at async F (.next/server/app/api/subdomain/check/route.js:1:9890)
+    2025-08-31T18:28:13.531Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/api/auth/session
+2025-08-31T18:28:13.531Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-08-31T18:28:13.531Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T18:28:13.531Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-08-31T18:28:13.531Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/api/auth/session
+2025-08-31T18:28:13.531Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-08-31T18:28:13.531Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-08-31T18:28:13.531Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-08-31T18:28:13.531Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
+2025-08-31T18:28:13.648Z [info] 🔍 [SESSION API] Request received from: https://bitto.docsflow.app/onboarding
+2025-08-31T18:28:13.648Z [info] 🔍 [SESSION API] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T18:28:13.648Z [info] 🔍 [SESSION API] Raw cookies: user-email, tenant-context, tenant-id, tenant-subdomain, docsflow_auth_token, sb-lhcopwwiqwjpzbdnjovo-auth-token, access_token, docsflow_refresh_token, refresh_token
+2025-08-31T18:28:13.648Z [info] 🔍 [SESSION API] Multi-tenant auth state: {
+  hasAuthToken: true,
+  currentTenant: undefined,
+  totalTenants: 0,
+  availableTenants: []
+}
+2025-08-31T18:28:13.649Z [info] 🔍 [SESSION API] Natural cookie flow - letting Supabase handle auth: {
+  totalCookies: 9,
+  hasSupabaseAuth: true,
+  cookieNames: [
+    'user-email',
+    'tenant-context',
+    'tenant-id',
+    'tenant-subdomain',
+    'docsflow_auth_token',
+    'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+    'access_token',
+    'docsflow_refresh_token',
+    'refresh_token'
+  ]
+}
+2025-08-31T18:28:13.649Z [info] 🔍 [SESSION API] Natural cookie flow - letting Supabase handle auth: {
+  totalCookies: 9,
+  hasSupabaseAuth: true,
+  cookieNames: [
+    'user-email',
+    'tenant-context',
+    'tenant-id',
+    'tenant-subdomain',
+    'docsflow_auth_token',
+    'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+    'access_token',
+    'docsflow_refresh_token',
+    'refresh_token'
+  ]
+}
+2025-08-31T18:28:13.649Z [info] 🔍 [SESSION API] Natural cookie flow - letting Supabase handle auth: {
+  totalCookies: 9,
+  hasSupabaseAuth: true,
+  cookieNames: [
+    'user-email',
+    'tenant-context',
+    'tenant-id',
+    'tenant-subdomain',
+    'docsflow_auth_token',
+    'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+    'access_token',
+    'docsflow_refresh_token',
+    'refresh_token'
+  ]
+}
+2025-08-31T18:28:13.650Z [info] 🔍 [SESSION API] Natural cookie flow - letting Supabase handle auth: {
+  totalCookies: 9,
+  hasSupabaseAuth: true,
+  cookieNames: [
+    'user-email',
+    'tenant-context',
+    'tenant-id',
+    'tenant-subdomain',
+    'docsflow_auth_token',
+    'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+    'access_token',
+    'docsflow_refresh_token',
+    'refresh_token'
+  ]
+}
+2025-08-31T18:28:13.651Z [info] 🔍 [SESSION API] Natural cookie flow - letting Supabase handle auth: {
+  totalCookies: 9,
+  hasSupabaseAuth: true,
+  cookieNames: [
+    'user-email',
+    'tenant-context',
+    'tenant-id',
+    'tenant-subdomain',
+    'docsflow_auth_token',
+    'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+    'access_token',
+    'docsflow_refresh_token',
+    'refresh_token'
+  ]
+}
+2025-08-31T18:28:13.651Z [info] 🔍 [SESSION API] Natural cookie flow - letting Supabase handle auth: {
+  totalCookies: 9,
+  hasSupabaseAuth: true,
+  cookieNames: [
+    'user-email',
+    'tenant-context',
+    'tenant-id',
+    'tenant-subdomain',
+    'docsflow_auth_token',
+    'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+    'access_token',
+    'docsflow_refresh_token',
+    'refresh_token'
+  ]
+}
+2025-08-31T18:28:13.651Z [info] 🔍 [SESSION API] Supabase auth result: {
+  hasUser: false,
+  userId: undefined,
+  userEmail: undefined,
+  hasSession: false,
+  hasAccessToken: false,
+  userError: 'Auth session missing!',
+  sessionError: undefined
+}
+2025-08-31T18:28:13.651Z [info] ❌ [SESSION API] Authentication failed: Auth session missing!

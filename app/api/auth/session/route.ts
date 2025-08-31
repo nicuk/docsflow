@@ -63,16 +63,43 @@ export async function GET(request: NextRequest) {
       {
         cookies: {
           getAll() {
-            // SURGICAL FIX: Let Supabase handle its own cookies naturally
-            // The unified tokens are already present as 'sb-lhcopwwiqwjpzbdnjovo-auth-token'
+            // SURGICAL FIX: Bridge cookies ONLY when Supabase cookies are missing
             const allCookies = cookieStore.getAll();
+            const hasSupabaseAuth = allCookies.find(c => c.name === 'sb-lhcopwwiqwjpzbdnjovo-auth-token');
             
-            console.log(`🔍 [SESSION API] Natural cookie flow - letting Supabase handle auth:`, {
-              totalCookies: allCookies.length,
-              hasSupabaseAuth: !!allCookies.find(c => c.name === 'sb-lhcopwwiqwjpzbdnjovo-auth-token'),
-              cookieNames: allCookies.map(c => c.name)
-            });
+            // If Supabase cookies already exist, return them as-is (no bridging needed)
+            if (hasSupabaseAuth) {
+              console.log(`✅ [SESSION API] Supabase cookies exist - no bridging needed`);
+              return allCookies;
+            }
             
+            // Otherwise, check for our unified cookies and bridge them
+            const unifiedAuthToken = cookieStore.get('docsflow_auth_token')?.value ||
+                                   cookieStore.get('access_token')?.value;
+            
+            if (unifiedAuthToken) {
+              console.log(`🔗 [SESSION API] Bridging unified token to Supabase format (one-time)`);
+              
+              // Add Supabase-formatted cookies
+              const bridgedCookies = [...allCookies];
+              bridgedCookies.push({
+                name: 'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+                value: unifiedAuthToken
+              });
+              
+              const refreshToken = cookieStore.get('docsflow_refresh_token')?.value ||
+                                 cookieStore.get('refresh_token')?.value;
+              if (refreshToken) {
+                bridgedCookies.push({
+                  name: 'sb-lhcopwwiqwjpzbdnjovo-refresh-token',
+                  value: refreshToken
+                });
+              }
+              
+              return bridgedCookies;
+            }
+            
+            // No cookies to bridge
             return allCookies;
           },
           setAll(cookiesToSet) {
