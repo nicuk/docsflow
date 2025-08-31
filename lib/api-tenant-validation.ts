@@ -205,10 +205,32 @@ export async function validateTenantContext(
           
           const cookieStore = await cookies();
           
-          // Read from multi-tenant cookie format with fallbacks
-          const authToken = cookieStore.get('docsflow_auth_token')?.value ||
-                           cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value ||
-                           cookieStore.get('access_token')?.value;
+          // CROSS-DOMAIN FIX: Parse cookies from request header since cookieStore may not see cross-domain cookies
+          const cookieHeader = request.headers.get('cookie');
+          let authToken = null;
+          
+          if (cookieHeader) {
+            // Parse cookies manually from header
+            const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
+              const [key, value] = cookie.trim().split('=');
+              if (key && value) {
+                acc[key] = decodeURIComponent(value);
+              }
+              return acc;
+            }, {} as Record<string, string>);
+            
+            authToken = cookies['docsflow_auth_token'] ||
+                       cookies['sb-lhcopwwiqwjpzbdnjovo-auth-token'] ||
+                       cookies['access_token'];
+            
+            console.log(`🔍 [COOKIE-DEBUG] Parsed cookies:`, {
+              hasCookieHeader: !!cookieHeader,
+              cookieCount: Object.keys(cookies).length,
+              hasAuthToken: !!authToken,
+              authTokenPreview: authToken ? authToken.substring(0, 20) + '...' : 'none',
+              availableCookies: Object.keys(cookies)
+            });
+          }
           
           if (authToken) {
             const cookieSupabase = createServerClient(
