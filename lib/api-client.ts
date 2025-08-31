@@ -98,7 +98,12 @@ export const apiClient = {
 
   // JWT GATEWAY: Get access token with cross-domain support
   async getAccessToken() {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === 'undefined') {
+      console.log('🔍 [JWT-GATEWAY] Server-side context, no token available');
+      return null;
+    }
+    
+    console.log('🔍 [JWT-GATEWAY] Starting token retrieval process...');
     
     // JWT BRIDGE: First check cached token from session bridge
     try {
@@ -107,6 +112,8 @@ export const apiClient = {
       if (cachedToken) {
         console.log('🔍 [JWT-GATEWAY] Using JWT bridge cached token');
         return cachedToken;
+      } else {
+        console.log('🔍 [JWT-GATEWAY] No valid token in JWT bridge cache');
       }
     } catch (bridgeError) {
       console.warn('🔍 [JWT-GATEWAY] JWT bridge unavailable, falling back:', bridgeError);
@@ -233,9 +240,18 @@ export const apiClient = {
   async getConversations() {
     try {
       const headers = await this.getAuthHeaders();
+      
+      // CRITICAL DEBUG: Log what headers we're actually sending
+      console.log('🔍 [CONVERSATIONS] Headers being sent:', {
+        hasAuthorization: !!headers.Authorization,
+        authPreview: headers.Authorization ? headers.Authorization.substring(0, 30) + '...' : 'none',
+        allHeaders: headers
+      });
+      
       const response = await fetch(`${API_BASE_URL}/conversations`, {
         method: 'GET',
         headers,
+        credentials: 'include', // CRITICAL FIX: Include cookies for cross-domain auth
       });
       
       if (!response.ok) {

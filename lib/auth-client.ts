@@ -440,7 +440,7 @@ class AuthClient {
     const response = await fetch(`${this.baseUrl}/api/chat`, {
       method: 'POST',
       headers: {
-        ...this.getAuthHeaders(),
+        ...(await this.getAuthHeaders()), // CRITICAL FIX: Await the async function
         'X-Tenant-Subdomain': tenantSubdomain
       },
       body: JSON.stringify({
