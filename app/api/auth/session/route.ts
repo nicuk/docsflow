@@ -170,7 +170,8 @@ export async function GET(request: NextRequest) {
       debug: 'success'
     });
 
-    // ARCHITECTURAL FIX: Set both tenant ID AND subdomain cookies
+    // SCHEMA COMPLIANCE: Set cookies according to schema-aligned-cookies.ts
+    // Note: tenant-subdomain should be header-only, not a cookie per schema spec
     if (userProfile.tenant_id && userProfile.email && userProfile.tenants?.subdomain) {
       const cookieOptions = {
         path: '/',
@@ -180,9 +181,10 @@ export async function GET(request: NextRequest) {
         maxAge: 60 * 60 * 24 // 24 hours
       };
 
+      // Follow schema: tenant-id (UUID) and user-email cookies only
       response.cookies.set('tenant-id', userProfile.tenant_id, cookieOptions);
-      response.cookies.set('tenant-subdomain', userProfile.tenants.subdomain, cookieOptions);
       response.cookies.set('user-email', userProfile.email, cookieOptions);
+      // tenant-subdomain removed - should be header-only per schema spec
       
       console.log(`🔧 [SESSION API] Set complete tenant context cookies:`, {
         tenantId: userProfile.tenant_id.substring(0, 8) + '...',

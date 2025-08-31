@@ -26,10 +26,11 @@ interface TenantData {
 const TENANT_CACHE_TTL = 60 * 60; // 1 hour in seconds
 const TENANT_CACHE_PREFIX = 'tenant:';
 
-// Create Supabase client
+// Create Supabase client with service role for public tenant metadata
+// This bypasses RLS policies that block anon access to tenant branding data
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export async function GET(
