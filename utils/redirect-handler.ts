@@ -71,28 +71,27 @@ export class RedirectHandler {
 
   // Cookie-based tenant redirect  
   static async checkCookieRedirect(): Promise<boolean> {
-    const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager')
+    const { MultiTenantCookieManager } = await import('@/lib/multi-tenant-cookie-manager')
     
-    const userSession = EnterpriseSessionManager.getUserSession()
-    const tenantContext = EnterpriseSessionManager.getTenantContext()
+    const currentTenant = MultiTenantCookieManager.getCurrentTenantSubdomain()
+    const tenantContexts = MultiTenantCookieManager.getCurrentTenantContexts()
 
-    if (tenantContext?.subdomain) {
+    if (currentTenant && tenantContexts[currentTenant]) {
       await this.redirectWithLoading({
-        destination: `https://${tenantContext.subdomain}.docsflow.app/dashboard`,
-        message: `Redirecting to ${tenantContext.subdomain}...`
+        destination: `https://${currentTenant}.docsflow.app/dashboard`,
+        message: `Redirecting to ${currentTenant}...`
       })
       return true
     }
 
-    if (userSession?.activeTenants?.length) {
-      const firstTenant = userSession.activeTenants[0]
-      if (firstTenant?.subdomain) {
-        await this.redirectWithLoading({
-          destination: `https://${firstTenant.subdomain}.docsflow.app/dashboard`,
-          message: `Connecting to ${firstTenant.subdomain}...`
-        })
-        return true
-      }
+    // Fallback: use first available tenant context
+    if (Object.keys(tenantContexts).length > 0) {
+      const firstTenantSubdomain = Object.keys(tenantContexts)[0]
+      await this.redirectWithLoading({
+        destination: `https://${firstTenantSubdomain}.docsflow.app/dashboard`,
+        message: `Connecting to ${firstTenantSubdomain}...`
+      })
+      return true
     }
 
     return false

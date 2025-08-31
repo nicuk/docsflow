@@ -88,15 +88,13 @@ export default function DashboardPage() {
       // Quick redirect without heavy loading
       const redirectToWorkspace = async () => {
         try {
-          const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager')
-          const userSession = EnterpriseSessionManager.getUserSession()
+          const { MultiTenantCookieManager } = await import('@/lib/multi-tenant-cookie-manager')
+          const tenantContexts = MultiTenantCookieManager.getCurrentTenantContexts()
+          const currentTenant = MultiTenantCookieManager.getCurrentTenantSubdomain()
           
-          if (userSession?.activeTenants?.length) {
-            const firstTenant = userSession.activeTenants[0]
-            if (firstTenant?.subdomain) {
-              window.location.replace(`https://${firstTenant.subdomain}.docsflow.app/dashboard`)
-              return
-            }
+          if (currentTenant && tenantContexts[currentTenant]) {
+            window.location.replace(`https://${currentTenant}.docsflow.app/dashboard`)
+            return
           }
           
           // Check if user is already onboarded via session API
@@ -140,38 +138,40 @@ export default function DashboardPage() {
           const hasRedirected = await RedirectHandler.checkCookieRedirect();
           if (hasRedirected) return;
           
-          // ENTERPRISE FIX: Use proper session management for tenant detection
-          const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager');
+          // UNIFIED FIX: Use MultiTenantCookieManager for tenant detection
+          const { MultiTenantCookieManager } = await import('@/lib/multi-tenant-cookie-manager');
           
-          const userSession = EnterpriseSessionManager.getUserSession();
-          const tenantContext = EnterpriseSessionManager.getTenantContext();
+          const tenantContexts = MultiTenantCookieManager.getCurrentTenantContexts();
+          const currentTenant = MultiTenantCookieManager.getCurrentTenantSubdomain();
+          const userEmail = MultiTenantCookieManager.getCurrentUserEmail();
           const authToken = document.cookie.includes('access_token') || document.cookie.includes('sb-lhcopwwiqwjpzbdnjovo-auth-token');
           
           console.log(`🔍 [DASHBOARD] Main domain auth state:`, {
-            hasUserSession: !!userSession,
-            hasTenantContext: !!tenantContext,
-            activeTenants: userSession?.activeTenants?.length || 0,
+            hasTenantContexts: Object.keys(tenantContexts).length > 0,
+            currentTenant: currentTenant,
+            userEmail: userEmail,
+            totalTenants: Object.keys(tenantContexts).length,
             authToken: authToken ? 'PRESENT' : 'MISSING'
           });
           
           // DEFENSIVE REDIRECT: Validate subdomain before redirect to prevent malformed URLs
-          if (authToken && tenantContext?.subdomain && tenantContext.subdomain.length > 0) {
-            console.log(`🎯 [ENTERPRISE] Redirecting to tenant subdomain: ${tenantContext.subdomain}`);
+          if (authToken && currentTenant && currentTenant.length > 0) {
+            console.log(`🎯 [UNIFIED] Redirecting to tenant subdomain: ${currentTenant}`);
             await RedirectHandler.redirectWithLoading({
-              destination: `https://${tenantContext.subdomain}.docsflow.app/dashboard`,
-              message: `Redirecting to ${tenantContext.subdomain}...`
+              destination: `https://${currentTenant}.docsflow.app/dashboard`,
+              message: `Redirecting to ${currentTenant}...`
             });
             return;
           }
           
           // Fallback: Check if user has any active tenants with valid subdomains
-          if (authToken && userSession?.activeTenants?.length) {
-            const firstTenant = userSession.activeTenants[0];
-            if (firstTenant?.subdomain && firstTenant.subdomain.length > 0) {
-              console.log(`🎯 [ENTERPRISE] Redirecting to first active tenant: ${firstTenant.subdomain}`);
+          if (authToken && Object.keys(tenantContexts).length > 0) {
+            const firstTenantSubdomain = Object.keys(tenantContexts)[0];
+            if (firstTenantSubdomain && firstTenantSubdomain.length > 0) {
+              console.log(`🎯 [UNIFIED] Redirecting to first active tenant: ${firstTenantSubdomain}`);
               await RedirectHandler.redirectWithLoading({
-                destination: `https://${firstTenant.subdomain}.docsflow.app/dashboard`,
-                message: `Connecting to ${firstTenant.subdomain}...`
+                destination: `https://${firstTenantSubdomain}.docsflow.app/dashboard`,
+                message: `Connecting to ${firstTenantSubdomain}...`
               });
               return;
             } else {
@@ -245,31 +245,33 @@ export default function DashboardPage() {
 
         setTenantContext(context);
         
-        // ENTERPRISE FIX: Use proper session management instead of localStorage
-        const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager');
+        // UNIFIED FIX: Use MultiTenantCookieManager instead of Enterprise system
+        const { MultiTenantCookieManager } = await import('@/lib/multi-tenant-cookie-manager');
         
         // DEFENSIVE STORAGE: Only store valid subdomain to prevent empty string corruption
         if (userData.tenant?.subdomain && userData.tenant.subdomain.length > 0) {
-          EnterpriseSessionManager.setTenantContext(userData.tenantId, userData.tenant.subdomain);
+          // Add tenant context using unified cookie system
+          MultiTenantCookieManager.addTenantContext(
+            {
+              tenantId: userData.tenantId,
+              subdomain: userData.tenant.subdomain,
+              userEmail: userData.email
+            },
+            {
+              accessToken: document.cookie.match(/(?:^|; )(?:access_token|docsflow_auth_token)=([^;]*)/)?.[1] || '',
+              refreshToken: document.cookie.match(/(?:^|; )(?:refresh_token|docsflow_refresh_token)=([^;]*)/)?.[1]
+            }
+          );
           
           // Check for tenant subdomain redirect
           const hasRedirected = await RedirectHandler.checkTenantRedirect(userData);
           if (hasRedirected) return;
         }
         
-        // Set user session with tenant access
-        EnterpriseSessionManager.setUserSession({
-          userId: userData.id,
-          userEmail: userData.email,
-          activeTenants: [{
-            tenantId: userData.tenantId,
-            subdomain: userData.tenant?.subdomain || '',
-            userEmail: userData.email,
-            lastAccessed: Date.now()
-          }]
-        });
+        // Note: MultiTenantCookieManager doesn't need explicit user session setting
+        // The tenant context includes all necessary user and tenant information
         
-        console.log(`✅ [DASHBOARD] Set enterprise session for: ${userData.email}`);
+        console.log(`✅ [DASHBOARD] Set unified tenant context for: ${userData.email}`);
         
         // 🚀 OPTIMISTIC UI: Set tenant context immediately, load documents in background
         setTenantContext(context);

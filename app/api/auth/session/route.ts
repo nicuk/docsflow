@@ -222,7 +222,9 @@ export async function GET(request: NextRequest) {
       // Follow schema: tenant-id (UUID) and user-email cookies only
       response.cookies.set('tenant-id', userProfile.tenant_id, cookieOptions);
       response.cookies.set('user-email', userProfile.email, cookieOptions);
-      // tenant-subdomain removed - should be header-only per schema spec
+      
+      // REDIRECT FIX: Add tenant-subdomain cookie for middleware redirect logic
+      response.cookies.set('tenant-subdomain', userProfile.tenants.subdomain, cookieOptions);
       
       // UNIFIED ARCHITECTURE: Set auth tokens using our MultiTenantCookieManager format
       if (session?.access_token) {

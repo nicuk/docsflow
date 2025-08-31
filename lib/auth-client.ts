@@ -230,14 +230,14 @@ class AuthClient {
       // Multi-tenant user - use safe logout that preserves other tenant access
       console.log('🏢 [LOGOUT] Multi-tenant user - preserving access to other tenants');
       MultiTenantCookieManager.clearAuthTokensOnly(); // Preserves tenant contexts
-      EnterpriseSessionManager.clearTenantContext(); // Clear only current tenant context
+      // Note: MultiTenantCookieManager handles current tenant context clearing
     } else {
       // Single tenant user - full logout (legacy behavior)
       console.log('🔒 [LOGOUT] Single tenant user - full logout');
       const cookiesToClear = [
         'access_token', 'refresh_token', 
         'tenant-id', 'tenant-subdomain', 'user_email',
-        'tenant-contexts', 'current-tenant', 'enterprise-session'
+        'tenant-contexts', 'current-tenant'
       ];
       
       cookiesToClear.forEach(cookieName => {

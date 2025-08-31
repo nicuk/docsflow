@@ -199,11 +199,8 @@ export default function LoginPage() {
           console.log(`🔍 [SESSION BRIDGE] Hostname: ${hostname}, Subdomain: ${subdomain}`);
           
           if (subdomain && subdomain !== 'www' && subdomain !== 'api') {
-            // ENTERPRISE FIX: Use proper session management instead of localStorage
-            const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager');
-            
-            // Set tenant context using enterprise session manager
-            // tenantId will be set properly when we get user data from session API
+            // UNIFIED FIX: Tenant context will be set by session API response
+            // MultiTenantCookieManager will handle the tenant context properly
             console.log(`🔍 [SESSION BRIDGE] Setting tenant context for subdomain: ${subdomain}`);
             
             // Clear URL parameters

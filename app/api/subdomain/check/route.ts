@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSubdomainData } from '@/lib/subdomains';
-import { getSupabaseClient } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
-const supabase = getSupabaseClient();
+// Create Supabase client for server-side usage
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 // Generate intelligent subdomain suggestions
 function generateSubdomainSuggestions(requestedSubdomain: string): string[] {
@@ -80,7 +84,7 @@ export async function GET(request: NextRequest) {
     const existingData = await getSubdomainData(sanitizedSubdomain);
     
     // Also check Supabase (new system)
-    const { data: supabaseTenant, error: supabaseError } = await supabase!
+    const { data: supabaseTenant, error: supabaseError } = await supabase
       .from('tenants')
       .select('id, subdomain, name, industry, created_at')
       .eq('subdomain', sanitizedSubdomain)
@@ -170,7 +174,7 @@ export async function POST(request: NextRequest) {
     const existingData = await getSubdomainData(sanitizedSubdomain);
     
     // Also check Supabase (new system)
-    const { data: supabaseTenant, error: supabaseError } = await supabase!
+    const { data: supabaseTenant, error: supabaseError } = await supabase
       .from('tenants')
       .select('id, subdomain, name, industry, created_at')
       .eq('subdomain', sanitizedSubdomain)

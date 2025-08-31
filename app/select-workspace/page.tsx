@@ -11,18 +11,21 @@ export default function SelectWorkspacePage() {
   useEffect(() => {
     const redirectToWorkspace = async () => {
       try {
-        // Get tenant session
-        const { EnterpriseSessionManager } = await import('@/lib/enterprise-session-manager')
-        const userSession = EnterpriseSessionManager.getUserSession()
+        // Get tenant session using unified cookie manager
+        const { MultiTenantCookieManager } = await import('@/lib/multi-tenant-cookie-manager')
+        const tenantContexts = MultiTenantCookieManager.getCurrentTenantContexts()
+        const currentTenant = MultiTenantCookieManager.getCurrentTenantSubdomain()
         
-        if (userSession?.activeTenants?.length) {
-          const firstTenant = userSession.activeTenants[0]
-          
-          if (firstTenant?.subdomain && firstTenant.subdomain.length > 0) {
-            console.log(`🎯 [SELECT-WORKSPACE] Redirecting to: ${firstTenant.subdomain}`)
-            window.location.replace(`https://${firstTenant.subdomain}.docsflow.app/dashboard`)
-            return
-          }
+        if (currentTenant && tenantContexts[currentTenant]) {
+          console.log(`🎯 [SELECT-WORKSPACE] Redirecting to: ${currentTenant}`)
+          window.location.replace(`https://${currentTenant}.docsflow.app/dashboard`)
+          return
+        } else if (Object.keys(tenantContexts).length > 0) {
+          // Use first available tenant
+          const firstTenantSubdomain = Object.keys(tenantContexts)[0]
+          console.log(`🎯 [SELECT-WORKSPACE] Redirecting to first tenant: ${firstTenantSubdomain}`)
+          window.location.replace(`https://${firstTenantSubdomain}.docsflow.app/dashboard`)
+          return
         }
         
         // Check if user is already onboarded via session API
