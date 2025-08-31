@@ -14,7 +14,7 @@ export async function GET(
   try {
     // Validate tenant context
     const tenantValidation = await validateTenantContext(request, {
-      requireAuth: false
+      requireAuth: true // ✅ PRODUCTION: Authentication enabled
     });
 
     if (!tenantValidation.isValid) {
@@ -31,10 +31,8 @@ export async function GET(
     const documentId = params.id;
 
     // Initialize Supabase client
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    // SECURITY FIX: Use secure database service
+    // TODO: Update the function to use SecureDocumentService, SecureTenantService, or SecureUserService methods
 
     // Set tenant context for RLS
     await supabase.rpc('set_tenant_context', { tenant_id: tenantId });

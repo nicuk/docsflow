@@ -41,6 +41,8 @@ export default function LoginPage() {
   const [isSuccess, setIsSuccess] = useState(false)
   const [message, setMessage] = useState('')
   const [tenantContext, setTenantContext] = useState<{name?: string, subdomain?: string} | null>(null)
+  const [hasSAMLEnabled, setHasSAMLEnabled] = useState(false)
+  const [isSAMLLoading, setIsSAMLLoading] = useState(false)
 
   // Detect if user has tenant context but no auth tokens
   useEffect(() => {
@@ -73,16 +75,81 @@ export default function LoginPage() {
               if (userEmail) {
                 setFormData(prev => ({ ...prev, email: userEmail }))
               }
+              
+              // Check if SAML is enabled for this tenant
+              checkSAMLAvailability(subdomain)
             }
           } catch (e) {
             console.warn('Failed to parse tenant contexts:', e)
           }
+        } else if (subdomain && subdomain !== 'localhost') {
+          // Direct access to tenant subdomain
+          setTenantContext({ subdomain })
+          checkSAMLAvailability(subdomain)
         }
       }
     }
     
     detectTenantContext()
   }, [])
+
+  // Check if SAML is available for the current tenant
+  const checkSAMLAvailability = async (subdomain: string) => {
+    try {
+      // FEATURE FLAG: Disable SAML in production until freemium is complete
+      const isDevMode = process.env.NODE_ENV === 'development';
+      const samlEnabled = process.env.NEXT_PUBLIC_ENABLE_SAML === 'true';
+      
+      if (!isDevMode && !samlEnabled) {
+        setHasSAMLEnabled(false);
+        return;
+      }
+      
+      // Get tenant ID from subdomain first
+      const tenantResponse = await fetch(`/api/company/${subdomain}`)
+      if (!tenantResponse.ok) return
+      
+      const tenantData = await tenantResponse.json()
+      if (!tenantData.tenant?.id) return
+      
+      // Check SAML configuration
+      const samlResponse = await fetch(`/api/tenants/${tenantData.tenant.id}/saml`)
+      if (samlResponse.ok) {
+        const samlData = await samlResponse.json()
+        setHasSAMLEnabled(samlData.samlConfig?.is_enabled === true)
+      }
+    } catch (error) {
+      console.error('Error checking SAML availability:', error)
+    }
+  }
+
+  // Handle SAML login
+  const handleSAMLLogin = async () => {
+    if (!tenantContext?.subdomain) return
+    
+    setIsSAMLLoading(true)
+    try {
+      // Get tenant ID from subdomain
+      const tenantResponse = await fetch(`/api/company/${tenantContext.subdomain}`)
+      if (!tenantResponse.ok) {
+        throw new Error('Failed to get tenant information')
+      }
+      
+      const tenantData = await tenantResponse.json()
+      if (!tenantData.tenant?.id) {
+        throw new Error('Tenant not found')
+      }
+      
+      // Redirect to SAML login endpoint
+      const relayState = encodeURIComponent(window.location.pathname + window.location.search)
+      window.location.href = `/api/auth/saml/login/${tenantData.tenant.id}?RelayState=${relayState}`
+    } catch (error) {
+      console.error('SAML login error:', error)
+      setErrors({ general: 'Failed to initiate SAML login. Please try again.' })
+    } finally {
+      setIsSAMLLoading(false)
+    }
+  }
 
   // Handle session bridge from main domain
   useEffect(() => {
@@ -557,6 +624,43 @@ export default function LoginPage() {
                   "Sign In"
                 )}
               </Button>
+              
+              {/* SAML SSO Button */}
+              {hasSAMLEnabled && (
+                <>
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-gray-300 dark:border-gray-600" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white dark:bg-gray-900 px-2 text-gray-500 dark:text-gray-400">
+                        Or
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <Button
+                    type="button"
+                    onClick={handleSAMLLogin}
+                    className="w-full h-10 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold text-sm"
+                    disabled={isSAMLLoading || isLoading}
+                  >
+                    {isSAMLLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Redirecting...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        Sign in with SSO
+                      </>
+                    )}
+                  </Button>
+                </>
+              )}
             </form>
           </CardContent>
         </Card>

@@ -2,16 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
 
-function getSupabaseClient() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('Supabase configuration missing');
-  }
-  
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
-}
+// SECURITY FIX: Use secure database service instead of direct service role
+import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin');

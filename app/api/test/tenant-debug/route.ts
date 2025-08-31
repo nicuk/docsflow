@@ -4,7 +4,7 @@ import { validateTenantContext } from '@/lib/api-tenant-validation';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! // SECURITY FIX: Use anon key for debug
 );
 
 export async function GET(request: NextRequest) {
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     // 3. Test tenant validation function
     let validationResult;
     try {
-      validationResult = await validateTenantContext(request, { requireAuth: false });
+      validationResult = await validateTenantContext(request, { requireAuth: false }); // Test endpoint
       console.log('✅ Validation result:', validationResult);
     } catch (validationError) {
       console.error('❌ Validation error:', validationError);

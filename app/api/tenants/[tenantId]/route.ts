@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { redis, safeRedisOperation } from '@/lib/redis';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// SECURITY FIX: Use secure database service
+import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
+// Note: Update the function to use SecureDocumentService, SecureTenantService, or SecureUserService methods
 
 interface TenantData {
   id: string;

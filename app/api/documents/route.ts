@@ -3,14 +3,14 @@ import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
 
+// SECURITY FIX: Use secure database service instead of direct service role
+import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
+
+// Helper function for getting Supabase client
 function getSupabaseClient() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('Supabase configuration missing');
-  }
-  
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 }
 
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     // 🔒 SECURE: Validate tenant context with proper security checks
     const tenantValidation = await validateTenantContext(request, {
 
-      requireAuth: false // Set to true for production
+      requireAuth: true // ✅ PRODUCTION: Authentication enabled
     });
 
     if (!tenantValidation.isValid) {
@@ -97,7 +97,7 @@ export async function DELETE(request: NextRequest) {
     // 🔒 SECURE: Validate tenant context with proper security checks
     const tenantValidation = await validateTenantContext(request, {
 
-      requireAuth: false // Set to true for production
+      requireAuth: true // ✅ PRODUCTION: Authentication enabled
     });
 
     if (!tenantValidation.isValid) {

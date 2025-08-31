@@ -3,12 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
 import { getCORSHeaders } from '@/lib/utils';
 
-function getSupabaseClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
+// SECURITY FIX: Use secure database service instead of direct service role
+import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin');
@@ -26,7 +22,7 @@ export async function GET(
   try {
     // Validate tenant context first
     const tenantValidation = await validateTenantContext(request, {
-      requireAuth: false // Set to true for production
+      requireAuth: true // ✅ PRODUCTION: Authentication enabled
     });
 
     if (!tenantValidation.isValid) {

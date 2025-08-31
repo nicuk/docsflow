@@ -13,6 +13,14 @@ export async function OPTIONS() {
 }
 
 export async function GET(request: NextRequest) {
+  // DEBUG ENDPOINT - Only available in development
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json(
+      { error: 'Debug endpoint not available in production' },
+      { status: 404, headers: corsHeaders }
+    );
+  }
+
   try {
     // Get email from query params
     const { searchParams } = new URL(request.url);
@@ -25,7 +33,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Initialize Supabase admin client
+    // Use secure service for debug operations
+    const { SecureUserService, SecureTenantService } = await import('@/lib/secure-database');
+
+    // NOTE: This debug endpoint uses service role for diagnostic purposes only
+    // It's restricted to development environment
+    
+    // Get user by email - using direct query for debug purposes
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
@@ -67,35 +81,15 @@ export async function GET(request: NextRequest) {
     // 2. Check tenant association
     let tenant = null;
     if (user.tenant_id) {
-      const { data: tenantData, error: tenantError } = await supabase
-        .from('tenants')
-        .select('*')
-        .eq('id', user.tenant_id)
-        .single();
-      
-      tenant = tenantData;
+      tenant = await SecureTenantService.getTenantByUUID(user.tenant_id);
     }
 
-    // 3. Check if sculptai tenant exists
-    const { data: sculptaiTenant } = await supabase
-      .from('tenants')
-      .select('*')
-      .eq('subdomain', 'sculptai')
-      .single();
+    // 3. Check specific tenants
+    const sculptaiTenant = await SecureTenantService.getTenantBySubdomain('sculptai');
+    const bittoTenant = await SecureTenantService.getTenantBySubdomain('bitto');
 
-    // 4. Check if bitto tenant exists
-    const { data: bittoTenant } = await supabase
-      .from('tenants')
-      .select('*')
-      .eq('subdomain', 'bitto')
-      .single();
-
-    // 5. Get all tenants to see what's available
-    const { data: allTenants } = await supabase
-      .from('tenants')
-      .select('id, subdomain, name, created_at')
-      .order('created_at', { ascending: false })
-      .limit(10);
+    // 4. Get recent tenants using secure service
+    const allTenants = await SecureTenantService.getAllTenants();
 
     return NextResponse.json({
       diagnostic: {
@@ -112,7 +106,7 @@ export async function GET(request: NextRequest) {
         currentTenant: tenant,
         sculptaiTenant: sculptaiTenant || 'NOT FOUND',
         bittoTenant: bittoTenant || 'NOT FOUND',
-        allTenants: allTenants || [],
+        allTenants: (allTenants || []).slice(0, 10),
         analysis: {
           userHasTenant: !!user.tenant_id,
           userTenantSubdomain: tenant?.subdomain || 'NONE',

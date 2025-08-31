@@ -1,10 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { redis } from '@/lib/redis';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// SECURITY FIX: Use secure database service
+import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
+// Note: Update the function to use SecureDocumentService, SecureTenantService, or SecureUserService methods
 
 export interface TenantData {
   uuid: string;

@@ -17,15 +17,8 @@ import { embeddingCache } from '@/lib/embedding-cache';
 import { getCORSHeaders } from '@/lib/utils';
 
 // Initialize services - only when environment variables are available
-function getSupabaseClient() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('Supabase configuration not available');
-  }
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
-}
+// SECURITY FIX: Use secure database service instead of direct service role
+import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin');
@@ -46,7 +39,7 @@ export async function POST(request: NextRequest) {
   try {
     // Validate tenant context first
     const tenantValidation = await validateTenantContext(request, {
-      requireAuth: false // Set to true for production
+      requireAuth: true // ✅ PRODUCTION: Authentication enabled
     });
 
     if (!tenantValidation.isValid) {
@@ -62,14 +55,8 @@ export async function POST(request: NextRequest) {
     const tenantId = tenantValidation.tenantId!; // This is the UUID
     const tenantSubdomain = tenantValidation.tenantData?.subdomain || 'unknown';
     
-    // Initialize Supabase
-    let supabase;
-    try {
-      supabase = getSupabaseClient();
-    } catch (error) {
-      console.error('Supabase initialization error:', error);
-      return NextResponse.json({ error: 'Database service not available' }, { status: 500, headers: getCORSHeaders(origin) });
-    }
+    // SECURITY FIX: Database operations now handled by secure services
+    // No direct supabase client needed - using SecureDocumentService
     
     // Get user access level
     let userAccessLevel;

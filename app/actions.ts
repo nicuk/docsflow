@@ -7,16 +7,8 @@ import { rootDomain, protocol } from '@/lib/utils';
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client
-function getSupabaseClient() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.warn('Supabase not configured, falling back to Redis-only mode');
-    return null;
-  }
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
-}
+// SECURITY FIX: Use secure database service instead of direct service role
+import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
 
 interface CreateSubdomainState {
   subdomain?: string;

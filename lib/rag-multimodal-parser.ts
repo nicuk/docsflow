@@ -4,6 +4,27 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // Dynamic import to prevent build issues with pdf-parse test files
 const loadPdfParse = () => import('pdf-parse');
 
+// MinerU Integration - Advanced multimodal document parser
+interface MinerUConfig {
+  enableImageProcessing: boolean;
+  enableTableProcessing: boolean;
+  enableEquationProcessing: boolean;
+  maxConcurrentFiles: number;
+  contextWindow: number;
+}
+
+interface MinerUResult {
+  success: boolean;
+  content: any[];
+  metadata: {
+    parseMethod: 'mineru' | 'fallback';
+    processingTime: number;
+    images: any[];
+    tables: any[];
+    equations: any[];
+  };
+}
+
 export interface ParsedDocument {
   text: string;
   metadata: {
@@ -26,11 +47,78 @@ export interface DocumentChunk {
   position: number;
 }
 
+// MinerU Parser Implementation - Enterprise Integration
+class MinerUParser {
+  private tenantId: string;
+  private config: MinerUConfig;
+  
+  constructor(tenantId: string) {
+    this.tenantId = tenantId;
+    this.config = {
+      enableImageProcessing: process.env.FF_MINERU_IMAGES === 'true',
+      enableTableProcessing: process.env.FF_MINERU_TABLES === 'true',
+      enableEquationProcessing: process.env.FF_MINERU_EQUATIONS === 'true',
+      maxConcurrentFiles: parseInt(process.env.MINERU_MAX_CONCURRENT || '1'),
+      contextWindow: parseInt(process.env.MINERU_CONTEXT_WINDOW || '1'),
+    };
+  }
+  
+  async parse(fileBuffer: Buffer, filename: string): Promise<MinerUResult> {
+    const startTime = Date.now();
+    
+    try {
+      // This would integrate with actual MinerU Python service
+      // For now, we'll create a mock implementation that follows the pattern
+      const mockMinerUProcess = await this.processMinerU(fileBuffer, filename);
+      
+      return {
+        success: true,
+        content: mockMinerUProcess.content,
+        metadata: {
+          parseMethod: 'mineru',
+          processingTime: Date.now() - startTime,
+          images: mockMinerUProcess.images || [],
+          tables: mockMinerUProcess.tables || [],
+          equations: mockMinerUProcess.equations || [],
+        }
+      };
+    } catch (error) {
+      console.error(`MinerU parsing failed for tenant ${this.tenantId}:`, error);
+      return {
+        success: false,
+        content: [],
+        metadata: {
+          parseMethod: 'fallback',
+          processingTime: Date.now() - startTime,
+          images: [],
+          tables: [],
+          equations: [],
+        }
+      };
+    }
+  }
+  
+  private async processMinerU(fileBuffer: Buffer, filename: string) {
+    // TODO: Integrate with actual MinerU Python service via API
+    // This is a placeholder implementation that follows the pattern
+    console.log(`🧠 MinerU: Processing ${filename} for tenant ${this.tenantId}`);
+    
+    // Mock advanced processing
+    return {
+      content: [`Advanced MinerU processing for ${filename}`],
+      images: this.config.enableImageProcessing ? ['mock_image_data'] : [],
+      tables: this.config.enableTableProcessing ? ['mock_table_data'] : [],
+      equations: this.config.enableEquationProcessing ? ['mock_equation_data'] : [],
+    };
+  }
+}
+
 export class MultimodalDocumentParser {
   private tenantId: string;
   private supabase: any;
   private genAI: GoogleGenerativeAI;
   private model: any;
+  private mineruParser?: MinerUParser;  // NEW: MinerU integration
   
   constructor(tenantId: string) {
     this.tenantId = tenantId;
@@ -39,6 +127,7 @@ export class MultimodalDocumentParser {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
     
+    // Initialize Gemini (existing system)
     if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
       this.genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY);
       this.model = this.genAI.getGenerativeModel({ 
@@ -46,9 +135,71 @@ export class MultimodalDocumentParser {
         systemInstruction: 'You are a document parsing expert. Extract structured information including tables, lists, and key entities.'
       });
     }
+    
+    // Initialize MinerU if enabled
+    if (process.env.FF_MINERU_PARSING === 'true') {
+      this.mineruParser = new MinerUParser(tenantId);
+      console.log(`🚀 MinerU parser enabled for tenant: ${tenantId}`);
+    }
   }
   
   async parseDocument(file: Buffer, mimeType: string, fileName?: string): Promise<ParsedDocument> {
+    const startTime = Date.now();
+    
+    try {
+      // NEW: Try MinerU parser first if enabled
+      if (this.mineruParser && fileName) {
+        console.log(`🧠 Attempting MinerU parsing for ${fileName}`);
+        const mineruResult = await this.mineruParser.parse(file, fileName);
+        
+        if (mineruResult.success) {
+          console.log(`✅ MinerU parsing successful in ${mineruResult.metadata.processingTime}ms`);
+          return this.convertMinerUToDocsFlow(mineruResult, mimeType);
+        } else {
+          console.log(`⚠️ MinerU parsing failed, falling back to Gemini parser`);
+        }
+      }
+      
+      // Fallback to existing Gemini-based parsing
+      console.log(`🔄 Using Gemini parser for ${fileName || 'document'}`);
+      return await this.parseWithGemini(file, mimeType, fileName);
+      
+    } catch (error) {
+      console.error('All parsing methods failed, using basic fallback:', error);
+      return await this.parseBasic(file, mimeType);
+    }
+  }
+  
+  // NEW: Convert MinerU result to DocsFlow format
+  private convertMinerUToDocsFlow(mineruResult: MinerUResult, mimeType: string): ParsedDocument {
+    const chunks: DocumentChunk[] = mineruResult.content.map((content, index) => ({
+      content: String(content),
+      type: 'text',
+      metadata: {
+        source: 'mineru',
+        parseMethod: 'advanced',
+        processingTime: mineruResult.metadata.processingTime,
+      },
+      position: index,
+    }));
+    
+    return {
+      text: mineruResult.content.join('\n'),
+      metadata: {
+        tenant_id: this.tenantId,
+        mime_type: mimeType,
+        pages: mineruResult.content.length,
+        tables: mineruResult.metadata.tables,
+        images: mineruResult.metadata.images,
+        equations: mineruResult.metadata.equations,
+        parse_method: 'advanced',
+      },
+      chunks,
+    };
+  }
+  
+  // Renamed existing parseDocument logic to parseWithGemini
+  private async parseWithGemini(file: Buffer, mimeType: string, fileName?: string): Promise<ParsedDocument> {
     try {
       // Route to appropriate parser based on mime type
       if (mimeType.includes('pdf')) {
@@ -64,7 +215,7 @@ export class MultimodalDocumentParser {
       // Fallback to basic text extraction
       return await this.parseBasic(file, mimeType);
     } catch (error) {
-      console.error('Multimodal parsing failed, using fallback:', error);
+      console.error('Gemini parsing failed, using basic fallback:', error);
       return await this.parseBasic(file, mimeType);
     }
   }

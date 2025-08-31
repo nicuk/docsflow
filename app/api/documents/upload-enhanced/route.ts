@@ -41,14 +41,10 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     
-    // Initialize Supabase client
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    // Use secure database service instead of direct service role key
+    const { SecureDocumentService } = await import('@/lib/secure-database');
     
-    // Set tenant context for RLS
-    await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    // Tenant context is handled by secure service layer
     
     let parsedDocument;
     let parseMethod: 'advanced' | 'basic' = 'basic';
@@ -110,46 +106,35 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Store document in database
-    const { data: document, error: insertError } = await supabase
-      .from('documents')
-      .insert({
-        tenant_id: tenantId,
-        name: file.name,
-        content: parsedDocument.text,
-        mime_type: file.type,
-        size: buffer.length,
-        metadata: parsedDocument.metadata,
-        parse_method: parseMethod,
-        has_tables: (parsedDocument.metadata.tables?.length || 0) > 0,
-        has_images: (parsedDocument.metadata.images?.length || 0) > 0,
-        chunk_count: parsedDocument.chunks.length
-      })
-      .select()
-      .single();
+    // Store document using secure service
+    const document = await SecureDocumentService.insertDocument({
+      tenant_id: tenantId,
+      name: file.name,
+      content: parsedDocument.text,
+      mime_type: file.type,
+      size: buffer.length,
+      metadata: parsedDocument.metadata,
+      parse_method: parseMethod,
+      has_tables: (parsedDocument.metadata.tables?.length || 0) > 0,
+      has_images: (parsedDocument.metadata.images?.length || 0) > 0,
+      chunk_count: parsedDocument.chunks.length
+    });
     
-    if (insertError) {
-      throw insertError;
+    if (!document) {
+      throw new Error('Failed to insert document');
     }
     
-    // Store chunks if available
+    // Store chunks if available using secure service
     if (parsedDocument.chunks.length > 0) {
-      const chunks = parsedDocument.chunks.map((chunk, index) => ({
-        document_id: document.id,
-        tenant_id: tenantId,
-        content: chunk.content,
-        type: chunk.type,
-        position: index,
-        metadata: chunk.metadata,
-        embedding: chunk.embedding
-      }));
-      
-      const { error: chunkError } = await supabase
-        .from('document_chunks')
-        .insert(chunks);
-      
-      if (chunkError) {
-        console.error('[Documents Upload] Failed to store chunks:', chunkError);
+      for (const [index, chunk] of parsedDocument.chunks.entries()) {
+        await SecureDocumentService.insertDocumentChunk({
+          document_id: document.id,
+          content: chunk.content,
+          type: chunk.type,
+          position: index,
+          metadata: chunk.metadata,
+          embedding: chunk.embedding
+        }, tenantId);
       }
     }
     

@@ -58,6 +58,8 @@ import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/hooks/use-toast"
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
+import SAMLConfiguration from "@/components/admin/saml-configuration"
+import { useAuth } from "@/contexts/AuthContext"
 
 // Sample usage data for charts
 const usageData = [
@@ -244,6 +246,7 @@ const webhookFormSchema = z.object({
 })
 
 export default function SettingsPage() {
+  const { user, tenant } = useAuth()
   const [activeTab, setActiveTab] = useState("profile")
   const [showPassword, setShowPassword] = useState(false)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
@@ -251,6 +254,9 @@ export default function SettingsPage() {
   const [apiKey, setApiKey] = useState("sk_live_51NZgGtKLk2DfFgQa7tYfVmBCVcfUvZ...")
   const [showApiKey, setShowApiKey] = useState(false)
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false)
+  
+  // Check if user is admin
+  const isAdmin = user?.role === 'admin'
 
   // Profile form
   const profileForm = useForm<z.infer<typeof profileFormSchema>>({
@@ -339,7 +345,7 @@ export default function SettingsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
+        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-2 md:grid-cols-6' : 'grid-cols-2 md:grid-cols-5'}`}>
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">Profile</span>
@@ -360,6 +366,12 @@ export default function SettingsPage() {
             <Shield className="h-4 w-4" />
             <span className="hidden sm:inline">Security</span>
           </TabsTrigger>
+          {isAdmin && process.env.NODE_ENV === 'development' && (
+            <TabsTrigger value="saml" className="flex items-center gap-2">
+              <Key className="h-4 w-4" />
+              <span className="hidden sm:inline">SAML SSO (Dev)</span>
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Profile Settings Tab */}
@@ -1778,6 +1790,22 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* SAML SSO Tab - Admin Only (Development) */}
+        {isAdmin && process.env.NODE_ENV === 'development' && (
+          <TabsContent value="saml" className="space-y-6">
+            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <h3 className="font-semibold text-yellow-800">🚧 Development Feature</h3>
+              <p className="text-yellow-700 text-sm mt-1">
+                SAML SSO is currently in development. This feature will be available in the Enterprise plan after freemium launch.
+              </p>
+            </div>
+            <SAMLConfiguration 
+              tenantId={tenant?.id || ''} 
+              tenantSubdomain={tenant?.subdomain || ''} 
+            />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   )

@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   try {
     // 🔒 SECURE: Validate tenant context
     const tenantValidation = await validateTenantContext(request, {
-      requireAuth: false
+      requireAuth: true // ✅ TESTING: Enable auth on analytics first
     })
 
     if (!tenantValidation.isValid) {

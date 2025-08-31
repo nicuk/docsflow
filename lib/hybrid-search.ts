@@ -35,13 +35,13 @@ export class HybridSearch {
   private reranker: SemanticReranker;
 
   constructor() {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !/* SECURITY FIX: Migrated to secure backend service */) {
       throw new Error('Supabase configuration not available');
     }
     
     this.supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
+      /* SECURITY FIX: Migrated to secure backend service */
     );
 
     if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {

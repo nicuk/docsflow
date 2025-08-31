@@ -11,8 +11,8 @@ import { CircuitBreakerFactory } from '@/lib/circuit-breaker';
 import { degradationManager } from '@/lib/emergency-degradation';
 import { OpenRouterClient, MODEL_CONFIGS } from '@/lib/openrouter-client';
 
-// Initialize OpenRouter client for chat
-const openRouterClient = new OpenRouterClient();
+// Initialize OpenRouter client for chat (lazy-loaded)
+let openRouterClient: OpenRouterClient | null = null;
 
 // Initialize Google AI model (keep as fallback)
 const googleAI = process.env.GOOGLE_GENERATIVE_AI_API_KEY 
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   try {
     // 🔒 SECURE: Validate tenant context (subdomain-based isolation)
     const tenantValidation = await validateTenantContext(request, {
-      requireAuth: false // Set to true for production
+      requireAuth: true // ✅ PRODUCTION: Authentication enabled
     });
 
     if (!tenantValidation.isValid) {
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get tenant-specific prompt
-    const tenantPrompt = await getTenantPrompt(tenantSubdomain);
+    const tenantPromptConfig = getTenantPrompt(tenantSubdomain);
     
     // Generate final answer using OpenRouter with fallback
     const contextText = context.map(ctx => `Source: ${ctx.source}\nContent: ${ctx.content}`).join('\n\n');
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     const messages = [
       {
         role: 'system' as const,
-        content: tenantPrompt
+        content: tenantPromptConfig.systemPrompt
       },
       {
         role: 'user' as const,
@@ -138,6 +138,11 @@ Provide a helpful, accurate answer based ONLY on the provided context. If the co
     let modelUsed: string;
     
     try {
+      // Lazy-load OpenRouter client
+      if (!openRouterClient) {
+        openRouterClient = new OpenRouterClient();
+      }
+      
       const llmResponse = await openRouterClient.generateWithFallback(
         MODEL_CONFIGS.CHAT,
         messages,
@@ -171,7 +176,30 @@ Provide a helpful, accurate answer based ONLY on the provided context. If the co
       console.log('🚨 Used Gemini emergency fallback');
     }
 
-    // This section has been moved inside the circuit breaker logic above
+    // Calculate confidence and enhance citations
+    const confidenceResult = ConfidenceScoring.calculateEnhancedConfidence(context, message, answerText);
+    
+    // Enhance citations in the response
+    const citedResponse = CitationEnhancer.enhanceWithCitations(answerText, context);
+    
+    const responseTime = Date.now() - startTime;
+    
+    // Return successful response
+    return NextResponse.json({
+      answer: citedResponse.text,
+      sources: context,
+      confidence: confidenceResult.score,
+      confidence_level: confidenceResult.level,
+      confidence_explanation: confidenceResult.explanation,
+      citations: citedResponse.citations,
+      metadata: {
+        strategy: 'unified_rag_with_llm',
+        model_used: modelUsed,
+        response_time_ms: responseTime,
+        source_count: context.length,
+        tenant_subdomain: tenantSubdomain
+      }
+    }, { headers: corsHeaders });
 
   } catch (error: any) {
     console.error('Chat API error:', error);

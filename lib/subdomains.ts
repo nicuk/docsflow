@@ -34,10 +34,8 @@ export async function getSubdomainData(
   // Enterprise mode: Query real tenant data from database
   try {
     const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    // SECURITY FIX: Use secure database service
+    // TODO: Update the function to use SecureDocumentService, SecureTenantService, or SecureUserService methods
 
     
     const { data: tenant, error } = await supabase

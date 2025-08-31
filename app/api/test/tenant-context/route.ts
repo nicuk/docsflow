@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { getSubdomainData } from '@/lib/subdomains';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// SECURITY FIX: Use secure database service instead of direct service role key
+import { SecureTenantService } from '@/lib/secure-database';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,12 +14,9 @@ export async function GET(request: NextRequest) {
     // Test 1: Redis/Cache lookup
     const cachedData = await getSubdomainData(testTenant);
     
-    // Test 2: Supabase lookup
-    const { data: supabaseData, error } = await supabase
-      .from('tenants')
-      .select('*')
-      .eq('subdomain', testTenant)
-      .single();
+    // Test 2: Secure service lookup
+    const supabaseData = await SecureTenantService.getTenantBySubdomain(testTenant);
+    const error = supabaseData ? null : new Error('Tenant not found');
 
     // Test 3: Header propagation
     const headerTest = {
@@ -60,7 +53,7 @@ export async function GET(request: NextRequest) {
         environment: {
           node_env: process.env.NODE_ENV,
           has_redis_config: !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN),
-          has_supabase_config: !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)
+          has_supabase_config: !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
         }
       }
     });

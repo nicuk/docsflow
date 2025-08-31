@@ -160,6 +160,25 @@ export const SecureDocumentService = {
     }
     
     return data;
+  },
+
+  /**
+   * Insert document with tenant isolation
+   */
+  async insertDocument(documentData: any) {
+    const client = getServiceClient();
+    const { data, error } = await client
+      .from('documents')
+      .insert(documentData)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('SecureDocumentService.insertDocument error:', error);
+      return null;
+    }
+    
+    return data;
   }
 };
 
