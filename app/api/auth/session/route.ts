@@ -132,6 +132,16 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // JWT GATEWAY: Create tenant context for client-side caching
+    const jwtTenantContext = {
+      tenantId: userProfile.tenant_id,
+      subdomain: userProfile.tenants?.subdomain,
+      tenantName: userProfile.tenants?.name,
+      userRole: userProfile.role,
+      accessLevel: userProfile.access_level,
+      timestamp: Date.now()
+    };
+
     // SUCCESS: Return authenticated user with tenant info
     const response = NextResponse.json({
       authenticated: true,
@@ -144,6 +154,8 @@ export async function GET(request: NextRequest) {
       tenant: userProfile.tenants || null,
       onboardingComplete: !!userProfile.tenant_id,
       tenantId: userProfile.tenant_id,
+      // JWT GATEWAY: Include tenant context for client caching
+      jwtContext: jwtTenantContext,
       debug: 'success'
     });
 
@@ -186,6 +198,8 @@ export async function GET(request: NextRequest) {
         onboardingComplete: !!userProfile.tenant_id
       });
     }
+
+
     
     return response;
 

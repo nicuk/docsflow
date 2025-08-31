@@ -179,14 +179,26 @@ export async function validateTenantContext(
     // Additional auth validation if required
     if (requireAuth) {
       const authHeader = request.headers.get('authorization');
+      const rlsContext = request.headers.get('x-rls-context');
       let user = null;
       
       // DEBUG: Log what auth headers we're receiving
       console.log(`🔍 [AUTH-DEBUG] Headers received:`, {
         hasAuthorization: !!authHeader,
         authHeader: authHeader ? authHeader.substring(0, 20) + '...' : 'none',
+        hasRLSContext: !!rlsContext,
         allHeaders: Object.fromEntries(request.headers.entries())
       });
+
+      // RLS CONTEXT: Set tenant context in database session if provided
+      if (rlsContext === 'tenant-scoped' && tenantUUID) {
+        try {
+          await supabase.rpc('set_tenant_context', { tenant_id: tenantUUID });
+          console.log(`🔍 [RLS-CONTEXT] Set database session context for tenant: ${tenantUUID.substring(0, 8)}...`);
+        } catch (rlsError) {
+          console.warn('🔍 [RLS-CONTEXT] Failed to set tenant context:', rlsError);
+        }
+      }
       
       // Try Bearer token first
       if (authHeader && authHeader.startsWith('Bearer ')) {

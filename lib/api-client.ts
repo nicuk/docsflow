@@ -27,20 +27,21 @@ let lastHealthCheck = 0;
 const HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
 
 export const apiClient = {
-  // Get comprehensive auth headers with tenant context
+  // JWT GATEWAY + RLS: Get comprehensive auth headers with tenant context
   async getAuthHeaders() {
     const headers: any = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
     
-    // Get auth token from unified Supabase session
+    // JWT GATEWAY: Get auth token from unified Supabase session
     const authToken = await this.getAccessToken();
     if (authToken) {
       headers['Authorization'] = `Bearer ${authToken}`;
+      console.log('🔍 [JWT-GATEWAY] Authorization header set for cross-domain request');
     }
     
-    // Add tenant subdomain from URL - CRITICAL for proper tenant context
+    // RLS CONTEXT: Add tenant context for database session
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname;
       const subdomain = hostname.split('.')[0];
@@ -52,8 +53,22 @@ export const apiClient = {
           subdomain !== 'localhost' &&
           hostname.includes('.docsflow.app')) {
         headers['X-Tenant-Subdomain'] = subdomain;
-        // NOTE: X-Tenant-ID should be UUID from tenants.id, not subdomain
-        // Removing incorrect subdomain-as-tenant-id to prevent validation errors
+        
+        // RLS CONTEXT: Add tenant UUID from localStorage cache for session context
+        const tenantContext = localStorage.getItem('tenant_context');
+        if (tenantContext) {
+          try {
+            const context = JSON.parse(tenantContext);
+            if (context.tenantId && context.subdomain === subdomain) {
+              headers['X-Tenant-ID'] = context.tenantId;
+              headers['X-RLS-Context'] = 'tenant-scoped'; // Signal for RLS context setting
+              console.log(`🏢 [RLS-CONTEXT] Adding tenant context: ${subdomain} -> ${context.tenantId.substring(0, 8)}...`);
+            }
+          } catch (parseError) {
+            console.warn('🔍 [RLS-CONTEXT] Failed to parse tenant context:', parseError);
+          }
+        }
+        
         console.log(`🏢 Adding tenant context: ${subdomain}`);
       }
     }
@@ -61,7 +76,7 @@ export const apiClient = {
     return headers;
   },
 
-  // Get access token from unified Supabase session
+  // JWT GATEWAY: Get access token with cross-domain support
   async getAccessToken() {
     if (typeof window === 'undefined') return null;
     
@@ -72,10 +87,29 @@ export const apiClient = {
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (!error && session?.access_token) {
+        // JWT GATEWAY: Cache token for cross-domain use
+        localStorage.setItem('jwt_access_token', session.access_token);
+        localStorage.setItem('jwt_expires_at', session.expires_at?.toString() || '');
         return session.access_token;
       }
     } catch (sessionError) {
-      console.warn('🔍 [API-CLIENT] Session token fetch failed, falling back to cookies:', sessionError);
+      console.warn('🔍 [API-CLIENT] Session token fetch failed, checking cache:', sessionError);
+    }
+    
+    // JWT GATEWAY: Check cached token for cross-domain scenarios
+    const cachedToken = localStorage.getItem('jwt_access_token');
+    const expiresAt = localStorage.getItem('jwt_expires_at');
+    
+    if (cachedToken && expiresAt) {
+      const expires = new Date(parseInt(expiresAt) * 1000);
+      if (expires > new Date()) {
+        console.log('🔍 [JWT-GATEWAY] Using cached valid token for cross-domain request');
+        return cachedToken;
+      } else {
+        // Clean expired tokens
+        localStorage.removeItem('jwt_access_token');
+        localStorage.removeItem('jwt_expires_at');
+      }
     }
     
     // Fallback: Parse Supabase auth cookies directly

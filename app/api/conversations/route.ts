@@ -15,28 +15,31 @@ export async function GET(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
   
   try {
-    // SUPABASE SSR FIX: Use server client for proper authentication  
-    const supabase = await createClient();
+    // RLS CONTEXT: Use tenant validation instead of direct tenant lookup
+    const { validateTenantContext } = await import('@/lib/api-tenant-validation');
     
-    // Get tenant from subdomain or demo mode
-    const tenantSubdomain = request.headers.get('X-Tenant-Subdomain') || 'demo-warehouse-dist';
-    
-    console.log('Fetching conversations for tenant subdomain:', tenantSubdomain);
-    
-    // First, get the tenant UUID from subdomain using server client
-    const { data: tenant, error: tenantError } = await supabase
-      .from('tenants')
-      .select('id')
-      .eq('subdomain', tenantSubdomain)
-      .single();
+    const tenantValidation = await validateTenantContext(request, {
+      requireAuth: true // Enable auth validation for proper RLS context
+    });
 
-    if (tenantError || !tenant) {
-      console.error('Tenant not found:', tenantError);
+    if (!tenantValidation.isValid) {
+      console.error('Tenant validation failed:', tenantValidation.error);
       return NextResponse.json(
-        { error: 'Tenant not found' },
-        { status: 404, headers: corsHeaders }
+        { 
+          error: tenantValidation.error,
+          security_violation: 'Invalid tenant context'
+        },
+        { status: tenantValidation.statusCode || 400, headers: corsHeaders }
       );
     }
+
+    const tenantId = tenantValidation.tenantId!; // This is the UUID
+    const tenantSubdomain = tenantValidation.tenantData?.subdomain || 'unknown';
+    
+    console.log('Fetching conversations for validated tenant:', tenantSubdomain, 'UUID:', tenantId);
+    
+    // SUPABASE SSR FIX: Use server client for proper authentication  
+    const supabase = await createClient();
     
     // Get conversations for this tenant using the actual UUID
     const { data: conversations, error } = await supabase
@@ -48,7 +51,7 @@ export async function GET(request: NextRequest) {
         updated_at,
         tenant_id
       `)
-      .eq('tenant_id', tenant.id)
+      .eq('tenant_id', tenantId)
       .order('updated_at', { ascending: false })
       .limit(50);
 
