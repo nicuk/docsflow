@@ -482,7 +482,7 @@ export default function LoginPage() {
         // CRITICAL FIX: Respect login context - don't force tenant redirect from root domain
         const userTenantSubdomain = (userProfile.tenants as any)?.subdomain
         const currentHostname = typeof window !== 'undefined' ? window.location.hostname : ''
-        const isRootDomain = currentHostname === 'docsflow.app' || currentHostname === 'localhost'
+        const isRootDomain = currentHostname === 'docsflow.app' || currentHostname === 'www.docsflow.app' || currentHostname === 'localhost'
         
         console.log('🔍 [LOGIN-DEBUG] Redirect context:', {
           userTenantSubdomain,
