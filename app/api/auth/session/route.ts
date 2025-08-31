@@ -63,32 +63,8 @@ export async function GET(request: NextRequest) {
       {
         cookies: {
           getAll() {
-            // FIX #1: Use unified auth cookie approach
-            const allCookies = cookieStore.getAll();
-            const serverCookies = allCookies.reduce((acc, cookie) => {
-              acc[cookie.name] = cookie.value;
-              return acc;
-            }, {} as Record<string, string>);
-            
-            // Use multi-tenant auth token with fallbacks
-            const authToken = cookieStore.get('docsflow_auth_token')?.value ||
-                             cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value ||
-                             cookieStore.get('access_token')?.value;
-            
-            if (authToken) {
-              // Create Supabase-compatible cookie structure
-              const supabaseCookie = {
-                name: 'sb-lhcopwwiqwjpzbdnjovo-auth-token',
-                value: authToken
-              };
-              
-              console.log(`✅ [SESSION API] Using multi-tenant auth token`);
-              return [...allCookies, supabaseCookie];
-            } else if (!isVercelBot) {
-              console.warn('🚨 [SESSION API] No valid auth tokens found in multi-tenant system');
-            }
-            
-            return allCookies;
+            // SURGICAL FIX: Let Supabase handle its own cookies without intervention
+            return cookieStore.getAll();
           },
           setAll(cookiesToSet) {
             try {
@@ -205,22 +181,8 @@ export async function GET(request: NextRequest) {
       response.cookies.set('user-email', userProfile.email, cookieOptions);
       // tenant-subdomain removed - should be header-only per schema spec
       
-      // CRITICAL FIX: Set authentication token cookie for API calls
-      if (session?.access_token) {
-        const authCookieOptions = {
-          ...cookieOptions,
-          httpOnly: false, // Must be accessible to frontend for API calls
-          maxAge: 60 * 60 * 1 // 1 hour for auth tokens
-        };
-        
-        response.cookies.set('sb-lhcopwwiqwjpzbdnjovo-auth-token', session.access_token, authCookieOptions);
-        response.cookies.set('docsflow_auth_token', session.access_token, authCookieOptions); // Unified format
-        response.cookies.set('access_token', session.access_token, authCookieOptions); // Legacy compatibility
-        
-        console.log(`🔑 [SESSION API] Set authentication token cookies for API access`);
-      } else {
-        console.warn(`⚠️ [SESSION API] No access token available in session for cookie setting`);
-      }
+      // NOTE: Removed manual auth token setting - let Supabase handle its own auth cookies
+      // The login flow should set these cookies properly
       
       console.log(`🔧 [SESSION API] Set complete tenant context cookies:`, {
         tenantId: userProfile.tenant_id.substring(0, 8) + '...',
