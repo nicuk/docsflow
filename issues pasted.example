@@ -1,26 +1,22 @@
-2025-08-31T18:41:09.283Z [info] 🔍 [MIDDLEWARE START] GET www.docsflow.app/select-workspace
-2025-08-31T18:41:09.283Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'www.docsflow.app' (length: 16)
-2025-08-31T18:41:09.283Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T18:41:09.283Z [info] 🔍 [MIDDLEWARE] Origin: null
-2025-08-31T18:41:09.283Z [info] 🔍 [MIDDLEWARE] Request URL: https://www.docsflow.app/select-workspace
-2025-08-31T18:41:09.283Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'null' from hostname: 'www.docsflow.app'
-2025-08-31T18:41:09.283Z [info] 🔍 [MIDDLEWARE] Checking main domain condition: hostname='www.docsflow.app' vs 'docsflow.app'|'www.docsflow.app'|'localhost'
-2025-08-31T18:41:09.283Z [info] 🔍 [MIDDLEWARE] ✅ MATCHED main domain condition - Processing: www.docsflow.app/select-workspace
-2025-08-31T18:41:09.283Z [info] 🔍 [MIDDLEWARE] Checking auth for main domain user on: /select-workspace
-2025-08-31T18:41:09.283Z [info] 🔍 [MIDDLEWARE] Auth check - Token: MISSING, Email: support@bitto.tech, TenantId: 122928f6-f34e-484b-9a69-7e1f25caf45c, Subdomain: bitto
-2025-08-31T18:41:09.283Z [info] 🔍 [MIDDLEWARE] User not authenticated or missing tenant context on main domain
-2025-08-31T18:41:09.283Z [info] 🔍 [MIDDLEWARE] Default handler - allowing frontend to handle: www.docsflow.app/select-workspace
-
-
-1T18:41:10.237Z [info] 🔍 [SESSION API] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T18:41:10.240Z [info] 🔍 [SESSION API] Raw cookies: user-email, tenant-context, tenant-id, tenant-subdomain, sb-lhcopwwiqwjpzbdnjovo-auth-token
-2025-08-31T18:41:10.240Z [info] 🔍 [SESSION API] Multi-tenant auth state: {
+2025-08-31T18:55:48.787Z [info] 🔍 [MIDDLEWARE START] GET www.docsflow.app/api/auth/session
+2025-08-31T18:55:48.787Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'www.docsflow.app' (length: 16)
+2025-08-31T18:55:48.787Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T18:55:48.787Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-08-31T18:55:48.787Z [info] 🔍 [MIDDLEWARE] Request URL: https://www.docsflow.app/api/auth/session
+2025-08-31T18:55:48.787Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'null' from hostname: 'www.docsflow.app'
+2025-08-31T18:55:48.787Z [info] 🔍 [MIDDLEWARE] Checking main domain condition: hostname='www.docsflow.app' vs 'docsflow.app'|'www.docsflow.app'|'localhost'
+2025-08-31T18:55:48.788Z [info] 🔍 [MIDDLEWARE] ✅ MATCHED main domain condition - Processing: www.docsflow.app/api/auth/session
+2025-08-31T18:55:48.788Z [info] 🔍 [MIDDLEWARE] Allowing main domain route: /api/auth/session
+2025-08-31T18:55:49.406Z [info] 🔍 [SESSION API] Request received from: https://www.docsflow.app/select-workspace
+2025-08-31T18:55:49.406Z [info] 🔍 [SESSION API] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T18:55:49.420Z [info] 🔍 [SESSION API] Raw cookies: user-email, tenant-context, tenant-id, tenant-subdomain, sb-lhcopwwiqwjpzbdnjovo-auth-token
+2025-08-31T18:55:49.420Z [info] 🔍 [SESSION API] Multi-tenant auth state: {
   hasAuthToken: false,
   currentTenant: undefined,
   totalTenants: 0,
   availableTenants: []
 }
-2025-08-31T18:41:10.248Z [info] 🔍 [SESSION API] DEBUGGING COOKIE VALUES: {
+2025-08-31T18:55:49.437Z [info] 🔍 [SESSION API] DEBUGGING COOKIE VALUES: {
   hasSupabaseAuth: true,
   supabaseTokenLength: 0,
   supabaseTokenPreview: '...',
@@ -30,7 +26,7 @@
   tokensMatch: false,
   totalCookies: 5
 }
-2025-08-31T18:41:10.249Z [info] 🔍 [SESSION API] DEBUGGING COOKIE VALUES: {
+2025-08-31T18:55:49.437Z [info] 🔍 [SESSION API] DEBUGGING COOKIE VALUES: {
   hasSupabaseAuth: true,
   supabaseTokenLength: 0,
   supabaseTokenPreview: '...',
@@ -40,7 +36,7 @@
   tokensMatch: false,
   totalCookies: 5
 }
-2025-08-31T18:41:10.250Z [info] 🔍 [SESSION API] DEBUGGING COOKIE VALUES: {
+2025-08-31T18:55:49.441Z [info] 🔍 [SESSION API] DEBUGGING COOKIE VALUES: {
   hasSupabaseAuth: true,
   supabaseTokenLength: 0,
   supabaseTokenPreview: '...',
@@ -50,7 +46,7 @@
   tokensMatch: false,
   totalCookies: 5
 }
-2025-08-31T18:41:10.251Z [info] 🔍 [SESSION API] DEBUGGING COOKIE VALUES: {
+2025-08-31T18:55:49.442Z [info] 🔍 [SESSION API] DEBUGGING COOKIE VALUES: {
   hasSupabaseAuth: true,
   supabaseTokenLength: 0,
   supabaseTokenPreview: '...',
@@ -60,7 +56,7 @@
   tokensMatch: false,
   totalCookies: 5
 }
-2025-08-31T18:41:10.252Z [info] 🔍 [SESSION API] Supabase auth result: {
+2025-08-31T18:55:49.442Z [info] 🔍 [SESSION API] Supabase auth result: {
   hasUser: false,
   userId: undefined,
   userEmail: undefined,
@@ -69,28 +65,19 @@
   userError: 'Auth session missing!',
   sessionError: undefined
 }
-2025-08-31T18:41:10.252Z [info] ❌ [SESSION API] Authentication failed: Auth session missing!
-2025-08-31T18:41:09.585Z [info] 🔍 [MIDDLEWARE START] GET www.docsflow.app/api/auth/session
-2025-08-31T18:41:09.586Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'www.docsflow.app' (length: 16)
-2025-08-31T18:41:09.586Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T18:41:09.586Z [info] 🔍 [MIDDLEWARE] Origin: null
-2025-08-31T18:41:09.586Z [info] 🔍 [MIDDLEWARE] Request URL: https://www.docsflow.app/api/auth/session
-2025-08-31T18:41:09.586Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'null' from hostname: 'www.docsflow.app'
-2025-08-31T18:41:09.586Z [info] 🔍 [MIDDLEWARE] Checking main domain condition: hostname='www.docsflow.app' vs 'docsflow.app'|'www.docsflow.app'|'localhost'
-2025-08-31T18:41:09.586Z [info] 🔍 [MIDDLEWARE] ✅ MATCHED main domain condition - Processing: www.docsflow.app/api/auth/session
-2025-08-31T18:41:09.586Z [info] 🔍 [MIDDLEWARE] Allowing main domain route: /api/auth/session
+2025-08-31T18:55:49.442Z [info] ❌ [SESSION API] Authentication failed: Auth session missing!
 
 
-2025-08-31T18:41:11.582Z [info] 🔍 [MIDDLEWARE START] POST www.docsflow.app/api/subdomain/check
-2025-08-31T18:41:11.582Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'www.docsflow.app' (length: 16)
-2025-08-31T18:41:11.582Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T18:41:11.582Z [info] 🔍 [MIDDLEWARE] Origin: https://www.docsflow.app
-2025-08-31T18:41:11.582Z [info] 🔍 [MIDDLEWARE] Request URL: https://www.docsflow.app/api/subdomain/check
-2025-08-31T18:41:11.582Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'null' from hostname: 'www.docsflow.app'
-2025-08-31T18:41:11.582Z [info] 🔍 [MIDDLEWARE] Checking main domain condition: hostname='www.docsflow.app' vs 'docsflow.app'|'www.docsflow.app'|'localhost'
-2025-08-31T18:41:11.583Z [info] 🔍 [MIDDLEWARE] ✅ MATCHED main domain condition - Processing: www.docsflow.app/api/subdomain/check
-2025-08-31T18:41:11.583Z [info] 🔍 [MIDDLEWARE] Allowing main domain route: /api/subdomain/check
-2025-08-31T18:41:12.724Z [error] Error fetching tenant data: ReferenceError: supabase is not defined
+2025-08-31T18:55:50.996Z [info] 🔍 [MIDDLEWARE START] POST www.docsflow.app/api/subdomain/check
+2025-08-31T18:55:50.996Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'www.docsflow.app' (length: 16)
+2025-08-31T18:55:50.996Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T18:55:50.996Z [info] 🔍 [MIDDLEWARE] Origin: https://www.docsflow.app
+2025-08-31T18:55:50.996Z [info] 🔍 [MIDDLEWARE] Request URL: https://www.docsflow.app/api/subdomain/check
+2025-08-31T18:55:50.997Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'null' from hostname: 'www.docsflow.app'
+2025-08-31T18:55:50.997Z [info] 🔍 [MIDDLEWARE] Checking main domain condition: hostname='www.docsflow.app' vs 'docsflow.app'|'www.docsflow.app'|'localhost'
+2025-08-31T18:55:50.997Z [info] 🔍 [MIDDLEWARE] ✅ MATCHED main domain condition - Processing: www.docsflow.app/api/subdomain/check
+2025-08-31T18:55:50.997Z [info] 🔍 [MIDDLEWARE] Allowing main domain route: /api/subdomain/check
+2025-08-31T18:55:52.135Z [error] Error fetching tenant data: ReferenceError: supabase is not defined
     at d (.next/server/app/api/subdomain/check/route.js:1:9725)
     at async z (.next/server/app/api/subdomain/check/route.js:1:3445)
     at async k (.next/server/app/api/subdomain/check/route.js:1:6742)
