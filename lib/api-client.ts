@@ -39,6 +39,26 @@ export const apiClient = {
     if (authToken) {
       headers['Authorization'] = `Bearer ${authToken}`;
       console.log('🔍 [JWT-GATEWAY] Authorization header set for cross-domain request');
+    } else {
+      // CRITICAL FIX: Force immediate session check if no cached token
+      console.warn('🔍 [JWT-GATEWAY] No token found, forcing fresh session check...');
+      try {
+        const { createClient } = await import('@/lib/supabase-browser');
+        const supabase = createClient();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (!error && session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+          // Update cache for next time
+          localStorage.setItem('jwt_access_token', session.access_token);
+          localStorage.setItem('jwt_expires_at', session.expires_at?.toString() || '');
+          console.log('🔍 [JWT-GATEWAY] Fresh token retrieved and cached');
+        } else {
+          console.error('🔍 [JWT-GATEWAY] Failed to get fresh session:', error);
+        }
+      } catch (freshError) {
+        console.error('🔍 [JWT-GATEWAY] Critical: Fresh session retrieval failed:', freshError);
+      }
     }
     
     // RLS CONTEXT: Add tenant context for database session
@@ -80,6 +100,18 @@ export const apiClient = {
   async getAccessToken() {
     if (typeof window === 'undefined') return null;
     
+    // JWT BRIDGE: First check cached token from session bridge
+    try {
+      const { jwtBridge } = await import('@/lib/jwt-session-bridge');
+      const cachedToken = jwtBridge.getCachedToken();
+      if (cachedToken) {
+        console.log('🔍 [JWT-GATEWAY] Using JWT bridge cached token');
+        return cachedToken;
+      }
+    } catch (bridgeError) {
+      console.warn('🔍 [JWT-GATEWAY] JWT bridge unavailable, falling back:', bridgeError);
+    }
+    
     try {
       // CRITICAL FIX: Get token from active Supabase session using SSR client
       const { createClient } = await import('@/lib/supabase-browser');
@@ -93,17 +125,17 @@ export const apiClient = {
         return session.access_token;
       }
     } catch (sessionError) {
-      console.warn('🔍 [API-CLIENT] Session token fetch failed, checking cache:', sessionError);
+      console.warn('🔍 [API-CLIENT] Session token fetch failed, checking legacy cache:', sessionError);
     }
     
-    // JWT GATEWAY: Check cached token for cross-domain scenarios
+    // JWT GATEWAY: Check legacy cached token for cross-domain scenarios
     const cachedToken = localStorage.getItem('jwt_access_token');
     const expiresAt = localStorage.getItem('jwt_expires_at');
     
     if (cachedToken && expiresAt) {
       const expires = new Date(parseInt(expiresAt) * 1000);
       if (expires > new Date()) {
-        console.log('🔍 [JWT-GATEWAY] Using cached valid token for cross-domain request');
+        console.log('🔍 [JWT-GATEWAY] Using legacy cached valid token for cross-domain request');
         return cachedToken;
       } else {
         // Clean expired tokens
