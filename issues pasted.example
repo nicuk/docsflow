@@ -1,75 +1,4 @@
-2025-08-31T21:06:19.331Z [info] 🔍 [SESSION API] Request received from: https://bitto.docsflow.app/dashboard
-2025-08-31T21:06:19.331Z [info] 🔍 [SESSION API] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36...
-2025-08-31T21:06:20.141Z [info] 🔍 [SESSION API] Supabase auth result: {
-  hasUser: true,
-  userId: 'cc362aeb-bf97-4260-9dfb-bb1725c9c202',
-  userEmail: 'support@bitto.tech',
-  hasSession: true,
-  hasAccessToken: true,
-  userError: undefined,
-  sessionError: undefined
-}
-2025-08-31T21:06:20.929Z [info] 🔧 [SESSION API] Set tenant context cookies: {
-  tenantId: '122928f6...',
-  email: 'support@bitto.tech',
-  subdomain: 'bitto'
-}
-2025-08-31T21:06:20.929Z [info] ✅ [SESSION API] Successful authentication: {
-  userId: 'cc362aeb-bf97-4260-9dfb-bb1725c9c202',
-  email: 'support@bitto.tech',
-  tenantId: '122928f6-f34e-484b-9a69-7e1f25caf45c',
-  tenantSubdomain: 'bitto',
-  onboardingComplete: true
-}
-2025-08-31T21:06:18.964Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/api/auth/session
-2025-08-31T21:06:18.964Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
-2025-08-31T21:06:18.964Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T21:06:18.964Z [info] 🔍 [MIDDLEWARE] Origin: null
-2025-08-31T21:06:18.964Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/api/auth/session
-2025-08-31T21:06:18.964Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
-2025-08-31T21:06:18.964Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
-2025-08-31T21:06:18.964Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
-2025-08-31T21:06:18.964Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto2025-08-31T21:06:19.331Z [info] 🔍 [SESSION API] Request received from: https://bitto.docsflow.app/dashboard
-2025-08-31T21:06:19.331Z [info] 🔍 [SESSION API] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36...
-2025-08-31T21:06:20.141Z [info] 🔍 [SESSION API] Supabase auth result: {
-  hasUser: true,
-  userId: 'cc362aeb-bf97-4260-9dfb-bb1725c9c202',
-  userEmail: 'support@bitto.tech',
-  hasSession: true,
-  hasAccessToken: true,
-  userError: undefined,
-  sessionError: undefined
-}
-2025-08-31T21:06:20.929Z [info] 🔧 [SESSION API] Set tenant context cookies: {
-  tenantId: '122928f6...',
-  email: 'support@bitto.tech',
-  subdomain: 'bitto'
-}
-2025-08-31T21:06:20.929Z [info] ✅ [SESSION API] Successful authentication: {
-  userId: 'cc362aeb-bf97-4260-9dfb-bb1725c9c202',
-  email: 'support@bitto.tech',
-  tenantId: '122928f6-f34e-484b-9a69-7e1f25caf45c',
-  tenantSubdomain: 'bitto',
-  onboardingComplete: true
-}
-2025-08-31T21:06:18.964Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/api/auth/session
-2025-08-31T21:06:18.964Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
-2025-08-31T21:06:18.964Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T21:06:18.964Z [info] 🔍 [MIDDLEWARE] Origin: null
-2025-08-31T21:06:18.964Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/api/auth/session
-2025-08-31T21:06:18.964Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
-2025-08-31T21:06:18.964Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
-2025-08-31T21:06:18.964Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
-2025-08-31T21:06:18.964Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto2025-08-31T21:06:21.147Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/api/conversations
-2025-08-31T21:06:21.147Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
-2025-08-31T21:06:21.147Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T21:06:21.147Z [info] 🔍 [MIDDLEWARE] Origin: null
-2025-08-31T21:06:21.147Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/api/conversations
-2025-08-31T21:06:21.147Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
-2025-08-31T21:06:21.147Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
-2025-08-31T21:06:21.147Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
-2025-08-31T21:06:21.147Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
-2025-08-31T21:06:21.581Z [info] 🔍 Tenant validation: {
+2025-08-31T21:28:54.939Z [info] 🔍 Tenant validation: {
   subdomain: 'bitto',
   tenantId: '122928f6-f34e-484b-9a69-7e1f25caf45c',
   requireAuth: true,
@@ -78,8 +7,8 @@
     'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c'
   }
 }
-2025-08-31T21:06:21.606Z [info] ✅ Redis tenant cache HIT for: bitto
-2025-08-31T21:06:21.606Z [info] 🔍 [VERCEL-PROXY] Token payload analysis: {
+2025-08-31T21:28:54.939Z [info] ✅ Memory cache hit for tenant: bitto
+2025-08-31T21:28:54.939Z [info] 🔍 [VERCEL-PROXY] Token payload analysis: {
   issuer: 'serverless',
   audience: undefined,
   isVercelToken: true,
@@ -87,8 +16,8 @@
   hasUserId: false,
   tokenType: 'VERCEL_DEPLOYMENT'
 }
-2025-08-31T21:06:21.606Z [warning] 🚨 [VERCEL-PROXY] Rejecting Vercel deployment token, not user auth token
-2025-08-31T21:06:21.607Z [info] 🔍 [AUTH-DEBUG] Headers received: {
+2025-08-31T21:28:54.940Z [warning] 🚨 [VERCEL-PROXY] Rejecting Vercel deployment token, not user auth token
+2025-08-31T21:28:54.940Z [info] 🔍 [AUTH-DEBUG] Headers received: {
   hasAuthorization: false,
   authHeader: 'none',
   hasRLSContext: false,
@@ -98,117 +27,14 @@
     'accept-encoding': 'gzip, deflate, br, zstd',
     'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8',
     'access-control-allow-credentials': 'true',
-    'access-control-allow-headers': 'Content-Type, Authorization, X-Tenant-ID, X-Tenant-Subdomain, X-HMAC-Signature',
-    'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'access-control-allow-origin': 'https://docsflow.app',
-    connection: 'close',
-    cookie: 'tenant-id=122928f6-f34e-484b-9a69-7e1f25caf45c; tenant-subdomain=bitto; tenant-contexts={"bitto":"122928f6-f34e-484b-9a69-7e1f25caf45c"}; current-tenant=bitto; access_token=; docsflow_auth_token=; sb-lhcopwwiqwjpzbdnjovo-auth-token=base64-eyJhY2Nlc3NfdG9rZW4iOiJleUpoYkdjaU9pSklVekkxTmlJc0ltdHBaQ0k2SW5kSlZuWkxla3B4VVRoWWFtVmhPVkVpTENKMGVYQWlPaUpLVjFRaWZRLmV5SnBjM01pT2lKb2RIUndjem92TDJ4b1kyOXdkM2RwY1hkcWNIcGlaRzVxYjNadkxuTjFjR0ZpWVhObExtTnZMMkYxZEdndmRqRWlMQ0p6ZFdJaU9pSmpZek0yTW1GbFlpMWlaamszTFRReU5qQXRPV1JtWWkxaVlqRTNNalZqT1dNeU1ESWlMQ0poZFdRaU9pSmhkWFJvWlc1MGFXTmhkR1ZrSWl3aVpYaHdJam94TnpVMk5qYzBOekkxTENKcFlYUWlPakUzTlRZMk56RXhNalVzSW1WdFlXbHNJam9pYzNWd2NHOXlkRUJpYVhSMGJ5NTBaV05vSWl3aWNHaHZibVVpT2lJaUxDSmhjSEJmYldWMFlXUmhkR0VpT25zaWNISnZkbWxrWlhJaU9pSmxiV0ZwYkNJc0luQnliM1pwWkdWeWN5STZXeUpsYldGcGJDSmRmU3dpZFhObGNsOXRaWFJoWkdGMFlTSTZleUpoWTJObGMzTmZiR1YyWld3aU9qSXNJbU52YlhCaGJubGZibUZ0WlNJNkltSnBkSFJ2SWl3aVpXMWhhV3dpT2lKemRYQndiM0owUUdKcGRIUnZMblJsWTJnaUxDSmxiV0ZwYkY5MlpYSnBabWxsWkNJNmRISjFaU3dpY0dodmJtVmZkbVZ5YVdacFpXUWlPbVpoYkhObExDSnliMnhsSWpvaWRYTmxjaUlzSW5OMVlpSTZJbU5qTXpZeVlXVmlMV0ptT1RjdE5ESTJNQzA1WkdaaUxXSmlNVGN5TldNNVl6SXdNaUo5TENKeWIyeGxJam9pWVhWMGFHVnVkR2xqWVhSbFpDSXNJbUZoYkNJNkltRmhiREVpTENKaGJYSWlPbHQ3SW0xbGRHaHZaQ0k2SW5CaGMzTjNiM0prSWl3aWRHbHRaWE4wWVcxd0lqb3hOelUyTmpZM05EUXhmVjBzSW5ObGMzTnBiMjVmYVdRaU9pSmtNREJsWVRrMFppMHlNVFF5TFRRelpUa3RPR1JoWmkwMFpXWm1Zek00TXpjMU5XWWlMQ0pwYzE5aGJtOXVlVzF2ZFhNaU9tWmhiSE5sZlEuZVRwZVlkWF8zamI5ZGNZZ1ZiNnBTcFhsandIeFk5eFM3akNYQnB4Nl9iYyIsInRva2VuX3R5cGUiOiJiZWFyZXIiLCJleHBpcmVzX2luIjozNjAwLCJleHBpcmVzX2F0IjoxNzU2Njc0NzI1LCJyZWZyZXNoX3Rva2VuIjoibWJlb3RtZjJ4Mm9uIiwidXNlciI6eyJpZCI6ImNjMzYyYWViLWJmOTctNDI2MC05ZGZiLWJiMTcyNWM5YzIwMiIsImF1ZCI6ImF1dGhlbnRpY2F0ZWQiLCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImVtYWlsIjoic3VwcG9ydEBiaXR0by50ZWNoIiwiZW1haWxfY29uZmlybWVkX2F0IjoiMjAyNS0wOC0yOVQwOTo1OTo1OS4wODQyNDlaIiwicGhvbmUiOiIiLCJjb25maXJtZWRfYXQiOiIyMDI1LTA4LTI5VDA5OjU5OjU5LjA4NDI0OVoiLCJsYXN0X3NpZ25faW5fYXQiOiIyMDI1LTA4LTMxVDE5OjU0OjM1LjgxNzY0MVoiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJhY2Nlc3NfbGV2ZWwiOjIsImNvbXBhbnlfbmFtZSI6ImJpdHRvIiwiZW1haWwiOiJzdXBwb3J0QGJpdHRvLnRlY2giLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGhvbmVfdmVyaWZpZWQiOmZhbHNlLCJyb2xlIjoidXNlciIsInN1YiI6ImNjMzYyYWViLWJmOTctNDI2MC05ZGZiLWJiMTcyNWM5YzIwMiJ9LCJpZGVudGl0aWVzIjpbeyJpZGVudGl0eV9pZCI6IjIxYzBiMDdkLTE4ZTItNDI0NS1hNGM3LWI3NDk3N2ZhNDMzMSIsImlkIjoiY2MzNjJhZWItYmY5Ny00MjYwLTlkZmItYmIxNzI1YzljMjAyIiwidXNlcl9pZCI6ImNjMzYyYWViLWJmOTctNDI2MC05ZGZiLWJiMTcyNWM5YzIwMiIsImlkZW50aXR5X2RhdGEiOnsiYWNjZXNzX2xldmVsIjoyLCJjb21wYW55X25hbWUiOiJiaXR0byIsImVtYWlsIjoic3VwcG9ydEBiaXR0by50ZWNoIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInJvbGUiOiJ1c2VyIiwic3ViIjoiY2MzNjJhZWItYmY5Ny00MjYwLTlkZmItYmIxNzI1YzljMjAyIn0sInByb3ZpZGVyIjoiZW1haWwiLCJsYXN0X3NpZ25faW5fYXQiOiIyMDI1LTA4LTI5VDA5OjU5OjU5LjA2MzAzN1oiLCJjcmVhdGVkX2F0IjoiMjAyNS0wOC0yOVQwOTo1OTo1OS4wNjMwOTJaIiwidXBkYXRlZF9hdCI6IjIwMjUtMDgtMjlUMDk6NTk6NTkuMDYzMDkyWiIsImVtYWlsIjoic3VwcG9ydEBiaXR0by50ZWNoIn1dLCJjcmVhdGVkX2F0IjoiMjAyNS0wOC0yOVQwOTo1OTo1OS4wMjY3NFoiLCJ1cGRhdGVkX2F0IjoiMjAyNS0wOC0zMVQyMDoxMjowNS4zODQzOTlaIiwiaXNfYW5vbnltb3VzIjpmYWxzZX19; tenant-context=%7B%22tenantId%22%3A%22122928f6-f34e-484b-9a69-7e1f25caf45c%22%2C%22subdomain%22%3A%22bitto%22%2C%22timestamp%22%3A1756674380928%7D; user-email=undefined; sb-lhcopwwiqwjpzbdnjovo-auth-token=',
-    date: 'Sun, 31 Aug 2025 21:06:21 GMT',
-    dnt: '1',
-    forwarded: 'for=161.142.152.210;host=bitto.docsflow.app;proto=https;sig=0QmVhcmVyIGM3OTI1MDRiN2ZhZjMwMTJhZDc2YTY4YjcwN2ViNjA4ZWVkOWU2NDI1YTJjOThlNjA5MmVjNWE4NTQ0MDgzMzE=;exp=1756674681',
-    host: 'bitto.docsflow.app',
-    priority: 'u=1, i',
-    referer: 'https://bitto.docsflow.app/dashboard',
-    'sec-ch-ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"',
-    'sec-ch-ua-mobile': '?0',
-    'sec-ch-ua-platform': '"Windows"',
-    'sec-fetch-dest': 'empty',
-    'sec-fetch-mode': 'cors',
-    'sec-fetch-site': 'same-origin',
-    'strict-transport-security': 'max-age=63072000; includeSubDomains; preload',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
-    'x-content-type-options': 'nosniff',
-    'x-forwarded-for': '161.142.152.210',
-    'x-forwarded-host': 'bitto.docsflow.app',
-    'x-forwarded-port': '443',
-    'x-forwarded-proto': 'https',
-    'x-frame-options': 'DENY',
-    'x-matched-path': '/api/conversations',
-    'x-real-ip': '161.142.152.210',
-    'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c',
-    'x-tenant-subdomain': 'bitto',
-    'x-vercel-deployment-url': 'ai-lead-router-saas-qgvmupg2h-nics-projects-4e604dbf.vercel.app',
-    'x-vercel-forwarded-for': '161.142.152.210',
-    'x-vercel-id': 'sin1::4wv4g-1756674381119-1023f6407930',
-    'x-vercel-internal-bot-check': 'skip',
-    'x-vercel-internal-ingress-bucket': 'bucket017',
-    'x-vercel-internal-ingress-port': '17443',
-    'x-vercel-ip-as-number': '9930',
-    'x-vercel-ip-city': 'Petaling%20Jaya',
-    'x-vercel-ip-continent': 'AS',
-    'x-vercel-ip-country': 'MY',
-    'x-vercel-ip-country-region': '10',
-    'x-vercel-ip-latitude': '3.1071',
-    'x-vercel-ip-longitude': '101.6139',
-    'x-vercel-ip-postal-code': '47301',
-    'x-vercel-ip-timezone': 'Asia/Kuala_Lumpur',
-    'x-vercel-ja4-digest': 't13d1517h2_8daaf6152771_b6f405a00624',
-    'x-vercel-oidc-token': 'eyJraWQiOiJtcmstNDMwMmVjMWI2NzBmNDhhOThhZDYxZGFkZTRhMjNiZTciLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NTY2NzQwMzksIm93bmVyX2lkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJpYXQiOjE3NTY2NzQwMzksInZlcmNlbF9pZCI6InNpbjE6OmhsbTdrLTE3NTY2NzQwMzkzMjgtZGFjYjg2MWVmMzJhIiwiYXVkIjoiaHR0cHM6XC9cL3ZlcmNlbC5jb21cL25pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJvd25lciI6Im5pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJpc3MiOiJodHRwczpcL1wvb2lkYy52ZXJjZWwuY29tXC9uaWNzLXByb2plY3RzLTRlNjA0ZGJmIiwicHJvamVjdF9pZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc3NjM5LCJlbnZpcm9ubWVudCI6InByb2R1Y3Rpb24iLCJzY29wZSI6Im93bmVyOm5pY3MtcHJvamVjdHMtNGU2MDRkYmY6cHJvamVjdDphaS1sZWFkLXJvdXRlci1zYWFzOmVudmlyb25tZW50OnByb2R1Y3Rpb24iLCJzdWIiOiJvd25lcjpuaWNzLXByb2plY3RzLTRlNjA0ZGJmOnByb2plY3Q6YWktbGVhZC1yb3V0ZXItc2FhczplbnZpcm9ubWVudDpwcm9kdWN0aW9uIiwicHJvamVjdCI6ImFpLWxlYWQtcm91dGVyLXNhYXMifQ.hpnzf8OGlg-sQW4WnbeBzgrGP8iQ9TS_kHE0fiXJ4jY0xv6wcT750I7YvLLfG5lvin7HqhTWJ8PVvqCQ7BJXJZb3NyJICO6XJ51tg6V3Q50Tqkz3yThPMuhkCvLZs0d3LNIqsAK2G8-b2GjCHblQEs7y2I5Z8GIx4ERtXLNZdAEzFEAY53pj2AvdAkLx6QFMZxJx9xc9xOzGIsIAqUFMmdXbbQ4G0zh7DOFj7XtcHSbjDMHuBdcUzsp3S1ebDj8M66GkbKh-Ac2OcORw5qra0FqjoQJbZ8yq6UgMLigzdDSiWy8PjRv2D8_H_kG4NNlLJ81PK6E-Ad6l8uM2UUHmaA',
-    'x-vercel-proxied-for': '161.142.152.210',
-    'x-vercel-proxy-signature': 'Bearer c792504b7faf3012ad76a68b707eb608eed9e6425a2c98e6092ec5a854408331',
-    'x-vercel-proxy-signature-ts': '1756674681',
-    'x-vercel-sc-basepath': '',
-    'x-vercel-sc-headers': '{"x-vercel-function-platform":"vercel\\/proxy+serverless","x-vercel-ept":"1","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXBsb3ltZW50SWQiOiJkcGxfR01nazJ0YzJqZWlYN2htVjRzbmNmVkcxSnpkRyIsInVubGltaXRlZCI6ZmFsc2UsInBsYW4iOiJob2JieSIsImlzcyI6InNlcnZlcmxlc3MiLCJkb21haW4iOiJiaXR0by5kb2NzZmxvdy5hcHAiLCJibG9jayI6ZmFsc2UsImlhdCI6MTc1NjY3NDM4MSwicHJvamVjdElkIjoicHJqX0dRazRTNm9Ra1dEMzNYM3JYM0JmWFJPNG1JdWUiLCJleHAiOjE3NTY2NzUzMDEsIm93bmVySWQiOiJ0ZWFtX21hWnpRQllkQmQxRGVCRlFnQ0VoYUVaeiIsInJlcXVlc3RJZCI6IjR3djRnLTE3NTY2NzQzODExMTktMTAyM2Y2NDA3OTMwIiwiZW52IjoicHJvZHVjdGlvbiJ9.W8oTl7vGPNvgkmM-0PxxFZLKr6XpMPZghFGrc1ImCcQ"}',
-    'x-vercel-sc-host': 'iad1.suspense-cache.vercel-infra.com',
-    'x-xss-protection': '1; mode=block'
-  }
-}
-2025-08-31T21:06:21.608Z [info] 🔍 [COOKIE-DEBUG] Parsed cookies: {
-  hasCookieHeader: true,
-  cookieCount: 7,
-  hasAuthToken: true,
-  authTokenPreview: 'base64-eyJhY2Nlc3Nfd...',
-  availableCookies: [
-    'tenant-id',
-    'tenant-subdomain',
-    'tenant-contexts',
-    'current-tenant',
-    'sb-lhcopwwiqwjpzbdnjovo-auth-token',
-    'tenant-context',
-    'user-email'
-  ]
-}
-2025-08-31T21:06:22.418Z [info] ✅ [VALIDATION] Multi-tenant cookie authentication successful
-2025-08-31T21:06:23.214Z [info] Fetching conversations for validated tenant: bitto UUID: 122928f6-f34e-484b-9a69-7e1f25caf45c2025-08-31T21:06:21.268Z [info] 🔍 [MIDDLEWARE START] GET api.docsflow.app/api/documents
-2025-08-31T21:06:21.268Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
-2025-08-31T21:06:21.268Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T21:06:21.268Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
-2025-08-31T21:06:21.268Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/documents
-2025-08-31T21:06:21.268Z [info] 🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: bitto
-2025-08-31T21:06:21.481Z [info] ✅ [API-MIDDLEWARE] Tenant bitto verified for API call (UUID: 122928f6...)
-2025-08-31T21:06:21.481Z [info] 🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin
-2025-08-31T21:06:21.881Z [info] 🔧 [DOCUMENTS API] Creating Supabase client...
-2025-08-31T21:06:21.882Z [info] ✅ [DOCUMENTS API] Server client created successfully
-2025-08-31T21:06:21.882Z [info] 🔍 Tenant validation: {
-  subdomain: 'bitto',
-  tenantId: '122928f6-f34e-484b-9a69-7e1f25caf45c',
-  requireAuth: true,
-  headers: {
-    'x-tenant-subdomain': 'bitto',
-    'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c'
-  }
-}
-2025-08-31T21:06:21.882Z [info] ✅ Memory cache hit for tenant: bitto
-2025-08-31T21:06:21.883Z [info] 🔍 [AUTH-DEBUG] Headers received: {
-  hasAuthorization: true,
-  authHeader: 'Bearer eyJhbGciOiJIU...',
-  hasRLSContext: false,
-  vercelProxyExtracted: true,
-  allHeaders: {
-    accept: 'application/json',
-    'accept-encoding': 'gzip, deflate, br, zstd',
-    'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8',
-    'access-control-allow-credentials': 'true',
-    'access-control-allow-headers': 'Content-Type, Authorization, X-Tenant-ID, X-Tenant-Subdomain, X-HMAC-Signature',
+    'access-control-allow-headers': 'Content-Type, Authorization, X-Auth-Token, X-Tenant-ID, X-Tenant-Subdomain, X-HMAC-Signature',
     'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'access-control-allow-origin': 'https://bitto.docsflow.app',
-    authorization: 'Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6IndJVnZLekpxUThYamVhOVEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2xoY29wd3dpcXdqcHpiZG5qb3ZvLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJjYzM2MmFlYi1iZjk3LTQyNjAtOWRmYi1iYjE3MjVjOWMyMDIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU2Njc0NzI1LCJpYXQiOjE3NTY2NzExMjUsImVtYWlsIjoic3VwcG9ydEBiaXR0by50ZWNoIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJhY2Nlc3NfbGV2ZWwiOjIsImNvbXBhbnlfbmFtZSI6ImJpdHRvIiwiZW1haWwiOiJzdXBwb3J0QGJpdHRvLnRlY2giLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGhvbmVfdmVyaWZpZWQiOmZhbHNlLCJyb2xlIjoidXNlciIsInN1YiI6ImNjMzYyYWViLWJmOTctNDI2MC05ZGZiLWJiMTcyNWM5YzIwMiJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU2NjY3NDQxfV0sInNlc3Npb25faWQiOiJkMDBlYTk0Zi0yMTQyLTQzZTktOGRhZi00ZWZmYzM4Mzc1NWYiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.eTpeYdX_3jb9dcYgVb6pSpXljwHxY9xS7jCXBpx6_bc',
     connection: 'close',
     'content-type': 'application/json',
-    cookie: 'tenant-id=122928f6-f34e-484b-9a69-7e1f25caf45c; tenant-subdomain=bitto; tenant-contexts={"bitto":"122928f6-f34e-484b-9a69-7e1f25caf45c"}; current-tenant=bitto; access_token=; docsflow_auth_token=; tenant-context=%7B%22tenantId%22%3A%22122928f6-f34e-484b-9a69-7e1f25caf45c%22%2C%22subdomain%22%3A%22bitto%22%2C%22timestamp%22%3A1756674380928%7D; user-email=undefined; sb-lhcopwwiqwjpzbdnjovo-auth-token=',
-    date: 'Sun, 31 Aug 2025 21:06:21 GMT',
+    date: 'Sun, 31 Aug 2025 21:28:54 GMT',
     dnt: '1',
-    forwarded: 'for=161.142.152.210;host=api.docsflow.app;proto=https;sig=0QmVhcmVyIDc0NjcyYTkyNWU5NDE5NzI2ZDVmZWE3NjkyMzQzNDg3Mzg3ZTQxOTM5OThlZGUxMGI5MWI2YzM1Mjg2ZmY5NjE=;exp=1756674681',
+    forwarded: 'for=161.142.152.210;host=api.docsflow.app;proto=https;sig=0QmVhcmVyIDZmOGQzODJjNzE5MTdkZmRlZDlmMjVmNGNmOTAxNTY0MGE2NTYxNDdmZjBkYTExZDcxZjJkYTZiYTRlNzUyMTY=;exp=1756676034',
     host: 'api.docsflow.app',
     origin: 'https://bitto.docsflow.app',
     priority: 'u=1, i',
@@ -227,16 +53,16 @@
     'x-forwarded-port': '443',
     'x-forwarded-proto': 'https',
     'x-frame-options': 'DENY',
-    'x-matched-path': '/api/documents',
+    'x-matched-path': '/api/conversations',
     'x-real-ip': '161.142.152.210',
     'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c',
     'x-tenant-subdomain': 'bitto',
-    'x-vercel-deployment-url': 'ai-lead-router-saas-qgvmupg2h-nics-projects-4e604dbf.vercel.app',
+    'x-vercel-deployment-url': 'ai-lead-router-saas-i6mcalq2d-nics-projects-4e604dbf.vercel.app',
     'x-vercel-forwarded-for': '161.142.152.210',
-    'x-vercel-id': 'sin1::tlj9j-1756674381256-b4cc9b5644a0',
+    'x-vercel-id': 'sin1::jg7xg-1756675734752-49ee68b19671',
     'x-vercel-internal-bot-check': 'skip',
     'x-vercel-internal-ingress-bucket': 'bucket017',
-    'x-vercel-internal-ingress-port': '17443',
+    'x-vercel-internal-ingress-port': '17444',
     'x-vercel-ip-as-number': '9930',
     'x-vercel-ip-city': 'Petaling%20Jaya',
     'x-vercel-ip-continent': 'AS',
@@ -249,30 +75,31 @@
     'x-vercel-ja4-digest': 't13d1517h2_8daaf6152771_b6f405a00624',
     'x-vercel-oidc-token': 'eyJraWQiOiJtcmstNDMwMmVjMWI2NzBmNDhhOThhZDYxZGFkZTRhMjNiZTciLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NTY2NzQwMzksIm93bmVyX2lkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJpYXQiOjE3NTY2NzQwMzksInZlcmNlbF9pZCI6InNpbjE6OmhsbTdrLTE3NTY2NzQwMzkzMjgtZGFjYjg2MWVmMzJhIiwiYXVkIjoiaHR0cHM6XC9cL3ZlcmNlbC5jb21cL25pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJvd25lciI6Im5pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJpc3MiOiJodHRwczpcL1wvb2lkYy52ZXJjZWwuY29tXC9uaWNzLXByb2plY3RzLTRlNjA0ZGJmIiwicHJvamVjdF9pZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc3NjM5LCJlbnZpcm9ubWVudCI6InByb2R1Y3Rpb24iLCJzY29wZSI6Im93bmVyOm5pY3MtcHJvamVjdHMtNGU2MDRkYmY6cHJvamVjdDphaS1sZWFkLXJvdXRlci1zYWFzOmVudmlyb25tZW50OnByb2R1Y3Rpb24iLCJzdWIiOiJvd25lcjpuaWNzLXByb2plY3RzLTRlNjA0ZGJmOnByb2plY3Q6YWktbGVhZC1yb3V0ZXItc2FhczplbnZpcm9ubWVudDpwcm9kdWN0aW9uIiwicHJvamVjdCI6ImFpLWxlYWQtcm91dGVyLXNhYXMifQ.hpnzf8OGlg-sQW4WnbeBzgrGP8iQ9TS_kHE0fiXJ4jY0xv6wcT750I7YvLLfG5lvin7HqhTWJ8PVvqCQ7BJXJZb3NyJICO6XJ51tg6V3Q50Tqkz3yThPMuhkCvLZs0d3LNIqsAK2G8-b2GjCHblQEs7y2I5Z8GIx4ERtXLNZdAEzFEAY53pj2AvdAkLx6QFMZxJx9xc9xOzGIsIAqUFMmdXbbQ4G0zh7DOFj7XtcHSbjDMHuBdcUzsp3S1ebDj8M66GkbKh-Ac2OcORw5qra0FqjoQJbZ8yq6UgMLigzdDSiWy8PjRv2D8_H_kG4NNlLJ81PK6E-Ad6l8uM2UUHmaA',
     'x-vercel-proxied-for': '161.142.152.210',
-    'x-vercel-proxy-signature': 'Bearer 74672a925e9419726d5fea7692343487387e4193998ede10b91b6c35286ff961',
-    'x-vercel-proxy-signature-ts': '1756674681',
+    'x-vercel-proxy-signature': 'Bearer 6f8d382c71917dfded9f25f4cf9015640a656147ff0da11d71f2da6ba4e75216',
+    'x-vercel-proxy-signature-ts': '1756676034',
     'x-vercel-sc-basepath': '',
-    'x-vercel-sc-headers': '{"x-vercel-function-platform":"vercel\\/proxy+serverless","x-vercel-ept":"1","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXBsb3ltZW50SWQiOiJkcGxfR01nazJ0YzJqZWlYN2htVjRzbmNmVkcxSnpkRyIsInVubGltaXRlZCI6ZmFsc2UsInBsYW4iOiJob2JieSIsImlzcyI6InNlcnZlcmxlc3MiLCJkb21haW4iOiJhcGkuZG9jc2Zsb3cuYXBwIiwiYmxvY2siOmZhbHNlLCJpYXQiOjE3NTY2NzQzODEsInByb2plY3RJZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc1MzAxLCJvd25lcklkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJyZXF1ZXN0SWQiOiJ0bGo5ai0xNzU2Njc0MzgxMjU2LWI0Y2M5YjU2NDRhMCIsImVudiI6InByb2R1Y3Rpb24ifQ.g83ZrZM6BErWdwUiSDzvdf4pAG7qQe2mvQ8ApoTKA6U"}',
+    'x-vercel-sc-headers': '{"x-vercel-function-platform":"vercel\\/proxy+serverless","x-vercel-ept":"1","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXBsb3ltZW50SWQiOiJkcGxfNjNNTVBpcXlzQjRybXg3WjNtYlNpbThWSjh4dCIsInVubGltaXRlZCI6ZmFsc2UsInBsYW4iOiJob2JieSIsImlzcyI6InNlcnZlcmxlc3MiLCJkb21haW4iOiJhcGkuZG9jc2Zsb3cuYXBwIiwiYmxvY2siOmZhbHNlLCJpYXQiOjE3NTY2NzU3MzQsInByb2plY3RJZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc2NjU0LCJvd25lcklkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJyZXF1ZXN0SWQiOiJqZzd4Zy0xNzU2Njc1NzM0NzUyLTQ5ZWU2OGIxOTY3MSIsImVudiI6InByb2R1Y3Rpb24ifQ.p3ztygy4ofArPf0WIJhpKp6ZFxY0lqkKwIqlht7ZbJw"}',
     'x-vercel-sc-host': 'iad1.suspense-cache.vercel-infra.com',
     'x-xss-protection': '1; mode=block'
   }
 }
-2025-08-31T21:06:21.883Z [info] 🔍 [TOKEN-VALIDATION] Attempting Bearer token validation: {
-  tokenPreview: 'eyJhbGciOiJIUzI1NiIsImtpZCI6In...',
-  tokenLength: 929,
-  hasValidJWTFormat: true,
-  tokenParts: 3
-}
-2025-08-31T21:06:22.642Z [info] 🔍 [TOKEN-VALIDATION] Supabase validation result: {
-  hasUser: true,
-  userId: 'cc362aeb...',
-  userEmail: 'support@bitto.tech',
-  hasError: false,
-  errorCode: 'none',
-  errorDetails: null
-}
-2025-08-31T21:06:22.642Z [info] ✅ [TOKEN-VALIDATION] Bearer token validation successful
-2025-08-31T21:06:23.454Z [info] Fetching documents for validated tenant: bitto UUID: 122928f6-f34e-484b-9a69-7e1f25caf45c2025-08-31T21:06:22.641Z [info] 🔍 Tenant validation: {
+2025-08-31T21:28:54.940Z [error] Tenant validation failed: Authentication required
+2025-08-31T21:28:54.772Z [info] 🔍 [MIDDLEWARE START] GET api.docsflow.app/api/conversations
+2025-08-31T21:28:54.772Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
+2025-08-31T21:28:54.772Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T21:28:54.772Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
+2025-08-31T21:28:54.772Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/conversations
+2025-08-31T21:28:54.772Z [info] 🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: bitto
+2025-08-31T21:28:54.808Z [info] ✅ [API-MIDDLEWARE] Tenant bitto verified for API call (UUID: 122928f6...)
+2025-08-31T21:28:54.809Z [info] 🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin2025-08-31T21:28:54.773Z [info] 🔍 [MIDDLEWARE START] POST api.docsflow.app/api/chat
+2025-08-31T21:28:54.774Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
+2025-08-31T21:28:54.774Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T21:28:54.774Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
+2025-08-31T21:28:54.774Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/chat
+2025-08-31T21:28:54.774Z [info] 🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: bitto
+2025-08-31T21:28:54.819Z [info] ✅ [API-MIDDLEWARE] Tenant bitto verified for API call (UUID: 122928f6...)
+2025-08-31T21:28:54.819Z [info] 🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin
+2025-08-31T21:28:55.267Z [info] 🔍 Tenant validation: {
   subdomain: 'bitto',
   tenantId: '122928f6-f34e-484b-9a69-7e1f25caf45c',
   requireAuth: true,
@@ -281,8 +108,8 @@
     'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c'
   }
 }
-2025-08-31T21:06:22.652Z [info] ✅ Redis tenant cache HIT for: bitto
-2025-08-31T21:06:22.652Z [info] 🔍 [VERCEL-PROXY] Token payload analysis: {
+2025-08-31T21:28:55.267Z [info] ✅ Memory cache hit for tenant: bitto
+2025-08-31T21:28:55.267Z [info] 🔍 [VERCEL-PROXY] Token payload analysis: {
   issuer: 'serverless',
   audience: undefined,
   isVercelToken: true,
@@ -290,8 +117,8 @@
   hasUserId: false,
   tokenType: 'VERCEL_DEPLOYMENT'
 }
-2025-08-31T21:06:22.652Z [warning] 🚨 [VERCEL-PROXY] Rejecting Vercel deployment token, not user auth token
-2025-08-31T21:06:22.653Z [info] 🔍 [AUTH-DEBUG] Headers received: {
+2025-08-31T21:28:55.267Z [warning] 🚨 [VERCEL-PROXY] Rejecting Vercel deployment token, not user auth token
+2025-08-31T21:28:55.268Z [info] 🔍 [AUTH-DEBUG] Headers received: {
   hasAuthorization: false,
   authHeader: 'none',
   hasRLSContext: false,
@@ -301,15 +128,15 @@
     'accept-encoding': 'gzip, deflate, br, zstd',
     'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8',
     'access-control-allow-credentials': 'true',
-    'access-control-allow-headers': 'Content-Type, Authorization, X-Tenant-ID, X-Tenant-Subdomain, X-HMAC-Signature',
+    'access-control-allow-headers': 'Content-Type, Authorization, X-Auth-Token, X-Tenant-ID, X-Tenant-Subdomain, X-HMAC-Signature',
     'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'access-control-allow-origin': 'https://bitto.docsflow.app',
     connection: 'close',
     'content-length': '31',
     'content-type': 'application/json',
-    date: 'Sun, 31 Aug 2025 21:06:22 GMT',
+    date: 'Sun, 31 Aug 2025 21:28:54 GMT',
     dnt: '1',
-    forwarded: 'for=161.142.152.210;host=api.docsflow.app;proto=https;sig=0QmVhcmVyIDJkNWYyMWNiZGQ4ODYxY2M1NjlhYzI5NzU5NTY2OTM4NzljNmE2NjllMDUxZTliMzJiNjQ1MTg2YmM5ZTAzMDY=;exp=1756674682',
+    forwarded: 'for=161.142.152.210;host=api.docsflow.app;proto=https;sig=0QmVhcmVyIDZmOGQzODJjNzE5MTdkZmRlZDlmMjVmNGNmOTAxNTY0MGE2NTYxNDdmZjBkYTExZDcxZjJkYTZiYTRlNzUyMTY=;exp=1756676034',
     host: 'api.docsflow.app',
     origin: 'https://bitto.docsflow.app',
     priority: 'u=1, i',
@@ -332,12 +159,12 @@
     'x-real-ip': '161.142.152.210',
     'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c',
     'x-tenant-subdomain': 'bitto',
-    'x-vercel-deployment-url': 'ai-lead-router-saas-qgvmupg2h-nics-projects-4e604dbf.vercel.app',
+    'x-vercel-deployment-url': 'ai-lead-router-saas-i6mcalq2d-nics-projects-4e604dbf.vercel.app',
     'x-vercel-forwarded-for': '161.142.152.210',
-    'x-vercel-id': 'sin1::pppzr-1756674382076-5760a640f0a5',
+    'x-vercel-id': 'sin1::975sf-1756675734759-ff1d305c467b',
     'x-vercel-internal-bot-check': 'skip',
     'x-vercel-internal-ingress-bucket': 'bucket017',
-    'x-vercel-internal-ingress-port': '17443',
+    'x-vercel-internal-ingress-port': '17444',
     'x-vercel-ip-as-number': '9930',
     'x-vercel-ip-city': 'Petaling%20Jaya',
     'x-vercel-ip-continent': 'AS',
@@ -347,33 +174,35 @@
     'x-vercel-ip-longitude': '101.6139',
     'x-vercel-ip-postal-code': '47301',
     'x-vercel-ip-timezone': 'Asia/Kuala_Lumpur',
-    'x-vercel-ja4-digest': 't13d1516h2_8daaf6152771_d8a2da3f94cd',
+    'x-vercel-ja4-digest': 't13d1517h2_8daaf6152771_b6f405a00624',
     'x-vercel-oidc-token': 'eyJraWQiOiJtcmstNDMwMmVjMWI2NzBmNDhhOThhZDYxZGFkZTRhMjNiZTciLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NTY2NzQwMzksIm93bmVyX2lkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJpYXQiOjE3NTY2NzQwMzksInZlcmNlbF9pZCI6InNpbjE6OmhsbTdrLTE3NTY2NzQwMzkzMjgtZGFjYjg2MWVmMzJhIiwiYXVkIjoiaHR0cHM6XC9cL3ZlcmNlbC5jb21cL25pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJvd25lciI6Im5pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJpc3MiOiJodHRwczpcL1wvb2lkYy52ZXJjZWwuY29tXC9uaWNzLXByb2plY3RzLTRlNjA0ZGJmIiwicHJvamVjdF9pZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc3NjM5LCJlbnZpcm9ubWVudCI6InByb2R1Y3Rpb24iLCJzY29wZSI6Im93bmVyOm5pY3MtcHJvamVjdHMtNGU2MDRkYmY6cHJvamVjdDphaS1sZWFkLXJvdXRlci1zYWFzOmVudmlyb25tZW50OnByb2R1Y3Rpb24iLCJzdWIiOiJvd25lcjpuaWNzLXByb2plY3RzLTRlNjA0ZGJmOnByb2plY3Q6YWktbGVhZC1yb3V0ZXItc2FhczplbnZpcm9ubWVudDpwcm9kdWN0aW9uIiwicHJvamVjdCI6ImFpLWxlYWQtcm91dGVyLXNhYXMifQ.hpnzf8OGlg-sQW4WnbeBzgrGP8iQ9TS_kHE0fiXJ4jY0xv6wcT750I7YvLLfG5lvin7HqhTWJ8PVvqCQ7BJXJZb3NyJICO6XJ51tg6V3Q50Tqkz3yThPMuhkCvLZs0d3LNIqsAK2G8-b2GjCHblQEs7y2I5Z8GIx4ERtXLNZdAEzFEAY53pj2AvdAkLx6QFMZxJx9xc9xOzGIsIAqUFMmdXbbQ4G0zh7DOFj7XtcHSbjDMHuBdcUzsp3S1ebDj8M66GkbKh-Ac2OcORw5qra0FqjoQJbZ8yq6UgMLigzdDSiWy8PjRv2D8_H_kG4NNlLJ81PK6E-Ad6l8uM2UUHmaA',
     'x-vercel-proxied-for': '161.142.152.210',
-    'x-vercel-proxy-signature': 'Bearer 2d5f21cbdd8861cc569ac2975956693879c6a669e051e9b32b645186bc9e0306',
-    'x-vercel-proxy-signature-ts': '1756674682',
+    'x-vercel-proxy-signature': 'Bearer 6f8d382c71917dfded9f25f4cf9015640a656147ff0da11d71f2da6ba4e75216',
+    'x-vercel-proxy-signature-ts': '1756676034',
     'x-vercel-sc-basepath': '',
-    'x-vercel-sc-headers': '{"x-vercel-function-platform":"vercel\\/proxy+serverless","x-vercel-ept":"1","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXBsb3ltZW50SWQiOiJkcGxfR01nazJ0YzJqZWlYN2htVjRzbmNmVkcxSnpkRyIsInVubGltaXRlZCI6ZmFsc2UsInBsYW4iOiJob2JieSIsImlzcyI6InNlcnZlcmxlc3MiLCJkb21haW4iOiJhcGkuZG9jc2Zsb3cuYXBwIiwiYmxvY2siOmZhbHNlLCJpYXQiOjE3NTY2NzQzODIsInByb2plY3RJZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc1MzAyLCJvd25lcklkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJyZXF1ZXN0SWQiOiJwcHB6ci0xNzU2Njc0MzgyMDc2LTU3NjBhNjQwZjBhNSIsImVudiI6InByb2R1Y3Rpb24ifQ.SLkjITBdo3QRgcr_cndskPsKoSx6bDZqfHiJf_TCORw"}',
+    'x-vercel-sc-headers': '{"x-vercel-function-platform":"vercel\\/proxy+serverless","x-vercel-ept":"1","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXBsb3ltZW50SWQiOiJkcGxfNjNNTVBpcXlzQjRybXg3WjNtYlNpbThWSjh4dCIsInVubGltaXRlZCI6ZmFsc2UsInBsYW4iOiJob2JieSIsImlzcyI6InNlcnZlcmxlc3MiLCJkb21haW4iOiJhcGkuZG9jc2Zsb3cuYXBwIiwiYmxvY2siOmZhbHNlLCJpYXQiOjE3NTY2NzU3MzUsInByb2plY3RJZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc2NjU1LCJvd25lcklkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJyZXF1ZXN0SWQiOiI5NzVzZi0xNzU2Njc1NzM0NzU5LWZmMWQzMDVjNDY3YiIsImVudiI6InByb2R1Y3Rpb24ifQ.1f38DXnDaJPrd36qBs5hcknckuvWEottUNK6brD_AVI"}',
     'x-vercel-sc-host': 'iad1.suspense-cache.vercel-infra.com',
     'x-xss-protection': '1; mode=block'
   }
-}
-2025-08-31T21:06:22.096Z [info] 🔍 [MIDDLEWARE START] POST api.docsflow.app/api/chat
-2025-08-31T21:06:22.096Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
-2025-08-31T21:06:22.096Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T21:06:22.096Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
-2025-08-31T21:06:22.096Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/chat
-2025-08-31T21:06:22.096Z [info] 🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: bitto
-2025-08-31T21:06:22.132Z [info] ✅ [API-MIDDLEWARE] Tenant bitto verified for API call (UUID: 122928f6...)
-2025-08-31T21:06:22.132Z [info] 🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin2025-08-31T21:06:22.157Z [info] 🔍 [MIDDLEWARE START] GET api.docsflow.app/api/conversations
-2025-08-31T21:06:22.158Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
-2025-08-31T21:06:22.158Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T21:06:22.158Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
-2025-08-31T21:06:22.158Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/conversations
-2025-08-31T21:06:22.158Z [info] 🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: bitto
-2025-08-31T21:06:22.223Z [info] ✅ [API-MIDDLEWARE] Tenant bitto verified for API call (UUID: 122928f6...)
-2025-08-31T21:06:22.223Z [info] 🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin
-2025-08-31T21:06:22.343Z [info] 🔍 Tenant validation: {
+}2025-08-31T21:28:54.795Z [info] 🔍 [MIDDLEWARE START] GET api.docsflow.app/api/documents/upload
+2025-08-31T21:28:54.795Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
+2025-08-31T21:28:54.795Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T21:28:54.795Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
+2025-08-31T21:28:54.795Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/documents/upload
+2025-08-31T21:28:54.796Z [info] 🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: bitto
+2025-08-31T21:28:54.859Z [info] ✅ [API-MIDDLEWARE] Tenant bitto verified for API call (UUID: 122928f6...)
+2025-08-31T21:28:54.859Z [info] 🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin
+2025-08-31T21:28:55.256Z [info] ✅ Using enhanced AI provider (OpenRouter + Gemini fallback)2025-08-31T21:28:57.313Z [info] 🔍 [MIDDLEWARE START] GET api.docsflow.app/api/documents
+2025-08-31T21:28:57.313Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
+2025-08-31T21:28:57.313Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T21:28:57.313Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
+2025-08-31T21:28:57.313Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/documents
+2025-08-31T21:28:57.313Z [info] 🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: bitto
+2025-08-31T21:28:57.339Z [info] ✅ [API-MIDDLEWARE] Tenant bitto verified for API call (UUID: 122928f6...)
+2025-08-31T21:28:57.339Z [info] 🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin
+2025-08-31T21:28:57.472Z [info] 🔧 [DOCUMENTS API] Creating Supabase client...
+2025-08-31T21:28:57.472Z [info] ✅ [DOCUMENTS API] Server client created successfully
+2025-08-31T21:28:57.472Z [info] 🔍 Tenant validation: {
   subdomain: 'bitto',
   tenantId: '122928f6-f34e-484b-9a69-7e1f25caf45c',
   requireAuth: true,
@@ -382,8 +211,8 @@
     'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c'
   }
 }
-2025-08-31T21:06:22.343Z [info] ✅ Memory cache hit for tenant: bitto
-2025-08-31T21:06:22.344Z [info] 🔍 [VERCEL-PROXY] Token payload analysis: {
+2025-08-31T21:28:57.472Z [info] ✅ Memory cache hit for tenant: bitto
+2025-08-31T21:28:57.472Z [info] 🔍 [VERCEL-PROXY] Token payload analysis: {
   issuer: 'serverless',
   audience: undefined,
   isVercelToken: true,
@@ -391,8 +220,8 @@
   hasUserId: false,
   tokenType: 'VERCEL_DEPLOYMENT'
 }
-2025-08-31T21:06:22.344Z [warning] 🚨 [VERCEL-PROXY] Rejecting Vercel deployment token, not user auth token
-2025-08-31T21:06:22.344Z [info] 🔍 [AUTH-DEBUG] Headers received: {
+2025-08-31T21:28:57.472Z [warning] 🚨 [VERCEL-PROXY] Rejecting Vercel deployment token, not user auth token
+2025-08-31T21:28:57.472Z [info] 🔍 [AUTH-DEBUG] Headers received: {
   hasAuthorization: false,
   authHeader: 'none',
   hasRLSContext: false,
@@ -402,109 +231,14 @@
     'accept-encoding': 'gzip, deflate, br, zstd',
     'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8',
     'access-control-allow-credentials': 'true',
-    'access-control-allow-headers': 'Content-Type, Authorization, X-Tenant-ID, X-Tenant-Subdomain, X-HMAC-Signature',
+    'access-control-allow-headers': 'Content-Type, Authorization, X-Auth-Token, X-Tenant-ID, X-Tenant-Subdomain, X-HMAC-Signature',
     'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'access-control-allow-origin': 'https://bitto.docsflow.app',
     connection: 'close',
     'content-type': 'application/json',
-    date: 'Sun, 31 Aug 2025 21:06:22 GMT',
+    date: 'Sun, 31 Aug 2025 21:28:57 GMT',
     dnt: '1',
-    forwarded: 'for=161.142.152.210;host=api.docsflow.app;proto=https;sig=0QmVhcmVyIDJkNWYyMWNiZGQ4ODYxY2M1NjlhYzI5NzU5NTY2OTM4NzljNmE2NjllMDUxZTliMzJiNjQ1MTg2YmM5ZTAzMDY=;exp=1756674682',
-    host: 'api.docsflow.app',
-    origin: 'https://bitto.docsflow.app',
-    priority: 'u=1, i',
-    referer: 'https://bitto.docsflow.app/',
-    'sec-ch-ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"',
-    'sec-ch-ua-mobile': '?0',
-    'sec-ch-ua-platform': '"Windows"',
-    'sec-fetch-dest': 'empty',
-    'sec-fetch-mode': 'cors',
-    'sec-fetch-site': 'same-site',
-    'strict-transport-security': 'max-age=63072000; includeSubDomains; preload',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
-    'x-content-type-options': 'nosniff',
-    'x-forwarded-for': '161.142.152.210',
-    'x-forwarded-host': 'api.docsflow.app',
-    'x-forwarded-port': '443',
-    'x-forwarded-proto': 'https',
-    'x-frame-options': 'DENY',
-    'x-matched-path': '/api/conversations',
-    'x-real-ip': '161.142.152.210',
-    'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c',
-    'x-tenant-subdomain': 'bitto',
-    'x-vercel-deployment-url': 'ai-lead-router-saas-qgvmupg2h-nics-projects-4e604dbf.vercel.app',
-    'x-vercel-forwarded-for': '161.142.152.210',
-    'x-vercel-id': 'sin1::v9q9s-1756674382142-914a8bced8d3',
-    'x-vercel-internal-bot-check': 'skip',
-    'x-vercel-internal-ingress-bucket': 'bucket017',
-    'x-vercel-internal-ingress-port': '17443',
-    'x-vercel-ip-as-number': '9930',
-    'x-vercel-ip-city': 'Petaling%20Jaya',
-    'x-vercel-ip-continent': 'AS',
-    'x-vercel-ip-country': 'MY',
-    'x-vercel-ip-country-region': '10',
-    'x-vercel-ip-latitude': '3.1071',
-    'x-vercel-ip-longitude': '101.6139',
-    'x-vercel-ip-postal-code': '47301',
-    'x-vercel-ip-timezone': 'Asia/Kuala_Lumpur',
-    'x-vercel-ja4-digest': 't13d1516h2_8daaf6152771_d8a2da3f94cd',
-    'x-vercel-oidc-token': 'eyJraWQiOiJtcmstNDMwMmVjMWI2NzBmNDhhOThhZDYxZGFkZTRhMjNiZTciLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NTY2NzQwMzksIm93bmVyX2lkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJpYXQiOjE3NTY2NzQwMzksInZlcmNlbF9pZCI6InNpbjE6OmhsbTdrLTE3NTY2NzQwMzkzMjgtZGFjYjg2MWVmMzJhIiwiYXVkIjoiaHR0cHM6XC9cL3ZlcmNlbC5jb21cL25pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJvd25lciI6Im5pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJpc3MiOiJodHRwczpcL1wvb2lkYy52ZXJjZWwuY29tXC9uaWNzLXByb2plY3RzLTRlNjA0ZGJmIiwicHJvamVjdF9pZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc3NjM5LCJlbnZpcm9ubWVudCI6InByb2R1Y3Rpb24iLCJzY29wZSI6Im93bmVyOm5pY3MtcHJvamVjdHMtNGU2MDRkYmY6cHJvamVjdDphaS1sZWFkLXJvdXRlci1zYWFzOmVudmlyb25tZW50OnByb2R1Y3Rpb24iLCJzdWIiOiJvd25lcjpuaWNzLXByb2plY3RzLTRlNjA0ZGJmOnByb2plY3Q6YWktbGVhZC1yb3V0ZXItc2FhczplbnZpcm9ubWVudDpwcm9kdWN0aW9uIiwicHJvamVjdCI6ImFpLWxlYWQtcm91dGVyLXNhYXMifQ.hpnzf8OGlg-sQW4WnbeBzgrGP8iQ9TS_kHE0fiXJ4jY0xv6wcT750I7YvLLfG5lvin7HqhTWJ8PVvqCQ7BJXJZb3NyJICO6XJ51tg6V3Q50Tqkz3yThPMuhkCvLZs0d3LNIqsAK2G8-b2GjCHblQEs7y2I5Z8GIx4ERtXLNZdAEzFEAY53pj2AvdAkLx6QFMZxJx9xc9xOzGIsIAqUFMmdXbbQ4G0zh7DOFj7XtcHSbjDMHuBdcUzsp3S1ebDj8M66GkbKh-Ac2OcORw5qra0FqjoQJbZ8yq6UgMLigzdDSiWy8PjRv2D8_H_kG4NNlLJ81PK6E-Ad6l8uM2UUHmaA',
-    'x-vercel-proxied-for': '161.142.152.210',
-    'x-vercel-proxy-signature': 'Bearer 2d5f21cbdd8861cc569ac2975956693879c6a669e051e9b32b645186bc9e0306',
-    'x-vercel-proxy-signature-ts': '1756674682',
-    'x-vercel-sc-basepath': '',
-    'x-vercel-sc-headers': '{"x-vercel-function-platform":"vercel\\/proxy+serverless","x-vercel-ept":"1","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXBsb3ltZW50SWQiOiJkcGxfR01nazJ0YzJqZWlYN2htVjRzbmNmVkcxSnpkRyIsInVubGltaXRlZCI6ZmFsc2UsInBsYW4iOiJob2JieSIsImlzcyI6InNlcnZlcmxlc3MiLCJkb21haW4iOiJhcGkuZG9jc2Zsb3cuYXBwIiwiYmxvY2siOmZhbHNlLCJpYXQiOjE3NTY2NzQzODIsInByb2plY3RJZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc1MzAyLCJvd25lcklkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJyZXF1ZXN0SWQiOiJ2OXE5cy0xNzU2Njc0MzgyMTQyLTkxNGE4YmNlZDhkMyIsImVudiI6InByb2R1Y3Rpb24ifQ.1Ont3OWtPu2l2Zur-cBrPi1Jnx89Tg0889JZ5aSl4a8"}',
-    'x-vercel-sc-host': 'iad1.suspense-cache.vercel-infra.com',
-    'x-xss-protection': '1; mode=block'
-  }
-}
-2025-08-31T21:06:22.344Z [error] Tenant validation failed: Authentication required2025-08-31T21:06:24.401Z [info] 🔍 [MIDDLEWARE START] GET api.docsflow.app/api/documents
-2025-08-31T21:06:24.401Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
-2025-08-31T21:06:24.401Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T21:06:24.402Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
-2025-08-31T21:06:24.402Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/documents
-2025-08-31T21:06:24.402Z [info] 🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: bitto
-2025-08-31T21:06:24.438Z [info] ✅ [API-MIDDLEWARE] Tenant bitto verified for API call (UUID: 122928f6...)
-2025-08-31T21:06:24.438Z [info] 🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin
-2025-08-31T21:06:25.214Z [info] 🔧 [DOCUMENTS API] Creating Supabase client...
-2025-08-31T21:06:25.216Z [info] ✅ [DOCUMENTS API] Server client created successfully
-2025-08-31T21:06:25.218Z [info] 🔍 Tenant validation: {
-  subdomain: 'bitto',
-  tenantId: '122928f6-f34e-484b-9a69-7e1f25caf45c',
-  requireAuth: true,
-  headers: {
-    'x-tenant-subdomain': 'bitto',
-    'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c'
-  }
-}
-2025-08-31T21:06:25.282Z [info] ✅ Redis tenant cache HIT for: bitto
-2025-08-31T21:06:25.282Z [info] 🔍 [VERCEL-PROXY] Token payload analysis: {
-  issuer: 'serverless',
-  audience: undefined,
-  isVercelToken: true,
-  isSupabaseToken: false,
-  hasUserId: false,
-  tokenType: 'VERCEL_DEPLOYMENT'
-}
-2025-08-31T21:06:25.282Z [warning] 🚨 [VERCEL-PROXY] Rejecting Vercel deployment token, not user auth token
-2025-08-31T21:06:25.284Z [info] 🔍 [AUTH-DEBUG] Headers received: {
-  hasAuthorization: false,
-  authHeader: 'none',
-  hasRLSContext: false,
-  vercelProxyExtracted: true,
-  allHeaders: {
-    accept: '*/*',
-    'accept-encoding': 'gzip, deflate, br, zstd',
-    'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8',
-    'access-control-allow-credentials': 'true',
-    'access-control-allow-headers': 'Content-Type, Authorization, X-Tenant-ID, X-Tenant-Subdomain, X-HMAC-Signature',
-    'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'access-control-allow-origin': 'https://bitto.docsflow.app',
-    connection: 'close',
-    'content-type': 'application/json',
-    date: 'Sun, 31 Aug 2025 21:06:24 GMT',
-    dnt: '1',
-    forwarded: 'for=161.142.152.210;host=api.docsflow.app;proto=https;sig=0QmVhcmVyIDFkNWVmZGQxZmNhNmNmMDcyNzVkMmUwOWU4OGZlZWYwOGU2MGVhNDVmN2E1NWRmM2VkMjUzZWJhYTcwYzIxOWY=;exp=1756674684',
+    forwarded: 'for=161.142.152.210;host=api.docsflow.app;proto=https;sig=0QmVhcmVyIGVjNTEyZjRkMTMwNjZmMzM4MDExOTNmNWUyMzdkMjNmYTNmYWI5YTU2NmVhZWZhYzA3Y2YzZGJiOWZjYzBhNGY=;exp=1756676037',
     host: 'api.docsflow.app',
     origin: 'https://bitto.docsflow.app',
     priority: 'u=1, i',
@@ -527,12 +261,12 @@
     'x-real-ip': '161.142.152.210',
     'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c',
     'x-tenant-subdomain': 'bitto',
-    'x-vercel-deployment-url': 'ai-lead-router-saas-qgvmupg2h-nics-projects-4e604dbf.vercel.app',
+    'x-vercel-deployment-url': 'ai-lead-router-saas-i6mcalq2d-nics-projects-4e604dbf.vercel.app',
     'x-vercel-forwarded-for': '161.142.152.210',
-    'x-vercel-id': 'sin1::b5jsb-1756674384362-7106a8a75b0d',
+    'x-vercel-id': 'sin1::tkbwk-1756675737287-cf5b4e7d332a',
     'x-vercel-internal-bot-check': 'skip',
     'x-vercel-internal-ingress-bucket': 'bucket017',
-    'x-vercel-internal-ingress-port': '17443',
+    'x-vercel-internal-ingress-port': '17444',
     'x-vercel-ip-as-number': '9930',
     'x-vercel-ip-city': 'Petaling%20Jaya',
     'x-vercel-ip-continent': 'AS',
@@ -542,13 +276,13 @@
     'x-vercel-ip-longitude': '101.6139',
     'x-vercel-ip-postal-code': '47301',
     'x-vercel-ip-timezone': 'Asia/Kuala_Lumpur',
-    'x-vercel-ja4-digest': 't13d1516h2_8daaf6152771_d8a2da3f94cd',
+    'x-vercel-ja4-digest': 't13d1517h2_8daaf6152771_b6f405a00624',
     'x-vercel-oidc-token': 'eyJraWQiOiJtcmstNDMwMmVjMWI2NzBmNDhhOThhZDYxZGFkZTRhMjNiZTciLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NTY2NzQwMzksIm93bmVyX2lkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJpYXQiOjE3NTY2NzQwMzksInZlcmNlbF9pZCI6InNpbjE6OmhsbTdrLTE3NTY2NzQwMzkzMjgtZGFjYjg2MWVmMzJhIiwiYXVkIjoiaHR0cHM6XC9cL3ZlcmNlbC5jb21cL25pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJvd25lciI6Im5pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJpc3MiOiJodHRwczpcL1wvb2lkYy52ZXJjZWwuY29tXC9uaWNzLXByb2plY3RzLTRlNjA0ZGJmIiwicHJvamVjdF9pZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc3NjM5LCJlbnZpcm9ubWVudCI6InByb2R1Y3Rpb24iLCJzY29wZSI6Im93bmVyOm5pY3MtcHJvamVjdHMtNGU2MDRkYmY6cHJvamVjdDphaS1sZWFkLXJvdXRlci1zYWFzOmVudmlyb25tZW50OnByb2R1Y3Rpb24iLCJzdWIiOiJvd25lcjpuaWNzLXByb2plY3RzLTRlNjA0ZGJmOnByb2plY3Q6YWktbGVhZC1yb3V0ZXItc2FhczplbnZpcm9ubWVudDpwcm9kdWN0aW9uIiwicHJvamVjdCI6ImFpLWxlYWQtcm91dGVyLXNhYXMifQ.hpnzf8OGlg-sQW4WnbeBzgrGP8iQ9TS_kHE0fiXJ4jY0xv6wcT750I7YvLLfG5lvin7HqhTWJ8PVvqCQ7BJXJZb3NyJICO6XJ51tg6V3Q50Tqkz3yThPMuhkCvLZs0d3LNIqsAK2G8-b2GjCHblQEs7y2I5Z8GIx4ERtXLNZdAEzFEAY53pj2AvdAkLx6QFMZxJx9xc9xOzGIsIAqUFMmdXbbQ4G0zh7DOFj7XtcHSbjDMHuBdcUzsp3S1ebDj8M66GkbKh-Ac2OcORw5qra0FqjoQJbZ8yq6UgMLigzdDSiWy8PjRv2D8_H_kG4NNlLJ81PK6E-Ad6l8uM2UUHmaA',
     'x-vercel-proxied-for': '161.142.152.210',
-    'x-vercel-proxy-signature': 'Bearer 1d5efdd1fca6cf07275d2e09e88feef08e60ea45f7a55df3ed253ebaa70c219f',
-    'x-vercel-proxy-signature-ts': '1756674684',
+    'x-vercel-proxy-signature': 'Bearer ec512f4d13066f33801193f5e237d23fa3fab9a566eaefac07cf3dbb9fcc0a4f',
+    'x-vercel-proxy-signature-ts': '1756676037',
     'x-vercel-sc-basepath': '',
-    'x-vercel-sc-headers': '{"x-vercel-function-platform":"vercel\\/proxy+serverless","x-vercel-ept":"1","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXBsb3ltZW50SWQiOiJkcGxfR01nazJ0YzJqZWlYN2htVjRzbmNmVkcxSnpkRyIsInVubGltaXRlZCI6ZmFsc2UsInBsYW4iOiJob2JieSIsImlzcyI6InNlcnZlcmxlc3MiLCJkb21haW4iOiJhcGkuZG9jc2Zsb3cuYXBwIiwiYmxvY2siOmZhbHNlLCJpYXQiOjE3NTY2NzQzODQsInByb2plY3RJZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc1MzA0LCJvd25lcklkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJyZXF1ZXN0SWQiOiJiNWpzYi0xNzU2Njc0Mzg0MzYyLTcxMDZhOGE3NWIwZCIsImVudiI6InByb2R1Y3Rpb24ifQ.-GNb6fSwhtEVS5dfEFlPmrzvZkNlYp62uA1Ll4DYoN0"}',
+    'x-vercel-sc-headers': '{"x-vercel-function-platform":"vercel\\/proxy+serverless","x-vercel-ept":"1","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXBsb3ltZW50SWQiOiJkcGxfNjNNTVBpcXlzQjRybXg3WjNtYlNpbThWSjh4dCIsInVubGltaXRlZCI6ZmFsc2UsInBsYW4iOiJob2JieSIsImlzcyI6InNlcnZlcmxlc3MiLCJkb21haW4iOiJhcGkuZG9jc2Zsb3cuYXBwIiwiYmxvY2siOmZhbHNlLCJpYXQiOjE3NTY2NzU3MzcsInByb2plY3RJZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc2NjU3LCJvd25lcklkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJyZXF1ZXN0SWQiOiJ0a2J3ay0xNzU2Njc1NzM3Mjg3LWNmNWI0ZTdkMzMyYSIsImVudiI6InByb2R1Y3Rpb24ifQ.z_7SOaKNV2kPbLB7XZJlHpcezroZW9rHFRtTTQcu1xI"}',
     'x-vercel-sc-host': 'iad1.suspense-cache.vercel-infra.com',
     'x-xss-protection': '1; mode=block'
   }

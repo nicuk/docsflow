@@ -88,17 +88,23 @@ export default function BackendStatus() {
           })
           break
         case '/documents':
-          response = await fetch(`${API_BASE_URL}${endpoint.endpoint}`, {
-            headers: {
-              'Content-Type': 'application/json',
-            },
+          // SURGICAL FIX: Use apiClient with proper auth headers
+          const { apiClient: docsApiClient } = await import('@/lib/api-client')
+          const documentsData = await docsApiClient.getDocuments()
+          response = new Response(JSON.stringify(documentsData), {
+            status: 200,
+            statusText: 'OK',
+            headers: { 'Content-Type': 'application/json' }
           })
           break
         case '/conversations':
-          response = await fetch(`${API_BASE_URL}${endpoint.endpoint}`, {
-            headers: {
-              'Content-Type': 'application/json',
-            },
+          // SURGICAL FIX: Use apiClient with proper auth headers
+          const { apiClient } = await import('@/lib/api-client')
+          const conversationsData = await apiClient.getConversations()
+          response = new Response(JSON.stringify(conversationsData), {
+            status: 200,
+            statusText: 'OK',
+            headers: { 'Content-Type': 'application/json' }
           })
           break
         default:

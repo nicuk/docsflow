@@ -21,13 +21,10 @@ export function useConversations(tenantId?: string) {
   return useQuery({
     queryKey: ['conversations', tenantId],
     queryFn: async () => {
-      const response = await fetch('/api/conversations', {
-        method: 'GET',
-        credentials: 'include',
-      })
-      if (!response.ok) throw new Error('Failed to fetch conversations')
-      const data = await response.json()
-      return data.conversations || []
+      // SURGICAL FIX: Use apiClient with proper auth headers
+      const { apiClient } = await import('@/lib/api-client')
+      const response = await apiClient.getConversations()
+      return response.conversations || []
     },
     enabled: !!tenantId,
     staleTime: 5 * 60 * 1000,
