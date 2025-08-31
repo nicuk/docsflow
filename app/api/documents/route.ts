@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCORSHeaders } from '@/lib/utils';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
 import { createClient } from '@/lib/supabase-server';
+import { createClient as createDirectClient } from '@supabase/supabase-js';
 
 // SECURITY FIX: Use secure database service instead of direct service role
 import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
@@ -16,8 +17,10 @@ export async function GET(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
   
   try {
-    // SUPABASE SSR FIX: Use server client for proper authentication
+    // SUPABASE SSR FIX: Use server client with error handling
+    console.log('🔧 [DOCUMENTS API] Creating Supabase client...');
     const supabase = await createClient();
+    console.log('✅ [DOCUMENTS API] Supabase client created successfully');
     
     // 🔒 SECURE: Validate tenant context with proper security checks
     const tenantValidation = await validateTenantContext(request, {

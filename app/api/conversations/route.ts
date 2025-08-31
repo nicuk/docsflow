@@ -15,20 +15,16 @@ export async function GET(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
   
   try {
-    // Use service role for tenant lookup to bypass RLS
-    const { createClient } = await import('@supabase/supabase-js');
-    const serviceSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    // SUPABASE SSR FIX: Use server client for proper authentication  
+    const supabase = await createClient();
     
     // Get tenant from subdomain or demo mode
     const tenantSubdomain = request.headers.get('X-Tenant-Subdomain') || 'demo-warehouse-dist';
     
     console.log('Fetching conversations for tenant subdomain:', tenantSubdomain);
     
-    // First, get the tenant UUID from subdomain using service role
-    const { data: tenant, error: tenantError } = await serviceSupabase
+    // First, get the tenant UUID from subdomain using server client
+    const { data: tenant, error: tenantError } = await supabase
       .from('tenants')
       .select('id')
       .eq('subdomain', tenantSubdomain)
@@ -87,17 +83,13 @@ export async function POST(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
   
   try {
-    // Use service role for tenant lookup to bypass RLS
-    const { createClient } = await import('@supabase/supabase-js');
-    const serviceSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    // SUPABASE SSR FIX: Use server client for proper authentication
+    const supabase = await createClient();
     
     const tenantSubdomain = request.headers.get('X-Tenant-Subdomain') || 'demo-warehouse-dist';
     
-    // Get the tenant UUID from subdomain using service role
-    const { data: tenant, error: tenantError } = await serviceSupabase
+    // Get the tenant UUID from subdomain using server client
+    const { data: tenant, error: tenantError } = await supabase
       .from('tenants')
       .select('id')
       .eq('subdomain', tenantSubdomain)
