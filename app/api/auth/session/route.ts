@@ -63,49 +63,15 @@ export async function GET(request: NextRequest) {
       {
         cookies: {
           getAll() {
-            // UNIFIED ARCHITECTURE: Provide Supabase with our unified tokens
+            // SURGICAL FIX: Let Supabase handle its own cookies naturally
+            // The unified tokens are already present as 'sb-lhcopwwiqwjpzbdnjovo-auth-token'
             const allCookies = cookieStore.getAll();
             
-            // Check if we have unified auth tokens that Supabase needs
-            const unifiedAuthToken = cookieStore.get('docsflow_auth_token')?.value ||
-                                   cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value ||
-                                   cookieStore.get('access_token')?.value;
-            
-            console.log(`🔍 [COOKIE-BRIDGE] Debug:`, {
-              hasUnifiedToken: !!unifiedAuthToken,
-              unifiedTokenPreview: unifiedAuthToken ? unifiedAuthToken.substring(0, 20) + '...' : 'none',
-              existingSupabaseCookie: !!allCookies.find(c => c.name === 'sb-lhcopwwiqwjpzbdnjovo-auth-token'),
-              allCookieNames: allCookies.map(c => c.name)
+            console.log(`🔍 [SESSION API] Natural cookie flow - letting Supabase handle auth:`, {
+              totalCookies: allCookies.length,
+              hasSupabaseAuth: !!allCookies.find(c => c.name === 'sb-lhcopwwiqwjpzbdnjovo-auth-token'),
+              cookieNames: allCookies.map(c => c.name)
             });
-            
-            if (unifiedAuthToken) {
-              // Always provide Supabase with our unified auth token
-              const supabaseAuthCookie = {
-                name: 'sb-lhcopwwiqwjpzbdnjovo-auth-token',
-                value: unifiedAuthToken
-              };
-              
-              // Also check for refresh token
-              const refreshToken = cookieStore.get('docsflow_refresh_token')?.value ||
-                                 cookieStore.get('refresh_token')?.value;
-              
-              const cookiesForSupabase = [...allCookies.filter(c => c.name !== 'sb-lhcopwwiqwjpzbdnjovo-auth-token'), supabaseAuthCookie];
-              
-              if (refreshToken) {
-                cookiesForSupabase.push({
-                  name: 'sb-lhcopwwiqwjpzbdnjovo-refresh-token',
-                  value: refreshToken
-                });
-              }
-              
-              console.log(`🔗 [SESSION API] Providing Supabase with unified tokens:`, {
-                authToken: unifiedAuthToken.substring(0, 20) + '...',
-                hasRefreshToken: !!refreshToken,
-                totalCookies: cookiesForSupabase.length
-              });
-              
-              return cookiesForSupabase;
-            }
             
             return allCookies;
           },
