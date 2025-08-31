@@ -208,6 +208,33 @@ export async function POST(request: NextRequest) {
       maxAge: refreshTokenMaxAge
     });
     
+    // CRITICAL FIX: Also set Supabase native cookies to prevent empty token issues
+    authCookieStore.set('sb-lhcopwwiqwjpzbdnjovo-auth-token', authData.session.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
+      maxAge: authTokenMaxAge
+    });
+    
+    if (authData.session.refresh_token) {
+      authCookieStore.set('sb-lhcopwwiqwjpzbdnjovo-refresh-token', authData.session.refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
+        maxAge: refreshTokenMaxAge
+      });
+    }
+    
+    console.log(`✅ [LOGIN API] Successfully set all auth cookies:`, {
+      unifiedAuth: !!authData.session.access_token,
+      supabaseAuth: !!authData.session.access_token,
+      hasRefresh: !!authData.session.refresh_token
+    });
+    
     return response;
 
   } catch (error: any) {
