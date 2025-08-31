@@ -38,9 +38,6 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // SUPABASE SSR FIX: Use server client for proper authentication
-    const supabase = await createClient();
-    
     // Get conversations for this tenant using the actual UUID
     const { data: conversations, error } = await supabase
       .from('chat_conversations')
@@ -84,12 +81,12 @@ export async function POST(request: NextRequest) {
   
   try {
     // SUPABASE SSR FIX: Use server client for proper authentication
-    const supabase = await createClient();
+    const supabaseClient = await createClient();
     
     const tenantSubdomain = request.headers.get('X-Tenant-Subdomain') || 'demo-warehouse-dist';
     
     // Get the tenant UUID from subdomain using server client
-    const { data: tenant, error: tenantError } = await supabase
+    const { data: tenant, error: tenantError } = await supabaseClient
       .from('tenants')
       .select('id')
       .eq('subdomain', tenantSubdomain)
@@ -103,16 +100,13 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // SUPABASE SSR FIX: Use server client for proper authentication
-    const supabase = await createClient();
-    
     // For now, use demo user ID since we don't have full auth yet
     const userId = '00000000-0000-0000-0000-000000000000';
     
     const { title } = await request.json();
     
     // Create new conversation
-    const { data: conversation, error } = await supabase
+    const { data: conversation, error } = await supabaseClient
       .from('chat_conversations')
       .insert({
         title: title || 'New Conversation',

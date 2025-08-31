@@ -9,11 +9,24 @@ import { NextRequest, NextResponse } from 'next/server'
  * SERVER CLIENT - For use in API routes and Server Components
  */
 export async function createClient() {
+  // VERCEL SERVERLESS FIX: Validate environment variables
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('🚨 [SUPABASE-SERVER] Missing environment variables:', {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseKey,
+      nodeEnv: process.env.NODE_ENV
+    });
+    throw new Error(`Missing Supabase config: URL=${!!supabaseUrl}, KEY=${!!supabaseKey}`);
+  }
+
   const cookieStore = await cookies()
 
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {

@@ -17,10 +17,21 @@ export async function GET(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
   
   try {
-    // SUPABASE SSR FIX: Use server client with error handling
+    // SUPABASE SSR FIX: Use server client with fallback
     console.log('🔧 [DOCUMENTS API] Creating Supabase client...');
-    const supabase = await createClient();
-    console.log('✅ [DOCUMENTS API] Supabase client created successfully');
+    let supabase;
+    
+    try {
+      supabase = await createClient();
+      console.log('✅ [DOCUMENTS API] Server client created successfully');
+    } catch (serverClientError) {
+      console.warn('⚠️ [DOCUMENTS API] Server client failed, using direct client:', serverClientError);
+      // Fallback to direct client if server client fails
+      supabase = createDirectClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+    }
     
     // 🔒 SECURE: Validate tenant context with proper security checks
     const tenantValidation = await validateTenantContext(request, {
