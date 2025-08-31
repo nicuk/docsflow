@@ -122,12 +122,59 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    // SECURITY FIX: Get both user and session data for complete authentication
+    // SURGICAL FIX: Direct token validation bypassing problematic session system
     if (!isVercelBot) {
-      console.log(`🔍 [SESSION API] Calling supabase.auth.getUser()...`);
+      console.log(`🔍 [SESSION API] Attempting direct token validation...`);
     }
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    let user = null;
+    let session = null;
+    let userError = null;
+    let sessionError = null;
+    
+    // Try direct auth validation first
+    const directAuthToken = cookieStore.get('docsflow_auth_token')?.value ||
+                           cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value ||
+                           cookieStore.get('access_token')?.value;
+    
+    if (directAuthToken) {
+      try {
+        // Create a clean Supabase client for direct token validation
+        const { createClient } = await import('@supabase/supabase-js');
+        const directSupabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+        
+        const { data: { user: directUser }, error: directError } = await directSupabase.auth.getUser(directAuthToken);
+        
+        if (directUser && !directError) {
+          user = directUser;
+          session = { access_token: directAuthToken }; // Minimal session object
+          console.log(`✅ [SESSION API] Direct token validation successful`);
+        } else {
+          console.log(`❌ [SESSION API] Direct token validation failed:`, directError?.message);
+          userError = directError;
+        }
+      } catch (directValidationError) {
+        console.error(`🚨 [SESSION API] Direct validation error:`, directValidationError);
+        userError = directValidationError;
+      }
+    }
+    
+    // Fallback to original Supabase client if direct validation failed
+    if (!user) {
+      if (!isVercelBot) {
+        console.log(`🔍 [SESSION API] Falling back to original Supabase auth...`);
+      }
+      const fallbackResult = await supabase.auth.getUser();
+      user = fallbackResult.data.user;
+      userError = fallbackResult.error;
+      
+      const fallbackSession = await supabase.auth.getSession();
+      session = fallbackSession.data.session;
+      sessionError = fallbackSession.error;
+    }
     
     if (!isVercelBot) {
       console.log(`🔍 [SESSION API] Supabase auth result:`, {
