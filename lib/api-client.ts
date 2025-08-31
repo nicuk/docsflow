@@ -34,31 +34,42 @@ export const apiClient = {
       'Accept': 'application/json',
     };
     
-    // JWT GATEWAY: Get auth token from unified Supabase session
-    const authToken = await this.getAccessToken();
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-      console.log('🔍 [JWT-GATEWAY] Authorization header set for cross-domain request');
-    } else {
-      // CRITICAL FIX: Force immediate session check if no cached token
-      console.warn('🔍 [JWT-GATEWAY] No token found, forcing fresh session check...');
+    // BRUTAL FIX: FORCE synchronous token retrieval - block until we have auth
+    console.log('🔍 [BRUTAL-FIX] Forcing synchronous token retrieval...');
+    
+    let authToken = null;
+    
+    // Step 1: Try cached token first
+    authToken = await this.getAccessToken();
+    
+    // Step 2: If no cache, FORCE fresh session check (BLOCKING)
+    if (!authToken) {
+      console.warn('🔍 [BRUTAL-FIX] No cached token, FORCING fresh Supabase session...');
       try {
         const { createClient } = await import('@/lib/supabase-browser');
         const supabase = createClient();
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (!error && session?.access_token) {
-          headers['Authorization'] = `Bearer ${session.access_token}`;
-          // Update cache for next time
+          authToken = session.access_token;
+          // Cache immediately
           localStorage.setItem('jwt_access_token', session.access_token);
           localStorage.setItem('jwt_expires_at', session.expires_at?.toString() || '');
-          console.log('🔍 [JWT-GATEWAY] Fresh token retrieved and cached');
+          console.log('✅ [BRUTAL-FIX] Fresh token retrieved and cached synchronously');
         } else {
-          console.error('🔍 [JWT-GATEWAY] Failed to get fresh session:', error);
+          console.error('❌ [BRUTAL-FIX] Fresh session failed:', error);
         }
-      } catch (freshError) {
-        console.error('🔍 [JWT-GATEWAY] Critical: Fresh session retrieval failed:', freshError);
+      } catch (sessionError) {
+        console.error('💀 [BRUTAL-FIX] Critical session failure:', sessionError);
       }
+    }
+    
+    // Step 3: If we have ANY token, use it
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+      console.log('✅ [BRUTAL-FIX] Authorization header set:', authToken.substring(0, 20) + '...');
+    } else {
+      console.error('💀 [BRUTAL-FIX] NO TOKEN AVAILABLE - API call will likely fail');
     }
     
     // RLS CONTEXT: Add tenant context for database session
