@@ -173,7 +173,56 @@ export async function validateTenantContext(
     // Additional auth validation if required
     if (requireAuth) {
       const authHeader = request.headers.get('authorization');
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      let user = null;
+      
+      // Try Bearer token first
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        try {
+          const token = authHeader.replace('Bearer ', '');
+          const { data: { user: bearerUser }, error: authError } = await supabase.auth.getUser(token);
+          
+          if (!authError && bearerUser) {
+            user = bearerUser;
+          }
+        } catch (bearerError) {
+          console.warn('Bearer token validation failed:', bearerError);
+        }
+      }
+      
+      // Fallback to cookie authentication if no Bearer token or Bearer failed
+      if (!user) {
+        try {
+          // Create client with cookies for session validation
+          const { createServerClient } = await import('@supabase/ssr');
+          const { cookies } = await import('next/headers');
+          
+          const cookieStore = await cookies();
+          const cookieSupabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+              cookies: {
+                get(name: string) {
+                  return cookieStore.get(name)?.value;
+                },
+                set() {},
+                remove() {}
+              }
+            }
+          );
+          
+          const { data: { user: cookieUser }, error: cookieError } = await cookieSupabase.auth.getUser();
+          
+          if (!cookieError && cookieUser) {
+            user = cookieUser;
+          }
+        } catch (cookieError) {
+          console.warn('Cookie authentication failed:', cookieError);
+        }
+      }
+      
+      // If no valid authentication found
+      if (!user) {
         return {
           isValid: false,
           tenantId: tenantUUID,  // Always use UUID
@@ -183,44 +232,20 @@ export async function validateTenantContext(
         };
       }
 
-      // Validate auth token
-      try {
-        const token = authHeader.replace('Bearer ', '');
-        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-        
-        if (authError || !user) {
-          return {
-            isValid: false,
-            tenantId: tenantUUID,  // Always use UUID
-            tenantData,
-            error: 'Invalid authentication token',
-            statusCode: 401
-          };
-        }
+      // Check if user has access to this tenant
+      const { data: userTenantAccess } = await supabase
+        .from('users')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single();
 
-        // Check if user has access to this tenant
-        const { data: userTenantAccess } = await supabase
-          .from('users')
-          .select('tenant_id')
-          .eq('id', user.id)
-          .single();
-
-        if (userTenantAccess?.tenant_id !== tenantUUID) {
-          return {
-            isValid: false,
-            tenantId: tenantUUID,  // Always use UUID
-            tenantData,
-            error: 'Access denied to this tenant',
-            statusCode: 403
-          };
-        }
-      } catch (authValidationError) {
+      if (userTenantAccess?.tenant_id !== tenantUUID) {
         return {
           isValid: false,
           tenantId: tenantUUID,  // Always use UUID
           tenantData,
-          error: 'Authentication validation failed',
-          statusCode: 401
+          error: 'Access denied to this tenant',
+          statusCode: 403
         };
       }
     }
