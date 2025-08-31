@@ -35,7 +35,7 @@ export class HybridRAGReranker {
   constructor() {
     this.supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      /* SECURITY FIX: Migrated to secure backend service */!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
     
     this.genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY!);
