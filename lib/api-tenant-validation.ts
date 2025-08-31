@@ -7,6 +7,12 @@ import { TenantContextManager } from './tenant-context-manager';
 import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
 // Note: Update the function to use SecureDocumentService, SecureTenantService, or SecureUserService methods
 
+// Initialize Supabase client for tenant validation
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 export interface TenantValidationResult {
   isValid: boolean;
   tenantId: string | null;
