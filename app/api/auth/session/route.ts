@@ -144,7 +144,61 @@ export async function GET(request: NextRequest) {
     if (!user || userError) {
       if (!isVercelBot) {
         console.log(`❌ [SESSION API] Authentication failed:`, userError?.message);
+        
+        // DIAGNOSTIC: Check if tokens are expired/invalid
+        const cookieStore = await cookies();
+        const authToken = cookieStore.get('docsflow_auth_token')?.value ||
+                         cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value;
+        
+        if (authToken) {
+          try {
+            // Try to decode JWT to check expiration
+            const tokenParts = authToken.split('.');
+            if (tokenParts.length === 3) {
+              const payload = JSON.parse(atob(tokenParts[1]));
+              const isExpired = payload.exp && (payload.exp * 1000 < Date.now());
+              console.log(`🔍 [TOKEN-DEBUG] Auth token analysis:`, {
+                hasToken: true,
+                isExpired,
+                expiresAt: payload.exp ? new Date(payload.exp * 1000).toISOString() : 'unknown',
+                currentTime: new Date().toISOString()
+              });
+              
+              if (isExpired) {
+                console.log(`⏰ [TOKEN-DEBUG] Auth token is EXPIRED - need to clear stale cookies`);
+                
+                // Clear expired tokens
+                const response = NextResponse.json({
+                  authenticated: false,
+                  user: null,
+                  tenant: null,
+                  onboardingComplete: false,
+                  error: 'Session expired - tokens cleared'
+                });
+                
+                // Clear all auth cookies
+                const expireOptions = { 
+                  path: '/', 
+                  domain: '.docsflow.app', 
+                  expires: new Date(0) 
+                };
+                
+                response.cookies.set('docsflow_auth_token', '', expireOptions);
+                response.cookies.set('sb-lhcopwwiqwjpzbdnjovo-auth-token', '', expireOptions);
+                response.cookies.set('access_token', '', expireOptions);
+                response.cookies.set('docsflow_refresh_token', '', expireOptions);
+                response.cookies.set('refresh_token', '', expireOptions);
+                
+                console.log(`🧹 [SESSION API] Cleared expired auth tokens`);
+                return response;
+              }
+            }
+          } catch (tokenError) {
+            console.warn(`⚠️ [TOKEN-DEBUG] Could not decode auth token:`, tokenError);
+          }
+        }
       }
+      
       return NextResponse.json({
         authenticated: false,
         user: null,
