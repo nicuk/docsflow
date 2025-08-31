@@ -219,7 +219,13 @@ export async function validateTenantContext(
               return acc;
             }, {} as Record<string, string>);
             
-            authToken = cookies['docsflow_auth_token'] ||
+            // SUPABASE SSR FIX: Look for any Supabase auth token first
+            const supabaseAuthKey = Object.keys(cookies).find(key => 
+              key.startsWith('sb-') && key.endsWith('-auth-token')
+            );
+            
+            authToken = cookies[supabaseAuthKey || ''] ||
+                       cookies['docsflow_auth_token'] ||
                        cookies['sb-lhcopwwiqwjpzbdnjovo-auth-token'] ||
                        cookies['access_token'];
             

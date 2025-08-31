@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
       debug: 'success'
     });
 
-    // Set tenant context cookies for compatibility with existing middleware
+    // SUPABASE SSR FIX: Set tenant context cookies for compatibility with existing middleware
     if (userProfile.tenant_id && userProfile.email && userProfile.tenants?.subdomain) {
       const cookieOptions = {
         httpOnly: false, // Need access for client-side redirect logic
@@ -117,6 +117,14 @@ export async function GET(request: NextRequest) {
       response.cookies.set('tenant-id', userProfile.tenant_id, cookieOptions);
       response.cookies.set('user-email', userProfile.email, cookieOptions);
       response.cookies.set('tenant-subdomain', userProfile.tenants.subdomain, cookieOptions);
+      
+      // SUPABASE SSR: Also set tenant context for multi-tenant support
+      const tenantContext = {
+        tenantId: userProfile.tenant_id,
+        subdomain: userProfile.tenants.subdomain,
+        timestamp: Date.now()
+      };
+      response.cookies.set('tenant-context', JSON.stringify(tenantContext), cookieOptions);
       
       console.log(`🔧 [SESSION API] Set tenant context cookies:`, {
         tenantId: userProfile.tenant_id.substring(0, 8) + '...',

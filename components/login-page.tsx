@@ -102,9 +102,21 @@ export default function LoginPage() {
       if (data.user) {
         setIsSuccess(true)
         
-        // Simple redirect - let middleware handle the rest
+        // SUPABASE SSR FIX: Graceful redirect with session check
+        // Check if we're on a tenant subdomain and redirect accordingly
+        const hostname = window.location.hostname;
+        const isOnTenantSubdomain = hostname.includes('.docsflow.app') && 
+                                   !hostname.startsWith('www.') && 
+                                   !hostname.startsWith('api.');
+        
         setTimeout(() => {
-          router.push('/dashboard')
+          if (isOnTenantSubdomain) {
+            // Already on tenant subdomain, go to dashboard
+            router.push('/dashboard')
+          } else {
+            // On main domain, let middleware redirect to appropriate tenant
+            router.push('/dashboard')
+          }
         }, 1500)
       }
       

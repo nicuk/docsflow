@@ -21,9 +21,16 @@ export async function createClient() {
         },
         setAll(cookiesToSet) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
+            cookiesToSet.forEach(({ name, value, options }) => {
+              // CRITICAL FIX: Set domain to .docsflow.app for cross-subdomain cookies
+              const cookieOptions = {
+                ...options,
+                domain: '.docsflow.app', // This allows cookies to work on bitto.docsflow.app AND api.docsflow.app
+                secure: true,
+                sameSite: 'lax' as const
+              }
+              cookieStore.set(name, value, cookieOptions)
+            })
           } catch {
             // The `setAll` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
@@ -49,8 +56,15 @@ export function createMiddlewareClient(request: NextRequest, response: NextRespo
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
+            // CRITICAL FIX: Set domain to .docsflow.app for cross-subdomain cookies
+            const cookieOptions = {
+              ...options,
+              domain: '.docsflow.app', // This allows cookies to work on bitto.docsflow.app AND api.docsflow.app
+              secure: true,
+              sameSite: 'lax' as const
+            }
             request.cookies.set(name, value)
-            response.cookies.set(name, value, options)
+            response.cookies.set(name, value, cookieOptions)
           })
         },
       },

@@ -1,85 +1,189 @@
-2025-08-31T18:55:48.787Z [info] 🔍 [MIDDLEWARE START] GET www.docsflow.app/api/auth/session
-2025-08-31T18:55:48.787Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'www.docsflow.app' (length: 16)
-2025-08-31T18:55:48.787Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T18:55:48.787Z [info] 🔍 [MIDDLEWARE] Origin: null
-2025-08-31T18:55:48.787Z [info] 🔍 [MIDDLEWARE] Request URL: https://www.docsflow.app/api/auth/session
-2025-08-31T18:55:48.787Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'null' from hostname: 'www.docsflow.app'
-2025-08-31T18:55:48.787Z [info] 🔍 [MIDDLEWARE] Checking main domain condition: hostname='www.docsflow.app' vs 'docsflow.app'|'www.docsflow.app'|'localhost'
-2025-08-31T18:55:48.788Z [info] 🔍 [MIDDLEWARE] ✅ MATCHED main domain condition - Processing: www.docsflow.app/api/auth/session
-2025-08-31T18:55:48.788Z [info] 🔍 [MIDDLEWARE] Allowing main domain route: /api/auth/session
-2025-08-31T18:55:49.406Z [info] 🔍 [SESSION API] Request received from: https://www.docsflow.app/select-workspace
-2025-08-31T18:55:49.406Z [info] 🔍 [SESSION API] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T18:55:49.420Z [info] 🔍 [SESSION API] Raw cookies: user-email, tenant-context, tenant-id, tenant-subdomain, sb-lhcopwwiqwjpzbdnjovo-auth-token
-2025-08-31T18:55:49.420Z [info] 🔍 [SESSION API] Multi-tenant auth state: {
-  hasAuthToken: false,
-  currentTenant: undefined,
-  totalTenants: 0,
-  availableTenants: []
+2025-08-31T19:10:20.374Z [info] 🔍 [MIDDLEWARE START] GET www.docsflow.app/select-workspace
+2025-08-31T19:10:20.374Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'www.docsflow.app' (length: 16)
+2025-08-31T19:10:20.374Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T19:10:20.374Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-08-31T19:10:20.374Z [info] 🔍 [MIDDLEWARE] Request URL: https://www.docsflow.app/select-workspace
+2025-08-31T19:10:20.375Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'null' from hostname: 'www.docsflow.app'
+2025-08-31T19:10:20.375Z [info] 🔍 [MIDDLEWARE] Checking main domain condition: hostname='www.docsflow.app' vs 'docsflow.app'|'www.docsflow.app'|'localhost'
+2025-08-31T19:10:20.375Z [info] 🔍 [MIDDLEWARE] ✅ MATCHED main domain condition - Processing: www.docsflow.app/select-workspace
+2025-08-31T19:10:20.375Z [info] 🔍 [MIDDLEWARE] Checking auth for main domain user on: /select-workspace
+2025-08-31T19:10:20.375Z [info] 🔍 [MIDDLEWARE] Auth check - Token: EXISTS, Email: support@bitto.tech, TenantId: 122928f6-f34e-484b-9a69-7e1f25caf45c, Subdomain: bitto
+2025-08-31T19:10:20.376Z [info] 🎯 [MIDDLEWARE] DIRECT REDIRECT authenticated user from main domain to tenant: https://bitto.docsflow.app/select-workspace
+
+2025-08-31T19:10:20.748Z [info] 🔍 [MIDDLEWARE START] OPTIONS bitto.docsflow.app/select-workspace
+2025-08-31T19:10:20.748Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-08-31T19:10:20.748Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T19:10:20.748Z [info] 🔍 [MIDDLEWARE] Origin: https://www.docsflow.app
+2025-08-31T19:10:20.748Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/select-workspace
+
+2025-08-31T19:10:20.882Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/select-workspace
+2025-08-31T19:10:20.882Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-08-31T19:10:20.882Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T19:10:20.882Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-08-31T19:10:20.882Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/select-workspace
+2025-08-31T19:10:20.882Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-08-31T19:10:20.882Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-08-31T19:10:20.882Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-08-31T19:10:20.943Z [info] Redis operation successful
+2025-08-31T19:10:20.943Z [info] 🎯 [RESILIENT] Direct database lookup: bitto
+2025-08-31T19:10:21.650Z [info] Redis operation successful
+2025-08-31T19:10:21.650Z [info] ✅ [RESILIENT] Database success, cached: bitto -> 122928f6...
+2025-08-31T19:10:21.652Z [info] 🔍 [MIDDLEWARE] bitto subdomain auth check: {
+  pathname: '/select-workspace',
+  storedTenantId: '122928f6...',
+  userEmail: 'support@bitto.tech',
+  authToken: 'MISSING',
+  tenantUUID: '122928f6...'
 }
-2025-08-31T18:55:49.437Z [info] 🔍 [SESSION API] DEBUGGING COOKIE VALUES: {
-  hasSupabaseAuth: true,
-  supabaseTokenLength: 0,
-  supabaseTokenPreview: '...',
-  hasUnifiedToken: false,
-  unifiedTokenLength: 0,
-  unifiedTokenPreview: 'undefined...',
-  tokensMatch: false,
-  totalCookies: 5
+2025-08-31T19:10:21.652Z [info] 🔍 [MIDDLEWARE] Raw cookies present: user-email, tenant-context, tenant-id, tenant-subdomain
+2025-08-31T19:10:21.652Z [info] 🔐 [MIDDLEWARE] Redirecting unauthenticated user to login: https://bitto.docsflow.app/login
+2025-08-31T19:10:21.652Z [info] 🔍 [MIDDLEWARE] Auth failure reason: {
+  hasEmail: true,
+  hasToken: false,
+  hasTenantId: true,
+  tenantMatch: true
 }
-2025-08-31T18:55:49.437Z [info] 🔍 [SESSION API] DEBUGGING COOKIE VALUES: {
-  hasSupabaseAuth: true,
-  supabaseTokenLength: 0,
-  supabaseTokenPreview: '...',
-  hasUnifiedToken: false,
-  unifiedTokenLength: 0,
-  unifiedTokenPreview: 'undefined...',
-  tokensMatch: false,
-  totalCookies: 5
+
+
+2025-08-31T19:10:42.824Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/dashboard
+2025-08-31T19:10:42.824Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-08-31T19:10:42.824Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T19:10:42.824Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-08-31T19:10:42.824Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/dashboard
+2025-08-31T19:10:42.824Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-08-31T19:10:42.824Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-08-31T19:10:42.824Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-08-31T19:10:42.824Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
+2025-08-31T19:10:42.824Z [info] 🔍 [MIDDLEWARE] bitto subdomain auth check: {
+  pathname: '/dashboard',
+  storedTenantId: '122928f6...',
+  userEmail: 'support@bitto.tech',
+  authToken: 'base64-eyJhY2Nlc3Nfd...',
+  tenantUUID: '122928f6...'
 }
-2025-08-31T18:55:49.441Z [info] 🔍 [SESSION API] DEBUGGING COOKIE VALUES: {
-  hasSupabaseAuth: true,
-  supabaseTokenLength: 0,
-  supabaseTokenPreview: '...',
-  hasUnifiedToken: false,
-  unifiedTokenLength: 0,
-  unifiedTokenPreview: 'undefined...',
-  tokensMatch: false,
-  totalCookies: 5
-}
-2025-08-31T18:55:49.442Z [info] 🔍 [SESSION API] DEBUGGING COOKIE VALUES: {
-  hasSupabaseAuth: true,
-  supabaseTokenLength: 0,
-  supabaseTokenPreview: '...',
-  hasUnifiedToken: false,
-  unifiedTokenLength: 0,
-  unifiedTokenPreview: 'undefined...',
-  tokensMatch: false,
-  totalCookies: 5
-}
-2025-08-31T18:55:49.442Z [info] 🔍 [SESSION API] Supabase auth result: {
-  hasUser: false,
-  userId: undefined,
-  userEmail: undefined,
-  hasSession: false,
-  hasAccessToken: false,
-  userError: 'Auth session missing!',
+2025-08-31T19:10:42.824Z [info] 🔍 [MIDDLEWARE] Raw cookies present: user-email, tenant-context, tenant-id, tenant-subdomain, sb-lhcopwwiqwjpzbdnjovo-auth-token
+2025-08-31T19:10:42.824Z [info] ✅ [MIDDLEWARE] User authenticated for tenant bitto - allowing access to /dashboard
+
+2025-08-31T19:10:43.436Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/api/auth/session
+2025-08-31T19:10:43.436Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-08-31T19:10:43.436Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T19:10:43.436Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-08-31T19:10:43.436Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/api/auth/session
+2025-08-31T19:10:43.436Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-08-31T19:10:43.436Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-08-31T19:10:43.436Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-08-31T19:10:43.436Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
+2025-08-31T19:10:44.133Z [info] 🔍 [SESSION API] Request received from: https://bitto.docsflow.app/dashboard
+2025-08-31T19:10:44.133Z [info] 🔍 [SESSION API] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36...
+2025-08-31T19:10:45.072Z [info] 🔍 [SESSION API] Supabase auth result: {
+  hasUser: true,
+  userId: 'cc362aeb-bf97-4260-9dfb-bb1725c9c202',
+  userEmail: 'support@bitto.tech',
+  hasSession: true,
+  hasAccessToken: true,
+  userError: undefined,
   sessionError: undefined
 }
-2025-08-31T18:55:49.442Z [info] ❌ [SESSION API] Authentication failed: Auth session missing!
+2025-08-31T19:10:45.906Z [info] 🔧 [SESSION API] Set tenant context cookies: {
+  tenantId: '122928f6...',
+  email: 'support@bitto.tech',
+  subdomain: 'bitto'
+}
+2025-08-31T19:10:45.906Z [info] ✅ [SESSION API] Successful authentication: {
+  userId: 'cc362aeb-bf97-4260-9dfb-bb1725c9c202',
+  email: 'support@bitto.tech',
+  tenantId: '122928f6-f34e-484b-9a69-7e1f25caf45c',
+  tenantSubdomain: 'bitto',
+  onboardingComplete: true
+}
 
-
-2025-08-31T18:55:50.996Z [info] 🔍 [MIDDLEWARE START] POST www.docsflow.app/api/subdomain/check
-2025-08-31T18:55:50.996Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'www.docsflow.app' (length: 16)
-2025-08-31T18:55:50.996Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T18:55:50.996Z [info] 🔍 [MIDDLEWARE] Origin: https://www.docsflow.app
-2025-08-31T18:55:50.996Z [info] 🔍 [MIDDLEWARE] Request URL: https://www.docsflow.app/api/subdomain/check
-2025-08-31T18:55:50.997Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'null' from hostname: 'www.docsflow.app'
-2025-08-31T18:55:50.997Z [info] 🔍 [MIDDLEWARE] Checking main domain condition: hostname='www.docsflow.app' vs 'docsflow.app'|'www.docsflow.app'|'localhost'
-2025-08-31T18:55:50.997Z [info] 🔍 [MIDDLEWARE] ✅ MATCHED main domain condition - Processing: www.docsflow.app/api/subdomain/check
-2025-08-31T18:55:50.997Z [info] 🔍 [MIDDLEWARE] Allowing main domain route: /api/subdomain/check
-2025-08-31T18:55:52.135Z [error] Error fetching tenant data: ReferenceError: supabase is not defined
-    at d (.next/server/app/api/subdomain/check/route.js:1:9725)
-    at async z (.next/server/app/api/subdomain/check/route.js:1:3445)
-    at async k (.next/server/app/api/subdomain/check/route.js:1:6742)
-    at async g (.next/server/app/api/subdomain/check/route.js:1:7745)
-    at async F (.next/server/app/api/subdomain/check/route.js:1:8867)
+2025-08-31T19:10:47.561Z [info] 🔍 [MIDDLEWARE START] GET api.docsflow.app/api/documents
+2025-08-31T19:10:47.561Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
+2025-08-31T19:10:47.561Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T19:10:47.561Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
+2025-08-31T19:10:47.561Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/documents
+2025-08-31T19:10:47.562Z [info] 🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: bitto
+2025-08-31T19:10:47.630Z [info] ✅ [API-MIDDLEWARE] Tenant bitto verified for API call (UUID: 122928f6...)
+2025-08-31T19:10:47.630Z [info] 🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin
+2025-08-31T19:10:48.040Z [info] 🔍 Tenant validation: {
+  subdomain: 'bitto',
+  tenantId: '122928f6-f34e-484b-9a69-7e1f25caf45c',
+  requireAuth: true,
+  headers: {
+    'x-tenant-subdomain': 'bitto',
+    'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c'
+  }
+}
+2025-08-31T19:10:48.065Z [info] ✅ Redis tenant cache HIT for: bitto
+2025-08-31T19:10:48.066Z [info] 🔍 [AUTH-DEBUG] Headers received: {
+  hasAuthorization: false,
+  authHeader: 'none',
+  allHeaders: {
+    accept: 'application/json',
+    'accept-encoding': 'gzip, deflate, br, zstd',
+    'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8',
+    'access-control-allow-credentials': 'true',
+    'access-control-allow-headers': 'Content-Type, Authorization, X-Tenant-ID, X-Tenant-Subdomain, X-HMAC-Signature',
+    'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'access-control-allow-origin': 'https://bitto.docsflow.app',
+    connection: 'close',
+    'content-type': 'application/json',
+    cookie: 'user-email=support%40bitto.tech; tenant-context=%7B%22tenantId%22%3A%22122928f6-f34e-484b-9a69-7e1f25caf45c%22%2C%22subdomain%22%3A%22bitto%22%2C%22timestamp%22%3A1756657056720%7D; tenant-id=122928f6-f34e-484b-9a69-7e1f25caf45c; tenant-subdomain=bitto',
+    date: 'Sun, 31 Aug 2025 19:10:47 GMT',
+    dnt: '1',
+    forwarded: 'for=161.142.152.210;host=api.docsflow.app;proto=https;sig=0QmVhcmVyIGFmNzc2MmI4ZWRjN2RiMjBmZDQwYTI4NTJmMDFhMWFlNzhmMzM5NDJiZjFjMGRiNjk4ZWQ1ODY5YTI1YjdkZGU=;exp=1756667747',
+    host: 'api.docsflow.app',
+    origin: 'https://bitto.docsflow.app',
+    priority: 'u=1, i',
+    referer: 'https://bitto.docsflow.app/',
+    'sec-ch-ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-site',
+    'strict-transport-security': 'max-age=63072000; includeSubDomains; preload',
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+    'x-content-type-options': 'nosniff',
+    'x-forwarded-for': '161.142.152.210',
+    'x-forwarded-host': 'api.docsflow.app',
+    'x-forwarded-port': '443',
+    'x-forwarded-proto': 'https',
+    'x-frame-options': 'DENY',
+    'x-matched-path': '/api/documents',
+    'x-real-ip': '161.142.152.210',
+    'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c',
+    'x-tenant-subdomain': 'bitto',
+    'x-vercel-deployment-url': 'ai-lead-router-saas-kamupa6yk-nics-projects-4e604dbf.vercel.app',
+    'x-vercel-forwarded-for': '161.142.152.210',
+    'x-vercel-id': 'sin1::x7lw2-1756667447533-dc28e4b63c92',
+    'x-vercel-internal-bot-check': 'skip',
+    'x-vercel-internal-ingress-bucket': 'bucket017',
+    'x-vercel-internal-ingress-port': '17443',
+    'x-vercel-ip-as-number': '9930',
+    'x-vercel-ip-city': 'Petaling%20Jaya',
+    'x-vercel-ip-continent': 'AS',
+    'x-vercel-ip-country': 'MY',
+    'x-vercel-ip-country-region': '10',
+    'x-vercel-ip-latitude': '3.1071',
+    'x-vercel-ip-longitude': '101.6139',
+    'x-vercel-ip-postal-code': '47301',
+    'x-vercel-ip-timezone': 'Asia/Kuala_Lumpur',
+    'x-vercel-ja4-digest': 't13d1517h2_8daaf6152771_b6f405a00624',
+    'x-vercel-oidc-token': 'eyJraWQiOiJtcmstNDMwMmVjMWI2NzBmNDhhOThhZDYxZGFkZTRhMjNiZTciLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NTY2NjQ4NzEsIm93bmVyX2lkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJpYXQiOjE3NTY2NjQ4NzEsInZlcmNlbF9pZCI6InNpbjE6OjQyaGN4LTE3NTY2NjQ4NzEzNDQtNjQwMWZhZTRhNjliIiwiYXVkIjoiaHR0cHM6XC9cL3ZlcmNlbC5jb21cL25pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJvd25lciI6Im5pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJpc3MiOiJodHRwczpcL1wvb2lkYy52ZXJjZWwuY29tXC9uaWNzLXByb2plY3RzLTRlNjA0ZGJmIiwicHJvamVjdF9pZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2NjY4NDcxLCJlbnZpcm9ubWVudCI6InByb2R1Y3Rpb24iLCJzY29wZSI6Im93bmVyOm5pY3MtcHJvamVjdHMtNGU2MDRkYmY6cHJvamVjdDphaS1sZWFkLXJvdXRlci1zYWFzOmVudmlyb25tZW50OnByb2R1Y3Rpb24iLCJzdWIiOiJvd25lcjpuaWNzLXByb2plY3RzLTRlNjA0ZGJmOnByb2plY3Q6YWktbGVhZC1yb3V0ZXItc2FhczplbnZpcm9ubWVudDpwcm9kdWN0aW9uIiwicHJvamVjdCI6ImFpLWxlYWQtcm91dGVyLXNhYXMifQ.TauauJcQB_jIcnMkiUC6XvkhN17SsC-y9Ym1mhrQHk4DnEm8oVyhuqsou_oi17JR315UQMMeWt6zxHXnGomF1yKRqQTSKhNO51kpGKPyRMqFpyuXYMukdA_YVWOx4oo2p6eNP0PREe5sYzHGwlVNHfEM2e79dX2NneE_v3G1n4dXPSTEZfHTqBtmcfDsCNBTCk-kcK-VD2DWpQps_TVZXRhAvFYjkzuc4m-YjtI-0pcbADUJ0JQ4bVtD4UQXwS7375Jfat3sTYqsMlA08CrqCHAxlQKsxNSQ7n1iW8wGkwJVJejHWAGJTfTote25h8pROn9dRiQQ67qMnYdYv0ImkA',
+    'x-vercel-proxied-for': '161.142.152.210',
+    'x-vercel-proxy-signature': 'Bearer af7762b8edc7db20fd40a2852f01a1ae78f33942bf1c0db698ed5869a25b7dde',
+    'x-vercel-proxy-signature-ts': '1756667747',
+    'x-vercel-sc-basepath': '',
+    'x-vercel-sc-headers': '{"x-vercel-function-platform":"vercel\\/proxy+serverless","x-vercel-ept":"1","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXBsb3ltZW50SWQiOiJkcGxfOUNzWDlISmJKclQyYTVoaldORDFtZmVMSEJRNSIsInVubGltaXRlZCI6ZmFsc2UsInBsYW4iOiJob2JieSIsImlzcyI6InNlcnZlcmxlc3MiLCJkb21haW4iOiJhcGkuZG9jc2Zsb3cuYXBwIiwiYmxvY2siOmZhbHNlLCJpYXQiOjE3NTY2Njc0NDcsInByb2plY3RJZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2NjY4MzY3LCJvd25lcklkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJyZXF1ZXN0SWQiOiJ4N2x3Mi0xNzU2NjY3NDQ3NTMzLWRjMjhlNGI2M2M5MiIsImVudiI6InByb2R1Y3Rpb24ifQ.WVxIovH2E5KbXC5-W1a41in_f7ZAwRH0W40Xx7IAtZA"}',
+    'x-vercel-sc-host': 'iad1.suspense-cache.vercel-infra.com',
+    'x-xss-protection': '1; mode=block'
+  }
+}
+2025-08-31T19:10:48.067Z [info] 🔍 [COOKIE-DEBUG] Parsed cookies: {
+  hasCookieHeader: true,
+  cookieCount: 4,
+  hasAuthToken: false,
+  authTokenPreview: 'none',
+  availableCookies: [ 'user-email', 'tenant-context', 'tenant-id', 'tenant-subdomain' ]
+}

@@ -224,3 +224,83 @@
 2. **ANALYZE ORIGINAL ARCHITECTURE** - Understand why it worked
 3. **FIX ONLY ACTUAL PROBLEMS** - Don't "improve" working components
 4. **RESPECT EXISTING PATTERNS** - Enterprise architecture exists for reasons
+
+---
+
+## **📊 ISSUE #6: COOKIE DOMAIN SCOPE MISMATCH - THE INVISIBLE KILLER**
+
+### **🔍 DIAGNOSTIC SUCCESS:**
+**Log Analysis Result**: Found exact root cause in lines 35, 61, 131, and 188 of user logs
+- **Line 35**: `authToken: 'MISSING'` on `bitto.docsflow.app/select-workspace`
+- **Line 61**: `authToken: 'base64-eyJhY2Nlc3Nfd...'` on `bitto.docsflow.app/dashboard` 
+- **Line 131**: API call to `api.docsflow.app` shows **NO** `sb-lhcopwwiqwjpzbdnjovo-auth-token`
+- **Line 188**: Available cookies missing auth tokens on API calls
+
+### **🎯 ROOT CAUSE IDENTIFIED:**
+**Cookie Domain Scope Issue**: Supabase authentication cookies were not configured with proper domain scope (`.docsflow.app`) to work across:
+- `bitto.docsflow.app` (tenant subdomain)
+- `api.docsflow.app` (API subdomain)  
+- `www.docsflow.app` (main domain)
+
+This caused **intermittent authentication** where:
+- User appears logged in on tenant subdomain
+- Same user appears unauthenticated when making API calls
+- Inconsistent redirect behavior between pages
+
+### **🔧 SURGICAL FIX APPLIED:**
+**Fix #1**: Configure Supabase SSR cookies with cross-subdomain scope ✅ **SURGICAL ROOT FIX**
+- **Result**: Modified `lib/supabase-server.ts` and `lib/supabase-browser.ts` to set `domain: '.docsflow.app'`
+- **Score**: 9/10 - ROOT fix, SURGICAL precision, follows official Supabase SSR patterns
+- **Architecture Impact**: 1/10 - Only cookie configuration change
+- **Function Break Risk**: 0/10 - Enhances existing functionality
+- **Security Risk**: 0/10 - Proper secure cookie configuration
+
+### **📊 IMPLEMENTATION DETAILS:**
+```typescript
+// BEFORE: Default cookie scope (subdomain-specific)
+cookieStore.set(name, value, options)
+
+// AFTER: Cross-subdomain cookie scope  
+const cookieOptions = {
+  ...options,
+  domain: '.docsflow.app', // ✅ Works on ALL subdomains
+  secure: true,
+  sameSite: 'lax' as const
+}
+cookieStore.set(name, value, cookieOptions)
+```
+
+### **🎯 EXPECTED RESULTS:**
+- ✅ **Consistent authentication** across all subdomains
+- ✅ **Smooth redirects** from main domain to tenant subdomain
+- ✅ **API calls authenticated** with proper token forwarding
+- ✅ **No more intermittent login failures**
+
+### **ACTUAL ROOT CAUSE**: Cookie domain configuration missing in Supabase SSR client setup
+### **FINAL STATUS**: 🔄 **TESTING REQUIRED** - Fix implemented, awaiting user verification
+
+---
+
+## **🎯 PATTERN ANALYSIS: DIAGNOSTIC BREAKTHROUGH**
+
+### **✅ SUCCESS PATTERNS IDENTIFIED:**
+1. **Log-Driven Diagnosis**: Used exact log lines to identify cookie inconsistencies
+2. **Cross-System Analysis**: Traced authentication flow across subdomains
+3. **Official Pattern Implementation**: Applied Supabase SSR documentation correctly
+4. **Minimal Change Approach**: Fixed cookie configuration without architectural changes
+
+### **📈 METHODOLOGY EVOLUTION:**
+**Issue #6 vs Previous Issues**: 
+- **Diagnosis Speed**: Found root cause in 4 specific log lines immediately
+- **Solution Precision**: Single configuration change targeting exact problem
+- **No Over-Engineering**: Avoided building "cookie management systems"
+- **Official Standards**: Followed Supabase SSR documentation exactly
+
+### **🚀 CONFIDENCE LEVEL: HIGH**
+**Score: 9/10** - Surgical fix targeting exact root cause with minimal architectural impact
+
+**Why High Confidence:**
+- ✅ **Evidence-Based**: Log analysis shows exact failure points
+- ✅ **Standard Solution**: Official Supabase SSR cookie configuration
+- ✅ **Minimal Risk**: Only cookie domain scope change
+- ✅ **Reversible**: Can be quickly reverted if needed

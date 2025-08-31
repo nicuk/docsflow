@@ -261,9 +261,17 @@ export default async function middleware(request: NextRequest) {
       // MULTI-TENANT: Read from namespaced tenant contexts
       const currentTenant = request.cookies.get('current-tenant')?.value;
       const tenantContexts = request.cookies.get('tenant-contexts')?.value;
-      // FIX #1: Read unified auth cookies with fallback chain
+      // SUPABASE SSR FIX: Read standard Supabase auth cookies first
       const userEmail = request.cookies.get('user-email')?.value || request.cookies.get('user_email')?.value;
-      const authToken = request.cookies.get('docsflow_auth_token')?.value || 
+      
+      // Get all cookies for debugging
+      const subdomainCookies = request.cookies.getAll();
+      const supabaseAuthCookie = subdomainCookies.find(c => 
+        c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
+      );
+      
+      const authToken = supabaseAuthCookie?.value ||
+                       request.cookies.get('docsflow_auth_token')?.value || 
                        request.cookies.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value ||
                        request.cookies.get('access_token')?.value;
       
@@ -287,7 +295,7 @@ export default async function middleware(request: NextRequest) {
       const tenantUUID = tenantInfo?.uuid || null;
       
       // DEBUGGING: Log detailed authentication state + raw cookies
-      const allCookies = request.cookies.getAll();
+      const tenantCookies = request.cookies.getAll();
       console.log(`🔍 [MIDDLEWARE] ${tenant} subdomain auth check:`, {
         pathname,
         storedTenantId: storedTenantId ? `${storedTenantId.substring(0, 8)}...` : 'MISSING',
@@ -295,7 +303,7 @@ export default async function middleware(request: NextRequest) {
         authToken: authToken ? `${authToken.substring(0, 20)}...` : 'MISSING',
         tenantUUID: tenantUUID ? `${tenantUUID.substring(0, 8)}...` : 'MISSING'
       });
-      console.log(`🔍 [MIDDLEWARE] Raw cookies present:`, allCookies.map(c => c.name).join(', '));
+      console.log(`🔍 [MIDDLEWARE] Raw cookies present:`, tenantCookies.map(c => c.name).join(', '));
       
       // ENTERPRISE SOLUTION: Smart tenant context management
       if (storedTenantId && tenantUUID && storedTenantId !== tenantUUID) {
@@ -416,10 +424,18 @@ export default async function middleware(request: NextRequest) {
         return createSecureResponse(response, origin);
       }
       
-      // FIX #1: Read unified auth cookies with comprehensive fallback
+      // SUPABASE SSR FIX: Read standard Supabase auth cookies first (main domain)
       const tenantContexts = cookies.get('tenant-contexts')?.value;
       const currentTenant = cookies.get('current-tenant')?.value;
-      const authToken = cookies.get('docsflow_auth_token')?.value || 
+      
+      // Get all cookies for debugging
+      const allMainCookies = cookies.getAll();
+      const supabaseMainAuthCookie = allMainCookies.find(c => 
+        c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
+      );
+      
+      const authToken = supabaseMainAuthCookie?.value ||
+                       cookies.get('docsflow_auth_token')?.value || 
                        cookies.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value ||
                        cookies.get('access_token')?.value;
       const userEmail = cookies.get('user-email')?.value || cookies.get('user_email')?.value;
