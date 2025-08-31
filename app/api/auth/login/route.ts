@@ -186,8 +186,8 @@ export async function POST(request: NextRequest) {
     const authCookieStore = await cookies();
     
     // REMEMBER ME FIX: Set cookie duration based on user preference
-    const authTokenMaxAge = rememberMe ? (60 * 60 * 24 * 30) : (authData.session.expires_in || 3600);
-    const refreshTokenMaxAge = rememberMe ? (60 * 60 * 24 * 30) : (60 * 60 * 24 * 7);
+    const authTokenMaxAge = rememberMe ? (60 * 60 * 24 * 30) : 3600; // 30 days vs 1 hour
+    const refreshTokenMaxAge = rememberMe ? (60 * 60 * 24 * 30) : (60 * 60 * 24 * 7); // 30 days vs 7 days
     
     // FIX #1: Set unified auth cookies on server-side
     authCookieStore.set('docsflow_auth_token', authData.session.access_token, {

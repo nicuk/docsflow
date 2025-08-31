@@ -239,7 +239,7 @@ export default function DashboardPage() {
           tenantSubdomain: userData.tenant?.subdomain || '',
           industry: userData.tenant?.industry || 'general',
           businessType: userData.tenant?.industry || 'General Business',
-          accessLevel: 2, // Default access level (user)
+          accessLevel: userData.user?.role === 'admin' ? 1 : 2, // Map role to access level: admin=1, user=2
           onboardingComplete: userData.onboardingComplete
         };
 

@@ -207,6 +207,30 @@ export class MultiTenantCookieManager {
   }
   
   /**
+   * GET CURRENT TENANT SUBDOMAIN: Returns the currently active tenant subdomain
+   */
+  static getCurrentTenantSubdomain(): string | null {
+    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+      const [key, value] = cookie.trim().split('=');
+      acc[key] = value;
+      return acc;
+    }, {} as Record<string, string>);
+    return cookies['current-tenant'] || null;
+  }
+  
+  /**
+   * GET CURRENT USER EMAIL: Returns the current user's email from cookies
+   */
+  static getCurrentUserEmail(): string | null {
+    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+      const [key, value] = cookie.trim().split('=');
+      acc[key] = value;
+      return acc;
+    }, {} as Record<string, string>);
+    return cookies['user-email'] || null;
+  }
+  
+  /**
    * DEBUG: Log current multi-tenant state
    */
   static debugMultiTenantState(): void {
