@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
-import { getSupabaseClient } from '@/lib/supabase';
 
-// SECURITY FIX: Use secure database service instead of direct service role
-import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
+function getSupabaseClient() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('Supabase configuration missing');
+  }
+  
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin');
@@ -16,20 +23,15 @@ export async function GET(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
   
   try {
-    // Use service role for tenant lookup to bypass RLS
-    const { createClient } = await import('@supabase/supabase-js');
-    const serviceSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabase = getSupabaseClient();
     
     // Get tenant from subdomain or demo mode
     const tenantSubdomain = request.headers.get('X-Tenant-Subdomain') || 'demo-warehouse-dist';
     
     console.log('Fetching conversations for tenant subdomain:', tenantSubdomain);
     
-    // First, get the tenant UUID from subdomain using service role
-    const { data: tenant, error: tenantError } = await serviceSupabase
+    // First, get the tenant UUID from subdomain
+    const { data: tenant, error: tenantError } = await supabase
       .from('tenants')
       .select('id')
       .eq('subdomain', tenantSubdomain)
@@ -42,9 +44,6 @@ export async function GET(request: NextRequest) {
         { status: 404, headers: corsHeaders }
       );
     }
-    
-    // Use regular client for user data
-    const supabase = getSupabaseClient();
     
     // Get conversations for this tenant using the actual UUID
     const { data: conversations, error } = await supabase
@@ -88,17 +87,12 @@ export async function POST(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
   
   try {
-    // Use service role for tenant lookup to bypass RLS
-    const { createClient } = await import('@supabase/supabase-js');
-    const serviceSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabase = getSupabaseClient();
     
     const tenantSubdomain = request.headers.get('X-Tenant-Subdomain') || 'demo-warehouse-dist';
     
-    // Get the tenant UUID from subdomain using service role
-    const { data: tenant, error: tenantError } = await serviceSupabase
+    // Get the tenant UUID from subdomain
+    const { data: tenant, error: tenantError } = await supabase
       .from('tenants')
       .select('id')
       .eq('subdomain', tenantSubdomain)
@@ -111,9 +105,6 @@ export async function POST(request: NextRequest) {
         { status: 404, headers: corsHeaders }
       );
     }
-    
-    // Use regular client for user data
-    const supabase = getSupabaseClient();
     
     // For now, use demo user ID since we don't have full auth yet
     const userId = '00000000-0000-0000-0000-000000000000';

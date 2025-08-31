@@ -25,9 +25,19 @@ export default function SelectWorkspacePage() {
           }
         }
         
-        // No valid tenant found - redirect to onboarding
-        console.log(`🔐 [SELECT-WORKSPACE] No valid workspace, redirecting to onboarding`)
-        window.location.replace('/onboarding')
+        // Check if user is already onboarded via session API
+        const sessionResponse = await fetch('/api/auth/session')
+        const sessionData = await sessionResponse.json()
+        
+        if (sessionData.authenticated && sessionData.onboardingComplete && sessionData.tenant?.subdomain) {
+          // User is onboarded - redirect to their tenant
+          console.log(`✅ [SELECT-WORKSPACE] User onboarded, redirecting to: ${sessionData.tenant.subdomain}`)
+          window.location.replace(`https://${sessionData.tenant.subdomain}.docsflow.app/dashboard`)
+        } else {
+          // No valid tenant found - redirect to onboarding
+          console.log(`🔐 [SELECT-WORKSPACE] No valid workspace, redirecting to onboarding`)
+          window.location.replace('/onboarding')
+        }
         
       } catch (error) {
         console.error('🚨 [SELECT-WORKSPACE] Error:', error)

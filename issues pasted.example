@@ -1,372 +1,258 @@
-Fetch finished loading: GET "<URL>".
-6Fetch failed loading: GET "<URL>".
-2354-fd5ecb43d0c50bc1.js:8 Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
-tx @ 2354-fd5ecb43d0c50bc1.js:8
-tL @ 2354-fd5ecb43d0c50bc1.js:8
-_initSupabaseAuthClient @ 2354-fd5ecb43d0c50bc1.js:8
-tB @ 2354-fd5ecb43d0c50bc1.js:8
-tD @ 2354-fd5ecb43d0c50bc1.js:8
-b @ 9535-8bb53dc8d79a2339.js:5
-n @ 6614.7d901536351250e8.js:1
-10015 @ 6614.7d901536351250e8.js:1
-r @ webpack-64e75b799a9c69d8.js:1
-Promise.then
-_ @ 2375-c241f662b19d166f.js:1
-iX @ 4bd1b696-86b7f7b384ded616.js:1
-(anonymous) @ 4bd1b696-86b7f7b384ded616.js:1
-nS @ 4bd1b696-86b7f7b384ded616.js:1
-i2 @ 4bd1b696-86b7f7b384ded616.js:1
-s7 @ 4bd1b696-86b7f7b384ded616.js:1
-s5 @ 4bd1b696-86b7f7b384ded616.js:1Understand this warning
-2354-fd5ecb43d0c50bc1.js:8 Fetch finished loading: POST "https://lhcopwwiqwjpzbdnjovo.supabase.co/auth/v1/token?grant_type=password".
-(anonymous) @ 2354-fd5ecb43d0c50bc1.js:8
-ty @ 2354-fd5ecb43d0c50bc1.js:8
-tg @ 2354-fd5ecb43d0c50bc1.js:8
-signInWithPassword @ 2354-fd5ecb43d0c50bc1.js:8
-_ @ 2375-c241f662b19d166f.js:1
-await in _
-iX @ 4bd1b696-86b7f7b384ded616.js:1
-(anonymous) @ 4bd1b696-86b7f7b384ded616.js:1
-nS @ 4bd1b696-86b7f7b384ded616.js:1
-i2 @ 4bd1b696-86b7f7b384ded616.js:1
-s7 @ 4bd1b696-86b7f7b384ded616.js:1
-s5 @ 4bd1b696-86b7f7b384ded616.js:1
-2375-c241f662b19d166f.js:1 🔐 User belongs to tenant: bitto
-2375-c241f662b19d166f.js:1 📍 User logged in from tenant subdomain - staying on tenant
-page-317c8fd77649039a.js:1 🔍 Main domain detected, checking for tenant context...
-page-317c8fd77649039a.js:1 🔐 No tenant context on main domain, redirecting to onboarding
-layout-f1ec10cfe0eeec52.js:1 Found authenticated user: support@bitto.tech
-Navigated to https://www.docsflow.app/onboarding
-page-8058ef0e36b04b15.js:1 🔍 Checking user authentication...
-page-8058ef0e36b04b15.js:1 🔍 Checking authentication via server...
-injected.js:1 Script was injected!
-content.js:202 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
-page-8058ef0e36b04b15.js:1 🔍 DomainSelection useEffect triggered with companyName: your-company
-page-8058ef0e36b04b15.js:1 🔍 DomainSelection generateSuggestions called with: {company: 'your-company', industry: 'technology'}
-layout-264f1841ad28363b.js:1 ⚠️ Long task detected: {duration: 187, name: 'self', startTime: 678.8999998569489}
-(anonymous) @ layout-264f1841ad28363b.js:1Understand this warning
-12Fetch finished loading: GET "<URL>".
-page-8058ef0e36b04b15.js:1 ✅ User authenticated: support@bitto.tech
-page-8058ef0e36b04b15.js:1 📊 Onboarding data loaded: {user: {…}, onboardingComplete: true, tenantId: '2e33ba17-ad07-44b7-ae8b-937de35e91d7', tenant: {…}}
-page-8058ef0e36b04b15.js:1 🏢 User already has tenant, redirecting to dashboard
-page-8058ef0e36b04b15.js:1 🔍 DomainSelection useEffect triggered with companyName: bitto
-page-8058ef0e36b04b15.js:1 🔍 DomainSelection generateSuggestions called with: {company: 'bitto', industry: 'technology'}
-7Fetch finished loading: POST "<URL>".
-Navigated to https://bitto.docsflow.app/login
-22Fetch finished loading: GET "<URL>".
-injected.js:1 Script was injected!
-content.js:202 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
-layout-264f1841ad28363b.js:1 ⚠️ Long task detected: {duration: 152, name: 'self', startTime: 2020.3999998569489}
-(anonymous) @ layout-264f1841ad28363b.js:1Understand this warning
-layout-264f1841ad28363b.js:1 ✅ Loaded tenant data for: 2e33ba17-ad07-44b7-ae8b-937de35e91d7 {id: '2e33ba17-ad07-44b7-ae8b-937de35e91d7', name: 'bitto', subdomain: 'bitto', branding: {…}, settings: {…}, …}
-1684-3c393591136ebd6c.js:1 Fetch failed loading: GET "https://bitto.docsflow.app/login".
-y @ 1684-3c393591136ebd6c.js:1
-h @ 1684-3c393591136ebd6c.js:1
-(anonymous) @ 1684-3c393591136ebd6c.js:1
-u @ 1684-3c393591136ebd6c.js:1
-s @ 1684-3c393591136ebd6c.js:1
-enqueue @ 1684-3c393591136ebd6c.js:1
-s @ 1684-3c393591136ebd6c.js:1
-i @ 1684-3c393591136ebd6c.js:1
-l @ 1684-3c393591136ebd6c.js:1
-prefetch @ 1684-3c393591136ebd6c.js:1
-(anonymous) @ 1684-3c393591136ebd6c.js:1
-O @ 1684-3c393591136ebd6c.js:1
-m @ 1684-3c393591136ebd6c.js:1
-(anonymous) @ 1684-3c393591136ebd6c.js:1
-1684-3c393591136ebd6c.js:1 Fetch failed loading: GET "https://bitto.docsflow.app/login".
-y @ 1684-3c393591136ebd6c.js:1
-h @ 1684-3c393591136ebd6c.js:1
-(anonymous) @ 1684-3c393591136ebd6c.js:1
-u @ 1684-3c393591136ebd6c.js:1
-s @ 1684-3c393591136ebd6c.js:1
-enqueue @ 1684-3c393591136ebd6c.js:1
-s @ 1684-3c393591136ebd6c.js:1
-i @ 1684-3c393591136ebd6c.js:1
-e @ 1684-3c393591136ebd6c.js:1
-f @ 1684-3c393591136ebd6c.js:1
-action @ 1684-3c393591136ebd6c.js:1
-p @ 1684-3c393591136ebd6c.js:1
-(anonymous) @ 1684-3c393591136ebd6c.js:1
-dispatch @ 1684-3c393591136ebd6c.js:1
-u @ 1684-3c393591136ebd6c.js:1
-l @ 1684-3c393591136ebd6c.js:1
-g @ 1684-3c393591136ebd6c.js:1
-(anonymous) @ 1684-3c393591136ebd6c.js:1
-(anonymous) @ 1684-3c393591136ebd6c.js:1
-push @ 1684-3c393591136ebd6c.js:1
-(anonymous) @ layout-264f1841ad28363b.js:1
-await in (anonymous)
-(anonymous) @ layout-264f1841ad28363b.js:1
-oq @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-iS @ 4bd1b696-86b7f7b384ded616.js:1
-iw @ 4bd1b696-86b7f7b384ded616.js:1
-iV @ 4bd1b696-86b7f7b384ded616.js:1
-iR @ 4bd1b696-86b7f7b384ded616.js:1
-ib @ 4bd1b696-86b7f7b384ded616.js:1
-ig @ 4bd1b696-86b7f7b384ded616.js:1
-u9 @ 4bd1b696-86b7f7b384ded616.js:1
-u5 @ 4bd1b696-86b7f7b384ded616.js:1
-iH @ 4bd1b696-86b7f7b384ded616.js:1
-w @ 1684-3c393591136ebd6c.js:1
-2354-fd5ecb43d0c50bc1.js:8 Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
-tx @ 2354-fd5ecb43d0c50bc1.js:8
-tL @ 2354-fd5ecb43d0c50bc1.js:8
-_initSupabaseAuthClient @ 2354-fd5ecb43d0c50bc1.js:8
-tB @ 2354-fd5ecb43d0c50bc1.js:8
-tD @ 2354-fd5ecb43d0c50bc1.js:8
-b @ 9535-8bb53dc8d79a2339.js:5
-n @ 6614.7d901536351250e8.js:1
-10015 @ 6614.7d901536351250e8.js:1
-r @ webpack-64e75b799a9c69d8.js:1
-Promise.then
-_ @ 2375-c241f662b19d166f.js:1
-iX @ 4bd1b696-86b7f7b384ded616.js:1
-(anonymous) @ 4bd1b696-86b7f7b384ded616.js:1
-nS @ 4bd1b696-86b7f7b384ded616.js:1
-i2 @ 4bd1b696-86b7f7b384ded616.js:1
-s7 @ 4bd1b696-86b7f7b384ded616.js:1
-s5 @ 4bd1b696-86b7f7b384ded616.js:1Understand this warning
-2354-fd5ecb43d0c50bc1.js:8 Fetch finished loading: POST "https://lhcopwwiqwjpzbdnjovo.supabase.co/auth/v1/token?grant_type=password".
-(anonymous) @ 2354-fd5ecb43d0c50bc1.js:8
-ty @ 2354-fd5ecb43d0c50bc1.js:8
-tg @ 2354-fd5ecb43d0c50bc1.js:8
-signInWithPassword @ 2354-fd5ecb43d0c50bc1.js:8
-_ @ 2375-c241f662b19d166f.js:1
-await in _
-iX @ 4bd1b696-86b7f7b384ded616.js:1
-(anonymous) @ 4bd1b696-86b7f7b384ded616.js:1
-nS @ 4bd1b696-86b7f7b384ded616.js:1
-i2 @ 4bd1b696-86b7f7b384ded616.js:1
-s7 @ 4bd1b696-86b7f7b384ded616.js:1
-s5 @ 4bd1b696-86b7f7b384ded616.js:1
-2375-c241f662b19d166f.js:1 🔐 User belongs to tenant: bitto
-2375-c241f662b19d166f.js:1 📍 User logged in from tenant subdomain - staying on tenant
-1684-3c393591136ebd6c.js:1 Fetch failed loading: GET "https://bitto.docsflow.app/login".
-y @ 1684-3c393591136ebd6c.js:1
-h @ 1684-3c393591136ebd6c.js:1
-(anonymous) @ 1684-3c393591136ebd6c.js:1
-u @ 1684-3c393591136ebd6c.js:1
-s @ 1684-3c393591136ebd6c.js:1
-enqueue @ 1684-3c393591136ebd6c.js:1
-s @ 1684-3c393591136ebd6c.js:1
-i @ 1684-3c393591136ebd6c.js:1
-e @ 1684-3c393591136ebd6c.js:1
-f @ 1684-3c393591136ebd6c.js:1
-action @ 1684-3c393591136ebd6c.js:1
-p @ 1684-3c393591136ebd6c.js:1
-(anonymous) @ 1684-3c393591136ebd6c.js:1
-dispatch @ 1684-3c393591136ebd6c.js:1
-u @ 1684-3c393591136ebd6c.js:1
-l @ 1684-3c393591136ebd6c.js:1
-g @ 1684-3c393591136ebd6c.js:1
-(anonymous) @ 1684-3c393591136ebd6c.js:1
-(anonymous) @ 1684-3c393591136ebd6c.js:1
-push @ 1684-3c393591136ebd6c.js:1
-(anonymous) @ 2375-c241f662b19d166f.js:1
-setTimeout
-(anonymous) @ 2375-c241f662b19d166f.js:1
-oq @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-um @ 4bd1b696-86b7f7b384ded616.js:1
-uh @ 4bd1b696-86b7f7b384ded616.js:1
-iS @ 4bd1b696-86b7f7b384ded616.js:1
-iw @ 4bd1b696-86b7f7b384ded616.js:1
-iV @ 4bd1b696-86b7f7b384ded616.js:1
-iR @ 4bd1b696-86b7f7b384ded616.js:1
-ib @ 4bd1b696-86b7f7b384ded616.js:1
-ig @ 4bd1b696-86b7f7b384ded616.js:1
-u9 @ 4bd1b696-86b7f7b384ded616.js:1
-u5 @ 4bd1b696-86b7f7b384ded616.js:1
-iH @ 4bd1b696-86b7f7b384ded616.js:1
-w @ 1684-3c393591136ebd6c.js:1
-1684-3c393591136ebd6c.js:1 Fetch failed loading: GET "https://bitto.docsflow.app/login".
-y @ 1684-3c393591136ebd6c.js:1
-h @ 1684-3c393591136ebd6c.js:1
-(anonymous) @ 1684-3c393591136ebd6c.js:1
-u @ 1684-3c393591136ebd6c.js:1
-s @ 1684-3c393591136ebd6c.js:1
-enqueue @ 1684-3c393591136ebd6c.js:1
-s @ 1684-3c393591136ebd6c.js:1
-i @ 1684-3c393591136ebd6c.js:1
-e @ 1684-3c393591136ebd6c.js:1
-f @ 1684-3c393591136ebd6c.js:1
-action @ 1684-3c393591136ebd6c.js:1
-p @ 1684-3c393591136ebd6c.js:1
-(anonymous) @ 1684-3c393591136ebd6c.js:1
-dispatch @ 1684-3c393591136ebd6c.js:1
-u @ 1684-3c393591136ebd6c.js:1
-l @ 1684-3c393591136ebd6c.js:1
-g @ 1684-3c393591136ebd6c.js:1
-(anonymous) @ 1684-3c393591136ebd6c.js:1
-(anonymous) @ 1684-3c393591136ebd6c.js:1
-push @ 1684-3c393591136ebd6c.js:1
-(anonymous) @ 2375-c241f662b19d166f.js:1
-setTimeout
-_ @ 2375-c241f662b19d166f.js:1
-await in _
-iX @ 4bd1b696-86b7f7b384ded616.js:1
-(anonymous) @ 4bd1b696-86b7f7b384ded616.js:1
-nS @ 4bd1b696-86b7f7b384ded616.js:1
-i2 @ 4bd1b696-86b7f7b384ded616.js:1
-s7 @ 4bd1b696-86b7f7b384ded616.js:1
-s5 @ 4bd1b696-86b7f7b384ded616.js:1
+2025-08-31T13:34:19.931Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/api/auth/session
+2025-08-31T13:34:19.931Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-08-31T13:34:19.931Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T13:34:19.931Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-08-31T13:34:19.931Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/api/auth/session
+2025-08-31T13:34:19.932Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-08-31T13:34:19.932Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-08-31T13:34:19.932Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-08-31T13:34:19.998Z [info] Redis operation successful
+2025-08-31T13:34:19.998Z [info] ✅ [RESILIENT] Redis cache HIT: bitto
+2025-08-31T13:34:20.175Z [info] 🔍 [SESSION API] Request received from: https://bitto.docsflow.app/select-workspace
+2025-08-31T13:34:20.175Z [info] 🔍 [SESSION API] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T13:34:20.178Z [info] 🔍 [SESSION API] Raw cookies: user-email, sb-lhcopwwiqwjpzbdnjovo-auth-token, tenant-id, tenant-subdomain, tenant-context, enterprise-session
+2025-08-31T13:34:20.178Z [info] 🔍 [SESSION API] Unified auth state: {
+  hasAccessToken: true,
+  hasRefreshToken: false,
+  source: 'supabase',
+  hasTenantId: true
+}
+2025-08-31T13:34:20.178Z [info] 🔍 [SESSION API] Calling supabase.auth.getUser()...
+2025-08-31T13:34:20.178Z [info] ✅ [SESSION API] Using unified auth token (source: supabase)
+2025-08-31T13:34:20.178Z [info] ✅ [SESSION API] Using unified auth token (source: supabase)
+2025-08-31T13:34:20.180Z [info] ✅ [SESSION API] Using unified auth token (source: supabase)
+2025-08-31T13:34:21.020Z [info] 🔍 [SESSION API] Supabase auth result: {
+  hasUser: true,
+  userId: 'cc362aeb-bf97-4260-9dfb-bb1725c9c202',
+  userEmail: 'support@bitto.tech',
+  error: undefined
+}
+2025-08-31T13:34:21.020Z [info] ✅ [SESSION API] Using unified auth token (source: supabase)
+2025-08-31T13:34:21.798Z [info] 🔧 [SESSION API] Set complete tenant context cookies: {
+  tenantId: '122928f6...',
+  email: 'support@bitto.tech',
+  subdomain: 'bitto'
+}
+2025-08-31T13:34:21.798Z [info] ✅ [SESSION API] Successful authentication: {
+  userId: 'cc362aeb-bf97-4260-9dfb-bb1725c9c202',
+  email: 'support@bitto.tech',
+  tenantId: '122928f6-f34e-484b-9a69-7e1f25caf45c',
+  tenantSubdomain: 'bitto',
+  onboardingComplete: true
+}
+
+2025-08-31T13:34:19.981Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/api/tenants/bitto
+2025-08-31T13:34:19.981Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-08-31T13:34:19.981Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T13:34:19.981Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-08-31T13:34:19.984Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/api/tenants/bitto
+2025-08-31T13:34:19.985Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-08-31T13:34:19.985Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-08-31T13:34:19.985Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-08-31T13:34:19.985Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
+2025-08-31T13:34:20.497Z [info] Redis operation successful
+2025-08-31T13:34:20.497Z [info] ❌ Cache MISS for tenant: bitto - fetching from database
+2025-08-31T13:34:20.497Z [info] 🔍 Looking up tenant by subdomain: bitto
+2025-08-31T13:34:21.311Z [info] Redis operation successful
+2025-08-31T13:34:21.311Z [info] 💾 Cached tenant data for: bitto
+
+2025-08-31T13:34:20.018Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/onboarding
+2025-08-31T13:34:20.018Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-08-31T13:34:20.019Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T13:34:20.019Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-08-31T13:34:20.019Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/onboarding
+2025-08-31T13:34:20.019Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-08-31T13:34:20.020Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-08-31T13:34:20.020Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-08-31T13:34:20.020Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
+2025-08-31T13:34:20.020Z [info] 🔍 [MIDDLEWARE] bitto subdomain auth check: {
+  pathname: '/onboarding',
+  storedTenantId: '122928f6...',
+  userEmail: 'support@bitto.tech',
+  authToken: 'base64-eyJhY2Nlc3Nfd...',
+  tenantUUID: '122928f6...'
+}
+2025-08-31T13:34:20.024Z [info] 🔍 [MIDDLEWARE] Raw cookies present: user-email, sb-lhcopwwiqwjpzbdnjovo-auth-token, tenant-id, tenant-subdomain
+2025-08-31T13:34:20.024Z [info] ✅ [MIDDLEWARE] User authenticated for tenant bitto - allowing access to /onboarding
+
+2025-08-31T13:34:20.841Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/api/subdomain/check
+2025-08-31T13:34:20.842Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-08-31T13:34:20.842Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T13:34:20.842Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-08-31T13:34:20.842Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/api/subdomain/check?subdomain=bitto
+2025-08-31T13:34:20.842Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-08-31T13:34:20.842Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-08-31T13:34:20.843Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-08-31T13:34:20.843Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
+2025-08-31T13:34:21.950Z [error] Error fetching tenant data: ReferenceError: supabase is not defined
+    at d (.next/server/app/api/subdomain/check/route.js:1:10748)
+    at async y (.next/server/app/api/subdomain/check/route.js:1:3056)
+    at async k (.next/server/app/api/subdomain/check/route.js:1:7765)
+    at async g (.next/server/app/api/subdomain/check/route.js:1:8768)
+    at async F (.next/server/app/api/subdomain/check/route.js:1:9890)
+
+    2025-08-31T13:34:20.962Z [info] 🔍 [SESSION API] Request received from: https://bitto.docsflow.app/onboarding
+2025-08-31T13:34:20.962Z [info] 🔍 [SESSION API] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T13:34:20.962Z [info] 🔍 [SESSION API] Raw cookies: user-email, sb-lhcopwwiqwjpzbdnjovo-auth-token, tenant-id, tenant-subdomain
+2025-08-31T13:34:20.962Z [info] 🔍 [SESSION API] Unified auth state: {
+  hasAccessToken: true,
+  hasRefreshToken: false,
+  source: 'supabase',
+  hasTenantId: true
+}
+2025-08-31T13:34:20.963Z [info] 🔍 [SESSION API] Calling supabase.auth.getUser()...
+2025-08-31T13:34:20.963Z [info] ✅ [SESSION API] Using unified auth token (source: supabase)
+2025-08-31T13:34:20.963Z [info] ✅ [SESSION API] Using unified auth token (source: supabase)
+2025-08-31T13:34:20.963Z [info] ✅ [SESSION API] Using unified auth token (source: supabase)
+2025-08-31T13:34:21.767Z [info] 🔍 [SESSION API] Supabase auth result: {
+  hasUser: true,
+  userId: 'cc362aeb-bf97-4260-9dfb-bb1725c9c202',
+  userEmail: 'support@bitto.tech',
+  error: undefined
+}
+2025-08-31T13:34:21.767Z [info] ✅ [SESSION API] Using unified auth token (source: supabase)
+2025-08-31T13:34:20.841Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/api/auth/session
+2025-08-31T13:34:20.841Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-08-31T13:34:20.841Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T13:34:20.841Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-08-31T13:34:20.842Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/api/auth/session
+2025-08-31T13:34:20.842Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-08-31T13:34:20.842Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-08-31T13:34:20.842Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-08-31T13:34:20.843Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
+2025-08-31T13:34:22.044Z [info] 🔧 [SESSION API] Set complete tenant context cookies: {
+  tenantId: '122928f6...',
+  email: 'support@bitto.tech',
+  subdomain: 'bitto'
+}
+2025-08-31T13:34:22.044Z [info] ✅ [SESSION API] Successful authentication: {
+  userId: 'cc362aeb-bf97-4260-9dfb-bb1725c9c202',
+  email: 'support@bitto.tech',
+  tenantId: '122928f6-f34e-484b-9a69-7e1f25caf45c',
+  tenantSubdomain: 'bitto',
+  onboardingComplete: true
+}
+
+2025-08-31T13:34:20.883Z [info] 🔍 [MIDDLEWARE START] POST bitto.docsflow.app/api/subdomain/check
+2025-08-31T13:34:20.883Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-08-31T13:34:20.883Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T13:34:20.883Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
+2025-08-31T13:34:20.883Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/api/subdomain/check
+2025-08-31T13:34:20.884Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-08-31T13:34:20.884Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-08-31T13:34:20.885Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-08-31T13:34:20.950Z [info] Redis operation successful
+2025-08-31T13:34:20.951Z [info] ✅ [RESILIENT] Redis cache HIT: bitto
+2025-08-31T13:34:21.438Z [error] Error fetching tenant data: ReferenceError: supabase is not defined
+    at d (.next/server/app/api/subdomain/check/route.js:1:10748)
+    at async z (.next/server/app/api/subdomain/check/route.js:1:4468)
+    at async k (.next/server/app/api/subdomain/check/route.js:1:7765)
+    at async g (.next/server/app/api/subdomain/check/route.js:1:8768)
+    at async F (.next/server/app/api/subdomain/check/route.js:1:9890)
+
+    2025-08-31T13:34:24.460Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/dashboard
+2025-08-31T13:34:24.461Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-08-31T13:34:24.461Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T13:34:24.461Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-08-31T13:34:24.461Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/dashboard
+2025-08-31T13:34:24.461Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-08-31T13:34:24.461Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-08-31T13:34:24.461Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-08-31T13:34:24.461Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
+2025-08-31T13:34:24.461Z [info] 🔍 [MIDDLEWARE] bitto subdomain auth check: {
+  pathname: '/dashboard',
+  storedTenantId: '122928f6...',
+  userEmail: 'support@bitto.tech',
+  authToken: 'base64-eyJhY2Nlc3Nfd...',
+  tenantUUID: '122928f6...'
+}
+2025-08-31T13:34:24.461Z [info] 🔍 [MIDDLEWARE] Raw cookies present: user-email, sb-lhcopwwiqwjpzbdnjovo-auth-token, tenant-id, tenant-subdomain
+2025-08-31T13:34:24.461Z [info] ✅ [MIDDLEWARE] User authenticated for tenant bitto - allowing access to /dashboard
+
+2025-08-31T13:34:29.868Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/api/conversations
+2025-08-31T13:34:29.868Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-08-31T13:34:29.868Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T13:34:29.868Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-08-31T13:34:29.868Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/api/conversations
+2025-08-31T13:34:29.869Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-08-31T13:34:29.869Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-08-31T13:34:29.869Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-08-31T13:34:29.869Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
+2025-08-31T13:34:30.266Z [info] Fetching conversations for tenant subdomain: bitto
+2025-08-31T13:34:31.074Z [error] Tenant not found: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'JSON object requested, multiple (or no) rows returned'
+}
+
+2025-08-31T13:34:29.892Z [info] 🔍 [MIDDLEWARE START] OPTIONS api.docsflow.app/api/documents
+2025-08-31T13:34:29.892Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
+2025-08-31T13:34:29.892Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T13:34:29.892Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
+2025-08-31T13:34:29.892Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/documents
+
+
+2025-08-31T13:34:29.913Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/dashboard/chat
+2025-08-31T13:34:29.913Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-08-31T13:34:29.913Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T13:34:29.913Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-08-31T13:34:29.913Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/dashboard/chat
+2025-08-31T13:34:29.914Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-08-31T13:34:29.914Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-08-31T13:34:29.914Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-08-31T13:34:29.914Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
+2025-08-31T13:34:29.916Z [info] 🔍 [MIDDLEWARE] bitto subdomain auth check: {
+  pathname: '/dashboard/chat',
+  storedTenantId: '122928f6...',
+  userEmail: 'support@bitto.tech',
+  authToken: 'base64-eyJhY2Nlc3Nfd...',
+  tenantUUID: '122928f6...'
+}
+2025-08-31T13:34:29.917Z [info] 🔍 [MIDDLEWARE] Raw cookies present: user-email, sb-lhcopwwiqwjpzbdnjovo-auth-token, tenant-id, tenant-subdomain, tenant-context, enterprise-session
+2025-08-31T13:34:29.917Z [info] ✅ [MIDDLEWARE] User authenticated for tenant bitto - allowing access to /dashboard/chat
+
+2025-08-31T13:34:29.940Z [info] 🔍 [MIDDLEWARE START] GET api.docsflow.app/api/documents
+2025-08-31T13:34:29.940Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
+2025-08-31T13:34:29.940Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T13:34:29.940Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
+2025-08-31T13:34:29.940Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/documents
+2025-08-31T13:34:29.941Z [info] 🔍 [MIDDLEWARE] API subdomain detected - bypassing tenant validation
+2025-08-31T13:34:30.326Z [info] 🔍 Tenant validation: {
+  subdomain: 'bitto',
+  tenantId: null,
+  requireAuth: true,
+  headers: { 'x-tenant-subdomain': 'bitto', 'x-tenant-id': null }
+}
+2025-08-31T13:34:30.337Z [info] ✅ Redis tenant cache HIT for: bitto
+
+2025-08-31T13:34:31.486Z [info] 🔍 [MIDDLEWARE START] GET api.docsflow.app/api/documents
+2025-08-31T13:34:31.486Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
+2025-08-31T13:34:31.487Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T13:34:31.487Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
+2025-08-31T13:34:31.487Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/documents
+2025-08-31T13:34:31.487Z [info] 🔍 [MIDDLEWARE] API subdomain detected - bypassing tenant validation
+2025-08-31T13:34:31.616Z [info] 🔍 Tenant validation: {
+  subdomain: 'bitto',
+  tenantId: null,
+  requireAuth: true,
+  headers: { 'x-tenant-subdomain': 'bitto', 'x-tenant-id': null }
+}
+2025-08-31T13:34:31.617Z [info] ✅ Memory cache hit for tenant: bitto
+
+2025-08-31T13:34:32.242Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/api/conversations
+2025-08-31T13:34:32.242Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-08-31T13:34:32.242Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T13:34:32.242Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-08-31T13:34:32.242Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/api/conversations
+2025-08-31T13:34:32.242Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-08-31T13:34:32.242Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-08-31T13:34:32.242Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-08-31T13:34:32.242Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
+2025-08-31T13:34:32.372Z [info] Fetching conversations for tenant subdomain: bitto
+2025-08-31T13:34:33.140Z [error] Tenant not found: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'JSON object requested, multiple (or no) rows returned'
+}

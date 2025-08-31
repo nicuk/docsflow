@@ -150,23 +150,39 @@ Content-Type: application/json
 
 ## 🔐 **ACCESS LEVELS SYSTEM**
 
-### **5-Level Security Framework**
+### **Subdomain-Based Security Framework**
 ```typescript
-const ACCESS_LEVELS = {
-  1: 'Public Access',      // Product brochures, basic info
-  2: 'Customer Access',    // Installation guides, basic troubleshooting  
-  3: 'Technician Access', // Service manuals, diagnostic procedures
-  4: 'Manager Access',    // Pricing, supplier contracts, metrics
-  5: 'Executive Access'   // Financial data, strategic plans
+// Real architecture: Subdomain isolation with simple roles
+const SECURITY_MODEL = {
+  subdomains: {
+    'engineering.company.com': 'Engineering department documents',
+    'marketing.company.com': 'Marketing department documents', 
+    'finance.company.com': 'Finance department documents',
+    'all.company.com': 'Company-wide shared documents'
+  },
+  roles: {
+    'admin': 'User management + all documents in subdomain',
+    'user': 'Document access + AI chat + upload capabilities', 
+    'viewer': 'Read-only access to documents'
+  },
+  accessLevels: {
+    1: 'Admin privileges (user management, settings)',
+    2: 'Standard user privileges (documents, AI, upload)'
+  }
 };
 ```
 
-### **Role-Based Permissions**
+### **Cross-Subdomain Collaboration**
 ```typescript
-const ROLES = {
-  viewer: 'Read-only access to assigned documents',
-  user: 'Full access to documents at their level + basic actions',
-  admin: 'Full access + user management + tenant settings'
+// Users can join multiple department subdomains
+const USER_ACCESS_EXAMPLE = {
+  user: 'john@company.com',
+  subdomains: [
+    { subdomain: 'engineering.company.com', role: 'admin' },
+    { subdomain: 'marketing.company.com', role: 'user' },
+    { subdomain: 'finance.company.com', role: 'viewer' }
+  ],
+  capability: 'AI queries across departments with proper permissions'
 };
 ```
 
@@ -174,23 +190,85 @@ const ROLES = {
 
 ## 💰 **SUBSCRIPTION PLANS & LIMITS**
 
-### **Plan Configuration**
+### **Freemium Business Model**
+
+#### **🆓 FREE TIER (Trial/Demo)**
 ```typescript
 const PLANS = {
-  starter: {
-    userLimit: 5,
-    price: '$29/month',
-    features: ['Access levels 1-2', 'Basic AI', 'Email support']
+  free: {
+    userLimit: 1,
+    price: 'Free trial',
+    subdomainLimit: 1, // One subdomain per email address
+    documentLimit: 5,
+    conversationLimit: 10, // Per month
+    trialPeriod: 14, // 14-day trial
+    features: [
+      'Solo user only',
+      'Basic document types (PDF, TXT)', 
+      'Access level 1-2 only',
+      'Community support',
+      '5 documents maximum',
+      '10 conversations per month',
+      '14-day trial period'
+    ],
+    upgradePrompts: [
+      'Add team members at $49/user/month',
+      'Unlimited enterprise RAG features', 
+      'Advanced AI and security',
+      'Dedicated customer success'
+    ]
   },
   professional: {
-    userLimit: 25, 
-    price: '$99/month',
-    features: ['Access levels 1-4', 'External integrations', 'Priority support']
+    pricePerUser: 49, // $49 per user per month
+    minimumUsers: 1,
+    price: '$49/user/month',
+    subdomainLimit: 'unlimited',
+    documentLimit: 'unlimited',
+    conversationLimit: 'unlimited',
+    features: [
+      'Per-user pricing (minimum 1 user)',
+      'All document types + OCR + Vision',
+      'Admin and user roles', 
+      'Advanced RAG pipeline',
+      'Email + chat support',
+      'Analytics dashboard',
+      'API access',
+      '99.9% uptime SLA'
+    ]
   },
   enterprise: {
-    userLimit: 100,
-    price: '$299/month', 
-    features: ['All access levels', 'Custom AI models', 'Dedicated support']
+    pricePerUser: 149, // $149 per user per month
+    minimumUsers: 10,
+    price: '$149/user/month', 
+    subdomainLimit: 'unlimited',
+    documentLimit: 'unlimited',
+    conversationLimit: 'unlimited',
+    features: [
+      'Per-user pricing (minimum 10 users)',
+      'Full admin and user management',
+      'Custom AI models + fine-tuning',
+      'Advanced security + audit logs', 
+      'Dedicated customer success manager',
+      'White-label options',
+      'Custom integrations',
+      'On-premise deployment available',
+      '99.99% uptime SLA',
+      'Advanced analytics + reporting'
+    ]
+  },
+  customEnterprise: {
+    pricePerUser: 'Custom pricing',
+    minimumUsers: 100,
+    price: 'Contact sales',
+    features: [
+      'Volume discounts (100+ users)',
+      'Custom deployment options',
+      'Dedicated infrastructure',
+      'Custom AI model development',
+      'Advanced compliance (SOC2, HIPAA)',
+      'Custom contract terms',
+      'Priority feature development'
+    ]
   }
 };
 ```
@@ -200,6 +278,9 @@ const PLANS = {
 - ✅ **Subscription status** - Blocks invitations for inactive accounts  
 - ✅ **Upgrade prompts** - Clear messaging when limits reached
 - ✅ **Graceful handling** - Existing users unaffected by downgrades
+- ✅ **Freemium controls** - Document, conversation, and subdomain limits enforced
+- ✅ **Usage tracking** - Monthly conversation resets, document count tracking
+- ✅ **Smart upgrade nudges** - Context-aware upgrade suggestions
 
 ---
 
@@ -331,16 +412,37 @@ const response = await fetch(`/api/invitations/${token}/accept`, {
 ## 📊 **BUSINESS IMPACT**
 
 ### **Enterprise-Ready Features**
-- ✅ **Multi-level access control** - Unique in market
+- ✅ **Subdomain-based tenant isolation** - Unique multi-department architecture
+- ✅ **Cross-departmental collaboration** - Users can join multiple subdomains
+- ✅ **Simple but secure role system** - Admin/User/Viewer with RLS enforcement
 - ✅ **Subscription management** - Automatic limit enforcement  
 - ✅ **Professional onboarding** - Branded email templates
 - ✅ **Audit compliance** - Complete activity logging
 
 ### **Revenue Opportunities**
-- ✅ **Upsell triggers** - User limit notifications drive upgrades
-- ✅ **Enterprise positioning** - 5-level access control differentiator
+- ✅ **Freemium conversion** - Free users upgrade when they need team collaboration
+- ✅ **Natural upgrade triggers** - Document/conversation limits drive upgrades
+- ✅ **Low acquisition cost** - Free tier removes signup friction
+- ✅ **Viral growth** - Free users invite colleagues who then upgrade
+- ✅ **Enterprise positioning** - Subdomain-based multi-department collaboration differentiator
 - ✅ **Reduced churn** - Smooth onboarding improves retention
 - ✅ **Scale efficiency** - Automated user management
+
+### **Enterprise RAG Business Metrics**
+- 🎯 **Target conversion rate**: 15-25% trial to paid within 14 days (enterprise sales cycle)
+- 🎯 **Average upgrade trigger**: User invites team member or hits document limit
+- 🎯 **Revenue per user**: $49/user/month (Professional) to $149/user/month (Enterprise)
+- 🎯 **Customer acquisition cost**: $150-500 per enterprise user (typical B2B SaaS)
+- 🎯 **Customer lifetime value**: 
+  - **Professional**: $588/user/year × 2.5 years = $1,470 LTV
+  - **Enterprise**: $1,788/user/year × 3 years = $5,364 LTV
+  - **Custom Enterprise**: $5,000-15,000+ per user/year for large deployments
+
+### **Market-Aligned Pricing Rationale**
+- **FruGPT Enterprise**: $10,000 starting price (1,000+ users) = ~$10/user
+- **SearchBlox**: $25,000/year single server = enterprise-grade positioning  
+- **Kelsen PrismRAG**: $18,000+ typical deployments
+- **Our positioning**: $49-149/user/month = $588-1,788/user/year (competitive premium)
 
 ---
 

@@ -458,10 +458,18 @@ export default async function middleware(request: NextRequest) {
       console.log(`🔍 [MIDDLEWARE] Auth check - Token: ${authToken ? 'EXISTS' : 'MISSING'}, Email: ${userEmail || 'MISSING'}, TenantId: ${storedTenantId || 'MISSING'}, Subdomain: ${storedTenantSubdomain || 'MISSING'}`);
       
       if (authToken && userEmail && storedTenantId && storedTenantSubdomain) {
-        // Direct redirect using subdomain from cookie - no database lookup needed
-        const tenantUrl = `https://${storedTenantSubdomain}.docsflow.app${pathname}`;
-        console.log(`🎯 [MIDDLEWARE] DIRECT REDIRECT authenticated user from main domain to tenant: ${tenantUrl}`);
-        return NextResponse.redirect(new URL(tenantUrl));
+        // SECURITY FIX: Don't redirect auth/login routes to tenant subdomain (causes CORS)
+        const authRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/auth', '/api/auth'];
+        const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
+        
+        if (!isAuthRoute) {
+          // Direct redirect using subdomain from cookie - no database lookup needed
+          const tenantUrl = `https://${storedTenantSubdomain}.docsflow.app${pathname}`;
+          console.log(`🎯 [MIDDLEWARE] DIRECT REDIRECT authenticated user from main domain to tenant: ${tenantUrl}`);
+          return NextResponse.redirect(new URL(tenantUrl));
+        } else {
+          console.log(`🔒 [MIDDLEWARE] Skipping tenant redirect for auth route: ${pathname}`);
+        }
       } else {
         console.log(`🔍 [MIDDLEWARE] User not authenticated or missing tenant context on main domain`);
       }
@@ -502,6 +510,6 @@ export const config = {
      */
     '/api/((?!health|static).*)',
     '/dashboard/:path*',
-    '/((?!_next|public|favicon.ico|login|signup|register|auth|robots.txt|sitemap.xml).*)',
+    '/((?!_next|public|favicon.ico|login|signup|register|auth|forgot-password|reset-password|privacy|terms|support|docs|robots.txt|sitemap.xml).*)',
   ],
 }; 
