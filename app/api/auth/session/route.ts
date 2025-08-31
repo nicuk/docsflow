@@ -19,11 +19,17 @@ export async function GET(request: NextRequest) {
     // OFFICIAL PATTERN: Use createServerClient that handles cookies automatically
     const supabase = await createClient();
 
-    // Get user and session from Supabase using official SSR pattern
+    // SURGICAL FIX: Get user and session with cookie debugging
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
+    // DEBUG: Log cookie state for server restart issues
     if (!isVercelBot) {
+      const cookies = await import('next/headers').then(m => m.cookies());
+      const authCookies = (await cookies()).getAll().filter(c => 
+        c.name.includes('auth') || c.name.includes('session') || c.name.includes('token')
+      );
+      
       console.log(`🔍 [SESSION API] Supabase auth result:`, {
         hasUser: !!user,
         userId: user?.id,
@@ -31,13 +37,14 @@ export async function GET(request: NextRequest) {
         hasSession: !!session,
         hasAccessToken: !!session?.access_token,
         userError: userError?.message,
-        sessionError: sessionError?.message
+        sessionError: sessionError?.message,
+        availableCookies: authCookies.map(c => ({ name: c.name, hasValue: !!c.value, valueLength: c.value?.length || 0 }))
       });
     }
     
     if (!user || userError) {
       if (!isVercelBot) {
-        console.log(`❌ [SESSION API] Authentication failed:`, userError?.message);
+        console.log(`❌ [SESSION API] Authentication failed:`, userError?.message || 'Auth session missing!');
       }
       
       return NextResponse.json({
@@ -45,7 +52,7 @@ export async function GET(request: NextRequest) {
         user: null,
         tenant: null,
         onboardingComplete: false,
-        error: userError?.message
+        error: userError?.message || 'Auth session missing!'
       });
     }
 

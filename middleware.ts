@@ -270,10 +270,39 @@ export default async function middleware(request: NextRequest) {
         c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
       );
       
-      const authToken = supabaseAuthCookie?.value ||
-                       request.cookies.get('docsflow_auth_token')?.value || 
-                       request.cookies.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value ||
-                       request.cookies.get('access_token')?.value;
+      // SURGICAL FIX: Enhanced token extraction (same as main domain logic)
+      let authToken = supabaseAuthCookie?.value ||
+                     request.cookies.get('docsflow_auth_token')?.value || 
+                     request.cookies.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value ||
+                     request.cookies.get('access_token')?.value;
+      
+      // SURGICAL FIX: If no direct token, try parsing all auth cookies
+      if (!authToken) {
+        try {
+          const allTenantCookies = request.cookies.getAll();
+          const allAuthCookies = allTenantCookies.filter(c => 
+            c.name.includes('auth') || c.name.includes('session')
+          );
+          
+          for (const cookie of allAuthCookies) {
+            if (cookie.value && cookie.value.length > 50) { // JWT tokens are long
+              try {
+                // Check if it's a valid JWT format
+                const parts = cookie.value.split('.');
+                if (parts.length === 3 && cookie.value.startsWith('eyJ')) {
+                  authToken = cookie.value;
+                  console.log(`🔍 [MIDDLEWARE] Found tenant auth token in cookie: ${cookie.name}`);
+                  break;
+                }
+              } catch (e) {
+                // Not a valid token, continue
+              }
+            }
+          }
+        } catch (parseError) {
+          console.warn(`🔍 [MIDDLEWARE] Tenant token parsing failed:`, parseError);
+        }
+      }
       
       // Extract tenant UUID from namespaced contexts
       let storedTenantId: string | null = null;
@@ -428,16 +457,44 @@ export default async function middleware(request: NextRequest) {
       const tenantContexts = cookies.get('tenant-contexts')?.value;
       const currentTenant = cookies.get('current-tenant')?.value;
       
-      // Get all cookies for debugging
+      // SURGICAL FIX: Enhanced token extraction with more fallbacks
       const allMainCookies = cookies.getAll();
       const supabaseMainAuthCookie = allMainCookies.find(c => 
         c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
       );
       
-      const authToken = supabaseMainAuthCookie?.value ||
-                       cookies.get('docsflow_auth_token')?.value || 
-                       cookies.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value ||
-                       cookies.get('access_token')?.value;
+      // Try all possible auth token sources with validation
+      let authToken = supabaseMainAuthCookie?.value ||
+                     cookies.get('docsflow_auth_token')?.value || 
+                     cookies.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value ||
+                     cookies.get('access_token')?.value;
+      
+      // SURGICAL FIX: If no direct token, try parsing Supabase session cookies
+      if (!authToken) {
+        try {
+          const allAuthCookies = allMainCookies.filter(c => 
+            c.name.includes('auth') || c.name.includes('session')
+          );
+          
+          for (const cookie of allAuthCookies) {
+            if (cookie.value && cookie.value.length > 50) { // JWT tokens are long
+              try {
+                // Check if it's a valid JWT format
+                const parts = cookie.value.split('.');
+                if (parts.length === 3 && cookie.value.startsWith('eyJ')) {
+                  authToken = cookie.value;
+                  console.log(`🔍 [MIDDLEWARE] Found auth token in cookie: ${cookie.name}`);
+                  break;
+                }
+              } catch (e) {
+                // Not a valid token, continue
+              }
+            }
+          }
+        } catch (parseError) {
+          console.warn(`🔍 [MIDDLEWARE] Token parsing failed:`, parseError);
+        }
+      }
       const userEmail = cookies.get('user-email')?.value || cookies.get('user_email')?.value;
       
       // ENTERPRISE SMART REDIRECT: Bypass dashboard/onboarding for authenticated users
