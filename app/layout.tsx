@@ -7,6 +7,7 @@ import { PerformanceMonitor } from "@/components/performance-monitor"
 import { TenantProvider } from "@/components/providers/tenant-provider"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { QueryProvider } from "@/components/providers/query-provider"
+import JWTInitializer from "@/components/jwt-initializer"
 import { headers } from 'next/headers'
 
 const inter = Inter({ subsets: ["latin"] })
@@ -73,12 +74,14 @@ export default async function RootLayout({
         <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" />
         <link rel="icon" type="image/x-icon" href="/favicon.ico?v=3" />
         <link rel="shortcut icon" href="/favicon.ico?v=3" />
+
       </head>
       <body className={inter.className}>
         <QueryProvider>
           <AuthProvider>
             <TenantProvider tenantId={tenantId} tenantSubdomain={tenantSubdomain}>
               <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+                <JWTInitializer />
                 <PerformanceMonitor />
                 {children}
               </ThemeProvider>
