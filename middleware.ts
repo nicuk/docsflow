@@ -193,7 +193,7 @@ export default async function middleware(request: NextRequest) {
             // CRITICAL FIX: Get tenant UUID for proper API validation
             const { SecureTenantService } = await import('@/lib/secure-database');
             const tenantData = await SecureTenantService.getTenantBySubdomain(tenantFromOrigin);
-            if (tenantData) {
+            if (tenantData && tenantData.id && typeof tenantData.id === 'string') {
               response.headers.set('x-tenant-id', tenantData.id);
               console.log(`✅ [API-MIDDLEWARE] Tenant ${tenantFromOrigin} verified for API call (UUID: ${tenantData.id.substring(0, 8)}...)`);
             } else {

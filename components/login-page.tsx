@@ -373,18 +373,59 @@ export default function LoginPage() {
         setIsSuccess(true)
         
         console.log('🔄 [LOGIN-DEBUG] Fetching user profile from database...');
-        // Check user's onboarding status from database
-        const { data: userProfile } = await supabase
-          .from('users')
-          .select('tenant_id, tenants(subdomain)')
-          .eq('id', data.user.id)
-          .single()
         
-        console.log('🔍 [LOGIN-DEBUG] User profile fetched:', { 
-          hasProfile: !!userProfile, 
-          hasTenantId: !!userProfile?.tenant_id,
-          tenantSubdomain: userProfile?.tenants?.subdomain 
-        });
+        // SURGICAL FIX: Add timeout and error handling to hanging database query
+        let userProfile = null;
+        try {
+          console.log('🔍 [LOGIN-DEBUG] Executing users table query...');
+          const profileResult = await Promise.race([
+            supabase
+              .from('users')
+              .select('tenant_id, tenants(subdomain)')
+              .eq('id', data.user.id)
+              .single(),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Database query timeout')), 8000)
+            )
+          ]);
+          
+          userProfile = profileResult.data;
+          console.log('🔍 [LOGIN-DEBUG] User profile fetched successfully:', { 
+            hasProfile: !!userProfile, 
+            hasTenantId: !!userProfile?.tenant_id,
+            tenantSubdomain: userProfile?.tenants?.subdomain 
+          });
+        } catch (dbError) {
+          console.error('🚨 [LOGIN-DEBUG] Database query failed or timed out:', dbError);
+          
+          // FALLBACK: Try simple query without join
+          console.log('🔄 [LOGIN-DEBUG] Attempting fallback query without join...');
+          try {
+            const simpleResult = await supabase
+              .from('users')
+              .select('tenant_id')
+              .eq('id', data.user.id)
+              .single();
+            
+            if (simpleResult.data?.tenant_id) {
+              console.log('✅ [LOGIN-DEBUG] Fallback query successful, fetching tenant separately...');
+              const tenantResult = await supabase
+                .from('tenants')
+                .select('subdomain')
+                .eq('id', simpleResult.data.tenant_id)
+                .single();
+              
+              userProfile = {
+                tenant_id: simpleResult.data.tenant_id,
+                tenants: { subdomain: tenantResult.data?.subdomain }
+              };
+              console.log('✅ [LOGIN-DEBUG] Fallback complete:', userProfile);
+            }
+          } catch (fallbackError) {
+            console.error('🚨 [LOGIN-DEBUG] Fallback query also failed:', fallbackError);
+            // Continue without profile - will redirect to onboarding
+          }
+        }
         
         // Check if user needs to complete onboarding
         if (!userProfile?.tenant_id) {
