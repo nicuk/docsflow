@@ -201,6 +201,15 @@ export const apiClient = {
   }) {
     try {
       const headers = await this.getAuthHeaders();
+      
+      // CRITICAL DEBUG: Log what headers we're sending for chat
+      console.log('🔍 [CHAT] Headers being sent:', {
+        hasAuthorization: !!headers.Authorization,
+        hasXAuthToken: !!headers['X-Auth-Token'],
+        authPreview: headers.Authorization ? headers.Authorization.substring(0, 30) + '...' : 'none',
+        allHeaders: headers
+      });
+      
       const response = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
         headers,

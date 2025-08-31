@@ -79,12 +79,13 @@ export default function BackendStatus() {
           })
           break
         case '/chat':
-          response = await fetch(`${API_BASE_URL}${endpoint.endpoint}`, {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ message: 'Health check test' }),
+          // SURGICAL FIX: Use apiClient with proper auth headers for chat health check
+          const { apiClient: chatApiClient } = await import('@/lib/api-client')
+          const chatData = await chatApiClient.sendMessage({ message: 'Health check test' })
+          response = new Response(JSON.stringify(chatData), {
+            status: 200,
+            statusText: 'OK',
+            headers: { 'Content-Type': 'application/json' }
           })
           break
         case '/documents':
