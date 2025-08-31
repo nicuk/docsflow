@@ -317,18 +317,60 @@ export default function LoginPage() {
 
     try {
       console.log('🔄 [LOGIN-DEBUG] Importing Supabase client...');
-      // Use Supabase directly (as designed) - this handles session cookies automatically
-      const { createSupabaseClient } = await import('@/lib-frontend/supabase')
-      const supabase = createSupabaseClient()
-      console.log('✅ [LOGIN-DEBUG] Supabase client created');
+      
+      // SURGICAL FIX: Create clean Supabase client to avoid conflicts
+      let supabase;
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+        supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          {
+            auth: {
+              autoRefreshToken: true,
+              persistSession: true,
+              detectSessionInUrl: false // Prevent conflicts with session bridge
+            }
+          }
+        );
+        console.log('✅ [LOGIN-DEBUG] Clean Supabase client created');
+      } catch (clientError) {
+        console.error('🚨 [LOGIN-DEBUG] Failed to create Supabase client:', clientError);
+        setErrors({
+          general: 'Authentication system unavailable. Please try again.'
+        });
+        return;
+      }
       
       console.log('🔐 [LOGIN-DEBUG] Attempting authentication...');
-      // Direct Supabase authentication
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password
-      })
-      console.log('🔍 [LOGIN-DEBUG] Auth response received:', { hasData: !!data, hasError: !!error, userId: data?.user?.id });
+      
+      // SURGICAL FIX: Add timeout to prevent hanging Supabase auth
+      let authResult;
+      try {
+        authResult = await Promise.race([
+          supabase.auth.signInWithPassword({
+            email: formData.email,
+            password: formData.password
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Supabase auth timeout')), 10000)
+          )
+        ]);
+        
+        console.log('🔍 [LOGIN-DEBUG] Auth response received:', { 
+          hasData: !!authResult.data, 
+          hasError: !!authResult.error, 
+          userId: authResult.data?.user?.id 
+        });
+      } catch (authTimeout) {
+        console.error('🚨 [LOGIN-DEBUG] Supabase auth timed out or failed:', authTimeout);
+        setErrors({
+          general: 'Authentication service is taking too long. Please try again in a moment.'
+        });
+        return;
+      }
+      
+      const { data, error } = authResult;
       
       if (error) {
         console.error('Supabase auth error:', error)
