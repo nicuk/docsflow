@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     
     const cookieStore = await cookies();
     
-    // 🚨 SECURITY FIX #2: Use schema-aligned cookie validation
+    // FIX #1: Use unified auth cookie management
     const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
     
     if (!isVercelBot) {
@@ -29,18 +29,19 @@ export async function GET(request: NextRequest) {
       const allCookies = cookieStore.getAll();
       console.log(`🔍 [SESSION API] Raw cookies: ${allCookies.map(c => c.name).join(', ')}`);
       
-      // Validate cookie integrity using schema manager (server-side compatible)
+      // FIX #1: Use unified auth cookie validation
       const serverCookies = allCookies.reduce((acc, cookie) => {
         acc[cookie.name] = cookie.value;
         return acc;
       }, {} as Record<string, string>);
-      SchemaAlignedCookieManager.debugCookieState(serverCookies);
       
-      const hasSupabaseAuth = !!cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value;
-      const hasAccessToken = !!cookieStore.get('access_token')?.value;
-      const hasRefreshToken = !!cookieStore.get('refresh_token')?.value;
-      
-      console.log(`🔍 [SESSION API] Auth cookies - Supabase: ${hasSupabaseAuth}, access_token: ${hasAccessToken}, refresh_token: ${hasRefreshToken}`);
+      const unifiedCookies = SchemaAlignedCookieManager.getUnifiedAuthCookies(serverCookies);
+      console.log(`🔍 [SESSION API] Unified auth state:`, {
+        hasAccessToken: !!unifiedCookies.accessToken,
+        hasRefreshToken: !!unifiedCookies.refreshToken,
+        source: unifiedCookies.source,
+        hasTenantId: !!unifiedCookies.tenantId
+      });
     }
     
     // 🚨 SECURITY FIX #2: Create Supabase client with schema-aligned cookie reading
@@ -50,34 +51,29 @@ export async function GET(request: NextRequest) {
       {
         cookies: {
           getAll() {
-            // SURGICAL FIX: Use existing Supabase cookies directly instead of reconstructing
+            // FIX #1: Use unified auth cookie approach
             const allCookies = cookieStore.getAll();
+            const serverCookies = allCookies.reduce((acc, cookie) => {
+              acc[cookie.name] = cookie.value;
+              return acc;
+            }, {} as Record<string, string>);
             
-            // Check if we have the existing Supabase session cookie
-            const existingSupabaseAuth = cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value;
+            const unifiedAuth = SchemaAlignedCookieManager.getUnifiedAuthCookies(serverCookies);
             
-            if (existingSupabaseAuth && existingSupabaseAuth.length > 50) {
-              console.log('✅ [SESSION API] Using existing Supabase auth token');
-              // Return all cookies as-is - Supabase will handle the existing session cookie
-              return allCookies;
-            }
-            
-            // Fallback: try manual token construction only if no Supabase cookie exists
-            const accessToken = cookieStore.get('access_token')?.value;
-            const refreshToken = cookieStore.get('refresh_token')?.value;
-            const validatedCookies = [];
-            
-            if (accessToken && accessToken.length > 10) {
-              validatedCookies.push({
-                name: `sb-lhcopwwiqwjpzbdnjovo-auth-token`,
-                value: accessToken
-              });
-              console.log('✅ [SESSION API] Using fallback access_token');
+            if (unifiedAuth.accessToken) {
+              // Create Supabase-compatible cookie structure
+              const supabaseCookie = {
+                name: 'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+                value: unifiedAuth.accessToken
+              };
+              
+              console.log(`✅ [SESSION API] Using unified auth token (source: ${unifiedAuth.source})`);
+              return [...allCookies, supabaseCookie];
             } else if (!isVercelBot) {
-              console.warn('🚨 [SESSION API] No valid auth tokens found');
+              console.warn('🚨 [SESSION API] No valid auth tokens found in unified system');
             }
             
-            return [...allCookies, ...validatedCookies];
+            return allCookies;
           },
           setAll(cookiesToSet) {
             try {

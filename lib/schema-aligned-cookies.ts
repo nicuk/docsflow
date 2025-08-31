@@ -53,6 +53,7 @@ interface AuthTokens {
 
 /**
  * CRITICAL: This list must include ALL possible cookie variants to prevent contamination
+ * FIX #1: Added comprehensive legacy cookie cleanup
  */
 const ALL_AUTH_COOKIE_VARIANTS = [
   // Standard cookies
@@ -76,8 +77,30 @@ const ALL_AUTH_COOKIE_VARIANTS = [
   'tenantId',
   'userEmail',
   'authToken',
-  'refreshToken'
+  'refreshToken',
+  
+  // FIX #1: Additional legacy patterns found in logs
+  'tenant-contexts',
+  'current-tenant',
+  'logout-timestamp',
+  'session_bridge'
 ];
+
+/**
+ * FIX #1: UNIFIED AUTH TOKEN CONFIGURATION
+ * Single source of truth for authentication cookies
+ */
+const UNIFIED_AUTH_CONFIG = {
+  PRIMARY_AUTH_COOKIE: 'docsflow_auth_token',
+  PRIMARY_REFRESH_COOKIE: 'docsflow_refresh_token',
+  TENANT_ID_COOKIE: 'tenant-id',
+  USER_EMAIL_COOKIE: 'user-email',
+  
+  // Cookie options
+  AUTH_OPTIONS: 'path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600',
+  REFRESH_OPTIONS: 'path=/; domain=.docsflow.app; secure; samesite=lax; max-age=604800',
+  TENANT_OPTIONS: 'path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400'
+};
 
 export class SchemaAlignedCookieManager {
   
@@ -130,52 +153,56 @@ export class SchemaAlignedCookieManager {
   }
   
   /**
-   * SCHEMA-ALIGNED COOKIE SETTING: Sets cookies that exactly match database schema
+   * FIX #1: UNIFIED AUTH COOKIE SETTING
+   * Single source of truth approach - eliminates auth token fragmentation
    */
-  static setSchemaAlignedCookies(context: TenantContext, tokens: AuthTokens): void {
+  static setUnifiedAuthCookies(context: TenantContext, tokens: AuthTokens): void {
     if (!this.validateTenantContext(context)) {
       throw new Error('Schema validation failed - refusing to set invalid cookies');
     }
     
-    // First, completely clear any existing auth cookies
+    // PHASE 1: Complete cleanup of ALL legacy auth cookies
     this.clearAllAuthCookies();
     
-    const cookieOptions = 'path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400';
-    const tokenOptions = 'path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600';
-    
-    // Set SCHEMA-ALIGNED cookies (only those actually used by middleware)
-    document.cookie = `tenant-id=${context.tenantId}; ${cookieOptions}`;
-    document.cookie = `user-email=${context.userEmail}; ${cookieOptions}`;  // Use dash format to match existing cookies
-    // NOTE: subdomain is NOT stored as cookie - middleware sets it as x-tenant-subdomain header
-    
-    // Set authentication tokens
-    document.cookie = `access_token=${tokens.accessToken}; ${tokenOptions}`;
+    // PHASE 2: Set UNIFIED auth cookies (single source of truth)
+    document.cookie = `${UNIFIED_AUTH_CONFIG.PRIMARY_AUTH_COOKIE}=${tokens.accessToken}; ${UNIFIED_AUTH_CONFIG.AUTH_OPTIONS}`;
     if (tokens.refreshToken) {
-      document.cookie = `refresh_token=${tokens.refreshToken}; ${tokenOptions}`;
+      document.cookie = `${UNIFIED_AUTH_CONFIG.PRIMARY_REFRESH_COOKIE}=${tokens.refreshToken}; ${UNIFIED_AUTH_CONFIG.REFRESH_OPTIONS}`;
     }
     
-    // ALSO set Supabase-specific cookies for compatibility
-    document.cookie = `sb-lhcopwwiqwjpzbdnjovo-auth-token=${tokens.accessToken}; ${tokenOptions}`;
+    // PHASE 3: Set tenant context cookies
+    document.cookie = `${UNIFIED_AUTH_CONFIG.TENANT_ID_COOKIE}=${context.tenantId}; ${UNIFIED_AUTH_CONFIG.TENANT_OPTIONS}`;
+    document.cookie = `${UNIFIED_AUTH_CONFIG.USER_EMAIL_COOKIE}=${context.userEmail}; ${UNIFIED_AUTH_CONFIG.TENANT_OPTIONS}`;
     
-    console.log(`✅ [SCHEMA] Set schema-aligned cookies:`, {
+    console.log(`✅ [UNIFIED-AUTH] Set unified auth cookies:`, {
+      primaryAuthCookie: UNIFIED_AUTH_CONFIG.PRIMARY_AUTH_COOKIE,
       tenantId: context.tenantId.substring(0, 8) + '...',
       subdomain: context.subdomain,
       email: context.userEmail,
       hasTokens: !!tokens.accessToken,
-      note: 'Access levels fetched from database, not cookies'
+      legacyCookiesCleared: ALL_AUTH_COOKIE_VARIANTS.length
     });
   }
   
   /**
-   * SCHEMA-ALIGNED COOKIE READING: Reads cookies with fallback to variants
-   * 
-   * @param serverCookies - Optional server-side cookies for SSR compatibility
+   * LEGACY COMPATIBILITY: Keep old method for gradual migration
+   * @deprecated Use setUnifiedAuthCookies instead
    */
-  static getSchemaAlignedCookies(serverCookies?: Record<string, string>): {
+  static setSchemaAlignedCookies(context: TenantContext, tokens: AuthTokens): void {
+    console.warn('⚠️ [DEPRECATED] setSchemaAlignedCookies is deprecated. Use setUnifiedAuthCookies instead.');
+    this.setUnifiedAuthCookies(context, tokens);
+  }
+  
+  /**
+   * FIX #1: UNIFIED AUTH COOKIE READING
+   * Reads from unified cookies with comprehensive fallback chain
+   */
+  static getUnifiedAuthCookies(serverCookies?: Record<string, string>): {
     tenantId: string | null;
     userEmail: string | null; 
     accessToken: string | null;
     refreshToken: string | null;
+    source: string; // For debugging
   } {
     let cookies: Record<string, string>;
     
@@ -186,17 +213,55 @@ export class SchemaAlignedCookieManager {
       // Client-side: parse document.cookie
       cookies = document.cookie.split(';').reduce((acc, cookie) => {
         const [key, value] = cookie.trim().split('=');
-        acc[key] = value;
+        if (value) acc[key] = value;
         return acc;
       }, {} as Record<string, string>);
     }
     
+    // FIX #1: Prioritize unified cookies, fallback to legacy
+    const accessToken = cookies[UNIFIED_AUTH_CONFIG.PRIMARY_AUTH_COOKIE] ||
+                       cookies['sb-lhcopwwiqwjpzbdnjovo-auth-token'] ||
+                       cookies['access_token'] ||
+                       cookies['auth-token'] ||
+                       null;
+    
+    const refreshToken = cookies[UNIFIED_AUTH_CONFIG.PRIMARY_REFRESH_COOKIE] ||
+                        cookies['refresh_token'] ||
+                        cookies['refresh-token'] ||
+                        null;
+    
+    const tenantId = cookies[UNIFIED_AUTH_CONFIG.TENANT_ID_COOKIE] || null;
+    const userEmail = cookies[UNIFIED_AUTH_CONFIG.USER_EMAIL_COOKIE] ||
+                     cookies['user_email'] ||
+                     null;
+    
+    // Determine source for debugging
+    let source = 'none';
+    if (cookies[UNIFIED_AUTH_CONFIG.PRIMARY_AUTH_COOKIE]) source = 'unified';
+    else if (cookies['sb-lhcopwwiqwjpzbdnjovo-auth-token']) source = 'supabase';
+    else if (cookies['access_token']) source = 'legacy-access';
+    else if (cookies['auth-token']) source = 'legacy-auth';
+    
     return {
-      tenantId: cookies['tenant-id'] || null,
-      userEmail: cookies['user_email'] || cookies['user-email'] || null,
-      accessToken: cookies['access_token'] || cookies['auth-token'] || null,
-      refreshToken: cookies['refresh_token'] || cookies['refresh-token'] || null
-      // NOTE: subdomain not returned - it's available via window.location.hostname or headers
+      tenantId,
+      userEmail,
+      accessToken,
+      refreshToken,
+      source
+    };
+  }
+  
+  /**
+   * LEGACY COMPATIBILITY: Keep old method for gradual migration
+   * @deprecated Use getUnifiedAuthCookies instead
+   */
+  static getSchemaAlignedCookies(serverCookies?: Record<string, string>) {
+    const unified = this.getUnifiedAuthCookies(serverCookies);
+    return {
+      tenantId: unified.tenantId,
+      userEmail: unified.userEmail,
+      accessToken: unified.accessToken,
+      refreshToken: unified.refreshToken
     };
   }
   

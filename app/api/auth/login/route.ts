@@ -152,11 +152,10 @@ export async function POST(request: NextRequest) {
       refreshToken: authData.session.refresh_token
     };
 
-    // Clear any existing contaminated cookies first
-    SchemaAlignedCookieManager.clearAllAuthCookies();
-    
-    // Set standardized, validated cookies
-    SchemaAlignedCookieManager.setSchemaAlignedCookies(tenantContext, tokens);
+    // FIX #1: Use unified auth cookie management (server-side compatible)
+    // Note: Server-side can't call client-side cookie methods directly
+    // The session API will handle unified cookie reading
+    console.log('✅ [LOGIN] Unified auth tokens prepared for client-side setting');
     
     const response = NextResponse.json({
       success: true,
@@ -184,8 +183,8 @@ export async function POST(request: NextRequest) {
     const authTokenMaxAge = rememberMe ? (60 * 60 * 24 * 30) : (authData.session.expires_in || 3600);
     const refreshTokenMaxAge = rememberMe ? (60 * 60 * 24 * 30) : (60 * 60 * 24 * 7);
     
-    // Set server-side cookies in standardized format
-    authCookieStore.set('access_token', authData.session.access_token, {
+    // FIX #1: Set unified auth cookies on server-side
+    authCookieStore.set('docsflow_auth_token', authData.session.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -194,7 +193,7 @@ export async function POST(request: NextRequest) {
       maxAge: authTokenMaxAge
     });
 
-    authCookieStore.set('refresh_token', authData.session.refresh_token, {
+    authCookieStore.set('docsflow_refresh_token', authData.session.refresh_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { TenantContextManager } from './lib/tenant-context-manager';
+import { ResilientTenantResolver } from './lib/resilient-tenant-resolver';
 import { 
   extractTenantFromHostname, 
   createSecureResponse,
@@ -205,8 +206,8 @@ export default async function middleware(request: NextRequest) {
           return createSecureResponse(response, origin);
         }
         
-        // HIGH-PERFORMANCE: Use TenantContextManager with multi-layer caching
-        const tenantInfo = await TenantContextManager.resolveTenant(tenant);
+        // FIX #2: Use ResilientTenantResolver (eliminates 404 cascades)
+        const tenantInfo = await ResilientTenantResolver.resolveTenant(tenant);
         
         // Set both headers properly for API routes
         response.headers.set('x-tenant-subdomain', tenant);
@@ -217,11 +218,12 @@ export default async function middleware(request: NextRequest) {
         return createSecureResponse(response, origin);
       }
       
-      // For non-API routes, verify tenant exists before allowing subdomain access
-      const tenantExists = await verifyTenantExists(tenant);
+      // FIX #2: Use resilient tenant resolution (no more 404 cascades)
+      const tenantInfo = await ResilientTenantResolver.resolveTenant(tenant);
       
-      if (!tenantExists) {
+      if (!tenantInfo) {
         // Tenant doesn't exist - redirect to main domain for onboarding
+        console.log(`❌ [RESILIENT] Tenant not found, redirecting to onboarding: ${tenant}`);
         const mainDomainUrl = new URL('https://docsflow.app/onboarding');
         return NextResponse.redirect(mainDomainUrl);
       }
@@ -248,8 +250,7 @@ export default async function middleware(request: NextRequest) {
         storedTenantId = request.cookies.get('tenant-id')?.value || null;
       }
       
-      // HIGH-PERFORMANCE: Use TenantContextManager with multi-layer caching
-      const tenantInfo = await TenantContextManager.resolveTenant(tenant);
+      // FIX #2: Reuse tenantInfo from resilient resolver (already fetched above)
       const tenantUUID = tenantInfo?.uuid || null;
       
       // DEBUGGING: Log detailed authentication state
@@ -445,8 +446,8 @@ export default async function middleware(request: NextRequest) {
       
       if (authToken && userEmail && storedTenantId) {
         console.log(`🔍 [MIDDLEWARE] User authenticated, resolving tenant: ${storedTenantId}`);
-        // Get tenant subdomain from TenantContextManager using UUID (tenant-id cookie contains UUID)
-        const tenantInfo = await TenantContextManager.resolveTenantByUUID(storedTenantId);
+        // FIX #2: Get tenant subdomain from ResilientTenantResolver using UUID
+        const tenantInfo = await ResilientTenantResolver.resolveTenantByUUID(storedTenantId);
         console.log(`🔍 [MIDDLEWARE] Tenant resolution result:`, tenantInfo);
         if (tenantInfo?.subdomain) {
           const tenantUrl = `https://${tenantInfo.subdomain}.docsflow.app${pathname}`;
