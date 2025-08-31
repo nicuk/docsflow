@@ -16,7 +16,7 @@ export interface FeatureFlags {
 
 export class RAGPipelineFactory {
   private static readonly DEFAULT_FLAGS: FeatureFlags = {
-    USE_UNIFIED_PIPELINE: process.env.FF_UNIFIED_RAG === 'true',
+    USE_UNIFIED_PIPELINE: process.env.FF_UNIFIED_RAG === 'true' || true, // SURGICAL FIX: Enable unified RAG by default
     USE_RAG_ANYTHING: process.env.FF_RAG_ANYTHING === 'true', 
     USE_VECTOR_ABSTRACTION: process.env.FF_VECTOR_ABSTRACT === 'true',
     ENABLE_TEMPORAL_ENHANCEMENT: process.env.FF_TEMPORAL === 'true',

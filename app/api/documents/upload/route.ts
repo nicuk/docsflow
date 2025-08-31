@@ -55,15 +55,18 @@ export async function POST(request: NextRequest) {
     const tenantId = tenantValidation.tenantId!; // This is the UUID
     const tenantSubdomain = tenantValidation.tenantData?.subdomain || 'unknown';
     
-    // SECURITY FIX: Database operations now handled by secure services
-    // No direct supabase client needed - using SecureDocumentService
+    // SURGICAL FIX: Initialize Supabase client
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
     
     // Get user access level
     let userAccessLevel;
     try {
       userAccessLevel = await getUserAccessLevel(request, tenantId);
     } catch (error) {
-      console.error('Auth error:', error);
+      console.error('Error getting user access level:', error);
       userAccessLevel = 1; // Default to level 1
     }
 
@@ -202,6 +205,7 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    // SURGICAL FIX: Initialize documentId variable properly  
     let documentId: string | null = null;
     
     const { data: document, error: dbError } = await supabase

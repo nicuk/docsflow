@@ -1,4 +1,25 @@
-2025-08-31T21:28:54.939Z [info] 🔍 Tenant validation: {
+2025-08-31T21:47:14.795Z [info] Chat API - Subdomain: bitto Tenant UUID: 122928f6-f34e-484b-9a69-7e1f25caf45c
+2025-08-31T21:47:14.796Z [info] 🔧 [RAG Factory] Creating pipeline for tenant 122928f6-f34e-484b-9a69-7e1f25caf45c {
+  flags: {
+    USE_UNIFIED_PIPELINE: false,
+    USE_RAG_ANYTHING: false,
+    USE_VECTOR_ABSTRACTION: false,
+    ENABLE_TEMPORAL_ENHANCEMENT: false,
+    ENABLE_AGENTIC_REASONING: false
+  },
+  timestamp: '2025-08-31T21:47:14.795Z'
+}
+2025-08-31T21:47:14.796Z [warning] ⚠️ [RAG Factory] Using legacy RAG for tenant 122928f6-f34e-484b-9a69-7e1f25caf45c
+2025-08-31T21:47:14.800Z [info] 🤖 Unified RAG: standard strategy, confidence: undefined
+2025-08-31T21:47:12.678Z [info] 🔍 [MIDDLEWARE START] POST api.docsflow.app/api/chat
+2025-08-31T21:47:12.678Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
+2025-08-31T21:47:12.678Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T21:47:12.679Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
+2025-08-31T21:47:12.679Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/chat
+2025-08-31T21:47:12.679Z [info] 🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: bitto
+2025-08-31T21:47:12.741Z [info] ✅ [API-MIDDLEWARE] Tenant bitto verified for API call (UUID: 122928f6...)
+2025-08-31T21:47:12.741Z [info] 🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin
+2025-08-31T21:47:13.170Z [info] 🔍 Tenant validation: {
   subdomain: 'bitto',
   tenantId: '122928f6-f34e-484b-9a69-7e1f25caf45c',
   requireAuth: true,
@@ -7,136 +28,28 @@
     'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c'
   }
 }
-2025-08-31T21:28:54.939Z [info] ✅ Memory cache hit for tenant: bitto
-2025-08-31T21:28:54.939Z [info] 🔍 [VERCEL-PROXY] Token payload analysis: {
-  issuer: 'serverless',
-  audience: undefined,
-  isVercelToken: true,
-  isSupabaseToken: false,
-  hasUserId: false,
-  tokenType: 'VERCEL_DEPLOYMENT'
-}
-2025-08-31T21:28:54.940Z [warning] 🚨 [VERCEL-PROXY] Rejecting Vercel deployment token, not user auth token
-2025-08-31T21:28:54.940Z [info] 🔍 [AUTH-DEBUG] Headers received: {
-  hasAuthorization: false,
-  authHeader: 'none',
+2025-08-31T21:47:13.170Z [info] ✅ Memory cache hit for tenant: bitto
+2025-08-31T21:47:13.171Z [info] 🔍 [AUTH-DEBUG] Headers received: {
+  hasAuthorization: true,
+  authHeader: 'Bearer eyJhbGciOiJIU...',
   hasRLSContext: false,
   vercelProxyExtracted: true,
   allHeaders: {
-    accept: '*/*',
+    accept: 'application/json',
     'accept-encoding': 'gzip, deflate, br, zstd',
     'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8',
     'access-control-allow-credentials': 'true',
     'access-control-allow-headers': 'Content-Type, Authorization, X-Auth-Token, X-Tenant-ID, X-Tenant-Subdomain, X-HMAC-Signature',
     'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'access-control-allow-origin': 'https://bitto.docsflow.app',
-    connection: 'close',
-    'content-type': 'application/json',
-    date: 'Sun, 31 Aug 2025 21:28:54 GMT',
-    dnt: '1',
-    forwarded: 'for=161.142.152.210;host=api.docsflow.app;proto=https;sig=0QmVhcmVyIDZmOGQzODJjNzE5MTdkZmRlZDlmMjVmNGNmOTAxNTY0MGE2NTYxNDdmZjBkYTExZDcxZjJkYTZiYTRlNzUyMTY=;exp=1756676034',
-    host: 'api.docsflow.app',
-    origin: 'https://bitto.docsflow.app',
-    priority: 'u=1, i',
-    referer: 'https://bitto.docsflow.app/',
-    'sec-ch-ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"',
-    'sec-ch-ua-mobile': '?0',
-    'sec-ch-ua-platform': '"Windows"',
-    'sec-fetch-dest': 'empty',
-    'sec-fetch-mode': 'cors',
-    'sec-fetch-site': 'same-site',
-    'strict-transport-security': 'max-age=63072000; includeSubDomains; preload',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
-    'x-content-type-options': 'nosniff',
-    'x-forwarded-for': '161.142.152.210',
-    'x-forwarded-host': 'api.docsflow.app',
-    'x-forwarded-port': '443',
-    'x-forwarded-proto': 'https',
-    'x-frame-options': 'DENY',
-    'x-matched-path': '/api/conversations',
-    'x-real-ip': '161.142.152.210',
-    'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c',
-    'x-tenant-subdomain': 'bitto',
-    'x-vercel-deployment-url': 'ai-lead-router-saas-i6mcalq2d-nics-projects-4e604dbf.vercel.app',
-    'x-vercel-forwarded-for': '161.142.152.210',
-    'x-vercel-id': 'sin1::jg7xg-1756675734752-49ee68b19671',
-    'x-vercel-internal-bot-check': 'skip',
-    'x-vercel-internal-ingress-bucket': 'bucket017',
-    'x-vercel-internal-ingress-port': '17444',
-    'x-vercel-ip-as-number': '9930',
-    'x-vercel-ip-city': 'Petaling%20Jaya',
-    'x-vercel-ip-continent': 'AS',
-    'x-vercel-ip-country': 'MY',
-    'x-vercel-ip-country-region': '10',
-    'x-vercel-ip-latitude': '3.1071',
-    'x-vercel-ip-longitude': '101.6139',
-    'x-vercel-ip-postal-code': '47301',
-    'x-vercel-ip-timezone': 'Asia/Kuala_Lumpur',
-    'x-vercel-ja4-digest': 't13d1517h2_8daaf6152771_b6f405a00624',
-    'x-vercel-oidc-token': 'eyJraWQiOiJtcmstNDMwMmVjMWI2NzBmNDhhOThhZDYxZGFkZTRhMjNiZTciLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NTY2NzQwMzksIm93bmVyX2lkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJpYXQiOjE3NTY2NzQwMzksInZlcmNlbF9pZCI6InNpbjE6OmhsbTdrLTE3NTY2NzQwMzkzMjgtZGFjYjg2MWVmMzJhIiwiYXVkIjoiaHR0cHM6XC9cL3ZlcmNlbC5jb21cL25pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJvd25lciI6Im5pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJpc3MiOiJodHRwczpcL1wvb2lkYy52ZXJjZWwuY29tXC9uaWNzLXByb2plY3RzLTRlNjA0ZGJmIiwicHJvamVjdF9pZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc3NjM5LCJlbnZpcm9ubWVudCI6InByb2R1Y3Rpb24iLCJzY29wZSI6Im93bmVyOm5pY3MtcHJvamVjdHMtNGU2MDRkYmY6cHJvamVjdDphaS1sZWFkLXJvdXRlci1zYWFzOmVudmlyb25tZW50OnByb2R1Y3Rpb24iLCJzdWIiOiJvd25lcjpuaWNzLXByb2plY3RzLTRlNjA0ZGJmOnByb2plY3Q6YWktbGVhZC1yb3V0ZXItc2FhczplbnZpcm9ubWVudDpwcm9kdWN0aW9uIiwicHJvamVjdCI6ImFpLWxlYWQtcm91dGVyLXNhYXMifQ.hpnzf8OGlg-sQW4WnbeBzgrGP8iQ9TS_kHE0fiXJ4jY0xv6wcT750I7YvLLfG5lvin7HqhTWJ8PVvqCQ7BJXJZb3NyJICO6XJ51tg6V3Q50Tqkz3yThPMuhkCvLZs0d3LNIqsAK2G8-b2GjCHblQEs7y2I5Z8GIx4ERtXLNZdAEzFEAY53pj2AvdAkLx6QFMZxJx9xc9xOzGIsIAqUFMmdXbbQ4G0zh7DOFj7XtcHSbjDMHuBdcUzsp3S1ebDj8M66GkbKh-Ac2OcORw5qra0FqjoQJbZ8yq6UgMLigzdDSiWy8PjRv2D8_H_kG4NNlLJ81PK6E-Ad6l8uM2UUHmaA',
-    'x-vercel-proxied-for': '161.142.152.210',
-    'x-vercel-proxy-signature': 'Bearer 6f8d382c71917dfded9f25f4cf9015640a656147ff0da11d71f2da6ba4e75216',
-    'x-vercel-proxy-signature-ts': '1756676034',
-    'x-vercel-sc-basepath': '',
-    'x-vercel-sc-headers': '{"x-vercel-function-platform":"vercel\\/proxy+serverless","x-vercel-ept":"1","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXBsb3ltZW50SWQiOiJkcGxfNjNNTVBpcXlzQjRybXg3WjNtYlNpbThWSjh4dCIsInVubGltaXRlZCI6ZmFsc2UsInBsYW4iOiJob2JieSIsImlzcyI6InNlcnZlcmxlc3MiLCJkb21haW4iOiJhcGkuZG9jc2Zsb3cuYXBwIiwiYmxvY2siOmZhbHNlLCJpYXQiOjE3NTY2NzU3MzQsInByb2plY3RJZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc2NjU0LCJvd25lcklkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJyZXF1ZXN0SWQiOiJqZzd4Zy0xNzU2Njc1NzM0NzUyLTQ5ZWU2OGIxOTY3MSIsImVudiI6InByb2R1Y3Rpb24ifQ.p3ztygy4ofArPf0WIJhpKp6ZFxY0lqkKwIqlht7ZbJw"}',
-    'x-vercel-sc-host': 'iad1.suspense-cache.vercel-infra.com',
-    'x-xss-protection': '1; mode=block'
-  }
-}
-2025-08-31T21:28:54.940Z [error] Tenant validation failed: Authentication required
-2025-08-31T21:28:54.772Z [info] 🔍 [MIDDLEWARE START] GET api.docsflow.app/api/conversations
-2025-08-31T21:28:54.772Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
-2025-08-31T21:28:54.772Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T21:28:54.772Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
-2025-08-31T21:28:54.772Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/conversations
-2025-08-31T21:28:54.772Z [info] 🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: bitto
-2025-08-31T21:28:54.808Z [info] ✅ [API-MIDDLEWARE] Tenant bitto verified for API call (UUID: 122928f6...)
-2025-08-31T21:28:54.809Z [info] 🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin2025-08-31T21:28:54.773Z [info] 🔍 [MIDDLEWARE START] POST api.docsflow.app/api/chat
-2025-08-31T21:28:54.774Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
-2025-08-31T21:28:54.774Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T21:28:54.774Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
-2025-08-31T21:28:54.774Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/chat
-2025-08-31T21:28:54.774Z [info] 🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: bitto
-2025-08-31T21:28:54.819Z [info] ✅ [API-MIDDLEWARE] Tenant bitto verified for API call (UUID: 122928f6...)
-2025-08-31T21:28:54.819Z [info] 🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin
-2025-08-31T21:28:55.267Z [info] 🔍 Tenant validation: {
-  subdomain: 'bitto',
-  tenantId: '122928f6-f34e-484b-9a69-7e1f25caf45c',
-  requireAuth: true,
-  headers: {
-    'x-tenant-subdomain': 'bitto',
-    'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c'
-  }
-}
-2025-08-31T21:28:55.267Z [info] ✅ Memory cache hit for tenant: bitto
-2025-08-31T21:28:55.267Z [info] 🔍 [VERCEL-PROXY] Token payload analysis: {
-  issuer: 'serverless',
-  audience: undefined,
-  isVercelToken: true,
-  isSupabaseToken: false,
-  hasUserId: false,
-  tokenType: 'VERCEL_DEPLOYMENT'
-}
-2025-08-31T21:28:55.267Z [warning] 🚨 [VERCEL-PROXY] Rejecting Vercel deployment token, not user auth token
-2025-08-31T21:28:55.268Z [info] 🔍 [AUTH-DEBUG] Headers received: {
-  hasAuthorization: false,
-  authHeader: 'none',
-  hasRLSContext: false,
-  vercelProxyExtracted: true,
-  allHeaders: {
-    accept: '*/*',
-    'accept-encoding': 'gzip, deflate, br, zstd',
-    'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8',
-    'access-control-allow-credentials': 'true',
-    'access-control-allow-headers': 'Content-Type, Authorization, X-Auth-Token, X-Tenant-ID, X-Tenant-Subdomain, X-HMAC-Signature',
-    'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'access-control-allow-origin': 'https://bitto.docsflow.app',
+    authorization: 'Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6IndJVnZLekpxUThYamVhOVEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2xoY29wd3dpcXdqcHpiZG5qb3ZvLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJjYzM2MmFlYi1iZjk3LTQyNjAtOWRmYi1iYjE3MjVjOWMyMDIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU2Njc5MzI3LCJpYXQiOjE3NTY2NzU3MjcsImVtYWlsIjoic3VwcG9ydEBiaXR0by50ZWNoIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJhY2Nlc3NfbGV2ZWwiOjIsImNvbXBhbnlfbmFtZSI6ImJpdHRvIiwiZW1haWwiOiJzdXBwb3J0QGJpdHRvLnRlY2giLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGhvbmVfdmVyaWZpZWQiOmZhbHNlLCJyb2xlIjoidXNlciIsInN1YiI6ImNjMzYyYWViLWJmOTctNDI2MC05ZGZiLWJiMTcyNWM5YzIwMiJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU2NjY3NDQxfV0sInNlc3Npb25faWQiOiJkMDBlYTk0Zi0yMTQyLTQzZTktOGRhZi00ZWZmYzM4Mzc1NWYiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.bc8oguH3UWWNcoREeowJzqKPs8o4eyk1rWbLyGzNfWE',
     connection: 'close',
     'content-length': '31',
     'content-type': 'application/json',
-    date: 'Sun, 31 Aug 2025 21:28:54 GMT',
+    cookie: 'tenant-id=122928f6-f34e-484b-9a69-7e1f25caf45c; tenant-subdomain=bitto; tenant-contexts={"bitto":"122928f6-f34e-484b-9a69-7e1f25caf45c"}; current-tenant=bitto; access_token=; docsflow_auth_token=; tenant-context=%7B%22tenantId%22%3A%22122928f6-f34e-484b-9a69-7e1f25caf45c%22%2C%22subdomain%22%3A%22bitto%22%2C%22timestamp%22%3A1756676831500%7D; user-email=undefined; sb-lhcopwwiqwjpzbdnjovo-auth-token=',
+    date: 'Sun, 31 Aug 2025 21:47:12 GMT',
     dnt: '1',
-    forwarded: 'for=161.142.152.210;host=api.docsflow.app;proto=https;sig=0QmVhcmVyIDZmOGQzODJjNzE5MTdkZmRlZDlmMjVmNGNmOTAxNTY0MGE2NTYxNDdmZjBkYTExZDcxZjJkYTZiYTRlNzUyMTY=;exp=1756676034',
+    forwarded: 'for=161.142.152.210;host=api.docsflow.app;proto=https;sig=0QmVhcmVyIGNkODkyZDFiODM5NTI5OGYwZTI4MTFiNWIxOTY0MmQwMGUyZjE1YTRhMzNmMjg4NTQ4ZTc2ODhkNWE0ZjMwZGE=;exp=1756677132',
     host: 'api.docsflow.app',
     origin: 'https://bitto.docsflow.app',
     priority: 'u=1, i',
@@ -149,6 +62,7 @@
     'sec-fetch-site': 'same-site',
     'strict-transport-security': 'max-age=63072000; includeSubDomains; preload',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+    'x-auth-token': 'eyJhbGciOiJIUzI1NiIsImtpZCI6IndJVnZLekpxUThYamVhOVEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2xoY29wd3dpcXdqcHpiZG5qb3ZvLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJjYzM2MmFlYi1iZjk3LTQyNjAtOWRmYi1iYjE3MjVjOWMyMDIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU2Njc5MzI3LCJpYXQiOjE3NTY2NzU3MjcsImVtYWlsIjoic3VwcG9ydEBiaXR0by50ZWNoIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJhY2Nlc3NfbGV2ZWwiOjIsImNvbXBhbnlfbmFtZSI6ImJpdHRvIiwiZW1haWwiOiJzdXBwb3J0QGJpdHRvLnRlY2giLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGhvbmVfdmVyaWZpZWQiOmZhbHNlLCJyb2xlIjoidXNlciIsInN1YiI6ImNjMzYyYWViLWJmOTctNDI2MC05ZGZiLWJiMTcyNWM5YzIwMiJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU2NjY3NDQxfV0sInNlc3Npb25faWQiOiJkMDBlYTk0Zi0yMTQyLTQzZTktOGRhZi00ZWZmYzM4Mzc1NWYiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.bc8oguH3UWWNcoREeowJzqKPs8o4eyk1rWbLyGzNfWE',
     'x-content-type-options': 'nosniff',
     'x-forwarded-for': '161.142.152.210',
     'x-forwarded-host': 'api.docsflow.app',
@@ -159,9 +73,9 @@
     'x-real-ip': '161.142.152.210',
     'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c',
     'x-tenant-subdomain': 'bitto',
-    'x-vercel-deployment-url': 'ai-lead-router-saas-i6mcalq2d-nics-projects-4e604dbf.vercel.app',
+    'x-vercel-deployment-url': 'ai-lead-router-saas-82dysneen-nics-projects-4e604dbf.vercel.app',
     'x-vercel-forwarded-for': '161.142.152.210',
-    'x-vercel-id': 'sin1::975sf-1756675734759-ff1d305c467b',
+    'x-vercel-id': 'sin1::6qvrg-1756676832661-02d812d3ed3d',
     'x-vercel-internal-bot-check': 'skip',
     'x-vercel-internal-ingress-bucket': 'bucket017',
     'x-vercel-internal-ingress-port': '17444',
@@ -175,34 +89,536 @@
     'x-vercel-ip-postal-code': '47301',
     'x-vercel-ip-timezone': 'Asia/Kuala_Lumpur',
     'x-vercel-ja4-digest': 't13d1517h2_8daaf6152771_b6f405a00624',
-    'x-vercel-oidc-token': 'eyJraWQiOiJtcmstNDMwMmVjMWI2NzBmNDhhOThhZDYxZGFkZTRhMjNiZTciLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NTY2NzQwMzksIm93bmVyX2lkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJpYXQiOjE3NTY2NzQwMzksInZlcmNlbF9pZCI6InNpbjE6OmhsbTdrLTE3NTY2NzQwMzkzMjgtZGFjYjg2MWVmMzJhIiwiYXVkIjoiaHR0cHM6XC9cL3ZlcmNlbC5jb21cL25pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJvd25lciI6Im5pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJpc3MiOiJodHRwczpcL1wvb2lkYy52ZXJjZWwuY29tXC9uaWNzLXByb2plY3RzLTRlNjA0ZGJmIiwicHJvamVjdF9pZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc3NjM5LCJlbnZpcm9ubWVudCI6InByb2R1Y3Rpb24iLCJzY29wZSI6Im93bmVyOm5pY3MtcHJvamVjdHMtNGU2MDRkYmY6cHJvamVjdDphaS1sZWFkLXJvdXRlci1zYWFzOmVudmlyb25tZW50OnByb2R1Y3Rpb24iLCJzdWIiOiJvd25lcjpuaWNzLXByb2plY3RzLTRlNjA0ZGJmOnByb2plY3Q6YWktbGVhZC1yb3V0ZXItc2FhczplbnZpcm9ubWVudDpwcm9kdWN0aW9uIiwicHJvamVjdCI6ImFpLWxlYWQtcm91dGVyLXNhYXMifQ.hpnzf8OGlg-sQW4WnbeBzgrGP8iQ9TS_kHE0fiXJ4jY0xv6wcT750I7YvLLfG5lvin7HqhTWJ8PVvqCQ7BJXJZb3NyJICO6XJ51tg6V3Q50Tqkz3yThPMuhkCvLZs0d3LNIqsAK2G8-b2GjCHblQEs7y2I5Z8GIx4ERtXLNZdAEzFEAY53pj2AvdAkLx6QFMZxJx9xc9xOzGIsIAqUFMmdXbbQ4G0zh7DOFj7XtcHSbjDMHuBdcUzsp3S1ebDj8M66GkbKh-Ac2OcORw5qra0FqjoQJbZ8yq6UgMLigzdDSiWy8PjRv2D8_H_kG4NNlLJ81PK6E-Ad6l8uM2UUHmaA',
+    'x-vercel-oidc-token': 'eyJraWQiOiJtcmstNDMwMmVjMWI2NzBmNDhhOThhZDYxZGFkZTRhMjNiZTciLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NTY2NzY4MTMsIm93bmVyX2lkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJpYXQiOjE3NTY2NzY4MTMsInZlcmNlbF9pZCI6InNpbjE6Ojd6djZrLTE3NTY2NzY4MTM2NjMtOWYxZGY3ODg4NDI0IiwiYXVkIjoiaHR0cHM6XC9cL3ZlcmNlbC5jb21cL25pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJvd25lciI6Im5pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJpc3MiOiJodHRwczpcL1wvb2lkYy52ZXJjZWwuY29tXC9uaWNzLXByb2plY3RzLTRlNjA0ZGJmIiwicHJvamVjdF9pZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2NjgwNDEzLCJlbnZpcm9ubWVudCI6InByb2R1Y3Rpb24iLCJzY29wZSI6Im93bmVyOm5pY3MtcHJvamVjdHMtNGU2MDRkYmY6cHJvamVjdDphaS1sZWFkLXJvdXRlci1zYWFzOmVudmlyb25tZW50OnByb2R1Y3Rpb24iLCJzdWIiOiJvd25lcjpuaWNzLXByb2plY3RzLTRlNjA0ZGJmOnByb2plY3Q6YWktbGVhZC1yb3V0ZXItc2FhczplbnZpcm9ubWVudDpwcm9kdWN0aW9uIiwicHJvamVjdCI6ImFpLWxlYWQtcm91dGVyLXNhYXMifQ.AQPmXniHG6WNYTIBboUKinDU8EOeUmhnt4FImCtU3te9KoW9737DkQSQ6Exxyr-nmCi1S_hyejWnwx-b3a2E0r4rDiC7_JvMf3bLsBnqgNJNZN42SKHdYiglSaI4w_2XacQ3A6UegS-g52DVaroJzPeZwKJouzIdED9H7ipLPpQ1ml--HPBODYzs3isppYV_xFiRRZVfPdszJZD6ZyhPhJ_nLXzLHJ0vAfGlGVMhFV_MCzLGwGmXxwKndnzBhBIQOnePqgDV99SjPrm_Z2D-zyY-y1YYu_lqOm6QXpWOJXFT9V7HUtqdMpyjNsPonNi1bdOSkrLN62kwFH-xym786Q',
     'x-vercel-proxied-for': '161.142.152.210',
-    'x-vercel-proxy-signature': 'Bearer 6f8d382c71917dfded9f25f4cf9015640a656147ff0da11d71f2da6ba4e75216',
-    'x-vercel-proxy-signature-ts': '1756676034',
+    'x-vercel-proxy-signature': 'Bearer cd892d1b8395298f0e2811b5b19642d00e2f15a4a33f288548e7688d5a4f30da',
+    'x-vercel-proxy-signature-ts': '1756677132',
     'x-vercel-sc-basepath': '',
-    'x-vercel-sc-headers': '{"x-vercel-function-platform":"vercel\\/proxy+serverless","x-vercel-ept":"1","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXBsb3ltZW50SWQiOiJkcGxfNjNNTVBpcXlzQjRybXg3WjNtYlNpbThWSjh4dCIsInVubGltaXRlZCI6ZmFsc2UsInBsYW4iOiJob2JieSIsImlzcyI6InNlcnZlcmxlc3MiLCJkb21haW4iOiJhcGkuZG9jc2Zsb3cuYXBwIiwiYmxvY2siOmZhbHNlLCJpYXQiOjE3NTY2NzU3MzUsInByb2plY3RJZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc2NjU1LCJvd25lcklkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJyZXF1ZXN0SWQiOiI5NzVzZi0xNzU2Njc1NzM0NzU5LWZmMWQzMDVjNDY3YiIsImVudiI6InByb2R1Y3Rpb24ifQ.1f38DXnDaJPrd36qBs5hcknckuvWEottUNK6brD_AVI"}',
+    'x-vercel-sc-headers': '{"x-vercel-function-platform":"vercel\\/proxy+serverless","x-vercel-ept":"1","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXBsb3ltZW50SWQiOiJkcGxfRWpYZEU4aFlCOFdmYzk3MzZpOWNiajRYY29HMSIsInVubGltaXRlZCI6ZmFsc2UsInBsYW4iOiJob2JieSIsImlzcyI6InNlcnZlcmxlc3MiLCJkb21haW4iOiJhcGkuZG9jc2Zsb3cuYXBwIiwiYmxvY2siOmZhbHNlLCJpYXQiOjE3NTY2NzY4MzIsInByb2plY3RJZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc3NzUyLCJvd25lcklkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJyZXF1ZXN0SWQiOiI2cXZyZy0xNzU2Njc2ODMyNjYxLTAyZDgxMmQzZWQzZCIsImVudiI6InByb2R1Y3Rpb24ifQ.kB98y6vG6Zv6oZK9jObQdeDXr1yJBMzmyi3t7oAP6mg"}',
     'x-vercel-sc-host': 'iad1.suspense-cache.vercel-infra.com',
     'x-xss-protection': '1; mode=block'
   }
-}2025-08-31T21:28:54.795Z [info] 🔍 [MIDDLEWARE START] GET api.docsflow.app/api/documents/upload
-2025-08-31T21:28:54.795Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
-2025-08-31T21:28:54.795Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T21:28:54.795Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
-2025-08-31T21:28:54.795Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/documents/upload
-2025-08-31T21:28:54.796Z [info] 🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: bitto
-2025-08-31T21:28:54.859Z [info] ✅ [API-MIDDLEWARE] Tenant bitto verified for API call (UUID: 122928f6...)
-2025-08-31T21:28:54.859Z [info] 🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin
-2025-08-31T21:28:55.256Z [info] ✅ Using enhanced AI provider (OpenRouter + Gemini fallback)2025-08-31T21:28:57.313Z [info] 🔍 [MIDDLEWARE START] GET api.docsflow.app/api/documents
-2025-08-31T21:28:57.313Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
-2025-08-31T21:28:57.313Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T21:28:57.313Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
-2025-08-31T21:28:57.313Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/documents
-2025-08-31T21:28:57.313Z [info] 🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: bitto
-2025-08-31T21:28:57.339Z [info] ✅ [API-MIDDLEWARE] Tenant bitto verified for API call (UUID: 122928f6...)
-2025-08-31T21:28:57.339Z [info] 🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin
-2025-08-31T21:28:57.472Z [info] 🔧 [DOCUMENTS API] Creating Supabase client...
-2025-08-31T21:28:57.472Z [info] ✅ [DOCUMENTS API] Server client created successfully
-2025-08-31T21:28:57.472Z [info] 🔍 Tenant validation: {
+}
+2025-08-31T21:47:13.171Z [info] 🔍 [TOKEN-VALIDATION] Attempting Bearer token validation: {
+  tokenPreview: 'eyJhbGciOiJIUzI1NiIsImtpZCI6In...',
+  tokenLength: 929,
+  hasValidJWTFormat: true,
+  tokenParts: 3
+}
+2025-08-31T21:47:13.993Z [info] 🔍 [TOKEN-VALIDATION] Supabase validation result: {
+  hasUser: true,
+  userId: 'cc362aeb...',
+  userEmail: 'support@bitto.tech',
+  hasError: false,
+  errorCode: 'none',
+  errorDetails: null
+}
+2025-08-31T21:47:13.993Z [info] ✅ [TOKEN-VALIDATION] Bearer token validation successful
+
+
+
+
+[
+  {
+    "name": "function_search_path_mutable",
+    "title": "Function Search Path Mutable",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "SECURITY"
+    ],
+    "description": "Detects functions where the search_path parameter is not set.",
+    "detail": "Function \\`public.is_admin\\` has a role mutable search_path",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0011_function_search_path_mutable",
+    "metadata": {
+      "name": "is_admin",
+      "type": "function",
+      "schema": "public"
+    },
+    "cache_key": "function_search_path_mutable_public_is_admin_348fd1aadc6faf17cfccb2aecfcbbe2a"
+  },
+  {
+    "name": "function_search_path_mutable",
+    "title": "Function Search Path Mutable",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "SECURITY"
+    ],
+    "description": "Detects functions where the search_path parameter is not set.",
+    "detail": "Function \\`public.complete_onboarding_atomic\\` has a role mutable search_path",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0011_function_search_path_mutable",
+    "metadata": {
+      "name": "complete_onboarding_atomic",
+      "type": "function",
+      "schema": "public"
+    },
+    "cache_key": "function_search_path_mutable_public_complete_onboarding_atomic_0a1e9ed70baa85c1276b732421afe2f2"
+  },
+  {
+    "name": "function_search_path_mutable",
+    "title": "Function Search Path Mutable",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "SECURITY"
+    ],
+    "description": "Detects functions where the search_path parameter is not set.",
+    "detail": "Function \\`public.is_user\\` has a role mutable search_path",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0011_function_search_path_mutable",
+    "metadata": {
+      "name": "is_user",
+      "type": "function",
+      "schema": "public"
+    },
+    "cache_key": "function_search_path_mutable_public_is_user_6414acbbd21c96b3a3168ae85c6807b5"
+  },
+  {
+    "name": "function_search_path_mutable",
+    "title": "Function Search Path Mutable",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "SECURITY"
+    ],
+    "description": "Detects functions where the search_path parameter is not set.",
+    "detail": "Function \\`public.match_documents_hybrid\\` has a role mutable search_path",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0011_function_search_path_mutable",
+    "metadata": {
+      "name": "match_documents_hybrid",
+      "type": "function",
+      "schema": "public"
+    },
+    "cache_key": "function_search_path_mutable_public_match_documents_hybrid_4bde279b79b58208150bce791074e5a8"
+  },
+  {
+
+    [
+  {
+    "name": "auth_rls_initplan",
+    "title": "Auth RLS Initialization Plan",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if calls to \\`current_setting()\\` and \\`auth.<function>()\\` in RLS policies are being unnecessarily re-evaluated for each row",
+    "detail": "Table \\`public.tenant_admins\\` has a row level security policy \\`admin_access\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan",
+    "metadata": {
+      "name": "tenant_admins",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "auth_rls_init_plan_public_tenant_admins_admin_access"
+  },
+  {
+    "name": "auth_rls_initplan",
+    "title": "Auth RLS Initialization Plan",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if calls to \\`current_setting()\\` and \\`auth.<function>()\\` in RLS policies are being unnecessarily re-evaluated for each row",
+    "detail": "Table \\`public.admin_audit_log\\` has a row level security policy \\`admin_audit_service_role_access\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan",
+    "metadata": {
+      "name": "admin_audit_log",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "auth_rls_init_plan_public_admin_audit_log_admin_audit_service_role_access"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.admin_audit_log\\` has multiple permissive policies for role \\`anon\\` for action \\`SELECT\\`. Policies include \\`{admin_audit_service_role_access,admin_audit_tenant_admin_read}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "admin_audit_log",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_admin_audit_log_anon_SELECT"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.admin_audit_log\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{admin_audit_service_role_access,admin_audit_tenant_admin_read}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "admin_audit_log",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_admin_audit_log_authenticated_SELECT"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.admin_audit_log\\` has multiple permissive policies for role \\`authenticator\\` for action \\`SELECT\\`. Policies include \\`{admin_audit_service_role_access,admin_audit_tenant_admin_read}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "admin_audit_log",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_admin_audit_log_authenticator_SELECT"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.admin_audit_log\\` has multiple permissive policies for role \\`dashboard_user\\` for action \\`SELECT\\`. Policies include \\`{admin_audit_service_role_access,admin_audit_tenant_admin_read}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "admin_audit_log",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_admin_audit_log_dashboard_user_SELECT"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.tenant_admins\\` has multiple permissive policies for role \\`anon\\` for action \\`DELETE\\`. Policies include \\`{\"Super admins can delete tenant admins\",admin_access}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "tenant_admins",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_tenant_admins_anon_DELETE"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.tenant_admins\\` has multiple permissive policies for role \\`anon\\` for action \\`INSERT\\`. Policies include \\`{\"Super admins can insert tenant admins\",admin_access}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "tenant_admins",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_tenant_admins_anon_INSERT"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.tenant_admins\\` has multiple permissive policies for role \\`anon\\` for action \\`SELECT\\`. Policies include \\`{\"Admins can view tenant admins\",admin_access}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "tenant_admins",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_tenant_admins_anon_SELECT"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.tenant_admins\\` has multiple permissive policies for role \\`anon\\` for action \\`UPDATE\\`. Policies include \\`{\"Super admins can update tenant admins\",admin_access}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "tenant_admins",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_tenant_admins_anon_UPDATE"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.tenant_admins\\` has multiple permissive policies for role \\`authenticated\\` for action \\`DELETE\\`. Policies include \\`{\"Super admins can delete tenant admins\",admin_access}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "tenant_admins",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_tenant_admins_authenticated_DELETE"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.tenant_admins\\` has multiple permissive policies for role \\`authenticated\\` for action \\`INSERT\\`. Policies include \\`{\"Super admins can insert tenant admins\",admin_access}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "tenant_admins",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_tenant_admins_authenticated_INSERT"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.tenant_admins\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{\"Admins can view tenant admins\",admin_access}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "tenant_admins",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_tenant_admins_authenticated_SELECT"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.tenant_admins\\` has multiple permissive policies for role \\`authenticated\\` for action \\`UPDATE\\`. Policies include \\`{\"Super admins can update tenant admins\",admin_access}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "tenant_admins",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_tenant_admins_authenticated_UPDATE"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.tenant_admins\\` has multiple permissive policies for role \\`authenticator\\` for action \\`DELETE\\`. Policies include \\`{\"Super admins can delete tenant admins\",admin_access}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "tenant_admins",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_tenant_admins_authenticator_DELETE"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.tenant_admins\\` has multiple permissive policies for role \\`authenticator\\` for action \\`INSERT\\`. Policies include \\`{\"Super admins can insert tenant admins\",admin_access}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "tenant_admins",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_tenant_admins_authenticator_INSERT"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.tenant_admins\\` has multiple permissive policies for role \\`authenticator\\` for action \\`SELECT\\`. Policies include \\`{\"Admins can view tenant admins\",admin_access}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "tenant_admins",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_tenant_admins_authenticator_SELECT"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.tenant_admins\\` has multiple permissive policies for role \\`authenticator\\` for action \\`UPDATE\\`. Policies include \\`{\"Super admins can update tenant admins\",admin_access}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "tenant_admins",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_tenant_admins_authenticator_UPDATE"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.tenant_admins\\` has multiple permissive policies for role \\`dashboard_user\\` for action \\`DELETE\\`. Policies include \\`{\"Super admins can delete tenant admins\",admin_access}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "tenant_admins",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_tenant_admins_dashboard_user_DELETE"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.tenant_admins\\` has multiple permissive policies for role \\`dashboard_user\\` for action \\`INSERT\\`. Policies include \\`{\"Super admins can insert tenant admins\",admin_access}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "tenant_admins",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_tenant_admins_dashboard_user_INSERT"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.tenant_admins\\` has multiple permissive policies for role \\`dashboard_user\\` for action \\`SELECT\\`. Policies include \\`{\"Admins can view tenant admins\",admin_access}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "tenant_admins",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_tenant_admins_dashboard_user_SELECT"
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "title": "Multiple Permissive Policies",
+    "level": "WARN",
+    "facing": "EXTERNAL",
+    "categories": [
+      "PERFORMANCE"
+    ],
+    "description": "Detects if multiple permissive row level security policies are present on a table for the same \\`role\\` and \\`action\\` (e.g. insert). Multiple permissive policies are suboptimal for performance as each policy must be executed for every relevant query.",
+    "detail": "Table \\`public.tenant_admins\\` has multiple permissive policies for role \\`dashboard_user\\` for action \\`UPDATE\\`. Policies include \\`{\"Super admins can update tenant admins\",admin_access}\\`",
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "metadata": {
+      "name": "tenant_admins",
+      "type": "table",
+      "schema": "public"
+    },
+    "cache_key": "multiple_permissive_policies_public_tenant_admins_dashboard_user_UPDATE"
+  }
+]
+
+
+
+2025-08-31T21:50:49.187Z [info] 🔍 [MIDDLEWARE START] POST api.docsflow.app/api/documents/upload
+2025-08-31T21:50:49.187Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
+2025-08-31T21:50:49.187Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-08-31T21:50:49.187Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
+2025-08-31T21:50:49.187Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/documents/upload
+2025-08-31T21:50:49.188Z [info] 🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: bitto
+2025-08-31T21:50:49.443Z [info] ✅ [API-MIDDLEWARE] Tenant bitto verified for API call (UUID: 122928f6...)
+2025-08-31T21:50:49.443Z [info] 🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin
+2025-08-31T21:50:51.130Z [info] 🔍 [TOKEN-VALIDATION] Supabase validation result: {
+  hasUser: true,
+  userId: 'cc362aeb...',
+  userEmail: 'support@bitto.tech',
+  hasError: false,
+  errorCode: 'none',
+  errorDetails: null
+}
+2025-08-31T21:50:51.130Z [info] ✅ [TOKEN-VALIDATION] Bearer token validation successful
+2025-08-31T21:50:51.923Z [error] Error getting user access level: ReferenceError: getSupabaseClient is not defined
+    at d (.next/server/app/api/documents/upload/route.js:1:1278)
+    at q (.next/server/app/api/documents/upload/route.js:35:1314)
+    at async k (.next/server/app/api/documents/upload/route.js:35:12278)
+    at async g (.next/server/app/api/documents/upload/route.js:35:13281)
+    at async x (.next/server/app/api/documents/upload/route.js:35:14403)
+2025-08-31T21:50:50.328Z [info] ✅ Using enhanced AI provider (OpenRouter + Gemini fallback)
+2025-08-31T21:50:50.333Z [info] 🔍 Tenant validation: {
   subdomain: 'bitto',
   tenantId: '122928f6-f34e-484b-9a69-7e1f25caf45c',
   requireAuth: true,
@@ -211,34 +627,27 @@
     'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c'
   }
 }
-2025-08-31T21:28:57.472Z [info] ✅ Memory cache hit for tenant: bitto
-2025-08-31T21:28:57.472Z [info] 🔍 [VERCEL-PROXY] Token payload analysis: {
-  issuer: 'serverless',
-  audience: undefined,
-  isVercelToken: true,
-  isSupabaseToken: false,
-  hasUserId: false,
-  tokenType: 'VERCEL_DEPLOYMENT'
-}
-2025-08-31T21:28:57.472Z [warning] 🚨 [VERCEL-PROXY] Rejecting Vercel deployment token, not user auth token
-2025-08-31T21:28:57.472Z [info] 🔍 [AUTH-DEBUG] Headers received: {
-  hasAuthorization: false,
-  authHeader: 'none',
+2025-08-31T21:50:50.333Z [info] ✅ Memory cache hit for tenant: bitto
+2025-08-31T21:50:50.334Z [info] 🔍 [AUTH-DEBUG] Headers received: {
+  hasAuthorization: true,
+  authHeader: 'Bearer eyJhbGciOiJIU...',
   hasRLSContext: false,
   vercelProxyExtracted: true,
   allHeaders: {
-    accept: '*/*',
+    accept: 'application/json',
     'accept-encoding': 'gzip, deflate, br, zstd',
     'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8',
     'access-control-allow-credentials': 'true',
     'access-control-allow-headers': 'Content-Type, Authorization, X-Auth-Token, X-Tenant-ID, X-Tenant-Subdomain, X-HMAC-Signature',
     'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'access-control-allow-origin': 'https://bitto.docsflow.app',
+    authorization: 'Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6IndJVnZLekpxUThYamVhOVEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2xoY29wd3dpcXdqcHpiZG5qb3ZvLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJjYzM2MmFlYi1iZjk3LTQyNjAtOWRmYi1iYjE3MjVjOWMyMDIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU2NjgwNTk1LCJpYXQiOjE3NTY2NzY5OTUsImVtYWlsIjoic3VwcG9ydEBiaXR0by50ZWNoIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJhY2Nlc3NfbGV2ZWwiOjIsImNvbXBhbnlfbmFtZSI6ImJpdHRvIiwiZW1haWwiOiJzdXBwb3J0QGJpdHRvLnRlY2giLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGhvbmVfdmVyaWZpZWQiOmZhbHNlLCJyb2xlIjoidXNlciIsInN1YiI6ImNjMzYyYWViLWJmOTctNDI2MC05ZGZiLWJiMTcyNWM5YzIwMiJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU2Njc2OTk1fV0sInNlc3Npb25faWQiOiIyNGMwMDEyYS0zMWRmLTRiYzktOTE2NC0wMmFiZGQ0YWEyODAiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.fTPfHitnt7g-EmYBm0QVacD4ctT6OqiwXyYmmZV7WN0',
     connection: 'close',
-    'content-type': 'application/json',
-    date: 'Sun, 31 Aug 2025 21:28:57 GMT',
+    'content-length': '113813',
+    'content-type': 'multipart/form-data; boundary=----WebKitFormBoundaryEYXS2udDK03hvw7G',
+    date: 'Sun, 31 Aug 2025 21:50:49 GMT',
     dnt: '1',
-    forwarded: 'for=161.142.152.210;host=api.docsflow.app;proto=https;sig=0QmVhcmVyIGVjNTEyZjRkMTMwNjZmMzM4MDExOTNmNWUyMzdkMjNmYTNmYWI5YTU2NmVhZWZhYzA3Y2YzZGJiOWZjYzBhNGY=;exp=1756676037',
+    forwarded: 'for=161.142.152.210;host=api.docsflow.app;proto=https;sig=0QmVhcmVyIDJkY2FhNGVmMTI1OGVjNzMxZjJhZTIyODA3MGM0NTFmMGNlNjdmNGU2ODY2NTAyYTQ5MmZjZmY5ZjcwMzFkNDE=;exp=1756677349',
     host: 'api.docsflow.app',
     origin: 'https://bitto.docsflow.app',
     priority: 'u=1, i',
@@ -251,19 +660,20 @@
     'sec-fetch-site': 'same-site',
     'strict-transport-security': 'max-age=63072000; includeSubDomains; preload',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+    'x-auth-token': 'eyJhbGciOiJIUzI1NiIsImtpZCI6IndJVnZLekpxUThYamVhOVEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2xoY29wd3dpcXdqcHpiZG5qb3ZvLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJjYzM2MmFlYi1iZjk3LTQyNjAtOWRmYi1iYjE3MjVjOWMyMDIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU2NjgwNTk1LCJpYXQiOjE3NTY2NzY5OTUsImVtYWlsIjoic3VwcG9ydEBiaXR0by50ZWNoIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJhY2Nlc3NfbGV2ZWwiOjIsImNvbXBhbnlfbmFtZSI6ImJpdHRvIiwiZW1haWwiOiJzdXBwb3J0QGJpdHRvLnRlY2giLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGhvbmVfdmVyaWZpZWQiOmZhbHNlLCJyb2xlIjoidXNlciIsInN1YiI6ImNjMzYyYWViLWJmOTctNDI2MC05ZGZiLWJiMTcyNWM5YzIwMiJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU2Njc2OTk1fV0sInNlc3Npb25faWQiOiIyNGMwMDEyYS0zMWRmLTRiYzktOTE2NC0wMmFiZGQ0YWEyODAiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.fTPfHitnt7g-EmYBm0QVacD4ctT6OqiwXyYmmZV7WN0',
     'x-content-type-options': 'nosniff',
     'x-forwarded-for': '161.142.152.210',
     'x-forwarded-host': 'api.docsflow.app',
     'x-forwarded-port': '443',
     'x-forwarded-proto': 'https',
     'x-frame-options': 'DENY',
-    'x-matched-path': '/api/documents',
+    'x-matched-path': '/api/documents/upload',
     'x-real-ip': '161.142.152.210',
     'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c',
     'x-tenant-subdomain': 'bitto',
-    'x-vercel-deployment-url': 'ai-lead-router-saas-i6mcalq2d-nics-projects-4e604dbf.vercel.app',
+    'x-vercel-deployment-url': 'ai-lead-router-saas-82dysneen-nics-projects-4e604dbf.vercel.app',
     'x-vercel-forwarded-for': '161.142.152.210',
-    'x-vercel-id': 'sin1::tkbwk-1756675737287-cf5b4e7d332a',
+    'x-vercel-id': 'sin1::z968h-1756677049102-55e18016b956',
     'x-vercel-internal-bot-check': 'skip',
     'x-vercel-internal-ingress-bucket': 'bucket017',
     'x-vercel-internal-ingress-port': '17444',
@@ -277,13 +687,34 @@
     'x-vercel-ip-postal-code': '47301',
     'x-vercel-ip-timezone': 'Asia/Kuala_Lumpur',
     'x-vercel-ja4-digest': 't13d1517h2_8daaf6152771_b6f405a00624',
-    'x-vercel-oidc-token': 'eyJraWQiOiJtcmstNDMwMmVjMWI2NzBmNDhhOThhZDYxZGFkZTRhMjNiZTciLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NTY2NzQwMzksIm93bmVyX2lkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJpYXQiOjE3NTY2NzQwMzksInZlcmNlbF9pZCI6InNpbjE6OmhsbTdrLTE3NTY2NzQwMzkzMjgtZGFjYjg2MWVmMzJhIiwiYXVkIjoiaHR0cHM6XC9cL3ZlcmNlbC5jb21cL25pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJvd25lciI6Im5pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJpc3MiOiJodHRwczpcL1wvb2lkYy52ZXJjZWwuY29tXC9uaWNzLXByb2plY3RzLTRlNjA0ZGJmIiwicHJvamVjdF9pZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc3NjM5LCJlbnZpcm9ubWVudCI6InByb2R1Y3Rpb24iLCJzY29wZSI6Im93bmVyOm5pY3MtcHJvamVjdHMtNGU2MDRkYmY6cHJvamVjdDphaS1sZWFkLXJvdXRlci1zYWFzOmVudmlyb25tZW50OnByb2R1Y3Rpb24iLCJzdWIiOiJvd25lcjpuaWNzLXByb2plY3RzLTRlNjA0ZGJmOnByb2plY3Q6YWktbGVhZC1yb3V0ZXItc2FhczplbnZpcm9ubWVudDpwcm9kdWN0aW9uIiwicHJvamVjdCI6ImFpLWxlYWQtcm91dGVyLXNhYXMifQ.hpnzf8OGlg-sQW4WnbeBzgrGP8iQ9TS_kHE0fiXJ4jY0xv6wcT750I7YvLLfG5lvin7HqhTWJ8PVvqCQ7BJXJZb3NyJICO6XJ51tg6V3Q50Tqkz3yThPMuhkCvLZs0d3LNIqsAK2G8-b2GjCHblQEs7y2I5Z8GIx4ERtXLNZdAEzFEAY53pj2AvdAkLx6QFMZxJx9xc9xOzGIsIAqUFMmdXbbQ4G0zh7DOFj7XtcHSbjDMHuBdcUzsp3S1ebDj8M66GkbKh-Ac2OcORw5qra0FqjoQJbZ8yq6UgMLigzdDSiWy8PjRv2D8_H_kG4NNlLJ81PK6E-Ad6l8uM2UUHmaA',
+    'x-vercel-oidc-token': 'eyJraWQiOiJtcmstNDMwMmVjMWI2NzBmNDhhOThhZDYxZGFkZTRhMjNiZTciLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NTY2NzY4MTMsIm93bmVyX2lkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJpYXQiOjE3NTY2NzY4MTMsInZlcmNlbF9pZCI6InNpbjE6Ojd6djZrLTE3NTY2NzY4MTM2NjMtOWYxZGY3ODg4NDI0IiwiYXVkIjoiaHR0cHM6XC9cL3ZlcmNlbC5jb21cL25pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJvd25lciI6Im5pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJpc3MiOiJodHRwczpcL1wvb2lkYy52ZXJjZWwuY29tXC9uaWNzLXByb2plY3RzLTRlNjA0ZGJmIiwicHJvamVjdF9pZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2NjgwNDEzLCJlbnZpcm9ubWVudCI6InByb2R1Y3Rpb24iLCJzY29wZSI6Im93bmVyOm5pY3MtcHJvamVjdHMtNGU2MDRkYmY6cHJvamVjdDphaS1sZWFkLXJvdXRlci1zYWFzOmVudmlyb25tZW50OnByb2R1Y3Rpb24iLCJzdWIiOiJvd25lcjpuaWNzLXByb2plY3RzLTRlNjA0ZGJmOnByb2plY3Q6YWktbGVhZC1yb3V0ZXItc2FhczplbnZpcm9ubWVudDpwcm9kdWN0aW9uIiwicHJvamVjdCI6ImFpLWxlYWQtcm91dGVyLXNhYXMifQ.AQPmXniHG6WNYTIBboUKinDU8EOeUmhnt4FImCtU3te9KoW9737DkQSQ6Exxyr-nmCi1S_hyejWnwx-b3a2E0r4rDiC7_JvMf3bLsBnqgNJNZN42SKHdYiglSaI4w_2XacQ3A6UegS-g52DVaroJzPeZwKJouzIdED9H7ipLPpQ1ml--HPBODYzs3isppYV_xFiRRZVfPdszJZD6ZyhPhJ_nLXzLHJ0vAfGlGVMhFV_MCzLGwGmXxwKndnzBhBIQOnePqgDV99SjPrm_Z2D-zyY-y1YYu_lqOm6QXpWOJXFT9V7HUtqdMpyjNsPonNi1bdOSkrLN62kwFH-xym786Q',
     'x-vercel-proxied-for': '161.142.152.210',
-    'x-vercel-proxy-signature': 'Bearer ec512f4d13066f33801193f5e237d23fa3fab9a566eaefac07cf3dbb9fcc0a4f',
-    'x-vercel-proxy-signature-ts': '1756676037',
+    'x-vercel-proxy-signature': 'Bearer 2dcaa4ef1258ec731f2ae228070c451f0ce67f4e6866502a492fcff9f7031d41',
+    'x-vercel-proxy-signature-ts': '1756677349',
     'x-vercel-sc-basepath': '',
-    'x-vercel-sc-headers': '{"x-vercel-function-platform":"vercel\\/proxy+serverless","x-vercel-ept":"1","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXBsb3ltZW50SWQiOiJkcGxfNjNNTVBpcXlzQjRybXg3WjNtYlNpbThWSjh4dCIsInVubGltaXRlZCI6ZmFsc2UsInBsYW4iOiJob2JieSIsImlzcyI6InNlcnZlcmxlc3MiLCJkb21haW4iOiJhcGkuZG9jc2Zsb3cuYXBwIiwiYmxvY2siOmZhbHNlLCJpYXQiOjE3NTY2NzU3MzcsInByb2plY3RJZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc2NjU3LCJvd25lcklkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJyZXF1ZXN0SWQiOiJ0a2J3ay0xNzU2Njc1NzM3Mjg3LWNmNWI0ZTdkMzMyYSIsImVudiI6InByb2R1Y3Rpb24ifQ.z_7SOaKNV2kPbLB7XZJlHpcezroZW9rHFRtTTQcu1xI"}',
+    'x-vercel-sc-headers': '{"x-vercel-function-platform":"vercel\\/proxy+serverless","x-vercel-ept":"1","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXBsb3ltZW50SWQiOiJkcGxfRWpYZEU4aFlCOFdmYzk3MzZpOWNiajRYY29HMSIsInVubGltaXRlZCI6ZmFsc2UsInBsYW4iOiJob2JieSIsImlzcyI6InNlcnZlcmxlc3MiLCJkb21haW4iOiJhcGkuZG9jc2Zsb3cuYXBwIiwiYmxvY2siOmZhbHNlLCJpYXQiOjE3NTY2NzcwNDksInByb2plY3RJZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc3OTY5LCJvd25lcklkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJyZXF1ZXN0SWQiOiJ6OTY4aC0xNzU2Njc3MDQ5MTAyLTU1ZTE4MDE2Yjk1NiIsImVudiI6InByb2R1Y3Rpb24ifQ.cycCZ5UQ8ct4zgtyBaPuEcaIxq1s84PYSjRWWCHk7CA"}',
     'x-vercel-sc-host': 'iad1.suspense-cache.vercel-infra.com',
     'x-xss-protection': '1; mode=block'
   }
 }
+2025-08-31T21:50:50.334Z [info] 🔍 [TOKEN-VALIDATION] Attempting Bearer token validation: {
+  tokenPreview: 'eyJhbGciOiJIUzI1NiIsImtpZCI6In...',
+  tokenLength: 929,
+  hasValidJWTFormat: true,
+  tokenParts: 3
+}
+2025-08-31T21:50:56.119Z [info] Extracted image content (Screenshot 2024-11-24 200013.png): Here's a detailed analysis of the image:
+
+1.  **Detailed Description:**
+
+The image is a flowchart il...
+2025-08-31T21:50:56.122Z [error] Upload error: ReferenceError: supabase is not defined
+    at q (.next/server/app/api/documents/upload/route.js:35:3855)
+    at async k (.next/server/app/api/documents/upload/route.js:35:12278)
+    at async g (.next/server/app/api/documents/upload/route.js:35:13281)
+    at async x (.next/server/app/api/documents/upload/route.js:35:14403)
+2025-08-31T21:50:56.123Z [error] ReferenceError: documentId is not defined
+    at q (.next/server/app/api/documents/upload/route.js:35:4863)
+    at async k (.next/server/app/api/documents/upload/route.js:35:12278)
+    at async g (.next/server/app/api/documents/upload/route.js:35:13281)
+    at async x (.next/server/app/api/documents/upload/route.js:35:14403)
