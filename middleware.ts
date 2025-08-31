@@ -256,7 +256,8 @@ export default async function middleware(request: NextRequest) {
       // FIX #2: Reuse tenantInfo from resilient resolver (already fetched above)
       const tenantUUID = tenantInfo?.uuid || null;
       
-      // DEBUGGING: Log detailed authentication state
+      // DEBUGGING: Log detailed authentication state + raw cookies
+      const allCookies = request.cookies.getAll();
       console.log(`🔍 [MIDDLEWARE] ${tenant} subdomain auth check:`, {
         pathname,
         storedTenantId: storedTenantId ? `${storedTenantId.substring(0, 8)}...` : 'MISSING',
@@ -264,6 +265,7 @@ export default async function middleware(request: NextRequest) {
         authToken: authToken ? `${authToken.substring(0, 20)}...` : 'MISSING',
         tenantUUID: tenantUUID ? `${tenantUUID.substring(0, 8)}...` : 'MISSING'
       });
+      console.log(`🔍 [MIDDLEWARE] Raw cookies present:`, allCookies.map(c => c.name).join(', '));
       
       // ENTERPRISE SOLUTION: Smart tenant context management
       if (storedTenantId && tenantUUID && storedTenantId !== tenantUUID) {
@@ -322,6 +324,26 @@ export default async function middleware(request: NextRequest) {
         return createSecureResponse(response, origin);
       }
       
+      // CRITICAL FIX: If user has auth token but missing tenant context, try to fetch and set it
+      if (authToken && !storedTenantId && tenantUUID) {
+        console.log(`🔧 [MIDDLEWARE] Auth token present but tenant context missing - attempting to set tenant context`);
+        const response = NextResponse.next();
+        response.headers.set('x-tenant-id', tenantUUID);
+        response.headers.set('x-tenant-subdomain', tenant);
+        
+        // Set missing tenant context cookies
+        response.cookies.set('tenant-id', tenantUUID, {
+          path: '/',
+          domain: '.docsflow.app',
+          secure: true,
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 // 24 hours
+        });
+        
+        console.log(`✅ [MIDDLEWARE] Set missing tenant context: ${tenantUUID.substring(0, 8)}... for ${tenant}`);
+        return createSecureResponse(response, origin);
+      }
+
       // For authenticated users on correct tenant, allow access with proper tenant context
       if (userEmail && authToken && storedTenantId && tenantUUID && storedTenantId === tenantUUID) {
         console.log(`✅ [MIDDLEWARE] User authenticated for tenant ${tenant} - allowing access to ${pathname}`);

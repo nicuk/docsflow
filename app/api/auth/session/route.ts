@@ -155,16 +155,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Return complete session data
-    console.log(`✅ [SESSION API] Successful authentication:`, {
-      userId: userProfile.id,
-      email: userProfile.email,
-      tenantId: userProfile.tenant_id,
-      tenantSubdomain: userProfile.tenants?.subdomain,
-      onboardingComplete: !!userProfile.tenant_id
-    });
-    
-    return NextResponse.json({
+    // CRITICAL FIX: Set missing tenant context cookies when authentication succeeds
+    const response = NextResponse.json({
       authenticated: true,
       user: {
         id: userProfile.id,
@@ -177,6 +169,36 @@ export async function GET(request: NextRequest) {
       tenantId: userProfile.tenant_id,
       debug: 'success'
     });
+
+    // Set tenant context cookies if missing
+    if (userProfile.tenant_id && userProfile.email) {
+      const cookieOptions = {
+        path: '/',
+        domain: '.docsflow.app',
+        secure: true,
+        sameSite: 'lax' as const,
+        maxAge: 60 * 60 * 24 // 24 hours
+      };
+
+      response.cookies.set('tenant-id', userProfile.tenant_id, cookieOptions);
+      response.cookies.set('user-email', userProfile.email, cookieOptions);
+      
+      console.log(`🔧 [SESSION API] Set missing tenant context cookies:`, {
+        tenantId: userProfile.tenant_id.substring(0, 8) + '...',
+        email: userProfile.email,
+        subdomain: userProfile.tenants?.subdomain
+      });
+    }
+
+    console.log(`✅ [SESSION API] Successful authentication:`, {
+      userId: userProfile.id,
+      email: userProfile.email,
+      tenantId: userProfile.tenant_id,
+      tenantSubdomain: userProfile.tenants?.subdomain,
+      onboardingComplete: !!userProfile.tenant_id
+    });
+    
+    return response;
 
   } catch (error) {
     console.error('Session check error:', error);
