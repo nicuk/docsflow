@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-clients';
+import { createClient } from '@/lib/supabase-server';
 
 /**
  * OFFICIAL SUPABASE SSR PATTERN
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     // OFFICIAL PATTERN: Use createServerClient that handles cookies automatically
-    const supabase = await createServerClient();
+    const supabase = await createClient();
 
     // Get user and session from Supabase using official SSR pattern
     const { data: { user }, error: userError } = await supabase.auth.getUser();

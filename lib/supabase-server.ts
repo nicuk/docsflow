@@ -1,20 +1,17 @@
 /**
- * OFFICIAL SUPABASE SSR PATTERN
- * Following Supabase's official Next.js App Router guide
+ * SERVER CLIENT - For use in API routes and Server Components only
  */
-
-import { createServerClient as createSupabaseServerClient } from '@supabase/ssr'
-import { createBrowserClient as createSupabaseBrowserClient } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * SERVER CLIENT - For use in API routes and Server Components
  */
-export async function createServerClient() {
+export async function createClient() {
   const cookieStore = await cookies()
 
-  return createSupabaseServerClient(
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -42,7 +39,7 @@ export async function createServerClient() {
  * MIDDLEWARE CLIENT - For use in middleware.ts
  */
 export function createMiddlewareClient(request: NextRequest, response: NextResponse) {
-  return createSupabaseServerClient(
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -58,15 +55,5 @@ export function createMiddlewareClient(request: NextRequest, response: NextRespo
         },
       },
     }
-  )
-}
-
-/**
- * BROWSER CLIENT - For use in Client Components
- */
-export function createBrowserClient() {
-  return createSupabaseBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 }

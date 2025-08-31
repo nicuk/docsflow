@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, Loader2 } from "lucide-react"
 import DocsFlowBrand from "@/components/DocsFlowBrand"
 import { useDarkMode } from "@/hooks/use-dark-mode"
-import { createBrowserClient } from '@/lib/supabase-clients'
+import { createClient } from '@/lib/supabase-browser'
 
 interface FormData {
   email: string
@@ -75,7 +75,7 @@ export default function LoginPage() {
 
     try {
       // OFFICIAL PATTERN: Simple Supabase browser client
-      const supabase = createBrowserClient()
+      const supabase = createClient()
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
@@ -122,7 +122,7 @@ export default function LoginPage() {
     setIsLoading(true)
     
     try {
-      const supabase = createBrowserClient()
+      const supabase = createClient()
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
