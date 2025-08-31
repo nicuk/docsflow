@@ -71,11 +71,15 @@ export class MultiTenantCookieManager {
   
   /**
    * ADD TENANT CONTEXT: Safely adds new tenant without destroying existing ones
+   * ENHANCED: Now compatible with existing validation systems
    */
   static addTenantContext(context: TenantContext, tokens: AuthTokens): void {
     if (!this.validateTenantContext(context)) {
       throw new Error('Schema validation failed - refusing to set invalid tenant context');
     }
+    
+    // COMPATIBILITY: Clear any conflicting legacy cookies first
+    this.clearLegacyCookies();
     
     // Get existing tenant contexts
     const existingContexts = this.getCurrentTenantContexts();
@@ -89,12 +93,21 @@ export class MultiTenantCookieManager {
     // Set MULTI-TENANT cookies
     document.cookie = `tenant-contexts=${JSON.stringify(existingContexts)}; ${cookieOptions}`;
     document.cookie = `current-tenant=${context.subdomain}; ${cookieOptions}`;
-    document.cookie = `user_email=${context.userEmail}; ${cookieOptions}`;
+    document.cookie = `user-email=${context.userEmail}; ${cookieOptions}`;
+    
+    // COMPATIBILITY: Also set validation-compatible cookies
+    document.cookie = `tenant-id=${context.tenantId}; ${cookieOptions}`;
     
     // Set authentication tokens
     document.cookie = `access_token=${tokens.accessToken}; ${tokenOptions}`;
     if (tokens.refreshToken) {
       document.cookie = `refresh_token=${tokens.refreshToken}; ${tokenOptions}`;
+    }
+    
+    // UNIFIED AUTH: Set unified auth token for validation compatibility
+    document.cookie = `docsflow_auth_token=${tokens.accessToken}; ${tokenOptions}`;
+    if (tokens.refreshToken) {
+      document.cookie = `docsflow_refresh_token=${tokens.refreshToken}; ${tokenOptions}`;
     }
     
     // ALSO set Supabase-specific cookies for compatibility
@@ -162,6 +175,21 @@ export class MultiTenantCookieManager {
         console.log(`✅ [MIGRATION] Successfully migrated legacy cookies to multi-tenant`);
       }
     }
+  }
+  
+  /**
+   * LEGACY CLEANUP: Remove conflicting cookie formats from other systems
+   */
+  static clearLegacyCookies(): void {
+    const legacyCookies = [
+      'user_email', // Old format (underscore)
+      'auth-token', 'refresh-token', // Old format (hyphen)
+    ];
+    
+    const expireDate = 'Thu, 01 Jan 1970 00:00:00 GMT';
+    legacyCookies.forEach(cookieName => {
+      document.cookie = `${cookieName}=; path=/; domain=.docsflow.app; expires=${expireDate}`;
+    });
   }
   
   /**

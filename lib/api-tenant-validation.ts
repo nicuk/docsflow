@@ -189,35 +189,48 @@ export async function validateTenantContext(
         }
       }
       
-      // Fallback to cookie authentication if no Bearer token or Bearer failed
+      // Fallback to multi-tenant cookie authentication if no Bearer token or Bearer failed
       if (!user) {
         try {
-          // Create client with cookies for session validation
+          // Use multi-tenant cookie system for authentication
           const { createServerClient } = await import('@supabase/ssr');
           const { cookies } = await import('next/headers');
           
           const cookieStore = await cookies();
-          const cookieSupabase = createServerClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-              cookies: {
-                get(name: string) {
-                  return cookieStore.get(name)?.value;
-                },
-                set() {},
-                remove() {}
+          
+          // Read from multi-tenant cookie format with fallbacks
+          const authToken = cookieStore.get('docsflow_auth_token')?.value ||
+                           cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value ||
+                           cookieStore.get('access_token')?.value;
+          
+          if (authToken) {
+            const cookieSupabase = createServerClient(
+              process.env.NEXT_PUBLIC_SUPABASE_URL!,
+              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+              {
+                cookies: {
+                  get(name: string) {
+                    // Provide the auth token to Supabase in expected format
+                    if (name === 'sb-lhcopwwiqwjpzbdnjovo-auth-token') {
+                      return authToken;
+                    }
+                    return cookieStore.get(name)?.value;
+                  },
+                  set() {},
+                  remove() {}
+                }
               }
+            );
+            
+            const { data: { user: cookieUser }, error: cookieError } = await cookieSupabase.auth.getUser();
+            
+            if (!cookieError && cookieUser) {
+              user = cookieUser;
+              console.log('✅ [VALIDATION] Multi-tenant cookie authentication successful');
             }
-          );
-          
-          const { data: { user: cookieUser }, error: cookieError } = await cookieSupabase.auth.getUser();
-          
-          if (!cookieError && cookieUser) {
-            user = cookieUser;
           }
         } catch (cookieError) {
-          console.warn('Cookie authentication failed:', cookieError);
+          console.warn('Multi-tenant cookie authentication failed:', cookieError);
         }
       }
       

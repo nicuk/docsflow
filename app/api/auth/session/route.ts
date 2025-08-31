@@ -21,8 +21,8 @@ export async function GET(request: NextRequest) {
     
     const cookieStore = await cookies();
     
-    // FIX #1: Use unified auth cookie management
-    const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
+    // Use multi-tenant cookie management (unified system)
+    const { MultiTenantCookieManager } = await import('@/lib/multi-tenant-cookie-manager');
     
     if (!isVercelBot) {
       // DEBUGGING: Enhanced cookie state logging
@@ -35,12 +35,18 @@ export async function GET(request: NextRequest) {
         return acc;
       }, {} as Record<string, string>);
       
-      const unifiedCookies = SchemaAlignedCookieManager.getUnifiedAuthCookies(serverCookies);
-      console.log(`🔍 [SESSION API] Unified auth state:`, {
-        hasAccessToken: !!unifiedCookies.accessToken,
-        hasRefreshToken: !!unifiedCookies.refreshToken,
-        source: unifiedCookies.source,
-        hasTenantId: !!unifiedCookies.tenantId
+      // Use multi-tenant cookie system for session state
+      const tenantContexts = MultiTenantCookieManager.getCurrentTenantContexts();
+      const currentTenant = serverCookies['current-tenant'];
+      const authToken = serverCookies['docsflow_auth_token'] || 
+                       serverCookies['sb-lhcopwwiqwjpzbdnjovo-auth-token'] ||
+                       serverCookies['access_token'];
+      
+      console.log(`🔍 [SESSION API] Multi-tenant auth state:`, {
+        hasAuthToken: !!authToken,
+        currentTenant,
+        totalTenants: Object.keys(tenantContexts).length,
+        availableTenants: Object.keys(tenantContexts)
       });
     }
     
@@ -58,19 +64,22 @@ export async function GET(request: NextRequest) {
               return acc;
             }, {} as Record<string, string>);
             
-            const unifiedAuth = SchemaAlignedCookieManager.getUnifiedAuthCookies(serverCookies);
+            // Use multi-tenant auth token with fallbacks
+            const authToken = cookieStore.get('docsflow_auth_token')?.value ||
+                             cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value ||
+                             cookieStore.get('access_token')?.value;
             
-            if (unifiedAuth.accessToken) {
+            if (authToken) {
               // Create Supabase-compatible cookie structure
               const supabaseCookie = {
                 name: 'sb-lhcopwwiqwjpzbdnjovo-auth-token',
-                value: unifiedAuth.accessToken
+                value: authToken
               };
               
-              console.log(`✅ [SESSION API] Using unified auth token (source: ${unifiedAuth.source})`);
+              console.log(`✅ [SESSION API] Using multi-tenant auth token`);
               return [...allCookies, supabaseCookie];
             } else if (!isVercelBot) {
-              console.warn('🚨 [SESSION API] No valid auth tokens found in unified system');
+              console.warn('🚨 [SESSION API] No valid auth tokens found in multi-tenant system');
             }
             
             return allCookies;
