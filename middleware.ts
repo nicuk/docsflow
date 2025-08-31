@@ -190,12 +190,15 @@ export default async function middleware(request: NextRequest) {
             // Set tenant headers for API route validation
             response.headers.set('x-tenant-subdomain', tenantFromOrigin);
             
-            // Optional: Verify tenant exists and get UUID
-            const tenantExists = await verifyTenantExists(tenantFromOrigin);
-            if (tenantExists) {
-              console.log(`✅ [API-MIDDLEWARE] Tenant ${tenantFromOrigin} verified for API call`);
+            // CRITICAL FIX: Get tenant UUID for proper API validation
+            const { SecureTenantService } = await import('@/lib/secure-database');
+            const tenantData = await SecureTenantService.getTenantBySubdomain(tenantFromOrigin);
+            if (tenantData) {
+              response.headers.set('x-tenant-id', tenantData.id);
+              console.log(`✅ [API-MIDDLEWARE] Tenant ${tenantFromOrigin} verified for API call (UUID: ${tenantData.id.substring(0, 8)}...)`);
             } else {
               console.warn(`⚠️ [API-MIDDLEWARE] Tenant ${tenantFromOrigin} not found for API call`);
+              // Still set subdomain header for potential fallback handling
             }
           } else {
             console.log(`🔍 [API-MIDDLEWARE] No valid tenant in origin: ${originHostname}`);
