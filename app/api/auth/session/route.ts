@@ -103,18 +103,22 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    // SECURITY FIX: Use getUser() instead of getSession() for authenticated data
+    // SECURITY FIX: Get both user and session data for complete authentication
     if (!isVercelBot) {
       console.log(`🔍 [SESSION API] Calling supabase.auth.getUser()...`);
     }
     const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (!isVercelBot) {
       console.log(`🔍 [SESSION API] Supabase auth result:`, {
         hasUser: !!user,
         userId: user?.id,
         userEmail: user?.email,
-        error: userError?.message
+        hasSession: !!session,
+        hasAccessToken: !!session?.access_token,
+        userError: userError?.message,
+        sessionError: sessionError?.message
       });
     }
     
@@ -200,6 +204,23 @@ export async function GET(request: NextRequest) {
       response.cookies.set('tenant-id', userProfile.tenant_id, cookieOptions);
       response.cookies.set('user-email', userProfile.email, cookieOptions);
       // tenant-subdomain removed - should be header-only per schema spec
+      
+      // CRITICAL FIX: Set authentication token cookie for API calls
+      if (session?.access_token) {
+        const authCookieOptions = {
+          ...cookieOptions,
+          httpOnly: false, // Must be accessible to frontend for API calls
+          maxAge: 60 * 60 * 1 // 1 hour for auth tokens
+        };
+        
+        response.cookies.set('sb-lhcopwwiqwjpzbdnjovo-auth-token', session.access_token, authCookieOptions);
+        response.cookies.set('docsflow_auth_token', session.access_token, authCookieOptions); // Unified format
+        response.cookies.set('access_token', session.access_token, authCookieOptions); // Legacy compatibility
+        
+        console.log(`🔑 [SESSION API] Set authentication token cookies for API access`);
+      } else {
+        console.warn(`⚠️ [SESSION API] No access token available in session for cookie setting`);
+      }
       
       console.log(`🔧 [SESSION API] Set complete tenant context cookies:`, {
         tenantId: userProfile.tenant_id.substring(0, 8) + '...',
