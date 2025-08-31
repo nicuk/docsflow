@@ -25,8 +25,9 @@ export async function GET(request: NextRequest) {
     
     // DEBUG: Log cookie state for server restart issues
     if (!isVercelBot) {
-      const cookies = await import('next/headers').then(m => m.cookies());
-      const authCookies = (await cookies()).getAll().filter(c => 
+      const { cookies } = await import('next/headers');
+      const cookieStore = await cookies();
+      const authCookies = cookieStore.getAll().filter(c => 
         c.name.includes('auth') || c.name.includes('session') || c.name.includes('token')
       );
       

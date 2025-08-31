@@ -4,6 +4,14 @@ import { createClient } from '@supabase/supabase-js';
 // SECURITY FIX: Use secure database service instead of direct service role
 import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
 
+// SURGICAL FIX: Initialize Supabase client properly
+function getSupabaseClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
+
 export async function getUserAccessLevel(request: NextRequest, tenantId: string): Promise<number> {
   try {
     const supabase = getSupabaseClient();

@@ -121,39 +121,39 @@ export class OpenRouterClient {
 export const MODEL_CONFIGS = {
   // 🤖 Chat Interface - Fast, efficient Q&A
   CHAT: [
-    'deepseek/deepseek-r1-distill-qwen-14b:free',
-    'mistralai/mistral-small-3.2-24b-instruct:free'  // ⬆️ UPGRADED: 24B params, 131k context, vision
+    'meta-llama/llama-3.2-3b-instruct:free',
+    'mistralai/mistral-7b-instruct:free'  // Reliable fallback
   ] as string[],
   
   // 🔍 Document Processing - Structured outputs, metadata extraction
   DOCUMENT_PROCESSING: [
-    'deepseek/deepseek-r1-distill-qwen-14b:free',
-    'openrouter/optimus-alpha'
+    'meta-llama/llama-3.2-3b-instruct:free',
+    'mistralai/mistral-7b-instruct:free'
   ] as string[],
   
   // 📈 RAG Pipeline - Search, reranking, synthesis
   RAG_PIPELINE: [
-    'openrouter/quasar-alpha',
-    'deepseek/deepseek-v3-chat:free',                        // ⬆️ PROMOTED: Latest generation
-    'mistralai/mistral-small-3.2-24b-instruct:free'         // ⬆️ UPGRADED: Better than old 24B
+    'meta-llama/llama-3.2-3b-instruct:free',
+    'mistralai/mistral-7b-instruct:free',
+    'google/gemini-2.0-flash-exp:free'  // Working free model
   ] as string[],
   
   // 🧠 Persona Generation - Creative, business context
   PERSONA_GENERATION: [
-    'meta-llama/llama-4-maverick-400b:free',
-    'google/gemini-2.0-pro' // Keep paid for quality fallback
+    'meta-llama/llama-3.2-3b-instruct:free',
+    'google/gemini-2.0-flash-exp:free'
   ] as string[],
   
   // 🎯 Deep Search - Complex multi-doc analysis  
   DEEP_SEARCH: [
-    'deepseek/deepseek-r1t2-chimera-671b:free',
-    'meta-llama/llama-4-maverick-400b:free'
+    'meta-llama/llama-3.2-3b-instruct:free',
+    'mistralai/mistral-7b-instruct:free'
   ] as string[],
   
   // 🖼️ Vision/OCR - Keep existing Gemini for reliability
   VISION: [
-    'google/gemini-2.0-flash-thinking-exp',
-    'meta-llama/llama-4-maverick-vision:free'
+    'google/gemini-2.0-flash-exp:free',
+    'meta-llama/llama-3.2-3b-instruct:free'
   ] as string[]
 };
 
