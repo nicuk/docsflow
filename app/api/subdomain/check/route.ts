@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSubdomainData } from '@/lib/subdomains';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase';
+
+const supabase = getSupabaseClient();
 
 // Generate intelligent subdomain suggestions
 function generateSubdomainSuggestions(requestedSubdomain: string): string[] {
