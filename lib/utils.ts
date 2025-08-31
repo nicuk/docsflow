@@ -42,7 +42,7 @@ export function getCORSHeaders(origin?: string | null): HeadersInit {
   return {
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Tenant-ID, X-Tenant-Subdomain, X-Requested-With, Accept',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Auth-Token, X-Tenant-ID, X-Tenant-Subdomain, X-Requested-With, Accept',
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Max-Age': '86400', // Cache preflight for 24 hours
   };

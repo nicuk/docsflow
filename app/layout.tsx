@@ -7,7 +7,7 @@ import { PerformanceMonitor } from "@/components/performance-monitor"
 import { TenantProvider } from "@/components/providers/tenant-provider"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { QueryProvider } from "@/components/providers/query-provider"
-import AuthGate from "@/components/auth-gate"
+
 import { headers } from 'next/headers'
 
 const inter = Inter({ subsets: ["latin"] })
@@ -81,10 +81,8 @@ export default async function RootLayout({
           <AuthProvider>
             <TenantProvider tenantId={tenantId} tenantSubdomain={tenantSubdomain}>
               <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-                <AuthGate>
-                  <PerformanceMonitor />
-                  {children}
-                </AuthGate>
+                <PerformanceMonitor />
+                {children}
               </ThemeProvider>
             </TenantProvider>
           </AuthProvider>

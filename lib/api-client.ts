@@ -34,13 +34,15 @@ export const apiClient = {
       'Accept': 'application/json',
     };
     
-    // SURGICAL FIX: Simple token retrieval (app-level auth ensures tokens are ready)
+    // SURGICAL FIX: Use custom header to bypass Vercel stripping
     const authToken = await this.getAccessToken();
     if (authToken) {
+      // Use BOTH headers - custom header survives Vercel proxy
       headers['Authorization'] = `Bearer ${authToken}`;
-      console.log('🔍 [SURGICAL] Authorization header set for cross-domain request');
+      headers['X-Auth-Token'] = authToken; // Custom header that Vercel won't strip
+      console.log('🔍 [SURGICAL] Auth headers set for cross-domain request');
     } else {
-      console.warn('⚠️ [SURGICAL] No auth token available - check app-level auth initialization');
+      console.warn('⚠️ [SURGICAL] No auth token available - check session');
     }
     
     // RLS CONTEXT: Add tenant context for database session

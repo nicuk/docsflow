@@ -180,6 +180,13 @@ export async function validateTenantContext(
     if (requireAuth) {
       let authHeader = request.headers.get('authorization');
       
+      // SURGICAL FIX: Check custom header first (survives Vercel proxy)
+      const customAuthToken = request.headers.get('x-auth-token');
+      if (customAuthToken && !authHeader) {
+        authHeader = `Bearer ${customAuthToken}`;
+        console.log('✅ [SURGICAL] Using X-Auth-Token custom header for authentication');
+      }
+      
       // CRITICAL FIX: Extract Authorization from Vercel proxy headers
       if (!authHeader) {
         const vercelSCHeaders = request.headers.get('x-vercel-sc-headers');
