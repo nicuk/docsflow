@@ -62,6 +62,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const refreshSession = useCallback(async () => {
     try {
       setLoading(true);
+      
+      // SURGICAL FIX: Skip session API call on public pages to avoid unnecessary "Auth session missing!" logs
+      const publicPaths = ['/login', '/register', '/', '/auth/callback'];
+      if (publicPaths.includes(pathname)) {
+        console.log(`🔍 [AUTH CONTEXT] Skipping session check on public page: ${pathname}`);
+        setLoading(false);
+        return;
+      }
+      
       const response = await fetch('/api/auth/session');
       const data = await response.json();
 
