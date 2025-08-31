@@ -28,14 +28,14 @@ const HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
 
 export const apiClient = {
   // Get comprehensive auth headers with tenant context
-  getAuthHeaders() {
+  async getAuthHeaders() {
     const headers: any = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
     
-    // Get auth token from cookies or localStorage
-    const authToken = this.getAccessToken();
+    // Get auth token from unified Supabase session
+    const authToken = await this.getAccessToken();
     if (authToken) {
       headers['Authorization'] = `Bearer ${authToken}`;
     }
@@ -61,20 +61,48 @@ export const apiClient = {
     return headers;
   },
 
-  // Get access token from multiple sources
-  getAccessToken() {
+  // Get access token from unified Supabase session
+  async getAccessToken() {
     if (typeof window === 'undefined') return null;
     
-    // Try cookies first
+    try {
+      // CRITICAL FIX: Get token from active Supabase session using SSR client
+      const { createClient } = await import('@/lib/supabase-browser');
+      const supabase = createClient();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (!error && session?.access_token) {
+        return session.access_token;
+      }
+    } catch (sessionError) {
+      console.warn('🔍 [API-CLIENT] Session token fetch failed, falling back to cookies:', sessionError);
+    }
+    
+    // Fallback: Parse Supabase auth cookies directly
+    const supabaseAuthCookie = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('sb-') && row.includes('auth-token'))
+      ?.split('=')[1];
+      
+    if (supabaseAuthCookie && supabaseAuthCookie !== '') {
+      try {
+        // Supabase cookies are base64-encoded JSON
+        const decoded = JSON.parse(atob(supabaseAuthCookie));
+        if (decoded.access_token) {
+          return decoded.access_token;
+        }
+      } catch (parseError) {
+        console.warn('🔍 [API-CLIENT] Cookie parse failed:', parseError);
+      }
+    }
+    
+    // Final fallback to legacy cookies
     const authCookie = document.cookie
       .split('; ')
-      .find(row => row.startsWith('auth-token='))
+      .find(row => row.startsWith('auth-token=') || row.startsWith('docsflow_auth_token='))
       ?.split('=')[1];
     
-    if (authCookie) return authCookie;
-    
-    // Fallback to localStorage
-    return localStorage.getItem('access_token');
+    return authCookie || localStorage.getItem('access_token') || null;
   },
 
   // Enhanced health check with tenant context
@@ -88,9 +116,10 @@ export const apiClient = {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
       
+      const headers = await this.getAuthHeaders();
       const response = await fetch(`${API_BASE_URL}/health`, {
         method: 'GET',
-        headers: this.getAuthHeaders(),
+        headers,
         credentials: 'include', // Important for cross-origin cookies
         signal: controller.signal,
       });
@@ -114,9 +143,10 @@ export const apiClient = {
     conversationId?: string;
   }) {
     try {
+      const headers = await this.getAuthHeaders();
       const response = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
-        headers: this.getAuthHeaders(),
+        headers,
         credentials: 'include', // Critical for cross-origin cookies
         body: JSON.stringify(data),
       });
@@ -136,9 +166,10 @@ export const apiClient = {
   // Conversation Management with better error handling
   async getConversations() {
     try {
+      const headers = await this.getAuthHeaders();
       const response = await fetch(`${API_BASE_URL}/conversations`, {
         method: 'GET',
-        headers: this.getAuthHeaders(),
+        headers,
       });
       
       if (!response.ok) {
@@ -154,9 +185,10 @@ export const apiClient = {
 
   async createConversation(title?: string) {
     try {
+      const headers = await this.getAuthHeaders();
       const response = await fetch(`${API_BASE_URL}/conversations`, {
         method: 'POST',
-        headers: this.getAuthHeaders(),
+        headers,
         body: JSON.stringify({ title }),
       });
       
@@ -179,9 +211,10 @@ export const apiClient = {
 
   async getConversationHistory(conversationId: string) {
     try {
+      const headers = await this.getAuthHeaders();
       const response = await fetch(`${API_BASE_URL}/conversations/${conversationId}`, {
         method: 'GET',
-        headers: this.getAuthHeaders(),
+        headers,
       });
       
       if (!response.ok) {
@@ -201,7 +234,7 @@ export const apiClient = {
       formData.append('file', file);
       
       // Get auth headers but exclude Content-Type for FormData
-      const authHeaders = this.getAuthHeaders();
+      const authHeaders = await this.getAuthHeaders();
       delete authHeaders['Content-Type']; // Let browser set this for FormData
       
       // 🚀 ENHANCED: Real progress tracking with XMLHttpRequest
@@ -255,9 +288,10 @@ export const apiClient = {
 
   async getDocuments() {
     try {
+      const headers = await this.getAuthHeaders();
       const response = await fetch(`${API_BASE_URL}/documents`, {
         method: 'GET',
-        headers: this.getAuthHeaders(),
+        headers,
         credentials: 'include',
       });
       

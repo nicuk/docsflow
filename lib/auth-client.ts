@@ -124,8 +124,22 @@ class AuthClient {
     return data;
   }
 
-  // Get access token
-  getAccessToken(): string | null {
+  // Get access token from unified Supabase session
+  async getAccessToken(): Promise<string | null> {
+    try {
+      // CRITICAL FIX: Get token from active Supabase session using SSR client
+      const { createClient } = await import('@/lib/supabase-browser');
+      const supabase = createClient();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (!error && session?.access_token) {
+        return session.access_token;
+      }
+    } catch (sessionError) {
+      console.warn('🔍 [AUTH-CLIENT] Session token fetch failed, falling back to localStorage:', sessionError);
+    }
+    
+    // Fallback to localStorage for backward compatibility
     return localStorage.getItem('access_token');
   }
 
@@ -141,15 +155,15 @@ class AuthClient {
   }
 
   // Check if user is authenticated
-  isAuthenticated(): boolean {
-    const token = this.getAccessToken();
+  async isAuthenticated(): Promise<boolean> {
+    const token = await this.getAccessToken();
     const user = this.getCurrentUser();
     return !!(token && user);
   }
 
   // Restore session from localStorage
-  restoreSession(): User | null {
-    if (this.isAuthenticated()) {
+  async restoreSession(): Promise<User | null> {
+    if (await this.isAuthenticated()) {
       return this.getCurrentUser();
     }
     return null;
@@ -270,8 +284,8 @@ class AuthClient {
   }
 
   // Create authenticated request headers
-  getAuthHeaders(): Record<string, string> {
-    const token = this.getAccessToken();
+  async getAuthHeaders(): Promise<Record<string, string>> {
+    const token = await this.getAccessToken();
     return {
       'Content-Type': 'application/json',
       ...(token && { 'Authorization': `Bearer ${token}` })
@@ -280,7 +294,7 @@ class AuthClient {
 
   // Make authenticated API request
   async authenticatedRequest(url: string, options: RequestInit = {}): Promise<any> {
-    const headers = this.getAuthHeaders();
+    const headers = await this.getAuthHeaders();
     
     const response = await fetch(url, {
       ...options,
