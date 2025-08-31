@@ -69,7 +69,21 @@ export async function GET(request: NextRequest) {
             
             // If Supabase cookies already exist, return them as-is (no bridging needed)
             if (hasSupabaseAuth) {
-              console.log(`✅ [SESSION API] Supabase cookies exist - no bridging needed`);
+              // DEBUG: Let's see what's actually in these cookies
+              const authCookie = allCookies.find(c => c.name === 'sb-lhcopwwiqwjpzbdnjovo-auth-token');
+              const unifiedToken = allCookies.find(c => c.name === 'docsflow_auth_token');
+              
+              console.log(`🔍 [SESSION API] DEBUGGING COOKIE VALUES:`, {
+                hasSupabaseAuth: !!authCookie,
+                supabaseTokenLength: authCookie?.value?.length || 0,
+                supabaseTokenPreview: authCookie?.value?.substring(0, 50) + '...',
+                hasUnifiedToken: !!unifiedToken,
+                unifiedTokenLength: unifiedToken?.value?.length || 0,
+                unifiedTokenPreview: unifiedToken?.value?.substring(0, 50) + '...',
+                tokensMatch: authCookie?.value === unifiedToken?.value,
+                totalCookies: allCookies.length
+              });
+              
               return allCookies;
             }
             
