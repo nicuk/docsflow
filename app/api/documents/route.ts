@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
+import { createClient } from '@/lib/supabase-server';
 
 // SECURITY FIX: Use secure database service instead of direct service role
 import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
-
-// Helper function for getting Supabase client
-function getSupabaseClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-}
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin');
@@ -24,7 +16,8 @@ export async function GET(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
   
   try {
-    const supabase = getSupabaseClient();
+    // SUPABASE SSR FIX: Use server client for proper authentication
+    const supabase = await createClient();
     
     // 🔒 SECURE: Validate tenant context with proper security checks
     const tenantValidation = await validateTenantContext(request, {
@@ -92,7 +85,8 @@ export async function DELETE(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
   
   try {
-    const supabase = getSupabaseClient();
+    // SUPABASE SSR FIX: Use server client for proper authentication
+    const supabase = await createClient();
     
     // 🔒 SECURE: Validate tenant context with proper security checks
     const tenantValidation = await validateTenantContext(request, {

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
-import { getSupabaseClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase-server';
 
 // SECURITY FIX: Use secure database service instead of direct service role
 import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
@@ -43,8 +42,8 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Use regular client for user data
-    const supabase = getSupabaseClient();
+    // SUPABASE SSR FIX: Use server client for proper authentication
+    const supabase = await createClient();
     
     // Get conversations for this tenant using the actual UUID
     const { data: conversations, error } = await supabase
@@ -112,8 +111,8 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Use regular client for user data
-    const supabase = getSupabaseClient();
+    // SUPABASE SSR FIX: Use server client for proper authentication
+    const supabase = await createClient();
     
     // For now, use demo user ID since we don't have full auth yet
     const userId = '00000000-0000-0000-0000-000000000000';
