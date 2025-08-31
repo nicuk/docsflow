@@ -121,39 +121,43 @@ export class OpenRouterClient {
 export const MODEL_CONFIGS = {
   // 🤖 Chat Interface - Fast, efficient Q&A
   CHAT: [
-    'meta-llama/llama-3.2-3b-instruct:free',
-    'mistralai/mistral-7b-instruct:free'  // Reliable fallback
+    'deepseek/deepseek-r1-0528-qwen3-8b:free',  // 🚀 Best reasoning model
+    'deepseek/deepseek-v3-0324:free',           // Fallback: Latest V3
+    'mistralai/mistral-7b-instruct:free'        // Emergency fallback
   ] as string[],
   
   // 🔍 Document Processing - Structured outputs, metadata extraction
   DOCUMENT_PROCESSING: [
-    'meta-llama/llama-3.2-3b-instruct:free',
+    'deepseek/deepseek-r1-0528-qwen3-8b:free',  // Best for structured analysis
+    'deepseek/deepseek-v3-0324:free',           // Strong alternative
     'mistralai/mistral-7b-instruct:free'
   ] as string[],
   
   // 📈 RAG Pipeline - Search, reranking, synthesis
   RAG_PIPELINE: [
-    'meta-llama/llama-3.2-3b-instruct:free',
-    'mistralai/mistral-7b-instruct:free',
-    'google/gemini-2.0-flash-exp:free'  // Working free model
+    'deepseek/deepseek-r1-0528-qwen3-8b:free',  // Superior reasoning for RAG
+    'deepseek/deepseek-v3-0324:free',           // Latest generation
+    'deepseek/deepseek-v3:free'                 // Stable V3 fallback
   ] as string[],
   
   // 🧠 Persona Generation - Creative, business context
   PERSONA_GENERATION: [
-    'meta-llama/llama-3.2-3b-instruct:free',
+    'deepseek/deepseek-r1-0528-qwen3-8b:free',  // Creative reasoning
+    'deepseek/deepseek-v3-0324:free',
     'google/gemini-2.0-flash-exp:free'
   ] as string[],
   
   // 🎯 Deep Search - Complex multi-doc analysis  
   DEEP_SEARCH: [
-    'meta-llama/llama-3.2-3b-instruct:free',
+    'deepseek/deepseek-r1-0528-qwen3-8b:free',  // Best reasoning capabilities
+    'deepseek/deepseek-v3-0324:free',           // Strong backup
     'mistralai/mistral-7b-instruct:free'
   ] as string[],
   
   // 🖼️ Vision/OCR - Keep existing Gemini for reliability
   VISION: [
     'google/gemini-2.0-flash-exp:free',
-    'meta-llama/llama-3.2-3b-instruct:free'
+    'deepseek/deepseek-r1-0528-qwen3-8b:free'   // Backup for text analysis
   ] as string[]
 };
 
