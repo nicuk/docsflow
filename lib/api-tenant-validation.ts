@@ -178,7 +178,24 @@ export async function validateTenantContext(
 
     // Additional auth validation if required
     if (requireAuth) {
-      const authHeader = request.headers.get('authorization');
+      let authHeader = request.headers.get('authorization');
+      
+      // CRITICAL FIX: Extract Authorization from Vercel proxy headers
+      if (!authHeader) {
+        const vercelSCHeaders = request.headers.get('x-vercel-sc-headers');
+        if (vercelSCHeaders) {
+          try {
+            const parsedHeaders = JSON.parse(vercelSCHeaders);
+            if (parsedHeaders.Authorization) {
+              authHeader = parsedHeaders.Authorization;
+              console.log('🔍 [VERCEL-PROXY] Extracted Authorization from x-vercel-sc-headers');
+            }
+          } catch (parseError) {
+            console.warn('🔍 [VERCEL-PROXY] Failed to parse x-vercel-sc-headers:', parseError);
+          }
+        }
+      }
+      
       const rlsContext = request.headers.get('x-rls-context');
       let user = null;
       
@@ -187,6 +204,7 @@ export async function validateTenantContext(
         hasAuthorization: !!authHeader,
         authHeader: authHeader ? authHeader.substring(0, 20) + '...' : 'none',
         hasRLSContext: !!rlsContext,
+        vercelProxyExtracted: !!request.headers.get('x-vercel-sc-headers'),
         allHeaders: Object.fromEntries(request.headers.entries())
       });
 
