@@ -82,11 +82,10 @@
 
 ### **❌ CRITICAL GAPS CAUSING USER FLOW ISSUES**
 
-#### **🚨 ROOT CAUSE: Missing Email-Based Tenant Discovery & Freemium Limits**
+#### **🚨 ROOT CAUSE: Missing Email-Based Tenant Discovery**
 - **Problem**: `support@bitto.tech` should suggest `bitto` subdomain
-- **Current**: No email domain analysis for subdomain suggestions  
+- **Current**: No email domain analysis for subdomain suggestions
 - **Impact**: Users don't get intelligent tenant recommendations
-- **NEW**: Need to enforce 1 subdomain per email limit for freemium users
 
 #### **🚨 ROOT CAUSE: Broken Onboarding Redirect Logic**
 - **Problem**: Users with incomplete onboarding get "Demo User" instead of onboarding redirect
@@ -722,10 +721,9 @@ describe('Tenant Isolation', () => {
 
 ## **⚡ IMPLEMENTATION TIMELINE**
 
-### **Week 1: Foundation & Freemium Implementation**
-**Days 1-2:** Freemium model implementation + subdomain limits
-**Days 3-4:** Redis integration + tenant caching  
-**Days 4-5:** Middleware enhancement with tenant routing
+### **Week 1: Foundation & Middleware**
+**Days 1-2:** Redis integration + tenant caching
+**Days 3-4:** Middleware enhancement with tenant routing
 **Day 5:** Testing and deployment
 
 ### **Week 2: Frontend & Admin Enhancement**
@@ -890,17 +888,13 @@ describe('Tenant Isolation', () => {
 
 ## **🚀 PRIORITY ROADMAP TO 9/10 ENTERPRISE READINESS**
 
-### **Phase 1: Critical Infrastructure Fixes + Freemium Implementation (1-2 weeks)**
+### **Phase 1: Critical Infrastructure Fixes (1-2 weeks)**
 1. **Fix Tenant Context Persistence Bug** - "bitto" tenant selection not being stored/verified
-2. **Implement Freemium Model** - Free tier limits and upgrade prompts
-3. **Add Redis Production Configuration** - KV_REST_API_URL/TOKEN environment variables
-4. **Enforce Subdomain Limits** - 1 subdomain per email for free users
-5. **Add Conversation Tracking** - Monthly conversation limits for free tier
-6. **Document Limit Enforcement** - 5 document maximum for free users
-7. **Implement Comprehensive Monitoring** - Sentry + Vercel Analytics + performance tracking
-8. **Write Critical Path Tests** - Auth, tenant creation, chat, document processing
-9. **Add Audit Logging System** - Compliance-grade audit trails
-10. **Enhance Admin Panel** - User management, tenant analytics, system monitoring
+2. **Add Redis Production Configuration** - KV_REST_API_URL/TOKEN environment variables
+3. **Implement Comprehensive Monitoring** - Sentry + Vercel Analytics + performance tracking
+4. **Write Critical Path Tests** - Auth, tenant creation, chat, document processing
+5. **Add Audit Logging System** - Compliance-grade audit trails
+6. **Enhance Admin Panel** - User management, tenant analytics, system monitoring
 
 ### **Phase 2: Enterprise Hardening (2-3 weeks)**
 1. **Security Enhancement** - MFA, API key management, advanced RBAC

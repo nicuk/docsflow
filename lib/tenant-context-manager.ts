@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
 import { redis } from '@/lib/redis';
 
 // SECURITY FIX: Use secure database service
@@ -87,7 +86,14 @@ export class TenantContextManager {
       // 3. Database fallback with proper caching (50-100ms - only when needed)
       console.log(`🔍 Database lookup for tenant: ${subdomain}`);
       
-      const { data, error } = await supabase
+      // Use service role for tenant lookups to bypass RLS
+      const { createClient } = await import('@supabase/supabase-js');
+      const serviceSupabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+      
+      const { data, error } = await serviceSupabase
         .from('tenants')
         .select('id, subdomain, name')
         .eq('subdomain', subdomain)
@@ -162,8 +168,14 @@ export class TenantContextManager {
         console.warn('⚠️ Redis unavailable for UUID lookup:', redisError);
       }
 
-      // Database lookup
-      const { data, error } = await supabase
+      // Database lookup with service role
+      const { createClient } = await import('@supabase/supabase-js');
+      const serviceSupabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+      
+      const { data, error } = await serviceSupabase
         .from('tenants')
         .select('id, subdomain, name')
         .eq('id', uuid)

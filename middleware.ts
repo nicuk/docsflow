@@ -173,12 +173,39 @@ export default async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/', request.url), 301);
     }
 
-    // CRITICAL: Handle API subdomain separately - it's NOT a tenant
+    // CRITICAL: Handle API subdomain separately - it's NOT a tenant BUT needs tenant context
     if (hostname === 'api.docsflow.app' || hostname === 'api.localhost') {
-      // API subdomain should pass through without tenant context
       const response = NextResponse.next();
-      // Explicitly DO NOT set any tenant headers for API subdomain
-      console.log('🔍 [MIDDLEWARE] API subdomain detected - bypassing tenant validation');
+      
+      // SCALING FIX: Extract tenant from Origin header for cross-subdomain API calls
+      if (origin) {
+        try {
+          const originUrl = new URL(origin);
+          const originHostname = originUrl.hostname;
+          const tenantFromOrigin = extractTenantFromHostname(originHostname);
+          
+          if (tenantFromOrigin && tenantFromOrigin !== 'docsflow' && tenantFromOrigin !== 'www') {
+            console.log(`🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: ${tenantFromOrigin}`);
+            
+            // Set tenant headers for API route validation
+            response.headers.set('x-tenant-subdomain', tenantFromOrigin);
+            
+            // Optional: Verify tenant exists and get UUID
+            const tenantExists = await verifyTenantExists(tenantFromOrigin);
+            if (tenantExists) {
+              console.log(`✅ [API-MIDDLEWARE] Tenant ${tenantFromOrigin} verified for API call`);
+            } else {
+              console.warn(`⚠️ [API-MIDDLEWARE] Tenant ${tenantFromOrigin} not found for API call`);
+            }
+          } else {
+            console.log(`🔍 [API-MIDDLEWARE] No valid tenant in origin: ${originHostname}`);
+          }
+        } catch (originError) {
+          console.warn('Failed to parse origin for tenant context:', originError);
+        }
+      }
+      
+      console.log('🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin');
       return createSecureResponse(response, origin);
     }
 
