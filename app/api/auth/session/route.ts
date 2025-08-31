@@ -71,15 +71,40 @@ export async function GET(request: NextRequest) {
                                    cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value ||
                                    cookieStore.get('access_token')?.value;
             
-            if (unifiedAuthToken && !allCookies.find(c => c.name === 'sb-lhcopwwiqwjpzbdnjovo-auth-token')) {
-              // Provide Supabase with the auth token in the format it expects
+            console.log(`🔍 [COOKIE-BRIDGE] Debug:`, {
+              hasUnifiedToken: !!unifiedAuthToken,
+              unifiedTokenPreview: unifiedAuthToken ? unifiedAuthToken.substring(0, 20) + '...' : 'none',
+              existingSupabaseCookie: !!allCookies.find(c => c.name === 'sb-lhcopwwiqwjpzbdnjovo-auth-token'),
+              allCookieNames: allCookies.map(c => c.name)
+            });
+            
+            if (unifiedAuthToken) {
+              // Always provide Supabase with our unified auth token
               const supabaseAuthCookie = {
                 name: 'sb-lhcopwwiqwjpzbdnjovo-auth-token',
                 value: unifiedAuthToken
               };
               
-              console.log(`🔗 [SESSION API] Providing Supabase with unified auth token`);
-              return [...allCookies, supabaseAuthCookie];
+              // Also check for refresh token
+              const refreshToken = cookieStore.get('docsflow_refresh_token')?.value ||
+                                 cookieStore.get('refresh_token')?.value;
+              
+              const cookiesForSupabase = [...allCookies.filter(c => c.name !== 'sb-lhcopwwiqwjpzbdnjovo-auth-token'), supabaseAuthCookie];
+              
+              if (refreshToken) {
+                cookiesForSupabase.push({
+                  name: 'sb-lhcopwwiqwjpzbdnjovo-refresh-token',
+                  value: refreshToken
+                });
+              }
+              
+              console.log(`🔗 [SESSION API] Providing Supabase with unified tokens:`, {
+                authToken: unifiedAuthToken.substring(0, 20) + '...',
+                hasRefreshToken: !!refreshToken,
+                totalCookies: cookiesForSupabase.length
+              });
+              
+              return cookiesForSupabase;
             }
             
             return allCookies;
