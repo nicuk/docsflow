@@ -122,59 +122,9 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    // SURGICAL FIX: Direct token validation bypassing problematic session system
-    if (!isVercelBot) {
-      console.log(`🔍 [SESSION API] Attempting direct token validation...`);
-    }
-    
-    let user = null;
-    let session = null;
-    let userError = null;
-    let sessionError = null;
-    
-    // Try direct auth validation first
-    const directAuthToken = cookieStore.get('docsflow_auth_token')?.value ||
-                           cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value ||
-                           cookieStore.get('access_token')?.value;
-    
-    if (directAuthToken) {
-      try {
-        // Create a clean Supabase client for direct token validation
-        const { createClient } = await import('@supabase/supabase-js');
-        const directSupabase = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        );
-        
-        const { data: { user: directUser }, error: directError } = await directSupabase.auth.getUser(directAuthToken);
-        
-        if (directUser && !directError) {
-          user = directUser;
-          session = { access_token: directAuthToken }; // Minimal session object
-          console.log(`✅ [SESSION API] Direct token validation successful`);
-        } else {
-          console.log(`❌ [SESSION API] Direct token validation failed:`, directError?.message);
-          userError = directError;
-        }
-      } catch (directValidationError) {
-        console.error(`🚨 [SESSION API] Direct validation error:`, directValidationError);
-        userError = directValidationError;
-      }
-    }
-    
-    // Fallback to original Supabase client if direct validation failed
-    if (!user) {
-      if (!isVercelBot) {
-        console.log(`🔍 [SESSION API] Falling back to original Supabase auth...`);
-      }
-      const fallbackResult = await supabase.auth.getUser();
-      user = fallbackResult.data.user;
-      userError = fallbackResult.error;
-      
-      const fallbackSession = await supabase.auth.getSession();
-      session = fallbackSession.data.session;
-      sessionError = fallbackSession.error;
-    }
+    // Get user and session from Supabase
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (!isVercelBot) {
       console.log(`🔍 [SESSION API] Supabase auth result:`, {
@@ -192,58 +142,7 @@ export async function GET(request: NextRequest) {
       if (!isVercelBot) {
         console.log(`❌ [SESSION API] Authentication failed:`, userError?.message);
         
-        // DIAGNOSTIC: Check if tokens are expired/invalid
-        const cookieStore = await cookies();
-        const authToken = cookieStore.get('docsflow_auth_token')?.value ||
-                         cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value;
-        
-        if (authToken) {
-          try {
-            // Try to decode JWT to check expiration
-            const tokenParts = authToken.split('.');
-            if (tokenParts.length === 3) {
-              const payload = JSON.parse(atob(tokenParts[1]));
-              const isExpired = payload.exp && (payload.exp * 1000 < Date.now());
-              console.log(`🔍 [TOKEN-DEBUG] Auth token analysis:`, {
-                hasToken: true,
-                isExpired,
-                expiresAt: payload.exp ? new Date(payload.exp * 1000).toISOString() : 'unknown',
-                currentTime: new Date().toISOString()
-              });
-              
-              if (isExpired) {
-                console.log(`⏰ [TOKEN-DEBUG] Auth token is EXPIRED - need to clear stale cookies`);
-                
-                // Clear expired tokens
-                const response = NextResponse.json({
-                  authenticated: false,
-                  user: null,
-                  tenant: null,
-                  onboardingComplete: false,
-                  error: 'Session expired - tokens cleared'
-                });
-                
-                // Clear all auth cookies
-                const expireOptions = { 
-                  path: '/', 
-                  domain: '.docsflow.app', 
-                  expires: new Date(0) 
-                };
-                
-                response.cookies.set('docsflow_auth_token', '', expireOptions);
-                response.cookies.set('sb-lhcopwwiqwjpzbdnjovo-auth-token', '', expireOptions);
-                response.cookies.set('access_token', '', expireOptions);
-                response.cookies.set('docsflow_refresh_token', '', expireOptions);
-                response.cookies.set('refresh_token', '', expireOptions);
-                
-                console.log(`🧹 [SESSION API] Cleared expired auth tokens`);
-                return response;
-              }
-            }
-          } catch (tokenError) {
-            console.warn(`⚠️ [TOKEN-DEBUG] Could not decode auth token:`, tokenError);
-          }
-        }
+
       }
       
       return NextResponse.json({
