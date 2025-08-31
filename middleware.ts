@@ -488,12 +488,13 @@ export default async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * Note: We DO want to process /api routes for CORS headers
+     * Optimized matcher - only process routes that need tenant validation:
+     * - /api routes (except health checks and static endpoints)
+     * - /dashboard routes (need tenant context)
+     * - Exclude: static files, auth pages, health endpoints
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/api/((?!health|static).*)',
+    '/dashboard/:path*',
+    '/((?!_next|public|favicon.ico|login|signup|register|auth|robots.txt|sitemap.xml).*)',
   ],
 }; 

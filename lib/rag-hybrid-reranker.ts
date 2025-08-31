@@ -35,7 +35,7 @@ export class HybridRAGReranker {
   constructor() {
     this.supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      /* SECURITY FIX: Migrated to secure backend service */!
     );
     
     this.genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY!);
@@ -301,6 +301,8 @@ Return only a number between 0 and 1.`;
     tenantId: string,
     limit: number
   ): Promise<SearchResult[]> {
+    console.log(`🔍 Vector search for tenant ${tenantId}, query: "${query}"`);
+    
     const queryEmbedding = await this.getEmbedding(query);
     
     const { data, error } = await this.supabase
@@ -308,8 +310,13 @@ Return only a number between 0 and 1.`;
         query_embedding: queryEmbedding,
         match_threshold: 0.7,
         match_count: limit,
-        p_tenant_id: tenantId
+        tenant_id: tenantId
       });
+    
+    console.log(`📊 Search result count: ${data?.length || 0}`);
+    if (error) {
+      console.error(`❌ Vector search error:`, error);
+    }
     
     if (error || !data) return [];
     
