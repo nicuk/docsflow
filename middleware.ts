@@ -324,25 +324,8 @@ export default async function middleware(request: NextRequest) {
         return createSecureResponse(response, origin);
       }
       
-      // CRITICAL FIX: If user has auth token but missing tenant context, try to fetch and set it
-      if (authToken && !storedTenantId && tenantUUID) {
-        console.log(`🔧 [MIDDLEWARE] Auth token present but tenant context missing - attempting to set tenant context`);
-        const response = NextResponse.next();
-        response.headers.set('x-tenant-id', tenantUUID);
-        response.headers.set('x-tenant-subdomain', tenant);
-        
-        // Set missing tenant context cookies
-        response.cookies.set('tenant-id', tenantUUID, {
-          path: '/',
-          domain: '.docsflow.app',
-          secure: true,
-          sameSite: 'lax',
-          maxAge: 60 * 60 * 24 // 24 hours
-        });
-        
-        console.log(`✅ [MIDDLEWARE] Set missing tenant context: ${tenantUUID.substring(0, 8)}... for ${tenant}`);
-        return createSecureResponse(response, origin);
-      }
+      // REMOVED: Over-engineered auto-tenant-context setting
+      // The session API should handle all cookie setting
 
       // For authenticated users on correct tenant, allow access with proper tenant context
       if (userEmail && authToken && storedTenantId && tenantUUID && storedTenantId === tenantUUID) {
@@ -469,21 +452,16 @@ export default async function middleware(request: NextRequest) {
       // Legacy fallback for backwards compatibility
       const storedTenantId = cookies.get('tenant-id')?.value;
       
-      console.log(`🔍 [MIDDLEWARE] Auth check - Token: ${authToken ? 'EXISTS' : 'MISSING'}, Email: ${userEmail || 'MISSING'}, TenantId: ${storedTenantId || 'MISSING'}`);
+      // ARCHITECTURAL FIX: Read subdomain directly from cookie (no database lookup needed)
+      const storedTenantSubdomain = cookies.get('tenant-subdomain')?.value;
       
-      // FIX #1: Update legacy auth check to use unified tokens
-      if (authToken && userEmail && storedTenantId) {
-        console.log(`🔍 [MIDDLEWARE] User authenticated, resolving tenant: ${storedTenantId}`);
-        // FIX #2: Get tenant subdomain from ResilientTenantResolver using UUID
-        const tenantInfo = await ResilientTenantResolver.resolveTenantByUUID(storedTenantId);
-        console.log(`🔍 [MIDDLEWARE] Tenant resolution result:`, tenantInfo);
-        if (tenantInfo?.subdomain) {
-          const tenantUrl = `https://${tenantInfo.subdomain}.docsflow.app${pathname}`;
-          console.log(`🎯 [MIDDLEWARE] REDIRECTING authenticated user from main domain to tenant: ${tenantUrl}`);
-          return NextResponse.redirect(new URL(tenantUrl));
-        } else {
-          console.log(`❌ [MIDDLEWARE] No tenant subdomain found for tenant ID: ${storedTenantId}`);
-        }
+      console.log(`🔍 [MIDDLEWARE] Auth check - Token: ${authToken ? 'EXISTS' : 'MISSING'}, Email: ${userEmail || 'MISSING'}, TenantId: ${storedTenantId || 'MISSING'}, Subdomain: ${storedTenantSubdomain || 'MISSING'}`);
+      
+      if (authToken && userEmail && storedTenantId && storedTenantSubdomain) {
+        // Direct redirect using subdomain from cookie - no database lookup needed
+        const tenantUrl = `https://${storedTenantSubdomain}.docsflow.app${pathname}`;
+        console.log(`🎯 [MIDDLEWARE] DIRECT REDIRECT authenticated user from main domain to tenant: ${tenantUrl}`);
+        return NextResponse.redirect(new URL(tenantUrl));
       } else {
         console.log(`🔍 [MIDDLEWARE] User not authenticated or missing tenant context on main domain`);
       }

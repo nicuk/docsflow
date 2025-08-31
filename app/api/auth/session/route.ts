@@ -170,8 +170,8 @@ export async function GET(request: NextRequest) {
       debug: 'success'
     });
 
-    // Set tenant context cookies if missing
-    if (userProfile.tenant_id && userProfile.email) {
+    // ARCHITECTURAL FIX: Set both tenant ID AND subdomain cookies
+    if (userProfile.tenant_id && userProfile.email && userProfile.tenants?.subdomain) {
       const cookieOptions = {
         path: '/',
         domain: '.docsflow.app',
@@ -181,12 +181,13 @@ export async function GET(request: NextRequest) {
       };
 
       response.cookies.set('tenant-id', userProfile.tenant_id, cookieOptions);
+      response.cookies.set('tenant-subdomain', userProfile.tenants.subdomain, cookieOptions);
       response.cookies.set('user-email', userProfile.email, cookieOptions);
       
-      console.log(`🔧 [SESSION API] Set missing tenant context cookies:`, {
+      console.log(`🔧 [SESSION API] Set complete tenant context cookies:`, {
         tenantId: userProfile.tenant_id.substring(0, 8) + '...',
         email: userProfile.email,
-        subdomain: userProfile.tenants?.subdomain
+        subdomain: userProfile.tenants.subdomain
       });
     }
 
