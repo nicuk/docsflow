@@ -174,14 +174,15 @@ export default function LoginPage() {
           console.log(`🔍 [SESSION BRIDGE] Decoded token length: ${decodedToken.length}`);
           console.log(`🔍 [SESSION BRIDGE] Token preview: ${decodedToken.substring(0, 50)}...`);
           
-          // FIX #1: Use unified auth cookie management
-          const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
-          SchemaAlignedCookieManager.clearAllAuthCookies();
+          // MULTI-TENANT: Use unified cookie management system
+          const { MultiTenantCookieManager } = await import('@/lib/multi-tenant-cookie-manager');
+          MultiTenantCookieManager.clearAuthTokensOnly();
           
-          // Set unified auth tokens (primary + fallback)
+          // Set unified auth tokens (primary + fallback) manually since this is session bridge
           document.cookie = `docsflow_auth_token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
           document.cookie = `sb-lhcopwwiqwjpzbdnjovo-auth-token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
-          console.log(`✅ [SESSION BRIDGE] Set unified auth cookies`);
+          document.cookie = `access_token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
+          console.log(`✅ [SESSION BRIDGE] Set multi-tenant compatible auth cookies`);
           
           // DEBUGGING: Verify cookies were actually set
           setTimeout(() => {

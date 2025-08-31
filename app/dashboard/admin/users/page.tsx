@@ -112,7 +112,7 @@ export default function AdminUsersPage() {
 
   const checkAdminAccess = async () => {
     try {
-      // Use the secure session manager to check admin status
+      // Use database-based secure access check (NOT cookie-based)
       const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
       const secureAccess = await SchemaAlignedCookieManager.getSecureUserAccess();
       

@@ -65,14 +65,14 @@ class AuthClient {
       localStorage.setItem('refresh_token', data.user.refresh_token);
       localStorage.setItem('user', JSON.stringify(data.user));
       
-      // SCHEMA-ALIGNED: Use SchemaAlignedCookieManager
-      const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
+      // MULTI-TENANT: Use unified cookie management system
+      const { MultiTenantCookieManager } = await import('@/lib/multi-tenant-cookie-manager');
       
       const tenantId = data.user.tenant_id;
       const tenantSubdomain = data.user.tenant?.subdomain || data.tenant?.subdomain;
       
       if (tenantId && tenantSubdomain && data.user.email) {
-        SchemaAlignedCookieManager.setSchemaAlignedCookies(
+        MultiTenantCookieManager.addTenantContext(
           {
             tenantId: tenantId,
             subdomain: tenantSubdomain, 
@@ -83,6 +83,12 @@ class AuthClient {
             refreshToken: data.user.refresh_token
           }
         );
+        
+        console.log('✅ [AUTH-CLIENT] Multi-tenant cookies set for:', {
+          subdomain: tenantSubdomain,
+          email: data.user.email,
+          tenantId: tenantId.substring(0, 8) + '...'
+        });
       }
     }
 

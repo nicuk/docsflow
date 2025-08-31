@@ -39,7 +39,8 @@ import {
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import DocsFlowBrand from '@/components/DocsFlowBrand'
-import { SchemaAlignedCookieManager } from '@/lib/schema-aligned-cookies'
+import { MultiTenantCookieManager } from '@/lib/multi-tenant-cookie-manager'
+import { SchemaAlignedCookieManager } from '@/lib/schema-aligned-cookies' // Keep for getSecureUserAccess only
 
 const navigationItems = [
   { name: 'Dashboard', href: '/dashboard', icon: Home, badge: null, requiresAdmin: false },
@@ -161,31 +162,37 @@ function useUserSession() {
       // SECURITY FIX: Use schema-aligned cookie manager instead of direct parsing
       if (typeof window !== 'undefined') {
         try {
-          const cookies = SchemaAlignedCookieManager.getSchemaAlignedCookies();
+          // Use multi-tenant cookie system for reading tenant context
+          const tenantContexts = MultiTenantCookieManager.getCurrentTenantContexts();
+          const currentTenant = MultiTenantCookieManager.getCurrentTenantSubdomain();
+          const userEmail = MultiTenantCookieManager.getCurrentUserEmail();
+          
+          // Still use secure access for database-based security checks
           const secureAccess = await SchemaAlignedCookieManager.getSecureUserAccess();
           
-          if (cookies.userEmail && cookies.tenantId && secureAccess.tenantId) {
-            console.log('✅ [SECURITY] Using validated session data:', {
-              email: cookies.userEmail,
-              tenantId: cookies.tenantId.substring(0, 8) + '...',
+          if (userEmail && currentTenant && secureAccess.tenantId) {
+            console.log('✅ [SECURITY] Using multi-tenant session data:', {
+              email: userEmail,
+              currentTenant,
+              totalTenants: Object.keys(tenantContexts).length,
               role: secureAccess.role,
               isAdmin: secureAccess.isAdmin
             });
             
             setUser({
-              name: cookies.userEmail.split('@')[0].charAt(0).toUpperCase() + cookies.userEmail.split('@')[0].slice(1),
-              email: cookies.userEmail,
+              name: userEmail.split('@')[0].charAt(0).toUpperCase() + userEmail.split('@')[0].slice(1),
+              email: userEmail,
               avatar: '/placeholder.svg',
               role: secureAccess.role, // From database, not hardcoded
             });
             return;
           } else {
-            console.warn('🚨 [SECURITY] Invalid cookie state - clearing contaminated cookies');
-            SchemaAlignedCookieManager.clearAllAuthCookies();
+            console.warn('🚨 [SECURITY] Invalid multi-tenant cookie state - clearing auth tokens');
+            MultiTenantCookieManager.clearAuthTokensOnly();
           }
         } catch (error) {
-          console.error('🚨 [SECURITY] Cookie validation failed:', error);
-          SchemaAlignedCookieManager.clearAllAuthCookies();
+          console.error('🚨 [SECURITY] Multi-tenant cookie validation failed:', error);
+          MultiTenantCookieManager.clearAuthTokensOnly();
         }
       }
       

@@ -131,8 +131,9 @@ export async function POST(request: NextRequest) {
     // Since onboarding_complete column doesn't exist, check if user has tenant_id
     const hasCompletedOnboarding = userProfile?.tenant_id ? true : false;
     
-    // 🚨 SECURITY FIX #1: Use schema-aligned cookie management
-    const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
+    // Use multi-tenant cookie management (unified system)
+    // Note: Server-side can't call client-side cookie methods directly
+    // The response will include tenant context for client-side cookie setting
     
     if (!userProfile?.tenant_id || !userProfile.tenants) {
       return NextResponse.json(
@@ -152,10 +153,12 @@ export async function POST(request: NextRequest) {
       refreshToken: authData.session.refresh_token
     };
 
-    // FIX #1: Use unified auth cookie management (server-side compatible)
-    // Note: Server-side can't call client-side cookie methods directly
-    // The session API will handle unified cookie reading
-    console.log('✅ [LOGIN] Unified auth tokens prepared for client-side setting');
+    // MULTI-TENANT: Prepare tenant context and tokens for client-side cookie setting
+    console.log('✅ [LOGIN] Multi-tenant auth tokens prepared for client-side setting:', {
+      tenantId: tenantContext.tenantId.substring(0, 8) + '...',
+      subdomain: tenantContext.subdomain,
+      email: tenantContext.userEmail
+    });
     
     const response = NextResponse.json({
       success: true,
@@ -173,7 +176,10 @@ export async function POST(request: NextRequest) {
         name: (userProfile.tenants as any).name,
         industry: (userProfile.tenants as any).industry
       },
-      message: 'Login successful - schema-aligned cookies set'
+      tokens: tokens,
+      // MULTI-TENANT: Include tenant context for client-side cookie management
+      tenantContext: tenantContext,
+      message: 'Login successful - multi-tenant cookies prepared'
     }, { headers: corsHeaders });
     
     // Also set server-side cookies for immediate session compatibility
