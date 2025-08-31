@@ -175,6 +175,13 @@ export async function validateTenantContext(
       const authHeader = request.headers.get('authorization');
       let user = null;
       
+      // DEBUG: Log what auth headers we're receiving
+      console.log(`🔍 [AUTH-DEBUG] Headers received:`, {
+        hasAuthorization: !!authHeader,
+        authHeader: authHeader ? authHeader.substring(0, 20) + '...' : 'none',
+        allHeaders: Object.fromEntries(request.headers.entries())
+      });
+      
       // Try Bearer token first
       if (authHeader && authHeader.startsWith('Bearer ')) {
         try {
