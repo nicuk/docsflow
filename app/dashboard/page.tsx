@@ -99,7 +99,16 @@ export default function DashboardPage() {
             }
           }
           
-          window.location.replace('/onboarding')
+          // Check if user is already onboarded via session API
+          const sessionResponse = await fetch('/api/auth/session')
+          const sessionData = await sessionResponse.json()
+          
+          if (sessionData.authenticated && sessionData.onboardingComplete && sessionData.tenant?.subdomain) {
+            // User is onboarded - redirect to their tenant
+            window.location.replace(`https://${sessionData.tenant.subdomain}.docsflow.app/dashboard`)
+          } else {
+            window.location.replace('/onboarding')
+          }
         } catch (error) {
           console.error('Redirect error:', error)
           window.location.replace('/onboarding')

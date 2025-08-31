@@ -58,11 +58,23 @@ export default function AuthRedirectPage() {
             }
           }, 1500);
         } else if (session.authenticated && !session.tenantId) {
-          setMessage('Setting up your workspace...');
-          setProgress(100);
-          setTimeout(() => {
-            window.location.href = '/onboarding';
-          }, 1000);
+          // Check if user is actually onboarded via direct API call
+          const sessionCheck = await fetch('/api/auth/session');
+          const sessionData = await sessionCheck.json();
+          
+          if (sessionData.authenticated && sessionData.onboardingComplete && sessionData.tenant?.subdomain) {
+            setMessage(`Redirecting to ${sessionData.tenant.name || 'your workspace'}...`);
+            setProgress(100);
+            setTimeout(() => {
+              window.location.href = `https://${sessionData.tenant.subdomain}.docsflow.app/dashboard`;
+            }, 1000);
+          } else {
+            setMessage('Setting up your workspace...');
+            setProgress(100);
+            setTimeout(() => {
+              window.location.href = '/onboarding';
+            }, 1000);
+          }
         } else {
           setMessage('Please sign in to continue...');
           setTimeout(() => {
