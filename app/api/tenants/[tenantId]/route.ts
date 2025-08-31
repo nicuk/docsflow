@@ -26,6 +26,12 @@ interface TenantData {
 const TENANT_CACHE_TTL = 60 * 60; // 1 hour in seconds
 const TENANT_CACHE_PREFIX = 'tenant:';
 
+// Create Supabase client
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ tenantId: string }> }

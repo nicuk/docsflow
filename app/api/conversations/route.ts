@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
+import { getSupabaseClient } from '@/lib/supabase';
 
 // SECURITY FIX: Use secure database service instead of direct service role
 import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
