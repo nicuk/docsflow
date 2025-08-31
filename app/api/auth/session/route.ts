@@ -21,8 +21,7 @@ export async function GET(request: NextRequest) {
     
     const cookieStore = await cookies();
     
-    // Use multi-tenant cookie management (unified system)
-    const { MultiTenantCookieManager } = await import('@/lib/multi-tenant-cookie-manager');
+    // Note: Multi-tenant cookies read manually server-side (no client-side manager)
     
     if (!isVercelBot) {
       // DEBUGGING: Enhanced cookie state logging
@@ -35,8 +34,15 @@ export async function GET(request: NextRequest) {
         return acc;
       }, {} as Record<string, string>);
       
-      // Use multi-tenant cookie system for session state
-      const tenantContexts = MultiTenantCookieManager.getCurrentTenantContexts();
+      // SERVER-SIDE: Read multi-tenant cookies manually (no client-side methods)
+      const tenantContextsRaw = serverCookies['tenant-contexts'];
+      let tenantContexts = {};
+      try {
+        tenantContexts = tenantContextsRaw ? JSON.parse(tenantContextsRaw) : {};
+      } catch (e) {
+        console.warn('🔄 [SESSION API] Invalid tenant-contexts cookie, using empty');
+      }
+      
       const currentTenant = serverCookies['current-tenant'];
       const authToken = serverCookies['docsflow_auth_token'] || 
                        serverCookies['sb-lhcopwwiqwjpzbdnjovo-auth-token'] ||
