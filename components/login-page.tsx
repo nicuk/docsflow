@@ -297,22 +297,38 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('🚀 [LOGIN-DEBUG] Submit started');
 
-    if (!validateForm()) return
+    if (!validateForm()) {
+      console.log('❌ [LOGIN-DEBUG] Form validation failed');
+      return;
+    }
 
+    console.log('✅ [LOGIN-DEBUG] Form validated, setting loading state');
     setIsLoading(true)
     setErrors({})
 
+    // FAILSAFE: Auto-recover from hanging state after 15 seconds
+    const hangingFailsafe = setTimeout(() => {
+      console.error('🚨 [LOGIN-DEBUG] FAILSAFE TRIGGERED - Login hanging for 15s, auto-recovering');
+      setIsLoading(false);
+      setErrors({ general: 'Login timed out. Please try again. If this persists, check your connection.' });
+    }, 15000);
+
     try {
+      console.log('🔄 [LOGIN-DEBUG] Importing Supabase client...');
       // Use Supabase directly (as designed) - this handles session cookies automatically
       const { createSupabaseClient } = await import('@/lib-frontend/supabase')
       const supabase = createSupabaseClient()
+      console.log('✅ [LOGIN-DEBUG] Supabase client created');
       
+      console.log('🔐 [LOGIN-DEBUG] Attempting authentication...');
       // Direct Supabase authentication
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password
       })
+      console.log('🔍 [LOGIN-DEBUG] Auth response received:', { hasData: !!data, hasError: !!error, userId: data?.user?.id });
       
       if (error) {
         console.error('Supabase auth error:', error)
@@ -353,8 +369,10 @@ export default function LoginPage() {
       }
       
       if (data.user) {
+        console.log('✅ [LOGIN-DEBUG] Authentication successful, user found');
         setIsSuccess(true)
         
+        console.log('🔄 [LOGIN-DEBUG] Fetching user profile from database...');
         // Check user's onboarding status from database
         const { data: userProfile } = await supabase
           .from('users')
@@ -362,23 +380,38 @@ export default function LoginPage() {
           .eq('id', data.user.id)
           .single()
         
+        console.log('🔍 [LOGIN-DEBUG] User profile fetched:', { 
+          hasProfile: !!userProfile, 
+          hasTenantId: !!userProfile?.tenant_id,
+          tenantSubdomain: userProfile?.tenants?.subdomain 
+        });
+        
         // Check if user needs to complete onboarding
         if (!userProfile?.tenant_id) {
+          console.log('🚪 [LOGIN-DEBUG] User needs onboarding, redirecting...');
           setTimeout(() => {
             router.push('/onboarding')
           }, 1500)
           return
         }
         
+        console.log('🔄 [LOGIN-DEBUG] Processing tenant redirect logic...');
         // CRITICAL FIX: Respect login context - don't force tenant redirect from root domain
         const userTenantSubdomain = (userProfile.tenants as any)?.subdomain
         const currentHostname = typeof window !== 'undefined' ? window.location.hostname : ''
         const isRootDomain = currentHostname === 'docsflow.app' || currentHostname === 'localhost'
         
+        console.log('🔍 [LOGIN-DEBUG] Redirect context:', {
+          userTenantSubdomain,
+          currentHostname,
+          isRootDomain
+        });
+        
         if (userTenantSubdomain) {
-          console.log(`🔐 User belongs to tenant: ${userTenantSubdomain}`)
+          console.log(`🔐 [LOGIN-DEBUG] User belongs to tenant: ${userTenantSubdomain}`)
           
           if (isRootDomain) {
+            console.log('🎯 [LOGIN-DEBUG] Root domain login detected - initiating redirect sequence');
             // SURGICAL FIX: Smooth transition from main domain to tenant
             console.log(`📍 User logged in from main domain - redirecting to tenant with session bridge`)
             
@@ -393,7 +426,9 @@ export default function LoginPage() {
             // ENTERPRISE UX: Use elegant transition page instead of direct redirect
             console.log(`🔍 [SMOOTH TRANSITION] Redirecting via transition page for better UX`);
             
+            console.log('⏰ [LOGIN-DEBUG] Setting 1.5s timeout for auth-redirect...');
             setTimeout(() => {
+              console.log('🚀 [LOGIN-DEBUG] Timeout fired, redirecting to /auth-redirect');
               window.location.href = '/auth-redirect'
             }, 1500)
           } else {
@@ -413,11 +448,15 @@ export default function LoginPage() {
       }
       
     } catch (error) {
-      console.error('Login error:', error)
+      console.error('🚨 [LOGIN-DEBUG] Catch block triggered:', error)
+      console.error('🚨 [LOGIN-DEBUG] Error type:', typeof error)
+      console.error('🚨 [LOGIN-DEBUG] Error message:', error instanceof Error ? error.message : String(error))
       setErrors({
         general: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
       })
     } finally {
+      console.log('🏁 [LOGIN-DEBUG] Finally block - clearing loading state and failsafe');
+      clearTimeout(hangingFailsafe); // Clear the failsafe since we completed
       setIsLoading(false)
     }
   }
