@@ -71,20 +71,64 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (profileError || !userProfile) {
-      console.error('🚨 [SESSION API] Profile fetch error:', profileError);
-      console.log(`🔍 [SESSION API] User exists but no profile - needs onboarding`);
+      if (!isVercelBot) {
+        console.error('🚨 [SESSION API] Profile fetch error:', profileError);
+        console.log(`🔍 [SESSION API] User exists but no profile - user ID: ${user.id}, email: ${user.email}`);
+        console.log(`🔍 [SESSION API] Checking if this is a cross-domain session issue...`);
+      }
       
+      // SUPABASE SSR FIX: Check for tenant context in cookies for cross-domain sessions
+      const { cookies } = await import('next/headers');
+      const cookieStore = await cookies();
+      const tenantId = cookieStore.get('tenant-id')?.value;
+      const tenantSubdomain = cookieStore.get('tenant-subdomain')?.value;
+      const tenantContext = cookieStore.get('tenant-context')?.value;
+      
+      if (!isVercelBot) {
+        console.log(`🔍 [SESSION API] Checking cookie fallback - tenantId: ${tenantId}, subdomain: ${tenantSubdomain}`);
+      }
+      
+      // If we have tenant info in cookies, use it as fallback
+      if (tenantId && tenantSubdomain) {
+        let parsedTenantContext = null;
+        try {
+          parsedTenantContext = tenantContext ? JSON.parse(tenantContext) : null;
+        } catch (e) {
+          console.warn('Failed to parse tenant context cookie');
+        }
+        
+        return NextResponse.json({
+          authenticated: true,
+          user: {
+            id: user.id,
+            email: user.email || 'cross_domain_session',
+            name: null,
+            role: 'user'
+          },
+          tenant: {
+            id: tenantId,
+            subdomain: tenantSubdomain,
+            name: parsedTenantContext?.name || tenantSubdomain
+          },
+          tenantId: tenantId,
+          onboardingComplete: true, // If they have tenant cookies, they're onboarded
+          debug: 'cookie_fallback_success'
+        });
+      }
+      
+      // No profile and no tenant cookies - likely needs onboarding
       return NextResponse.json({
         authenticated: true,
         user: {
           id: user.id,
-          email: user.email,
+          email: user.email || 'email_missing_cross_domain',
           name: null,
           role: 'user'
         },
         tenant: null,
         onboardingComplete: false,
-        debug: 'no_profile_found'
+        debug: 'profile_fetch_failed',
+        crossDomainIssue: true
       });
     }
 
