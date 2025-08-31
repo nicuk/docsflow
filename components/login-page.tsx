@@ -174,20 +174,20 @@ export default function LoginPage() {
           console.log(`🔍 [SESSION BRIDGE] Decoded token length: ${decodedToken.length}`);
           console.log(`🔍 [SESSION BRIDGE] Token preview: ${decodedToken.substring(0, 50)}...`);
           
-          // SCHEMA-ALIGNED: Clear auth cookies to prevent contamination
+          // FIX #1: Use unified auth cookie management
           const { SchemaAlignedCookieManager } = await import('@/lib/schema-aligned-cookies');
           SchemaAlignedCookieManager.clearAllAuthCookies();
           
-          // Set schema-aligned auth tokens
-          document.cookie = `access_token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
+          // Set unified auth tokens (primary + fallback)
+          document.cookie = `docsflow_auth_token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
           document.cookie = `sb-lhcopwwiqwjpzbdnjovo-auth-token=${decodedToken}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=3600`;
-          console.log(`✅ [SESSION BRIDGE] Set schema-aligned auth cookies`);
+          console.log(`✅ [SESSION BRIDGE] Set unified auth cookies`);
           
           // DEBUGGING: Verify cookies were actually set
           setTimeout(() => {
             const allCookies = document.cookie;
             console.log(`🔍 [SESSION BRIDGE] Current cookies: ${allCookies.substring(0, 200)}...`);
-            console.log(`🔍 [SESSION BRIDGE] access_token present: ${allCookies.includes('access_token')}`);
+            console.log(`🔍 [SESSION BRIDGE] docsflow_auth_token present: ${allCookies.includes('docsflow_auth_token')}`);
             console.log(`🔍 [SESSION BRIDGE] sb-auth present: ${allCookies.includes('sb-lhcopwwiqwjpzbdnjovo-auth-token')}`);
           }, 100);
           

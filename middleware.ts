@@ -231,8 +231,11 @@ export default async function middleware(request: NextRequest) {
       // MULTI-TENANT: Read from namespaced tenant contexts
       const currentTenant = request.cookies.get('current-tenant')?.value;
       const tenantContexts = request.cookies.get('tenant-contexts')?.value;
-      const userEmail = request.cookies.get('user_email')?.value || request.cookies.get('user-email')?.value;
-      const authToken = request.cookies.get('access_token')?.value || request.cookies.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value;
+      // FIX #1: Read unified auth cookies with fallback chain
+      const userEmail = request.cookies.get('user-email')?.value || request.cookies.get('user_email')?.value;
+      const authToken = request.cookies.get('docsflow_auth_token')?.value || 
+                       request.cookies.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value ||
+                       request.cookies.get('access_token')?.value;
       
       // Extract tenant UUID from namespaced contexts
       let storedTenantId: string | null = null;
@@ -378,11 +381,13 @@ export default async function middleware(request: NextRequest) {
         return createSecureResponse(response, origin);
       }
       
-      // Read MULTI-TENANT cookies (not legacy single tenant)
+      // FIX #1: Read unified auth cookies with comprehensive fallback
       const tenantContexts = cookies.get('tenant-contexts')?.value;
       const currentTenant = cookies.get('current-tenant')?.value;
-      const authToken = cookies.get('access_token')?.value || cookies.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value;
-      const userEmail = cookies.get('user_email')?.value || cookies.get('user-email')?.value;
+      const authToken = cookies.get('docsflow_auth_token')?.value || 
+                       cookies.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value ||
+                       cookies.get('access_token')?.value;
+      const userEmail = cookies.get('user-email')?.value || cookies.get('user_email')?.value;
       
       // ENTERPRISE SMART REDIRECT: Bypass dashboard/onboarding for authenticated users
       if ((pathname === '/dashboard' || pathname === '/onboarding' || pathname === '/') && 
@@ -444,6 +449,7 @@ export default async function middleware(request: NextRequest) {
       
       console.log(`🔍 [MIDDLEWARE] Auth check - Token: ${authToken ? 'EXISTS' : 'MISSING'}, Email: ${userEmail || 'MISSING'}, TenantId: ${storedTenantId || 'MISSING'}`);
       
+      // FIX #1: Update legacy auth check to use unified tokens
       if (authToken && userEmail && storedTenantId) {
         console.log(`🔍 [MIDDLEWARE] User authenticated, resolving tenant: ${storedTenantId}`);
         // FIX #2: Get tenant subdomain from ResilientTenantResolver using UUID
