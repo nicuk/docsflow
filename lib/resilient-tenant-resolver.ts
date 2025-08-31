@@ -39,10 +39,10 @@ export class ResilientTenantResolver {
   private static readonly CIRCUIT_FAILURE_THRESHOLD = 3;
   private static readonly CIRCUIT_RESET_TIMEOUT = 30000; // 30 seconds
   
-  // Supabase client for direct database access
+  // Supabase client for direct database access (SERVICE ROLE for admin operations)
   private static supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
   /**
