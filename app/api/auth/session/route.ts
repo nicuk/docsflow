@@ -63,8 +63,26 @@ export async function GET(request: NextRequest) {
       {
         cookies: {
           getAll() {
-            // SURGICAL FIX: Let Supabase handle its own cookies without intervention
-            return cookieStore.getAll();
+            // UNIFIED ARCHITECTURE: Provide Supabase with our unified tokens
+            const allCookies = cookieStore.getAll();
+            
+            // Check if we have unified auth tokens that Supabase needs
+            const unifiedAuthToken = cookieStore.get('docsflow_auth_token')?.value ||
+                                   cookieStore.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value ||
+                                   cookieStore.get('access_token')?.value;
+            
+            if (unifiedAuthToken && !allCookies.find(c => c.name === 'sb-lhcopwwiqwjpzbdnjovo-auth-token')) {
+              // Provide Supabase with the auth token in the format it expects
+              const supabaseAuthCookie = {
+                name: 'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+                value: unifiedAuthToken
+              };
+              
+              console.log(`🔗 [SESSION API] Providing Supabase with unified auth token`);
+              return [...allCookies, supabaseAuthCookie];
+            }
+            
+            return allCookies;
           },
           setAll(cookiesToSet) {
             try {
@@ -181,8 +199,28 @@ export async function GET(request: NextRequest) {
       response.cookies.set('user-email', userProfile.email, cookieOptions);
       // tenant-subdomain removed - should be header-only per schema spec
       
-      // NOTE: Removed manual auth token setting - let Supabase handle its own auth cookies
-      // The login flow should set these cookies properly
+      // UNIFIED ARCHITECTURE: Set auth tokens using our MultiTenantCookieManager format
+      if (session?.access_token) {
+        const authCookieOptions = {
+          ...cookieOptions,
+          httpOnly: false, // Must be accessible for frontend API calls
+          maxAge: 60 * 60 * 1 // 1 hour for auth tokens
+        };
+        
+        // Set unified auth tokens (compatible with MultiTenantCookieManager)
+        response.cookies.set('docsflow_auth_token', session.access_token, authCookieOptions);
+        response.cookies.set('sb-lhcopwwiqwjpzbdnjovo-auth-token', session.access_token, authCookieOptions);
+        response.cookies.set('access_token', session.access_token, authCookieOptions);
+        
+        if (session.refresh_token) {
+          response.cookies.set('docsflow_refresh_token', session.refresh_token, authCookieOptions);
+          response.cookies.set('refresh_token', session.refresh_token, authCookieOptions);
+        }
+        
+        console.log(`🔑 [SESSION API] Set unified auth tokens for cross-domain API access`);
+      } else {
+        console.warn(`⚠️ [SESSION API] No access token in session - unified tokens not set`);
+      }
       
       console.log(`🔧 [SESSION API] Set complete tenant context cookies:`, {
         tenantId: userProfile.tenant_id.substring(0, 8) + '...',
