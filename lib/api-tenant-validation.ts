@@ -187,8 +187,33 @@ export async function validateTenantContext(
           try {
             const parsedHeaders = JSON.parse(vercelSCHeaders);
             if (parsedHeaders.Authorization) {
-              authHeader = parsedHeaders.Authorization;
-              console.log('🔍 [VERCEL-PROXY] Extracted Authorization from x-vercel-sc-headers');
+              // CRITICAL CHECK: Verify this isn't a Vercel deployment token
+              const potentialToken = parsedHeaders.Authorization.replace('Bearer ', '');
+              
+              // Decode JWT payload to check if it's a Vercel token vs Supabase token
+              try {
+                const payload = JSON.parse(atob(potentialToken.split('.')[1]));
+                console.log('🔍 [VERCEL-PROXY] Token payload analysis:', {
+                  issuer: payload.iss,
+                  audience: payload.aud,
+                  isVercelToken: payload.iss === 'serverless' || !!payload.deploymentId,
+                  isSupabaseToken: payload.iss?.includes('supabase') || !!payload.sub,
+                  hasUserId: !!payload.sub,
+                  tokenType: payload.iss === 'serverless' ? 'VERCEL_DEPLOYMENT' : 'UNKNOWN'
+                });
+                
+                // REJECT Vercel deployment tokens
+                if (payload.iss === 'serverless' || payload.deploymentId) {
+                  console.warn('🚨 [VERCEL-PROXY] Rejecting Vercel deployment token, not user auth token');
+                  authHeader = null; // Don't use this token
+                } else {
+                  authHeader = parsedHeaders.Authorization;
+                  console.log('✅ [VERCEL-PROXY] Extracted valid user Authorization from x-vercel-sc-headers');
+                }
+              } catch (decodeError) {
+                console.warn('🔍 [VERCEL-PROXY] Could not decode token payload:', decodeError);
+                authHeader = parsedHeaders.Authorization; // Use it anyway if we can't decode
+              }
             }
           } catch (parseError) {
             console.warn('🔍 [VERCEL-PROXY] Failed to parse x-vercel-sc-headers:', parseError);
@@ -222,13 +247,35 @@ export async function validateTenantContext(
       if (authHeader && authHeader.startsWith('Bearer ')) {
         try {
           const token = authHeader.replace('Bearer ', '');
+          console.log(`🔍 [TOKEN-VALIDATION] Attempting Bearer token validation:`, {
+            tokenPreview: token.substring(0, 30) + '...',
+            tokenLength: token.length,
+            hasValidJWTFormat: token.includes('.'),
+            tokenParts: token.split('.').length
+          });
+          
           const { data: { user: bearerUser }, error: authError } = await supabase.auth.getUser(token);
+          
+          console.log(`🔍 [TOKEN-VALIDATION] Supabase validation result:`, {
+            hasUser: !!bearerUser,
+            userId: bearerUser?.id?.substring(0, 8) + '...' || 'none',
+            userEmail: bearerUser?.email || 'none',
+            hasError: !!authError,
+            errorCode: authError?.message || 'none',
+            errorDetails: authError
+          });
           
           if (!authError && bearerUser) {
             user = bearerUser;
+            console.log('✅ [TOKEN-VALIDATION] Bearer token validation successful');
+          } else {
+            console.warn('❌ [TOKEN-VALIDATION] Bearer token validation failed:', {
+              error: authError,
+              hasUser: !!bearerUser
+            });
           }
         } catch (bearerError) {
-          console.warn('Bearer token validation failed:', bearerError);
+          console.error('🚨 [TOKEN-VALIDATION] Bearer token validation exception:', bearerError);
         }
       }
       
