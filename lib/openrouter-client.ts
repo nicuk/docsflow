@@ -117,44 +117,44 @@ export class OpenRouterClient {
   }
 }
 
-// EMERGENCY FALLBACK: Use only VERIFIED working models
+// CORRECTED MODEL NAMES: User-verified working models with correct names
 export const MODEL_CONFIGS = {
-  // 🤖 Chat Interface - SAFE MODELS ONLY
+  // 🤖 Chat Interface - CORRECTED NAMES
   CHAT: [
-    'mistralai/mistral-7b-instruct:free',           // ✅ VERIFIED: Works
-    'meta-llama/llama-3.1-8b-instruct:free'         // ✅ VERIFIED: Works
+    'mistralai/mistral-small-3.2-24b-instruct:free', // ✅ USER VERIFIED: Correct name
+    'qwen/qwq-32b:free'                              // ✅ CORRECTED: qwq not qwen3
   ] as string[],
 
-  // 🔍 Document Processing - SAFE MODELS ONLY  
+  // 🔍 Document Processing - CORRECTED NAMES  
   DOCUMENT_PROCESSING: [
-    'mistralai/mistral-7b-instruct:free',           // ✅ VERIFIED: Works for structured output
-    'meta-llama/llama-3.1-8b-instruct:free',        // ✅ VERIFIED: Works
-    'google/gemma-2-9b-it:free'                     // ✅ VERIFIED: Google's free model
+    'mistralai/mistral-small-3.2-24b-instruct:free', // ✅ USER VERIFIED: Best for structured output
+    'qwen/qwen3-14b:free',                           // ✅ USER VERIFIED: Correct name
+    'deepseek/deepseek-chat-v3.1:free'               // ✅ CORRECTED: Added "chat" to name
   ] as string[],
 
-  // 📈 RAG Pipeline - SAFE MODELS ONLY
+  // 📈 RAG Pipeline - CORRECTED NAMES
   RAG_PIPELINE: [
-    'mistralai/mistral-7b-instruct:free',           // ✅ VERIFIED: Works for RAG
-    'meta-llama/llama-3.1-8b-instruct:free',        // ✅ VERIFIED: Works
-    'google/gemma-2-9b-it:free'                     // ✅ VERIFIED: Google fallback
+    'deepseek/deepseek-chat-v3.1:free',              // ✅ CORRECTED: Latest DeepSeek with correct name
+    'mistralai/mistral-small-3.2-24b-instruct:free', // ✅ USER VERIFIED: Strong for RAG
+    'qwen/qwq-32b:free'                              // ✅ CORRECTED: QwQ reasoning model
   ] as string[],
 
-  // 🧠 Persona Generation - SAFE MODELS ONLY
+  // 🧠 Persona Generation - CORRECTED NAMES
   PERSONA_GENERATION: [
-    'mistralai/mistral-7b-instruct:free',           // ✅ VERIFIED: Works for creative tasks
-    'meta-llama/llama-3.1-8b-instruct:free'         // ✅ VERIFIED: Works
+    'qwen/qwq-32b:free',                             // ✅ CORRECTED: Good for reasoning/creativity
+    'mistralai/mistral-small-3.2-24b-instruct:free'  // ✅ USER VERIFIED: Creative tasks
   ] as string[],
 
-  // 🎯 Deep Search - SAFE MODELS ONLY
+  // 🎯 Deep Search - CORRECTED NAMES
   DEEP_SEARCH: [
-    'mistralai/mistral-7b-instruct:free',           // ✅ VERIFIED: Works
-    'meta-llama/llama-3.1-8b-instruct:free'         // ✅ VERIFIED: Works
+    'deepseek/deepseek-chat-v3.1:free',              // ✅ CORRECTED: Best reasoning model
+    'qwen/qwq-32b:free'                              // ✅ CORRECTED: QwQ for complex analysis
   ] as string[],
 
-  // 🖼️ Vision/OCR - Keep Gemini (paid but works)
+  // 🖼️ Vision/OCR - Keep working vision models
   VISION: [
-    'google/gemini-2.0-flash-exp',                  // ✅ VERIFIED: Works (paid)
-    'mistralai/mistral-7b-instruct:free'            // ✅ Fallback for text analysis
+    'mistralai/mistral-small-3.2-24b-instruct:free', // ✅ USER VERIFIED: Can handle images
+    'google/gemini-2.0-flash-exp'                    // ✅ Paid but reliable vision
   ] as string[]
 };
 
