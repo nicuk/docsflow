@@ -31,6 +31,11 @@ export async function GET(request: NextRequest) {
         c.name.includes('auth') || c.name.includes('session') || c.name.includes('token')
       );
       
+      // SURGICAL DEBUG: Check if Supabase is setting cookies properly
+      const supabaseCookies = cookieStore.getAll().filter(c => 
+        c.name.startsWith('sb-') || c.name.includes('supabase')
+      );
+      
       console.log(`🔍 [SESSION API] Supabase auth result:`, {
         hasUser: !!user,
         userId: user?.id,
@@ -39,8 +44,16 @@ export async function GET(request: NextRequest) {
         hasAccessToken: !!session?.access_token,
         userError: userError?.message,
         sessionError: sessionError?.message,
-        availableCookies: authCookies.map(c => ({ name: c.name, hasValue: !!c.value, valueLength: c.value?.length || 0 }))
+        availableCookies: authCookies.map(c => ({ name: c.name, hasValue: !!c.value, valueLength: c.value?.length || 0 })),
+        supabaseCookies: supabaseCookies.map(c => ({ name: c.name, hasValue: !!c.value, valueLength: c.value?.length || 0, valuePreview: c.value?.substring(0, 20) || 'empty' }))
       });
+      
+      // SURGICAL DEBUG: Check if session has access token
+      if (session?.access_token) {
+        console.log(`🔍 [SESSION API] Session access token: ${session.access_token.substring(0, 20)}... (length: ${session.access_token.length})`);
+      } else {
+        console.log(`❌ [SESSION API] No access token in session`);
+      }
     }
     
     if (!user || userError) {
@@ -194,6 +207,14 @@ export async function GET(request: NextRequest) {
         tenantId: userProfile.tenant_id.substring(0, 8) + '...',
         email: userProfile.email,
         subdomain: userProfile.tenants.subdomain
+      });
+      
+      // SURGICAL DEBUG: Log what cookies are actually being set
+      console.log(`🔍 [SESSION API] Cookie values being set:`, {
+        'tenant-id': userProfile.tenant_id,
+        'user-email': userProfile.email,
+        'tenant-subdomain': userProfile.tenants?.subdomain,
+        'tenant-context': JSON.stringify(tenantContext)
       });
     }
 
