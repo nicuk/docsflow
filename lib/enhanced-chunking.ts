@@ -167,7 +167,12 @@ Context:`
     ];
 
     try {
-      const response = await this.openRouterClient.generateWithFallback(
+      // SURGICAL FIX: Add timeout to prevent 504 Gateway Timeout
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('AI model timeout after 12 seconds')), 12000);
+      });
+      
+      const aiPromise = this.openRouterClient.generateWithFallback(
         MODEL_CONFIGS.DOCUMENT_PROCESSING,
         messages,
         {
@@ -176,15 +181,31 @@ Context:`
         }
       );
       
+      // Race between AI response and timeout
+      const response = await Promise.race([aiPromise, timeoutPromise]) as any;
+      
       console.log(`📄 Document context generated using ${response.modelUsed}`);
       return response.response.trim();
       
     } catch (error) {
       console.warn('OpenRouter failed for document context, using Gemini fallback:', error);
       
-      // Fallback to Gemini
-      const result = await this.textModel.generateContent(messages[0].content);
-      return result.response.text().trim();
+      // SURGICAL FIX: Also add timeout to Gemini fallback
+      try {
+        const geminiTimeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Gemini fallback timeout after 10 seconds')), 10000);
+        });
+        
+        const geminiPromise = this.textModel.generateContent(messages[0].content);
+        
+        const result = await Promise.race([geminiPromise, geminiTimeoutPromise]) as any;
+        return result.response.text().trim();
+        
+      } catch (geminiError) {
+        console.error('Both AI models failed, using basic fallback:', geminiError);
+        // Final fallback: return basic context
+        return `Document context`;
+      }
     }
   }
 
@@ -215,7 +236,12 @@ Section Summary:`
     ];
 
     try {
-      const response = await this.openRouterClient.generateWithFallback(
+      // SURGICAL FIX: Add timeout to prevent 504 Gateway Timeout
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('AI model timeout after 10 seconds')), 10000);
+      });
+      
+      const aiPromise = this.openRouterClient.generateWithFallback(
         MODEL_CONFIGS.DOCUMENT_PROCESSING,
         messages,
         {
@@ -224,17 +250,32 @@ Section Summary:`
         }
       );
       
+      // Race between AI response and timeout
+      const response = await Promise.race([aiPromise, timeoutPromise]) as any;
+      
       return response.response.trim();
       
     } catch (error) {
       console.warn('OpenRouter failed for chunk context, using Gemini fallback:', error);
       
-      // Fallback to Gemini with rate limiting
-      const result = await withGeminiRateLimit(async () => {
-        return await this.textModel.generateContent(messages[0].content);
-      })();
-      
-      return result.response.text().trim();
+      // SURGICAL FIX: Also add timeout to Gemini fallback
+      try {
+        const geminiTimeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Gemini fallback timeout after 8 seconds')), 8000);
+        });
+        
+        const geminiPromise = withGeminiRateLimit(async () => {
+          return await this.textModel.generateContent(messages[0].content);
+        })();
+        
+        const result = await Promise.race([geminiPromise, geminiTimeoutPromise]) as any;
+        return result.response.text().trim();
+        
+      } catch (geminiError) {
+        console.error('Both AI models failed, using basic fallback:', geminiError);
+        // Final fallback: return basic context
+        return `Section about ${chunkContent.slice(0, 50)}...`;
+      }
     }
   }
 
