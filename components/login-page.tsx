@@ -77,10 +77,18 @@ export default function LoginPage() {
       // OFFICIAL PATTERN: Simple Supabase browser client
       const supabase = createClient()
       
+      // REMEMBER ME FIX: Supabase handles session persistence automatically
+      // We'll control this via cookie maxAge in the backend API
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password
       })
+      
+      // Store remember me preference for backend API call if needed
+      if (formData.rememberMe && data.session) {
+        // Set a longer-lived session indicator
+        document.cookie = `remember-me=true; path=/; domain=.docsflow.app; max-age=${60 * 60 * 24 * 30}; secure; samesite=lax`
+      }
 
       if (error) {
         console.error('Login error:', error)

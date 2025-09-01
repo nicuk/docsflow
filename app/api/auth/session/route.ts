@@ -91,6 +91,21 @@ export async function GET(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
+    // SURGICAL DEBUG: Log the exact userProfile structure
+    if (!isVercelBot) {
+      console.log(`🔍 [SESSION API] UserProfile Debug:`, {
+        userProfile: userProfile,
+        hasEmail: !!userProfile?.email,
+        emailValue: userProfile?.email,
+        hasTenantId: !!userProfile?.tenant_id,
+        tenantIdValue: userProfile?.tenant_id,
+        hasTenants: !!userProfile?.tenants,
+        tenantsValue: userProfile?.tenants,
+        tenantsSubdomain: userProfile?.tenants?.subdomain,
+        profileError: profileError
+      });
+    }
+
     if (profileError || !userProfile) {
       if (!isVercelBot) {
         console.error('🚨 [SESSION API] Profile fetch error:', profileError);
