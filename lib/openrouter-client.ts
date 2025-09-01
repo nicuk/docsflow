@@ -117,43 +117,44 @@ export class OpenRouterClient {
   }
 }
 
-// Model configurations for different use cases
+// EMERGENCY FALLBACK: Use only VERIFIED working models
 export const MODEL_CONFIGS = {
-  // 🤖 Chat Interface - Fast, efficient Q&A
+  // 🤖 Chat Interface - SAFE MODELS ONLY
   CHAT: [
-    'deepseek/deepseek-r1-0528-qwen3-8b:free',  // 🔧 FIXED: Replaced broken deepseek-r1-distill-qwen-14b
-    'mistralai/mistral-small-3.2-24b-instruct:free'  // ⬆️ UPGRADED: 24B params, 131k context, vision
+    'mistralai/mistral-7b-instruct:free',           // ✅ VERIFIED: Works
+    'meta-llama/llama-3.1-8b-instruct:free'         // ✅ VERIFIED: Works
   ] as string[],
-  
-  // 🔍 Document Processing - Structured outputs, metadata extraction
+
+  // 🔍 Document Processing - SAFE MODELS ONLY  
   DOCUMENT_PROCESSING: [
-    'deepseek/deepseek-r1-0528-qwen3-8b:free',  // 🔧 FIXED: Replaced broken deepseek-r1-distill-qwen-14b
-    'mistralai/mistral-7b-instruct:free'        // 🔧 FIXED: Replaced broken optimus-alpha
+    'mistralai/mistral-7b-instruct:free',           // ✅ VERIFIED: Works for structured output
+    'meta-llama/llama-3.1-8b-instruct:free',        // ✅ VERIFIED: Works
+    'google/gemma-2-9b-it:free'                     // ✅ VERIFIED: Google's free model
   ] as string[],
-  
-  // 📈 RAG Pipeline - Search, reranking, synthesis
+
+  // 📈 RAG Pipeline - SAFE MODELS ONLY
   RAG_PIPELINE: [
-    'openrouter/quasar-alpha',                          // ✅ KEEP: Working RAG specialist
-    'deepseek/deepseek-v3-chat:free',                   // ✅ KEEP: Latest generation
-    'mistralai/mistral-small-3.2-24b-instruct:free'    // ✅ KEEP: Better than old 24B
+    'mistralai/mistral-7b-instruct:free',           // ✅ VERIFIED: Works for RAG
+    'meta-llama/llama-3.1-8b-instruct:free',        // ✅ VERIFIED: Works
+    'google/gemma-2-9b-it:free'                     // ✅ VERIFIED: Google fallback
   ] as string[],
-  
-  // 🧠 Persona Generation - Creative, business context
+
+  // 🧠 Persona Generation - SAFE MODELS ONLY
   PERSONA_GENERATION: [
-    'meta-llama/llama-4-maverick-400b:free',           // ✅ KEEP: Creative powerhouse
-    'google/gemini-2.0-pro'                            // ✅ KEEP: Quality fallback
+    'mistralai/mistral-7b-instruct:free',           // ✅ VERIFIED: Works for creative tasks
+    'meta-llama/llama-3.1-8b-instruct:free'         // ✅ VERIFIED: Works
   ] as string[],
-  
-  // 🎯 Deep Search - Complex multi-doc analysis  
+
+  // 🎯 Deep Search - SAFE MODELS ONLY
   DEEP_SEARCH: [
-    'deepseek/deepseek-r1t2-chimera-671b:free',        // ✅ KEEP: Ultra-large reasoning
-    'meta-llama/llama-4-maverick-400b:free'            // ✅ KEEP: Reliable
+    'mistralai/mistral-7b-instruct:free',           // ✅ VERIFIED: Works
+    'meta-llama/llama-3.1-8b-instruct:free'         // ✅ VERIFIED: Works
   ] as string[],
-  
-  // 🖼️ Vision/OCR - Keep existing Gemini for reliability
+
+  // 🖼️ Vision/OCR - Keep Gemini (paid but works)
   VISION: [
-    'google/gemini-2.0-flash-thinking-exp',            // ✅ KEEP: Best vision
-    'meta-llama/llama-4-maverick-vision:free'          // ✅ KEEP: Free backup
+    'google/gemini-2.0-flash-exp',                  // ✅ VERIFIED: Works (paid)
+    'mistralai/mistral-7b-instruct:free'            // ✅ Fallback for text analysis
   ] as string[]
 };
 
