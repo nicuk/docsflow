@@ -84,18 +84,29 @@ export default function PersonaEditor({ currentPersona, tenantId, onPersonaUpdat
     try {
       // Use current business context to regenerate persona
       const prompt = `
-        Regenerate an AI assistant persona for this business:
+        Generate an enhanced AI assistant persona for this business:
         Industry: ${persona.industry}
         Business Context: ${persona.business_context}
         Current Role: ${persona.role}
+        Focus Areas: ${persona.focus_areas.join(', ')}
         
-        Create a fresh, optimized persona that maintains the business context but improves the AI's effectiveness.
+        Return a JSON object with these fields:
+        - role: (improved professional title)
+        - tone: (communication style)
+        - focus_areas: (array of 3-5 specific areas)
+        - business_context: (enhanced context)
+        - prompt_template: (detailed AI instructions)
+        - industry: (keep same: ${persona.industry})
+        
+        Make it more specific and effective than the current version.
       `;
       
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ai-lead-router-saas.vercel.app/api';
       const response = await fetch(`${apiUrl}/tenant/regenerate-persona`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
           tenantId,
           prompt,
