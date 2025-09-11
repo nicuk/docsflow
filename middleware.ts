@@ -18,6 +18,10 @@ import { redis, safeRedisOperation } from './lib/redis';
 // SECURITY FIX: Remove direct service role access from middleware
 // Service role operations now handled by secure backend APIs
 
+// UNIFIED AUTH: Import new auth services for parallel testing
+import { AuthService } from './lib/services/auth-service';
+import { TenantService } from './lib/services/tenant-service';
+
 // SURGICAL HELPER: JWT email extraction with robust error handling
 function extractEmailFromJWT(authToken: string): string | null {
   try {
@@ -350,6 +354,22 @@ export default async function middleware(request: NextRequest) {
       
       if (userEmail && authToken) {
         console.log(`🔍 [MIDDLEWARE] User email extracted successfully`);
+      }
+
+      // 🧪 PARALLEL TESTING: Try new AuthService alongside existing logic
+      try {
+        const unifiedToken = AuthService.parseAuthFromCookies(request.headers.get('cookie') || '');
+        if (unifiedToken) {
+          console.log(`🧪 [UNIFIED-AUTH] Token found via AuthService (parallel test)`);
+          // Compare with existing token for validation
+          if (authToken && unifiedToken !== authToken) {
+            console.warn(`⚠️ [UNIFIED-AUTH] Token mismatch detected - existing vs unified`);
+          }
+        } else {
+          console.log(`🧪 [UNIFIED-AUTH] No token found via AuthService`);
+        }
+      } catch (unifiedError) {
+        console.warn(`🧪 [UNIFIED-AUTH] Parallel test error:`, unifiedError);
       }
       
       // Extract tenant UUID from namespaced contexts

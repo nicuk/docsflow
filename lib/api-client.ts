@@ -3,6 +3,9 @@
 
 // Enterprise tenant configuration - extracted from subdomain or headers
 
+// UNIFIED AUTH: Import new auth service for parallel testing
+import { AuthService } from '@/lib/services/auth-service';
+
 // Enhanced API base URL logic
 const getAPIBaseURL = () => {
   // Use environment variable first, then fallback to production API
@@ -36,6 +39,24 @@ export const apiClient = {
     
     // SURGICAL FIX: Enhanced token retrieval with multiple fallbacks
     const authToken = await this.getAccessToken();
+    
+    // 🧪 PARALLEL TESTING: Try new AuthService alongside existing logic
+    let unifiedToken: string | null = null;
+    try {
+      unifiedToken = await AuthService.getToken();
+      if (unifiedToken) {
+        console.log('🧪 [UNIFIED-AUTH] Token retrieved via AuthService (parallel test)');
+        // Compare tokens for validation
+        if (authToken && unifiedToken !== authToken) {
+          console.warn('⚠️ [UNIFIED-AUTH] Token mismatch - legacy vs unified');
+        }
+      } else {
+        console.log('🧪 [UNIFIED-AUTH] No token from AuthService');
+      }
+    } catch (unifiedError) {
+      console.warn('🧪 [UNIFIED-AUTH] Parallel test error:', unifiedError);
+    }
+    
     if (authToken) {
       // Use BOTH headers - custom header survives Vercel proxy
       headers['Authorization'] = `Bearer ${authToken}`;
@@ -43,7 +64,8 @@ export const apiClient = {
       console.log('🔍 [SURGICAL] Auth headers set for cross-domain request:', {
         tokenPreview: authToken.substring(0, 30) + '...',
         tokenLength: authToken.length,
-        hasValidFormat: authToken.includes('.')
+        hasValidFormat: authToken.includes('.'),
+        unifiedMatch: unifiedToken === authToken
       });
     } else {
       console.error('❌ [SURGICAL] No auth token available - debugging session state');
@@ -56,7 +78,8 @@ export const apiClient = {
           hasSession: !!session,
           hasAccessToken: !!session?.access_token,
           sessionError: error,
-          tokenPreview: session?.access_token?.substring(0, 30) + '...' || 'none'
+          tokenPreview: session?.access_token?.substring(0, 30) + '...' || 'none',
+          unifiedAvailable: !!unifiedToken
         });
       } catch (debugError) {
         console.error('🔍 [DEBUG] Session check failed:', debugError);
