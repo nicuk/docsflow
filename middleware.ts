@@ -18,6 +18,32 @@ import { redis, safeRedisOperation } from './lib/redis';
 // SECURITY FIX: Remove direct service role access from middleware
 // Service role operations now handled by secure backend APIs
 
+// SURGICAL HELPER: JWT email extraction with robust error handling
+function extractEmailFromJWT(authToken: string): string | null {
+  try {
+    if (!authToken || typeof authToken !== 'string') return null;
+    
+    const parts = authToken.split('.');
+    if (parts.length !== 3) return null;
+    
+    // Validate JWT structure
+    if (!authToken.startsWith('eyJ')) return null;
+    
+    const payload = JSON.parse(atob(parts[1]));
+    const email = payload?.email;
+    
+    // Validate email format
+    if (email && typeof email === 'string' && email.includes('@')) {
+      return email;
+    }
+    
+    return null;
+  } catch (error) {
+    // Silent fail for security - don't log JWT contents
+    return null;
+  }
+}
+
 // PERFORMANCE FIX: Use Redis for tenant verification with Supabase fallback
 async function verifyTenantExists(subdomain: string): Promise<boolean> {
   try {
@@ -261,8 +287,6 @@ export default async function middleware(request: NextRequest) {
       // MULTI-TENANT: Read from namespaced tenant contexts
       const currentTenant = request.cookies.get('current-tenant')?.value;
       const tenantContexts = request.cookies.get('tenant-contexts')?.value;
-      // SUPABASE SSR FIX: Read standard Supabase auth cookies first
-      const userEmail = request.cookies.get('user-email')?.value || request.cookies.get('user_email')?.value;
       
       // Get all cookies for debugging
       const subdomainCookies = request.cookies.getAll();
@@ -302,6 +326,16 @@ export default async function middleware(request: NextRequest) {
         } catch (parseError) {
           console.warn(`🔍 [MIDDLEWARE] Tenant token parsing failed:`, parseError);
         }
+      }
+      
+      // SURGICAL FIX: Extract user info from JWT token with robust error handling
+      const userEmail = extractEmailFromJWT(authToken) || 
+                       request.cookies.get('user-email')?.value || 
+                       request.cookies.get('user_email')?.value || 
+                       null;
+      
+      if (userEmail && authToken) {
+        console.log(`🔍 [MIDDLEWARE] User email extracted successfully`);
       }
       
       // Extract tenant UUID from namespaced contexts
@@ -495,7 +529,16 @@ export default async function middleware(request: NextRequest) {
           console.warn(`🔍 [MIDDLEWARE] Token parsing failed:`, parseError);
         }
       }
-      const userEmail = cookies.get('user-email')?.value || cookies.get('user_email')?.value;
+      
+      // SURGICAL FIX: Extract user info from JWT token with robust error handling
+      const userEmail = extractEmailFromJWT(authToken) || 
+                       cookies.get('user-email')?.value || 
+                       cookies.get('user_email')?.value || 
+                       null;
+      
+      if (userEmail && authToken) {
+        console.log(`🔍 [MIDDLEWARE] User email extracted successfully`);
+      }
       
       // ENTERPRISE SMART REDIRECT: Bypass dashboard/onboarding for authenticated users
       if ((pathname === '/dashboard' || pathname === '/onboarding' || pathname === '/') && 
