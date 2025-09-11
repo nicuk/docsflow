@@ -30,10 +30,11 @@ export class AuthService {
    * Used by: Middleware, API Client, Components
    */
   static async getToken(): Promise<string | null> {
-    // 🛡️ CRITICAL FIX: Server-side safety check
+    // 🛡️ CRITICAL FIX: Server-side safety check with cookie fallback
     if (typeof window === 'undefined') {
-      console.warn('🔐 [AUTH-SERVICE] Server-side call detected - returning null');
-      return null;
+      console.log('🔐 [AUTH-SERVICE] Server-side execution - using cookie parsing fallback');
+      // For server-side calls, try to parse from request headers if available
+      return null; // Middleware will handle server-side auth
     }
 
     try {

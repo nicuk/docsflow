@@ -365,20 +365,19 @@ export default async function middleware(request: NextRequest) {
         console.log(`🔍 [MIDDLEWARE] User email extracted successfully`);
       }
 
-      // 🧪 PARALLEL TESTING: Try new AuthService alongside existing logic
+      // 🎯 PHASE 2: PRIMARY AUTH - Use AuthService as primary auth method
+      let unifiedToken: string | null = null;
       try {
-        const unifiedToken = AuthService.parseAuthFromCookies(request.headers.get('cookie') || '');
+        unifiedToken = AuthService.parseAuthFromCookies(request.headers.get('cookie') || '');
         if (unifiedToken) {
-          console.log(`🧪 [UNIFIED-AUTH] Token found via AuthService (parallel test)`);
-          // Compare with existing token for validation
-          if (authToken && unifiedToken !== authToken) {
-            console.warn(`⚠️ [UNIFIED-AUTH] Token mismatch detected - existing vs unified`);
-          }
+          console.log(`🎯 [UNIFIED-AUTH] Token found via AuthService (primary)`);
+          // Override legacy token with unified token
+          authToken = unifiedToken;
         } else {
           console.log(`🧪 [UNIFIED-AUTH] No token found via AuthService`);
         }
       } catch (unifiedError) {
-        console.warn(`🧪 [UNIFIED-AUTH] Parallel test error:`, unifiedError);
+        console.warn(`🚨 [UNIFIED-AUTH] Auth service error:`, unifiedError);
       }
       
       // Extract tenant UUID from namespaced contexts
