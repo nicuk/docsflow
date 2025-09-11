@@ -30,6 +30,12 @@ export class AuthService {
    * Used by: Middleware, API Client, Components
    */
   static async getToken(): Promise<string | null> {
+    // 🛡️ CRITICAL FIX: Server-side safety check
+    if (typeof window === 'undefined') {
+      console.warn('🔐 [AUTH-SERVICE] Server-side call detected - returning null');
+      return null;
+    }
+
     try {
       // Check cache first (performance optimization)
       if (this.tokenCache && Date.now() < this.tokenExpiry) {
@@ -70,6 +76,11 @@ export class AuthService {
    * Used by: Components, Route Guards
    */
   static async isAuthenticated(): Promise<boolean> {
+    // 🛡️ Server-side safety check
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    
     const token = await this.getToken();
     return token !== null;
   }
@@ -79,6 +90,11 @@ export class AuthService {
    * Used by: Components, Profile displays
    */
   static async getCurrentUser(): Promise<AuthUser | null> {
+    // 🛡️ Server-side safety check
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
     try {
       const { data: { user }, error } = await this.supabase.auth.getUser();
       

@@ -57,14 +57,18 @@ export const apiClient = {
       console.warn('🧪 [UNIFIED-AUTH] Parallel test error:', unifiedError);
     }
     
-    if (authToken) {
+    // 🎯 CRITICAL FIX: Use unified token if primary token is missing
+    const finalToken = authToken || unifiedToken;
+    
+    if (finalToken) {
       // Use BOTH headers - custom header survives Vercel proxy
-      headers['Authorization'] = `Bearer ${authToken}`;
-      headers['X-Auth-Token'] = authToken; // Custom header that Vercel won't strip
+      headers['Authorization'] = `Bearer ${finalToken}`;
+      headers['X-Auth-Token'] = finalToken; // Custom header that Vercel won't strip
       console.log('🔍 [SURGICAL] Auth headers set for cross-domain request:', {
-        tokenPreview: authToken.substring(0, 30) + '...',
-        tokenLength: authToken.length,
-        hasValidFormat: authToken.includes('.'),
+        tokenPreview: finalToken.substring(0, 30) + '...',
+        tokenLength: finalToken.length,
+        hasValidFormat: finalToken.includes('.'),
+        tokenSource: authToken ? 'legacy' : 'unified',
         unifiedMatch: unifiedToken === authToken
       });
     } else {
@@ -178,6 +182,13 @@ export const apiClient = {
     
     // SURGICAL FIX: Enhanced Supabase cookie parsing with debugging
     console.log('🔍 [TOKEN-DEBUG] Checking Supabase auth cookies...');
+    
+    // 🛡️ CRITICAL FIX: Server-side safety check
+    if (typeof document === 'undefined') {
+      console.warn('🔍 [TOKEN-DEBUG] Server-side context - no cookies available');
+      return null;
+    }
+    
     const allCookies = document.cookie.split('; ');
     const authCookies = allCookies.filter(cookie => 
       cookie.includes('auth-token') || cookie.includes('access_token')
@@ -205,7 +216,7 @@ export const apiClient = {
     }
     
     // Final fallback to legacy cookies
-    const authCookie = document.cookie
+    const authCookie = (typeof document !== 'undefined' ? document.cookie : '')
       .split('; ')
       .find(row => row.startsWith('auth-token=') || row.startsWith('docsflow_auth_token='))
       ?.split('=')[1];
