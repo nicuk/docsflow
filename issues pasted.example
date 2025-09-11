@@ -1,13 +1,395 @@
-2025-08-31T22:02:17.176Z [info] 🔍 [MIDDLEWARE START] POST api.docsflow.app/api/documents/upload
-2025-08-31T22:02:17.176Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
-2025-08-31T22:02:17.176Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T22:02:17.176Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
-2025-08-31T22:02:17.176Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/documents/upload
-2025-08-31T22:02:17.176Z [info] 🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: bitto
-2025-08-31T22:02:17.299Z [info] ✅ [API-MIDDLEWARE] Tenant bitto verified for API call (UUID: 122928f6...)
-2025-08-31T22:02:17.299Z [info] 🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin
-2025-08-31T22:02:19.199Z [info] ✅ Using enhanced AI provider (OpenRouter + Gemini fallback)
-2025-08-31T22:02:19.280Z [info] 🔍 Tenant validation: {
+2025-09-11T04:12:38.590Z [info] 🔍 [MIDDLEWARE START] GET www.docsflow.app/
+2025-09-11T04:12:38.590Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'www.docsflow.app' (length: 16)
+2025-09-11T04:12:38.590Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-09-11T04:12:38.591Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-09-11T04:12:38.591Z [info] 🔍 [MIDDLEWARE] Request URL: https://www.docsflow.app/
+2025-09-11T04:12:38.591Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'null' from hostname: 'www.docsflow.app'
+2025-09-11T04:12:38.591Z [info] 🔍 [MIDDLEWARE] Checking main domain condition: hostname='www.docsflow.app' vs 'docsflow.app'|'www.docsflow.app'|'localhost'
+2025-09-11T04:12:38.591Z [info] 🔍 [MIDDLEWARE] ✅ MATCHED main domain condition - Processing: www.docsflow.app/
+2025-09-11T04:12:38.591Z [info] 🔍 [MIDDLEWARE] Allowing main domain route: /
+
+2025-09-11T04:12:51.695Z [info] 🔍 [MIDDLEWARE START] GET www.docsflow.app/select-workspace
+2025-09-11T04:12:51.695Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'www.docsflow.app' (length: 16)
+2025-09-11T04:12:51.695Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-09-11T04:12:51.695Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-09-11T04:12:51.695Z [info] 🔍 [MIDDLEWARE] Request URL: https://www.docsflow.app/select-workspace
+2025-09-11T04:12:51.696Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'null' from hostname: 'www.docsflow.app'
+2025-09-11T04:12:51.696Z [info] 🔍 [MIDDLEWARE] Checking main domain condition: hostname='www.docsflow.app' vs 'docsflow.app'|'www.docsflow.app'|'localhost'
+2025-09-11T04:12:51.696Z [info] 🔍 [MIDDLEWARE] ✅ MATCHED main domain condition - Processing: www.docsflow.app/select-workspace
+2025-09-11T04:12:51.696Z [info] 🔍 [MIDDLEWARE] Checking auth for main domain user on: /select-workspace
+2025-09-11T04:12:51.697Z [warning] 🔧 [SAFE-DECODER] Direct decode failed, trying URL decode...
+2025-09-11T04:12:51.697Z [warning] 🔧 [SAFE-DECODER] URL decode failed, trying manual cleanup...
+2025-09-11T04:12:51.697Z [info] ✅ [SAFE-DECODER] Manual cleanup successful
+2025-09-11T04:12:51.697Z [info] ✅ [SAFE-DECODER] Successfully extracted access token
+2025-09-11T04:12:51.697Z [info] ✅ [MIDDLEWARE] Successfully extracted JWT from Supabase session cookie
+2025-09-11T04:12:51.697Z [info] 🔍 [MIDDLEWARE] User email extracted successfully
+2025-09-11T04:12:51.697Z [info] 🔍 [MIDDLEWARE] Auth check - Token: EXISTS, Email: support@bitto.tech, TenantId: 122928f6-f34e-484b-9a69-7e1f25caf45c, Subdomain: bitto
+2025-09-11T04:12:51.697Z [info] 🎯 [MIDDLEWARE] DIRECT REDIRECT authenticated user from main domain to tenant: https://bitto.docsflow.app/select-workspace
+2025-09-11T04:12:52.050Z [info] 🔍 [MIDDLEWARE START] OPTIONS bitto.docsflow.app/select-workspace
+2025-09-11T04:12:52.050Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-09-11T04:12:52.050Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-09-11T04:12:52.050Z [info] 🔍 [MIDDLEWARE] Origin: https://www.docsflow.app
+2025-09-11T04:12:52.051Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/select-workspace
+2025-09-11T04:12:52.124Z [info] 🔍 [MIDDLEWARE START] GET www.docsflow.app/select-workspace
+2025-09-11T04:12:52.124Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'www.docsflow.app' (length: 16)
+2025-09-11T04:12:52.124Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-09-11T04:12:52.124Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-09-11T04:12:52.124Z [info] 🔍 [MIDDLEWARE] Request URL: https://www.docsflow.app/select-workspace
+2025-09-11T04:12:52.124Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'null' from hostname: 'www.docsflow.app'
+2025-09-11T04:12:52.124Z [info] 🔍 [MIDDLEWARE] Checking main domain condition: hostname='www.docsflow.app' vs 'docsflow.app'|'www.docsflow.app'|'localhost'
+2025-09-11T04:12:52.124Z [info] 🔍 [MIDDLEWARE] ✅ MATCHED main domain condition - Processing: www.docsflow.app/select-workspace
+2025-09-11T04:12:52.124Z [info] 🔍 [MIDDLEWARE] Checking auth for main domain user on: /select-workspace
+2025-09-11T04:12:52.124Z [warning] 🔧 [SAFE-DECODER] Direct decode failed, trying URL decode...
+2025-09-11T04:12:52.125Z [warning] 🔧 [SAFE-DECODER] URL decode failed, trying manual cleanup...
+2025-09-11T04:12:52.125Z [info] ✅ [SAFE-DECODER] Manual cleanup successful
+2025-09-11T04:12:52.125Z [info] ✅ [SAFE-DECODER] Successfully extracted access token
+2025-09-11T04:12:52.125Z [info] ✅ [MIDDLEWARE] Successfully extracted JWT from Supabase session cookie
+2025-09-11T04:12:52.125Z [info] 🔍 [MIDDLEWARE] User email extracted successfully
+2025-09-11T04:12:52.125Z [info] 🔍 [MIDDLEWARE] Auth check - Token: EXISTS, Email: support@bitto.tech, TenantId: 122928f6-f34e-484b-9a69-7e1f25caf45c, Subdomain: bitto
+2025-09-11T04:12:52.125Z [info] 🎯 [MIDDLEWARE] DIRECT REDIRECT authenticated user from main domain to tenant: https://bitto.docsflow.app/select-workspace
+
+2025-09-11T04:12:53.036Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/api/tenants/bitto
+2025-09-11T04:12:53.036Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-09-11T04:12:53.036Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-09-11T04:12:53.036Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-09-11T04:12:53.036Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/api/tenants/bitto
+2025-09-11T04:12:53.036Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-09-11T04:12:53.036Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-09-11T04:12:53.036Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-09-11T04:12:53.036Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
+2025-09-11T04:12:53.757Z [info] Redis operation successful
+2025-09-11T04:12:53.758Z [info] ❌ Cache MISS for tenant: bitto - fetching from database
+2025-09-11T04:12:53.758Z [info] 🔍 Looking up tenant by subdomain: bitto
+2025-09-11T04:12:54.637Z [info] Redis operation successful
+2025-09-11T04:12:54.637Z [info] 💾 Cached tenant data for: bitto
+
+2025-09-11T04:12:53.020Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/api/auth/session
+2025-09-11T04:12:53.020Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-09-11T04:12:53.020Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-09-11T04:12:53.020Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-09-11T04:12:53.020Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/api/auth/session
+2025-09-11T04:12:53.020Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-09-11T04:12:53.020Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-09-11T04:12:53.020Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-09-11T04:12:53.020Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
+2025-09-11T04:12:54.331Z [info] 🔍 [SESSION API] Request received from: https://bitto.docsflow.app/select-workspace
+2025-09-11T04:12:54.331Z [info] 🔍 [SESSION API] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36...
+2025-09-11T04:12:55.979Z [info] 🔍 [SESSION API] UserProfile Debug: {
+  userProfile: {
+    id: 'cc362aeb-bf97-4260-9dfb-bb1725c9c202',
+    email: 'support@bitto.tech',
+    name: 'bitto',
+    role: 'admin',
+    tenant_id: '122928f6-f34e-484b-9a69-7e1f25caf45c',
+    created_at: '2025-08-29T09:59:59.299+00:00',
+    tenants: {
+      id: '122928f6-f34e-484b-9a69-7e1f25caf45c',
+      name: 'bitto',
+      industry: 'general',
+      subdomain: 'bitto',
+      created_at: '2025-08-29T10:00:26.515675+00:00'
+    }
+  },
+  hasEmail: true,
+  emailValue: 'support@bitto.tech',
+  hasTenantId: true,
+  tenantIdValue: '122928f6-f34e-484b-9a69-7e1f25caf45c',
+  hasTenants: true,
+  tenantsValue: {
+    id: '122928f6-f34e-484b-9a69-7e1f25caf45c',
+    name: 'bitto',
+    industry: 'general',
+    subdomain: 'bitto',
+    created_at: '2025-08-29T10:00:26.515675+00:00'
+  },
+  tenantsSubdomain: 'bitto',
+  profileError: null
+}
+2025-09-11T04:12:55.981Z [info] 🔧 [SESSION API] Set tenant context cookies: {
+  tenantId: '122928f6...',
+  email: 'support@bitto.tech',
+  subdomain: 'bitto'
+}
+2025-09-11T04:12:55.982Z [info] 🔍 [SESSION API] Cookie values being set: {
+  'tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c',
+  'user-email': 'support@bitto.tech',
+  'tenant-subdomain': 'bitto',
+  'tenant-context': '{"tenantId":"122928f6-f34e-484b-9a69-7e1f25caf45c","subdomain":"bitto","timestamp":1757563975980}'
+}
+2025-09-11T04:12:55.982Z [info] ✅ [SESSION API] Successful authentication: {
+  userId: 'cc362aeb-bf97-4260-9dfb-bb1725c9c202',
+  email: 'support@bitto.tech',
+  tenantId: '122928f6-f34e-484b-9a69-7e1f25caf45c',
+  tenantSubdomain: 'bitto',
+  onboardingComplete: true
+}
+2025-09-11T04:12:55.191Z [info] 🔍 [SESSION API] Supabase auth result: {
+  hasUser: true,
+  userId: 'cc362aeb-bf97-4260-9dfb-bb1725c9c202',
+  userEmail: 'support@bitto.tech',
+  hasSession: true,
+  hasAccessToken: true,
+  userError: undefined,
+  sessionError: undefined,
+  availableCookies: [
+    {
+      name: 'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+      hasValue: true,
+      valueLength: 2966
+    }
+  ],
+  supabaseCookies: [
+    {
+      name: 'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+      hasValue: true,
+      valueLength: 2966,
+      valuePreview: 'base64-eyJhY2Nlc3Nfd'
+    }
+  ]
+}
+2025-09-11T04:12:55.191Z [info] 🔍 [SESSION API] Session access token: eyJhbGciOiJIUzI1NiIs... (length: 929)
+
+2025-09-11T04:12:53.053Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/dashboard
+2025-09-11T04:12:53.053Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-09-11T04:12:53.053Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-09-11T04:12:53.053Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-09-11T04:12:53.053Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/dashboard
+2025-09-11T04:12:53.054Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-09-11T04:12:53.054Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-09-11T04:12:53.054Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-09-11T04:12:53.054Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
+2025-09-11T04:12:53.054Z [warning] 🔧 [SAFE-DECODER] Direct decode failed, trying URL decode...
+2025-09-11T04:12:53.055Z [warning] 🔧 [SAFE-DECODER] URL decode failed, trying manual cleanup...
+2025-09-11T04:12:53.055Z [info] ✅ [SAFE-DECODER] Manual cleanup successful
+2025-09-11T04:12:53.055Z [info] ✅ [SAFE-DECODER] Successfully extracted access token
+2025-09-11T04:12:53.055Z [info] ✅ [MIDDLEWARE] Successfully extracted JWT from Supabase session cookie
+2025-09-11T04:12:53.055Z [info] 🔍 [MIDDLEWARE] User email extracted successfully
+2025-09-11T04:12:53.055Z [info] 🧪 [UNIFIED-AUTH] No token found via AuthService
+2025-09-11T04:12:53.056Z [info] 🔍 [MIDDLEWARE] bitto subdomain auth check: {
+  pathname: '/dashboard',
+  storedTenantId: '122928f6...',
+  userEmail: 'support@bitto.tech',
+  authToken: 'eyJhbGciOiJIUzI1NiIs...',
+  tenantUUID: '122928f6...'
+}
+2025-09-11T04:12:53.056Z [info] 🔍 [MIDDLEWARE] Raw cookies present: tenant-id, tenant-subdomain, tenant-contexts, current-tenant, user-email, tenant-context, sb-lhcopwwiqwjpzbdnjovo-auth-token
+2025-09-11T04:12:53.056Z [info] ✅ [MIDDLEWARE] User authenticated for tenant bitto - allowing access to /dashboard
+2025-09-11T04:12:53.528Z [error] Unhandled Rejection: ReferenceError: document is not defined
+    at Object.getAll (.next/server/chunks/6049.js:1:15855)
+    at c (.next/server/chunks/6605.js:5:1278)
+    at Object.getItem (.next/server/chunks/6605.js:5:3568)
+2025-09-11T04:12:53.528Z [fatal] Node.js process exited with exit status: 128. The logs above can help with debugging the issue.
+2025-09-11T04:12:53.529Z [error] ReferenceError: document is not defined
+    at Object.getAll (.next/server/chunks/6049.js:1:15855)
+    at c (.next/server/chunks/6605.js:5:1278)
+    at Object.getItem (.next/server/chunks/6605.js:5:3568)
+
+    2025-09-11T04:12:53.970Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/dashboard/documents
+2025-09-11T04:12:53.970Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-09-11T04:12:53.970Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-09-11T04:12:53.970Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-09-11T04:12:53.970Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/dashboard/documents
+2025-09-11T04:12:53.970Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-09-11T04:12:53.970Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-09-11T04:12:53.971Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-09-11T04:12:53.971Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
+2025-09-11T04:12:53.971Z [warning] 🔧 [SAFE-DECODER] Direct decode failed, trying URL decode...
+2025-09-11T04:12:53.971Z [warning] 🔧 [SAFE-DECODER] URL decode failed, trying manual cleanup...
+2025-09-11T04:12:53.971Z [info] ✅ [SAFE-DECODER] Manual cleanup successful
+2025-09-11T04:12:53.972Z [info] ✅ [SAFE-DECODER] Successfully extracted access token
+2025-09-11T04:12:53.972Z [info] ✅ [MIDDLEWARE] Successfully extracted JWT from Supabase session cookie
+2025-09-11T04:12:53.972Z [info] 🔍 [MIDDLEWARE] User email extracted successfully
+2025-09-11T04:12:53.972Z [info] 🧪 [UNIFIED-AUTH] No token found via AuthService
+2025-09-11T04:12:53.972Z [info] 🔍 [MIDDLEWARE] bitto subdomain auth check: {
+  pathname: '/dashboard/documents',
+  storedTenantId: '122928f6...',
+  userEmail: 'support@bitto.tech',
+  authToken: 'eyJhbGciOiJIUzI1NiIs...',
+  tenantUUID: '122928f6...'
+}
+2025-09-11T04:12:53.972Z [info] 🔍 [MIDDLEWARE] Raw cookies present: tenant-id, tenant-subdomain, tenant-contexts, current-tenant, user-email, tenant-context, sb-lhcopwwiqwjpzbdnjovo-auth-token
+2025-09-11T04:12:53.973Z [info] ✅ [MIDDLEWARE] User authenticated for tenant bitto - allowing access to /dashboard/documents
+
+2025-09-11T04:12:54.008Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/api/auth/session
+2025-09-11T04:12:54.008Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-09-11T04:12:54.008Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-09-11T04:12:54.009Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-09-11T04:12:54.009Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/api/auth/session
+2025-09-11T04:12:54.009Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-09-11T04:12:54.009Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-09-11T04:12:54.010Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-09-11T04:12:54.010Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
+2025-09-11T04:12:54.148Z [info] 🔍 [SESSION API] Request received from: https://bitto.docsflow.app/dashboard
+2025-09-11T04:12:54.148Z [info] 🔍 [SESSION API] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36...
+2025-09-11T04:12:55.764Z [info] 🔍 [SESSION API] UserProfile Debug: {
+  userProfile: {
+    id: 'cc362aeb-bf97-4260-9dfb-bb1725c9c202',
+    email: 'support@bitto.tech',
+    name: 'bitto',
+    role: 'admin',
+    tenant_id: '122928f6-f34e-484b-9a69-7e1f25caf45c',
+    created_at: '2025-08-29T09:59:59.299+00:00',
+    tenants: {
+      id: '122928f6-f34e-484b-9a69-7e1f25caf45c',
+      name: 'bitto',
+      industry: 'general',
+      subdomain: 'bitto',
+      created_at: '2025-08-29T10:00:26.515675+00:00'
+    }
+  },
+  hasEmail: true,
+  emailValue: 'support@bitto.tech',
+  hasTenantId: true,
+  tenantIdValue: '122928f6-f34e-484b-9a69-7e1f25caf45c',
+  hasTenants: true,
+  tenantsValue: {
+    id: '122928f6-f34e-484b-9a69-7e1f25caf45c',
+    name: 'bitto',
+    industry: 'general',
+    subdomain: 'bitto',
+    created_at: '2025-08-29T10:00:26.515675+00:00'
+  },
+  tenantsSubdomain: 'bitto',
+  profileError: null
+}
+2025-09-11T04:12:55.766Z [info] 🔧 [SESSION API] Set tenant context cookies: {
+  tenantId: '122928f6...',
+  email: 'support@bitto.tech',
+  subdomain: 'bitto'
+}
+2025-09-11T04:12:55.766Z [info] 🔍 [SESSION API] Cookie values being set: {
+  'tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c',
+  'user-email': 'support@bitto.tech',
+  'tenant-subdomain': 'bitto',
+  'tenant-context': '{"tenantId":"122928f6-f34e-484b-9a69-7e1f25caf45c","subdomain":"bitto","timestamp":1757563975765}'
+}
+2025-09-11T04:12:55.766Z [info] ✅ [SESSION API] Successful authentication: {
+  userId: 'cc362aeb-bf97-4260-9dfb-bb1725c9c202',
+  email: 'support@bitto.tech',
+  tenantId: '122928f6-f34e-484b-9a69-7e1f25caf45c',
+  tenantSubdomain: 'bitto',
+  onboardingComplete: true
+}
+2025-09-11T04:12:54.962Z [info] 🔍 [SESSION API] Supabase auth result: {
+  hasUser: true,
+  userId: 'cc362aeb-bf97-4260-9dfb-bb1725c9c202',
+  userEmail: 'support@bitto.tech',
+  hasSession: true,
+  hasAccessToken: true,
+  userError: undefined,
+  sessionError: undefined,
+  availableCookies: [
+    {
+      name: 'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+      hasValue: true,
+      valueLength: 2966
+    }
+  ],
+  supabaseCookies: [
+    {
+      name: 'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+      hasValue: true,
+      valueLength: 2966,
+      valuePreview: 'base64-eyJhY2Nlc3Nfd'
+    }
+  ]
+}
+2025-09-11T04:12:54.962Z [info] 🔍 [SESSION API] Session access token: eyJhbGciOiJIUzI1NiIs... (length: 929)
+
+2025-09-11T04:12:57.835Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/api/auth/session
+2025-09-11T04:12:57.835Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-09-11T04:12:57.835Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-09-11T04:12:57.836Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-09-11T04:12:57.836Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/api/auth/session
+2025-09-11T04:12:57.837Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-09-11T04:12:57.837Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-09-11T04:12:57.837Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-09-11T04:12:57.837Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
+2025-09-11T04:12:57.975Z [info] 🔍 [SESSION API] Request received from: https://bitto.docsflow.app/dashboard
+2025-09-11T04:12:57.975Z [info] 🔍 [SESSION API] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36...
+2025-09-11T04:12:58.748Z [info] 🔍 [SESSION API] Supabase auth result: {
+  hasUser: true,
+  userId: 'cc362aeb-bf97-4260-9dfb-bb1725c9c202',
+  userEmail: 'support@bitto.tech',
+  hasSession: true,
+  hasAccessToken: true,
+  userError: undefined,
+  sessionError: undefined,
+  availableCookies: [
+    {
+      name: 'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+      hasValue: true,
+      valueLength: 2966
+    }
+  ],
+  supabaseCookies: [
+    {
+      name: 'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+      hasValue: true,
+      valueLength: 2966,
+      valuePreview: 'base64-eyJhY2Nlc3Nfd'
+    }
+  ]
+}
+2025-09-11T04:12:58.748Z [info] 🔍 [SESSION API] Session access token: eyJhbGciOiJIUzI1NiIs... (length: 929)
+2025-09-11T04:12:59.556Z [info] 🔍 [SESSION API] UserProfile Debug: {
+  userProfile: {
+    id: 'cc362aeb-bf97-4260-9dfb-bb1725c9c202',
+    email: 'support@bitto.tech',
+    name: 'bitto',
+    role: 'admin',
+    tenant_id: '122928f6-f34e-484b-9a69-7e1f25caf45c',
+    created_at: '2025-08-29T09:59:59.299+00:00',
+    tenants: {
+      id: '122928f6-f34e-484b-9a69-7e1f25caf45c',
+      name: 'bitto',
+      industry: 'general',
+      subdomain: 'bitto',
+      created_at: '2025-08-29T10:00:26.515675+00:00'
+    }
+  },
+  hasEmail: true,
+  emailValue: 'support@bitto.tech',
+  hasTenantId: true,
+  tenantIdValue: '122928f6-f34e-484b-9a69-7e1f25caf45c',
+  hasTenants: true,
+  tenantsValue: {
+    id: '122928f6-f34e-484b-9a69-7e1f25caf45c',
+    name: 'bitto',
+    industry: 'general',
+    subdomain: 'bitto',
+    created_at: '2025-08-29T10:00:26.515675+00:00'
+  },
+  tenantsSubdomain: 'bitto',
+  profileError: null
+}
+2025-09-11T04:12:59.556Z [info] 🔧 [SESSION API] Set tenant context cookies: {
+  tenantId: '122928f6...',
+  email: 'support@bitto.tech',
+  subdomain: 'bitto'
+}
+2025-09-11T04:12:59.556Z [info] 🔍 [SESSION API] Cookie values being set: {
+  'tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c',
+  'user-email': 'support@bitto.tech',
+  'tenant-subdomain': 'bitto',
+  'tenant-context': '{"tenantId":"122928f6-f34e-484b-9a69-7e1f25caf45c","subdomain":"bitto","timestamp":1757563979556}'
+}
+2025-09-11T04:12:59.556Z [info] ✅ [SESSION API] Successful authentication: {
+  userId: 'cc362aeb-bf97-4260-9dfb-bb1725c9c202',
+  email: 'support@bitto.tech',
+  tenantId: '122928f6-f34e-484b-9a69-7e1f25caf45c',
+  tenantSubdomain: 'bitto',
+  onboardingComplete: true
+}
+2025-09-11T04:13:00.379Z [info] 🔍 [MIDDLEWARE START] GET api.docsflow.app/api/conversations
+2025-09-11T04:13:00.379Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
+2025-09-11T04:13:00.380Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-09-11T04:13:00.380Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
+2025-09-11T04:13:00.380Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/conversations
+2025-09-11T04:13:00.381Z [info] 🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: bitto
+2025-09-11T04:13:00.674Z [info] ✅ [API-MIDDLEWARE] Tenant bitto verified for API call (UUID: 122928f6...)
+2025-09-11T04:13:00.674Z [info] 🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin
+2025-09-11T04:13:01.074Z [info] 🔍 Tenant validation: {
   subdomain: 'bitto',
   tenantId: '122928f6-f34e-484b-9a69-7e1f25caf45c',
   requireAuth: true,
@@ -16,10 +398,19 @@
     'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c'
   }
 }
-2025-08-31T22:02:19.474Z [info] ✅ Redis tenant cache HIT for: bitto
-2025-08-31T22:02:19.475Z [info] 🔍 [AUTH-DEBUG] Headers received: {
-  hasAuthorization: true,
-  authHeader: 'Bearer eyJhbGciOiJIU...',
+2025-09-11T04:13:01.094Z [info] ✅ Redis tenant cache HIT for: bitto
+2025-09-11T04:13:01.094Z [info] 🔍 [VERCEL-PROXY] Token payload analysis: {
+  issuer: 'serverless',
+  audience: undefined,
+  isVercelToken: true,
+  isSupabaseToken: false,
+  hasUserId: false,
+  tokenType: 'VERCEL_DEPLOYMENT'
+}
+2025-09-11T04:13:01.094Z [warning] 🚨 [VERCEL-PROXY] Rejecting Vercel deployment token, not user auth token
+2025-09-11T04:13:01.095Z [info] 🔍 [AUTH-DEBUG] Headers received: {
+  hasAuthorization: false,
+  authHeader: 'none',
   hasRLSContext: false,
   vercelProxyExtracted: true,
   allHeaders: {
@@ -30,13 +421,12 @@
     'access-control-allow-headers': 'Content-Type, Authorization, X-Auth-Token, X-Tenant-ID, X-Tenant-Subdomain, X-HMAC-Signature',
     'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'access-control-allow-origin': 'https://bitto.docsflow.app',
-    authorization: 'Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6IndJVnZLekpxUThYamVhOVEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2xoY29wd3dpcXdqcHpiZG5qb3ZvLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJjYzM2MmFlYi1iZjk3LTQyNjAtOWRmYi1iYjE3MjVjOWMyMDIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU2NjgxMzIzLCJpYXQiOjE3NTY2Nzc3MjMsImVtYWlsIjoic3VwcG9ydEBiaXR0by50ZWNoIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJhY2Nlc3NfbGV2ZWwiOjIsImNvbXBhbnlfbmFtZSI6ImJpdHRvIiwiZW1haWwiOiJzdXBwb3J0QGJpdHRvLnRlY2giLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGhvbmVfdmVyaWZpZWQiOmZhbHNlLCJyb2xlIjoidXNlciIsInN1YiI6ImNjMzYyYWViLWJmOTctNDI2MC05ZGZiLWJiMTcyNWM5YzIwMiJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU2Njc3NzIzfV0sInNlc3Npb25faWQiOiJmZDU3MGRmNi04MmMzLTQ1NTgtOTJjMi1iMjJmOGYzZjBhOWUiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.hCyNqE96bN8HXpMdDnhFOCnenOhlNQmWuJeIrvYcBGM',
     connection: 'close',
-    'content-length': '359559',
-    'content-type': 'multipart/form-data; boundary=----WebKitFormBoundaryHhLfuH02xxm79SA1',
-    date: 'Sun, 31 Aug 2025 22:02:17 GMT',
+    'content-type': 'application/json',
+    cookie: 'tenant-id=122928f6-f34e-484b-9a69-7e1f25caf45c; tenant-subdomain=bitto; tenant-contexts={"bitto":"122928f6-f34e-484b-9a69-7e1f25caf45c"}; current-tenant=bitto; tenant-context=%7B%22tenantId%22%3A%22122928f6-f34e-484b-9a69-7e1f25caf45c%22%2C%22subdomain%22%3A%22bitto%22%2C%22timestamp%22%3A1757563979556%7D; user-email=undefined; access_token=; docsflow_auth_token=; sb-lhcopwwiqwjpzbdnjovo-auth-token=',
+    date: 'Thu, 11 Sep 2025 04:13:00 GMT',
     dnt: '1',
-    forwarded: 'for=161.142.152.210;host=api.docsflow.app;proto=https;sig=0QmVhcmVyIDFiZTI3NWUwNTllOGYxNTk3YTMwYjllZTBmODYxOTljNWRmMzZiYTk4MGQ4MzQ2NGI3N2E3M2ViYTgxMjlmODI=;exp=1756678037',
+    forwarded: 'for=161.142.142.132;host=api.docsflow.app;proto=https;sig=0QmVhcmVyIGY3MWNmNmFhYzA3Y2UxOWMzZGE0ZTg4NzViZGQ4MjVhNDEzNjNlZTMyMjcxZGRiYmYyNjY1ZDY4ZmFjYzBlMjc=;exp=1757564280',
     host: 'api.docsflow.app',
     origin: 'https://bitto.docsflow.app',
     priority: 'u=1, i',
@@ -49,330 +439,67 @@
     'sec-fetch-site': 'same-site',
     'strict-transport-security': 'max-age=63072000; includeSubDomains; preload',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
-    'x-auth-token': 'eyJhbGciOiJIUzI1NiIsImtpZCI6IndJVnZLekpxUThYamVhOVEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2xoY29wd3dpcXdqcHpiZG5qb3ZvLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJjYzM2MmFlYi1iZjk3LTQyNjAtOWRmYi1iYjE3MjVjOWMyMDIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU2NjgxMzIzLCJpYXQiOjE3NTY2Nzc3MjMsImVtYWlsIjoic3VwcG9ydEBiaXR0by50ZWNoIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJhY2Nlc3NfbGV2ZWwiOjIsImNvbXBhbnlfbmFtZSI6ImJpdHRvIiwiZW1haWwiOiJzdXBwb3J0QGJpdHRvLnRlY2giLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGhvbmVfdmVyaWZpZWQiOmZhbHNlLCJyb2xlIjoidXNlciIsInN1YiI6ImNjMzYyYWViLWJmOTctNDI2MC05ZGZiLWJiMTcyNWM5YzIwMiJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU2Njc3NzIzfV0sInNlc3Npb25faWQiOiJmZDU3MGRmNi04MmMzLTQ1NTgtOTJjMi1iMjJmOGYzZjBhOWUiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.hCyNqE96bN8HXpMdDnhFOCnenOhlNQmWuJeIrvYcBGM',
     'x-content-type-options': 'nosniff',
-    'x-forwarded-for': '161.142.152.210',
+    'x-forwarded-for': '161.142.142.132',
     'x-forwarded-host': 'api.docsflow.app',
     'x-forwarded-port': '443',
     'x-forwarded-proto': 'https',
     'x-frame-options': 'DENY',
-    'x-matched-path': '/api/documents/upload',
-    'x-real-ip': '161.142.152.210',
+    'x-matched-path': '/api/conversations',
+    'x-real-ip': '161.142.142.132',
     'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c',
     'x-tenant-subdomain': 'bitto',
-    'x-vercel-deployment-url': 'ai-lead-router-saas-ux1fpyoop-nics-projects-4e604dbf.vercel.app',
-    'x-vercel-forwarded-for': '161.142.152.210',
-    'x-vercel-id': 'sin1::lzkp9-1756677737009-27b4c88eeea4',
+    'x-vercel-deployment-url': 'ai-lead-router-saas-cegj61nk8-nics-projects-4e604dbf.vercel.app',
+    'x-vercel-forwarded-for': '161.142.142.132',
+    'x-vercel-id': 'sin1::mb7v6-1757563980360-34b5a74929f7',
     'x-vercel-internal-bot-check': 'skip',
     'x-vercel-internal-ingress-bucket': 'bucket017',
     'x-vercel-internal-ingress-port': '17443',
     'x-vercel-ip-as-number': '9930',
-    'x-vercel-ip-city': 'Petaling%20Jaya',
+    'x-vercel-ip-city': 'Kuala%20Lumpur',
     'x-vercel-ip-continent': 'AS',
     'x-vercel-ip-country': 'MY',
-    'x-vercel-ip-country-region': '10',
-    'x-vercel-ip-latitude': '3.1071',
-    'x-vercel-ip-longitude': '101.6139',
-    'x-vercel-ip-postal-code': '47301',
+    'x-vercel-ip-country-region': '14',
+    'x-vercel-ip-latitude': '3.1013',
+    'x-vercel-ip-longitude': '101.6915',
+    'x-vercel-ip-postal-code': '57000',
     'x-vercel-ip-timezone': 'Asia/Kuala_Lumpur',
-    'x-vercel-ja4-digest': 't13d1517h2_8daaf6152771_b6f405a00624',
-    'x-vercel-oidc-token': 'eyJraWQiOiJtcmstNDMwMmVjMWI2NzBmNDhhOThhZDYxZGFkZTRhMjNiZTciLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NTY2NzY4MTMsIm93bmVyX2lkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJpYXQiOjE3NTY2NzY4MTMsInZlcmNlbF9pZCI6InNpbjE6Ojd6djZrLTE3NTY2NzY4MTM2NjMtOWYxZGY3ODg4NDI0IiwiYXVkIjoiaHR0cHM6XC9cL3ZlcmNlbC5jb21cL25pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJvd25lciI6Im5pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJpc3MiOiJodHRwczpcL1wvb2lkYy52ZXJjZWwuY29tXC9uaWNzLXByb2plY3RzLTRlNjA0ZGJmIiwicHJvamVjdF9pZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2NjgwNDEzLCJlbnZpcm9ubWVudCI6InByb2R1Y3Rpb24iLCJzY29wZSI6Im93bmVyOm5pY3MtcHJvamVjdHMtNGU2MDRkYmY6cHJvamVjdDphaS1sZWFkLXJvdXRlci1zYWFzOmVudmlyb25tZW50OnByb2R1Y3Rpb24iLCJzdWIiOiJvd25lcjpuaWNzLXByb2plY3RzLTRlNjA0ZGJmOnByb2plY3Q6YWktbGVhZC1yb3V0ZXItc2FhczplbnZpcm9ubWVudDpwcm9kdWN0aW9uIiwicHJvamVjdCI6ImFpLWxlYWQtcm91dGVyLXNhYXMifQ.AQPmXniHG6WNYTIBboUKinDU8EOeUmhnt4FImCtU3te9KoW9737DkQSQ6Exxyr-nmCi1S_hyejWnwx-b3a2E0r4rDiC7_JvMf3bLsBnqgNJNZN42SKHdYiglSaI4w_2XacQ3A6UegS-g52DVaroJzPeZwKJouzIdED9H7ipLPpQ1ml--HPBODYzs3isppYV_xFiRRZVfPdszJZD6ZyhPhJ_nLXzLHJ0vAfGlGVMhFV_MCzLGwGmXxwKndnzBhBIQOnePqgDV99SjPrm_Z2D-zyY-y1YYu_lqOm6QXpWOJXFT9V7HUtqdMpyjNsPonNi1bdOSkrLN62kwFH-xym786Q',
-    'x-vercel-proxied-for': '161.142.152.210',
-    'x-vercel-proxy-signature': 'Bearer 1be275e059e8f1597a30b9ee0f86199c5df36ba980d83464b77a73eba8129f82',
-    'x-vercel-proxy-signature-ts': '1756678037',
+    'x-vercel-ja4-digest': 't13d1516h2_8daaf6152771_d8a2da3f94cd',
+    'x-vercel-oidc-token': 'eyJraWQiOiJtcmstNDMwMmVjMWI2NzBmNDhhOThhZDYxZGFkZTRhMjNiZTciLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NTc1NjIzNzIsIm93bmVyX2lkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJpYXQiOjE3NTc1NjIzNzIsInZlcmNlbF9pZCI6InNpbjE6OjRqd3M3LTE3NTc1NjIzNzIzMDctMmUyMDBmNTAyYTQ2IiwiYXVkIjoiaHR0cHM6XC9cL3ZlcmNlbC5jb21cL25pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJvd25lciI6Im5pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJpc3MiOiJodHRwczpcL1wvb2lkYy52ZXJjZWwuY29tXC9uaWNzLXByb2plY3RzLTRlNjA0ZGJmIiwicHJvamVjdF9pZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU3NTY1OTcyLCJlbnZpcm9ubWVudCI6InByb2R1Y3Rpb24iLCJzY29wZSI6Im93bmVyOm5pY3MtcHJvamVjdHMtNGU2MDRkYmY6cHJvamVjdDphaS1sZWFkLXJvdXRlci1zYWFzOmVudmlyb25tZW50OnByb2R1Y3Rpb24iLCJzdWIiOiJvd25lcjpuaWNzLXByb2plY3RzLTRlNjA0ZGJmOnByb2plY3Q6YWktbGVhZC1yb3V0ZXItc2FhczplbnZpcm9ubWVudDpwcm9kdWN0aW9uIiwicHJvamVjdCI6ImFpLWxlYWQtcm91dGVyLXNhYXMifQ.AL1pSndBaGNyqEqU5it9KNAsVylQlLAb8ztHlQbZ8vCujHa4V9SkzLJsb_DAOrlRQJsHfxfHR_2h3iBDM0GdVhvs1yaPUUSgcrM7FLwPOLuo1nN5DrPFZfnO4p8ZCuXBlqq_irnChHLTdFxYC_5T-0knDC9qPEZKsNLFVFPmplLWp4i4i9v6GFiUtOkt-SUs9H-tP7gSX9oXAKK_t8H_QYrKimU_SWCClpIkWzzplWuTGbu_QxnxNPrM0KS8O35jF2fnEdFTvDHLoLpCtkadY9VZ4Wheyq4KdL1TozagHlJ3a9uc9sH_ux_YEjRhazmwMti_2e0QDE1jE0JUnanCHQ',
+    'x-vercel-proxied-for': '161.142.142.132',
+    'x-vercel-proxy-signature': 'Bearer f71cf6aac07ce19c3da4e8875bdd825a41363ee32271ddbbf2665d68facc0e27',
+    'x-vercel-proxy-signature-ts': '1757564280',
     'x-vercel-sc-basepath': '',
-    'x-vercel-sc-headers': '{"x-vercel-function-platform":"vercel\\/proxy+serverless","x-vercel-ept":"1","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXBsb3ltZW50SWQiOiJkcGxfM0VxNFdlTGZWRzFpUllKUUJRR05GOHYzUkNkbiIsInVubGltaXRlZCI6ZmFsc2UsInBsYW4iOiJob2JieSIsImlzcyI6InNlcnZlcmxlc3MiLCJkb21haW4iOiJhcGkuZG9jc2Zsb3cuYXBwIiwiYmxvY2siOmZhbHNlLCJpYXQiOjE3NTY2Nzc3MzcsInByb2plY3RJZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc4NjU3LCJvd25lcklkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJyZXF1ZXN0SWQiOiJsemtwOS0xNzU2Njc3NzM3MDA5LTI3YjRjODhlZWVhNCIsImVudiI6InByb2R1Y3Rpb24ifQ.nH_7y6EhyTmADOLkAWb1U4ycviW89uq8P9pQdFXxqVM"}',
+    'x-vercel-sc-headers': '{"x-vercel-function-platform":"vercel\\/proxy+serverless","x-vercel-ept":"1","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXBsb3ltZW50SWQiOiJkcGxfMlV1aEtjVGRkZHR4ZVdCeEVvTW04OXRrZk1WMiIsInVubGltaXRlZCI6ZmFsc2UsInBsYW4iOiJob2JieSIsImlzcyI6InNlcnZlcmxlc3MiLCJkb21haW4iOiJhcGkuZG9jc2Zsb3cuYXBwIiwiYmxvY2siOmZhbHNlLCJpYXQiOjE3NTc1NjM5ODAsInByb2plY3RJZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU3NTY0OTAwLCJvd25lcklkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJyZXF1ZXN0SWQiOiJtYjd2Ni0xNzU3NTYzOTgwMzYwLTM0YjVhNzQ5MjlmNyIsImVudiI6InByb2R1Y3Rpb24ifQ._8-2zSsIeiD5EWduEt2LbXZsRSTRVzyj8ZqRH4F9124"}',
     'x-vercel-sc-host': 'iad1.suspense-cache.vercel-infra.com',
     'x-xss-protection': '1; mode=block'
   }
 }
-2025-08-31T22:02:19.475Z [info] 🔍 [TOKEN-VALIDATION] Attempting Bearer token validation: {
-  tokenPreview: 'eyJhbGciOiJIUzI1NiIsImtpZCI6In...',
-  tokenLength: 929,
-  hasValidJWTFormat: true,
-  tokenParts: 3
+2025-09-11T04:13:01.095Z [info] 🔍 [COOKIE-DEBUG] Parsed cookies: {
+  hasCookieHeader: true,
+  cookieCount: 6,
+  hasAuthToken: false,
+  authTokenPreview: 'none',
+  availableCookies: [
+    'tenant-id',
+    'tenant-subdomain',
+    'tenant-contexts',
+    'current-tenant',
+    'tenant-context',
+    'user-email'
+  ]
 }
-2025-08-31T22:02:20.311Z [info] 🔍 [TOKEN-VALIDATION] Supabase validation result: {
-  hasUser: true,
-  userId: 'cc362aeb...',
-  userEmail: 'support@bitto.tech',
-  hasError: false,
-  errorCode: 'none',
-  errorDetails: null
-}
-2025-08-31T22:02:20.311Z [info] ✅ [TOKEN-VALIDATION] Bearer token validation successful
-2025-08-31T22:02:21.123Z [error] Error getting user access level: ReferenceError: getSupabaseClient is not defined
-    at d (.next/server/app/api/documents/upload/route.js:1:1278)
-    at r (.next/server/app/api/documents/upload/route.js:35:1432)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-    at async g (.next/server/app/api/documents/upload/route.js:35:13385)
-    at async x (.next/server/app/api/documents/upload/route.js:35:14507)
-2025-08-31T22:02:38.829Z [info] 🤖 Attempting openrouter/optimus-alpha (attempt 2/2)
-2025-08-31T22:02:38.907Z [error] OpenRouter API call failed for model openrouter/optimus-alpha: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:38.907Z [warning] ❌ Model openrouter/optimus-alpha failed: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:38.907Z [warning] OpenRouter failed for chunk context, using Gemini fallback: Error: All models failed. Last error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8608)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:39.486Z [info] 🤖 Attempting deepseek/deepseek-r1-distill-qwen-14b:free (attempt 1/2)
-2025-08-31T22:02:39.879Z [error] OpenRouter API call failed for model deepseek/deepseek-r1-distill-qwen-14b:free: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:39.879Z [warning] ❌ Model deepseek/deepseek-r1-distill-qwen-14b:free failed: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:40.879Z [info] 🤖 Attempting openrouter/optimus-alpha (attempt 2/2)
-2025-08-31T22:02:41.070Z [error] OpenRouter API call failed for model openrouter/optimus-alpha: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:41.070Z [warning] ❌ Model openrouter/optimus-alpha failed: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:41.071Z [warning] OpenRouter failed for chunk context, using Gemini fallback: Error: All models failed. Last error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8608)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:41.538Z [info] 🤖 Attempting deepseek/deepseek-r1-distill-qwen-14b:free (attempt 1/2)
-2025-08-31T22:02:42.055Z [error] OpenRouter API call failed for model deepseek/deepseek-r1-distill-qwen-14b:free: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:42.055Z [warning] ❌ Model deepseek/deepseek-r1-distill-qwen-14b:free failed: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:43.056Z [info] 🤖 Attempting openrouter/optimus-alpha (attempt 2/2)
-2025-08-31T22:02:43.149Z [error] OpenRouter API call failed for model openrouter/optimus-alpha: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:43.150Z [warning] ❌ Model openrouter/optimus-alpha failed: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:43.151Z [warning] OpenRouter failed for chunk context, using Gemini fallback: Error: All models failed. Last error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8608)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:43.227Z [warning] [Rate Limiter] Attempt 1/4 failed. Waiting 16000ms before retry...
-2025-08-31T22:02:49.103Z [error] Vercel Runtime Timeout Error: Task timed out after 30 seconds
-2025-08-31T22:02:28.838Z [info] Extracted image content (Screenshot 2024-11-25 121023.png): Okay, let's break down this image.
+2025-09-11T04:13:01.095Z [error] Tenant validation failed: Authentication required
 
-**1. Detailed Description:**
-
-The image is a flowchart outlining...
-2025-08-31T22:02:29.642Z [info] Creating contextual chunks for Screenshot 2024-11-25 121023.png...
-2025-08-31T22:02:29.642Z [info] 🤖 Attempting deepseek/deepseek-r1-distill-qwen-14b:free (attempt 1/2)
-2025-08-31T22:02:30.183Z [error] OpenRouter API call failed for model deepseek/deepseek-r1-distill-qwen-14b:free: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateDocumentContext (.next/server/app/api/documents/upload/route.js:18:23)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4783)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:30.184Z [warning] ❌ Model deepseek/deepseek-r1-distill-qwen-14b:free failed: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateDocumentContext (.next/server/app/api/documents/upload/route.js:18:23)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4783)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:31.185Z [info] 🤖 Attempting openrouter/optimus-alpha (attempt 2/2)
-2025-08-31T22:02:31.280Z [error] OpenRouter API call failed for model openrouter/optimus-alpha: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateDocumentContext (.next/server/app/api/documents/upload/route.js:18:23)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4783)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:31.280Z [warning] ❌ Model openrouter/optimus-alpha failed: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateDocumentContext (.next/server/app/api/documents/upload/route.js:18:23)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4783)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:31.281Z [warning] OpenRouter failed for document context, using Gemini fallback: Error: All models failed. Last error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8608)
-    at async i.generateDocumentContext (.next/server/app/api/documents/upload/route.js:18:23)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4783)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:31.898Z [info] 🤖 Attempting deepseek/deepseek-r1-distill-qwen-14b:free (attempt 1/2)
-2025-08-31T22:02:32.472Z [error] OpenRouter API call failed for model deepseek/deepseek-r1-distill-qwen-14b:free: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:32.473Z [warning] ❌ Model deepseek/deepseek-r1-distill-qwen-14b:free failed: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:33.473Z [info] 🤖 Attempting openrouter/optimus-alpha (attempt 2/2)
-2025-08-31T22:02:33.741Z [error] OpenRouter API call failed for model openrouter/optimus-alpha: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:33.742Z [warning] ❌ Model openrouter/optimus-alpha failed: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:33.742Z [warning] OpenRouter failed for chunk context, using Gemini fallback: Error: All models failed. Last error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8608)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:34.296Z [info] 🤖 Attempting deepseek/deepseek-r1-distill-qwen-14b:free (attempt 1/2)
-2025-08-31T22:02:35.278Z [error] OpenRouter API call failed for model deepseek/deepseek-r1-distill-qwen-14b:free: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:35.279Z [warning] ❌ Model deepseek/deepseek-r1-distill-qwen-14b:free failed: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:36.280Z [info] 🤖 Attempting openrouter/optimus-alpha (attempt 2/2)
-2025-08-31T22:02:36.392Z [error] OpenRouter API call failed for model openrouter/optimus-alpha: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:36.392Z [warning] ❌ Model openrouter/optimus-alpha failed: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:36.392Z [warning] OpenRouter failed for chunk context, using Gemini fallback: Error: All models failed. Last error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8608)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:37.123Z [info] 🤖 Attempting deepseek/deepseek-r1-distill-qwen-14b:free (attempt 1/2)
-2025-08-31T22:02:37.828Z [error] OpenRouter API call failed for model deepseek/deepseek-r1-distill-qwen-14b:free: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:37.829Z [warning] ❌ Model deepseek/deepseek-r1-distill-qwen-14b:free failed: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-
-
-
-    2025-08-31T22:02:17.159Z [info] 🔍 [MIDDLEWARE START] POST api.docsflow.app/api/documents/upload
-2025-08-31T22:02:17.160Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
-2025-08-31T22:02:17.160Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
-2025-08-31T22:02:17.160Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
-2025-08-31T22:02:17.160Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/documents/upload
-2025-08-31T22:02:17.161Z [info] 🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: bitto
-2025-08-31T22:02:17.272Z [info] ✅ [API-MIDDLEWARE] Tenant bitto verified for API call (UUID: 122928f6...)
-2025-08-31T22:02:17.272Z [info] 🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin
-2025-08-31T22:02:19.978Z [info] 🔍 Tenant validation: {
+2025-09-11T04:13:01.290Z [info] 🔍 [MIDDLEWARE START] POST api.docsflow.app/api/chat
+2025-09-11T04:13:01.290Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'api.docsflow.app' (length: 16)
+2025-09-11T04:13:01.290Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-09-11T04:13:01.290Z [info] 🔍 [MIDDLEWARE] Origin: https://bitto.docsflow.app
+2025-09-11T04:13:01.291Z [info] 🔍 [MIDDLEWARE] Request URL: https://api.docsflow.app/api/chat
+2025-09-11T04:13:01.291Z [info] 🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: bitto
+2025-09-11T04:13:01.355Z [info] ✅ [API-MIDDLEWARE] Tenant bitto verified for API call (UUID: 122928f6...)
+2025-09-11T04:13:01.355Z [info] 🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin
+2025-09-11T04:13:01.795Z [info] 🔍 Tenant validation: {
   subdomain: 'bitto',
   tenantId: '122928f6-f34e-484b-9a69-7e1f25caf45c',
   requireAuth: true,
@@ -381,10 +508,19 @@ The image is a flowchart outlining...
     'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c'
   }
 }
-2025-08-31T22:02:19.978Z [info] ✅ Memory cache hit for tenant: bitto
-2025-08-31T22:02:19.978Z [info] 🔍 [AUTH-DEBUG] Headers received: {
-  hasAuthorization: true,
-  authHeader: 'Bearer eyJhbGciOiJIU...',
+2025-09-11T04:13:01.795Z [info] ✅ Memory cache hit for tenant: bitto
+2025-09-11T04:13:01.795Z [info] 🔍 [VERCEL-PROXY] Token payload analysis: {
+  issuer: 'serverless',
+  audience: undefined,
+  isVercelToken: true,
+  isSupabaseToken: false,
+  hasUserId: false,
+  tokenType: 'VERCEL_DEPLOYMENT'
+}
+2025-09-11T04:13:01.795Z [warning] 🚨 [VERCEL-PROXY] Rejecting Vercel deployment token, not user auth token
+2025-09-11T04:13:01.796Z [info] 🔍 [AUTH-DEBUG] Headers received: {
+  hasAuthorization: false,
+  authHeader: 'none',
   hasRLSContext: false,
   vercelProxyExtracted: true,
   allHeaders: {
@@ -395,13 +531,13 @@ The image is a flowchart outlining...
     'access-control-allow-headers': 'Content-Type, Authorization, X-Auth-Token, X-Tenant-ID, X-Tenant-Subdomain, X-HMAC-Signature',
     'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'access-control-allow-origin': 'https://bitto.docsflow.app',
-    authorization: 'Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6IndJVnZLekpxUThYamVhOVEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2xoY29wd3dpcXdqcHpiZG5qb3ZvLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJjYzM2MmFlYi1iZjk3LTQyNjAtOWRmYi1iYjE3MjVjOWMyMDIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU2NjgxMzIzLCJpYXQiOjE3NTY2Nzc3MjMsImVtYWlsIjoic3VwcG9ydEBiaXR0by50ZWNoIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJhY2Nlc3NfbGV2ZWwiOjIsImNvbXBhbnlfbmFtZSI6ImJpdHRvIiwiZW1haWwiOiJzdXBwb3J0QGJpdHRvLnRlY2giLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGhvbmVfdmVyaWZpZWQiOmZhbHNlLCJyb2xlIjoidXNlciIsInN1YiI6ImNjMzYyYWViLWJmOTctNDI2MC05ZGZiLWJiMTcyNWM5YzIwMiJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU2Njc3NzIzfV0sInNlc3Npb25faWQiOiJmZDU3MGRmNi04MmMzLTQ1NTgtOTJjMi1iMjJmOGYzZjBhOWUiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.hCyNqE96bN8HXpMdDnhFOCnenOhlNQmWuJeIrvYcBGM',
     connection: 'close',
-    'content-length': '191720',
-    'content-type': 'multipart/form-data; boundary=----WebKitFormBoundaryhEClN2HAuRNqwpJy',
-    date: 'Sun, 31 Aug 2025 22:02:17 GMT',
+    'content-length': '31',
+    'content-type': 'application/json',
+    cookie: 'tenant-id=122928f6-f34e-484b-9a69-7e1f25caf45c; tenant-subdomain=bitto; tenant-contexts={"bitto":"122928f6-f34e-484b-9a69-7e1f25caf45c"}; current-tenant=bitto; tenant-context=%7B%22tenantId%22%3A%22122928f6-f34e-484b-9a69-7e1f25caf45c%22%2C%22subdomain%22%3A%22bitto%22%2C%22timestamp%22%3A1757563979556%7D; user-email=undefined; access_token=; docsflow_auth_token=; sb-lhcopwwiqwjpzbdnjovo-auth-token=',
+    date: 'Thu, 11 Sep 2025 04:13:01 GMT',
     dnt: '1',
-    forwarded: 'for=161.142.152.210;host=api.docsflow.app;proto=https;sig=0QmVhcmVyIDFiZTI3NWUwNTllOGYxNTk3YTMwYjllZTBmODYxOTljNWRmMzZiYTk4MGQ4MzQ2NGI3N2E3M2ViYTgxMjlmODI=;exp=1756678037',
+    forwarded: 'for=161.142.142.132;host=api.docsflow.app;proto=https;sig=0QmVhcmVyIDE1OWYxZWQwZDdiNzUyYzM3OTMyYjFkYjg1MzY1ZGU2N2JhY2UwNTgyODZhZDc2MWVlODA5YjY1MGEyYTc3MWI=;exp=1757564281',
     host: 'api.docsflow.app',
     origin: 'https://bitto.docsflow.app',
     priority: 'u=1, i',
@@ -414,247 +550,120 @@ The image is a flowchart outlining...
     'sec-fetch-site': 'same-site',
     'strict-transport-security': 'max-age=63072000; includeSubDomains; preload',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
-    'x-auth-token': 'eyJhbGciOiJIUzI1NiIsImtpZCI6IndJVnZLekpxUThYamVhOVEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2xoY29wd3dpcXdqcHpiZG5qb3ZvLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJjYzM2MmFlYi1iZjk3LTQyNjAtOWRmYi1iYjE3MjVjOWMyMDIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU2NjgxMzIzLCJpYXQiOjE3NTY2Nzc3MjMsImVtYWlsIjoic3VwcG9ydEBiaXR0by50ZWNoIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJhY2Nlc3NfbGV2ZWwiOjIsImNvbXBhbnlfbmFtZSI6ImJpdHRvIiwiZW1haWwiOiJzdXBwb3J0QGJpdHRvLnRlY2giLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGhvbmVfdmVyaWZpZWQiOmZhbHNlLCJyb2xlIjoidXNlciIsInN1YiI6ImNjMzYyYWViLWJmOTctNDI2MC05ZGZiLWJiMTcyNWM5YzIwMiJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU2Njc3NzIzfV0sInNlc3Npb25faWQiOiJmZDU3MGRmNi04MmMzLTQ1NTgtOTJjMi1iMjJmOGYzZjBhOWUiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.hCyNqE96bN8HXpMdDnhFOCnenOhlNQmWuJeIrvYcBGM',
     'x-content-type-options': 'nosniff',
-    'x-forwarded-for': '161.142.152.210',
+    'x-forwarded-for': '161.142.142.132',
     'x-forwarded-host': 'api.docsflow.app',
     'x-forwarded-port': '443',
     'x-forwarded-proto': 'https',
     'x-frame-options': 'DENY',
-    'x-matched-path': '/api/documents/upload',
-    'x-real-ip': '161.142.152.210',
+    'x-matched-path': '/api/chat',
+    'x-real-ip': '161.142.142.132',
     'x-tenant-id': '122928f6-f34e-484b-9a69-7e1f25caf45c',
     'x-tenant-subdomain': 'bitto',
-    'x-vercel-deployment-url': 'ai-lead-router-saas-ux1fpyoop-nics-projects-4e604dbf.vercel.app',
-    'x-vercel-forwarded-for': '161.142.152.210',
-    'x-vercel-id': 'sin1::z968h-1756677737009-2074a4e2e2b7',
+    'x-vercel-deployment-url': 'ai-lead-router-saas-cegj61nk8-nics-projects-4e604dbf.vercel.app',
+    'x-vercel-forwarded-for': '161.142.142.132',
+    'x-vercel-id': 'sin1::g8jn6-1757563981259-4cc58d0b9d13',
     'x-vercel-internal-bot-check': 'skip',
     'x-vercel-internal-ingress-bucket': 'bucket017',
     'x-vercel-internal-ingress-port': '17443',
     'x-vercel-ip-as-number': '9930',
-    'x-vercel-ip-city': 'Petaling%20Jaya',
+    'x-vercel-ip-city': 'Kuala%20Lumpur',
     'x-vercel-ip-continent': 'AS',
     'x-vercel-ip-country': 'MY',
-    'x-vercel-ip-country-region': '10',
-    'x-vercel-ip-latitude': '3.1071',
-    'x-vercel-ip-longitude': '101.6139',
-    'x-vercel-ip-postal-code': '47301',
+    'x-vercel-ip-country-region': '14',
+    'x-vercel-ip-latitude': '3.1013',
+    'x-vercel-ip-longitude': '101.6915',
+    'x-vercel-ip-postal-code': '57000',
     'x-vercel-ip-timezone': 'Asia/Kuala_Lumpur',
-    'x-vercel-ja4-digest': 't13d1517h2_8daaf6152771_b6f405a00624',
-    'x-vercel-oidc-token': 'eyJraWQiOiJtcmstNDMwMmVjMWI2NzBmNDhhOThhZDYxZGFkZTRhMjNiZTciLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NTY2NzY4MTMsIm93bmVyX2lkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJpYXQiOjE3NTY2NzY4MTMsInZlcmNlbF9pZCI6InNpbjE6Ojd6djZrLTE3NTY2NzY4MTM2NjMtOWYxZGY3ODg4NDI0IiwiYXVkIjoiaHR0cHM6XC9cL3ZlcmNlbC5jb21cL25pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJvd25lciI6Im5pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJpc3MiOiJodHRwczpcL1wvb2lkYy52ZXJjZWwuY29tXC9uaWNzLXByb2plY3RzLTRlNjA0ZGJmIiwicHJvamVjdF9pZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2NjgwNDEzLCJlbnZpcm9ubWVudCI6InByb2R1Y3Rpb24iLCJzY29wZSI6Im93bmVyOm5pY3MtcHJvamVjdHMtNGU2MDRkYmY6cHJvamVjdDphaS1sZWFkLXJvdXRlci1zYWFzOmVudmlyb25tZW50OnByb2R1Y3Rpb24iLCJzdWIiOiJvd25lcjpuaWNzLXByb2plY3RzLTRlNjA0ZGJmOnByb2plY3Q6YWktbGVhZC1yb3V0ZXItc2FhczplbnZpcm9ubWVudDpwcm9kdWN0aW9uIiwicHJvamVjdCI6ImFpLWxlYWQtcm91dGVyLXNhYXMifQ.AQPmXniHG6WNYTIBboUKinDU8EOeUmhnt4FImCtU3te9KoW9737DkQSQ6Exxyr-nmCi1S_hyejWnwx-b3a2E0r4rDiC7_JvMf3bLsBnqgNJNZN42SKHdYiglSaI4w_2XacQ3A6UegS-g52DVaroJzPeZwKJouzIdED9H7ipLPpQ1ml--HPBODYzs3isppYV_xFiRRZVfPdszJZD6ZyhPhJ_nLXzLHJ0vAfGlGVMhFV_MCzLGwGmXxwKndnzBhBIQOnePqgDV99SjPrm_Z2D-zyY-y1YYu_lqOm6QXpWOJXFT9V7HUtqdMpyjNsPonNi1bdOSkrLN62kwFH-xym786Q',
-    'x-vercel-proxied-for': '161.142.152.210',
-    'x-vercel-proxy-signature': 'Bearer 1be275e059e8f1597a30b9ee0f86199c5df36ba980d83464b77a73eba8129f82',
-    'x-vercel-proxy-signature-ts': '1756678037',
+    'x-vercel-ja4-digest': 't13d1516h2_8daaf6152771_d8a2da3f94cd',
+    'x-vercel-oidc-token': 'eyJraWQiOiJtcmstNDMwMmVjMWI2NzBmNDhhOThhZDYxZGFkZTRhMjNiZTciLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NTc1NjIzNzIsIm93bmVyX2lkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJpYXQiOjE3NTc1NjIzNzIsInZlcmNlbF9pZCI6InNpbjE6OjRqd3M3LTE3NTc1NjIzNzIzMDctMmUyMDBmNTAyYTQ2IiwiYXVkIjoiaHR0cHM6XC9cL3ZlcmNlbC5jb21cL25pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJvd25lciI6Im5pY3MtcHJvamVjdHMtNGU2MDRkYmYiLCJpc3MiOiJodHRwczpcL1wvb2lkYy52ZXJjZWwuY29tXC9uaWNzLXByb2plY3RzLTRlNjA0ZGJmIiwicHJvamVjdF9pZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU3NTY1OTcyLCJlbnZpcm9ubWVudCI6InByb2R1Y3Rpb24iLCJzY29wZSI6Im93bmVyOm5pY3MtcHJvamVjdHMtNGU2MDRkYmY6cHJvamVjdDphaS1sZWFkLXJvdXRlci1zYWFzOmVudmlyb25tZW50OnByb2R1Y3Rpb24iLCJzdWIiOiJvd25lcjpuaWNzLXByb2plY3RzLTRlNjA0ZGJmOnByb2plY3Q6YWktbGVhZC1yb3V0ZXItc2FhczplbnZpcm9ubWVudDpwcm9kdWN0aW9uIiwicHJvamVjdCI6ImFpLWxlYWQtcm91dGVyLXNhYXMifQ.AL1pSndBaGNyqEqU5it9KNAsVylQlLAb8ztHlQbZ8vCujHa4V9SkzLJsb_DAOrlRQJsHfxfHR_2h3iBDM0GdVhvs1yaPUUSgcrM7FLwPOLuo1nN5DrPFZfnO4p8ZCuXBlqq_irnChHLTdFxYC_5T-0knDC9qPEZKsNLFVFPmplLWp4i4i9v6GFiUtOkt-SUs9H-tP7gSX9oXAKK_t8H_QYrKimU_SWCClpIkWzzplWuTGbu_QxnxNPrM0KS8O35jF2fnEdFTvDHLoLpCtkadY9VZ4Wheyq4KdL1TozagHlJ3a9uc9sH_ux_YEjRhazmwMti_2e0QDE1jE0JUnanCHQ',
+    'x-vercel-proxied-for': '161.142.142.132',
+    'x-vercel-proxy-signature': 'Bearer 159f1ed0d7b752c37932b1db85365de67bace058286ad761ee809b650a2a771b',
+    'x-vercel-proxy-signature-ts': '1757564281',
     'x-vercel-sc-basepath': '',
-    'x-vercel-sc-headers': '{"x-vercel-function-platform":"vercel\\/proxy+serverless","x-vercel-ept":"1","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXBsb3ltZW50SWQiOiJkcGxfM0VxNFdlTGZWRzFpUllKUUJRR05GOHYzUkNkbiIsInVubGltaXRlZCI6ZmFsc2UsInBsYW4iOiJob2JieSIsImlzcyI6InNlcnZlcmxlc3MiLCJkb21haW4iOiJhcGkuZG9jc2Zsb3cuYXBwIiwiYmxvY2siOmZhbHNlLCJpYXQiOjE3NTY2Nzc3MzcsInByb2plY3RJZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU2Njc4NjU3LCJvd25lcklkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJyZXF1ZXN0SWQiOiJ6OTY4aC0xNzU2Njc3NzM3MDA5LTIwNzRhNGUyZTJiNyIsImVudiI6InByb2R1Y3Rpb24ifQ.YGcHaJLLVW7efnL1N_NRp1FVfJRdBab5YTogXZO16oA"}',
+    'x-vercel-sc-headers': '{"x-vercel-function-platform":"vercel\\/proxy+serverless","x-vercel-ept":"1","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkZXBsb3ltZW50SWQiOiJkcGxfMlV1aEtjVGRkZHR4ZVdCeEVvTW04OXRrZk1WMiIsInVubGltaXRlZCI6ZmFsc2UsInBsYW4iOiJob2JieSIsImlzcyI6InNlcnZlcmxlc3MiLCJkb21haW4iOiJhcGkuZG9jc2Zsb3cuYXBwIiwiYmxvY2siOmZhbHNlLCJpYXQiOjE3NTc1NjM5ODEsInByb2plY3RJZCI6InByal9HUWs0UzZvUWtXRDMzWDNyWDNCZlhSTzRtSXVlIiwiZXhwIjoxNzU3NTY0OTAxLCJvd25lcklkIjoidGVhbV9tYVp6UUJZZEJkMURlQkZRZ0NFaGFFWnoiLCJyZXF1ZXN0SWQiOiJnOGpuNi0xNzU3NTYzOTgxMjU5LTRjYzU4ZDBiOWQxMyIsImVudiI6InByb2R1Y3Rpb24ifQ.nMYKAfGJS5mbigQLaL29Cx6AM6RYjx24WQNSKBbKL1E"}',
     'x-vercel-sc-host': 'iad1.suspense-cache.vercel-infra.com',
     'x-xss-protection': '1; mode=block'
   }
 }
-2025-08-31T22:02:19.978Z [info] 🔍 [TOKEN-VALIDATION] Attempting Bearer token validation: {
-  tokenPreview: 'eyJhbGciOiJIUzI1NiIsImtpZCI6In...',
-  tokenLength: 929,
-  hasValidJWTFormat: true,
-  tokenParts: 3
+2025-09-11T04:13:01.796Z [info] 🔍 [COOKIE-DEBUG] Parsed cookies: {
+  hasCookieHeader: true,
+  cookieCount: 6,
+  hasAuthToken: false,
+  authTokenPreview: 'none',
+  availableCookies: [
+    'tenant-id',
+    'tenant-subdomain',
+    'tenant-contexts',
+    'current-tenant',
+    'tenant-context',
+    'user-email'
+  ]
 }
-2025-08-31T22:02:20.277Z [info] 🔍 [TOKEN-VALIDATION] Supabase validation result: {
-  hasUser: true,
-  userId: 'cc362aeb...',
-  userEmail: 'support@bitto.tech',
-  hasError: false,
-  errorCode: 'none',
-  errorDetails: null
+
+2025-09-11T04:13:01.403Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/dashboard/documents
+2025-09-11T04:13:01.404Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-09-11T04:13:01.404Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-09-11T04:13:01.404Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-09-11T04:13:01.404Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/dashboard/documents
+2025-09-11T04:13:01.404Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-09-11T04:13:01.404Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-09-11T04:13:01.405Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-09-11T04:13:01.424Z [info] Redis operation successful
+2025-09-11T04:13:01.424Z [info] ✅ [RESILIENT] Redis cache HIT: bitto
+2025-09-11T04:13:01.424Z [info] 🧪 [UNIFIED-AUTH] No token found via AuthService
+2025-09-11T04:13:01.426Z [info] 🔍 [MIDDLEWARE] bitto subdomain auth check: {
+  pathname: '/dashboard/documents',
+  storedTenantId: '122928f6...',
+  userEmail: 'undefined',
+  authToken: 'MISSING',
+  tenantUUID: '122928f6...'
 }
-2025-08-31T22:02:20.277Z [info] ✅ [TOKEN-VALIDATION] Bearer token validation successful
-2025-08-31T22:02:21.096Z [error] Error getting user access level: ReferenceError: getSupabaseClient is not defined
-    at d (.next/server/app/api/documents/upload/route.js:1:1278)
-    at r (.next/server/app/api/documents/upload/route.js:35:1432)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-    at async g (.next/server/app/api/documents/upload/route.js:35:13385)
-    at async x (.next/server/app/api/documents/upload/route.js:35:14507)
-2025-08-31T22:02:25.772Z [info] Extracted image content (Screenshot 2024-11-25 121001.png): Here's a detailed analysis of the image:
+2025-09-11T04:13:01.427Z [info] 🔍 [MIDDLEWARE] Raw cookies present: tenant-id, tenant-subdomain, tenant-contexts, current-tenant, tenant-context, user-email, access_token, docsflow_auth_token, sb-lhcopwwiqwjpzbdnjovo-auth-token
+2025-09-11T04:13:01.427Z [info] 🔐 [MIDDLEWARE] Redirecting unauthenticated user to login: https://bitto.docsflow.app/login
+2025-09-11T04:13:01.427Z [info] 🔍 [MIDDLEWARE] Auth failure reason: {
+  hasEmail: true,
+  hasToken: false,
+  hasTenantId: true,
+  tenantMatch: true
+}
 
-**1. Detailed Description:**
-
-The image is a slide or a do...
-2025-08-31T22:02:26.568Z [info] Creating contextual chunks for Screenshot 2024-11-25 121001.png...
-2025-08-31T22:02:26.568Z [info] 🤖 Attempting deepseek/deepseek-r1-distill-qwen-14b:free (attempt 1/2)
-2025-08-31T22:02:28.189Z [error] OpenRouter API call failed for model deepseek/deepseek-r1-distill-qwen-14b:free: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateDocumentContext (.next/server/app/api/documents/upload/route.js:18:23)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4783)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:28.189Z [warning] ❌ Model deepseek/deepseek-r1-distill-qwen-14b:free failed: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateDocumentContext (.next/server/app/api/documents/upload/route.js:18:23)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4783)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:29.191Z [info] 🤖 Attempting openrouter/optimus-alpha (attempt 2/2)
-2025-08-31T22:02:29.400Z [error] OpenRouter API call failed for model openrouter/optimus-alpha: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateDocumentContext (.next/server/app/api/documents/upload/route.js:18:23)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4783)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:29.400Z [warning] ❌ Model openrouter/optimus-alpha failed: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateDocumentContext (.next/server/app/api/documents/upload/route.js:18:23)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4783)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:29.400Z [warning] OpenRouter failed for document context, using Gemini fallback: Error: All models failed. Last error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8608)
-    at async i.generateDocumentContext (.next/server/app/api/documents/upload/route.js:18:23)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4783)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:30.147Z [info] 🤖 Attempting deepseek/deepseek-r1-distill-qwen-14b:free (attempt 1/2)
-2025-08-31T22:02:30.615Z [error] OpenRouter API call failed for model deepseek/deepseek-r1-distill-qwen-14b:free: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:30.615Z [warning] ❌ Model deepseek/deepseek-r1-distill-qwen-14b:free failed: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:31.616Z [info] 🤖 Attempting openrouter/optimus-alpha (attempt 2/2)
-2025-08-31T22:02:31.727Z [error] OpenRouter API call failed for model openrouter/optimus-alpha: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:31.727Z [warning] ❌ Model openrouter/optimus-alpha failed: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:31.728Z [warning] OpenRouter failed for chunk context, using Gemini fallback: Error: All models failed. Last error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8608)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:32.350Z [info] 🤖 Attempting deepseek/deepseek-r1-distill-qwen-14b:free (attempt 1/2)
-2025-08-31T22:02:32.945Z [error] OpenRouter API call failed for model deepseek/deepseek-r1-distill-qwen-14b:free: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:32.945Z [warning] ❌ Model deepseek/deepseek-r1-distill-qwen-14b:free failed: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:33.946Z [info] 🤖 Attempting openrouter/optimus-alpha (attempt 2/2)
-2025-08-31T22:02:34.128Z [error] OpenRouter API call failed for model openrouter/optimus-alpha: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:34.129Z [warning] ❌ Model openrouter/optimus-alpha failed: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:34.129Z [warning] OpenRouter failed for chunk context, using Gemini fallback: Error: All models failed. Last error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8608)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:34.769Z [info] 🤖 Attempting deepseek/deepseek-r1-distill-qwen-14b:free (attempt 1/2)
-2025-08-31T22:02:35.291Z [error] OpenRouter API call failed for model deepseek/deepseek-r1-distill-qwen-14b:free: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:35.292Z [warning] ❌ Model deepseek/deepseek-r1-distill-qwen-14b:free failed: Error: OpenRouter API error (404): {"error":{"message":"Provider returned error","code":404,"metadata":{"raw":"{\"detail\":\"model not found: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B\"}","provider_name":"Chutes"}},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:36.292Z [info] 🤖 Attempting openrouter/optimus-alpha (attempt 2/2)
-2025-08-31T22:02:36.392Z [error] OpenRouter API call failed for model openrouter/optimus-alpha: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:36.392Z [warning] ❌ Model openrouter/optimus-alpha failed: Error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generate (.next/server/app/api/documents/upload/route.js:35:8110)
-    at async d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8476)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:36.392Z [warning] OpenRouter failed for chunk context, using Gemini fallback: Error: All models failed. Last error: OpenRouter API error (404): {"error":{"message":"Quasar and Optimus were stealth models, and revealed on April 14th as early testing versions of GPT 4.1. Check it out: https://openrouter.ai/openai/gpt-4.1","code":404},"user_id":"user_2zJGI3WLK8iV1tnnDW5jKFFHGqq"}
-    at d.generateWithFallback (.next/server/app/api/documents/upload/route.js:35:8608)
-    at async i.generateChunkContext (.next/server/app/api/documents/upload/route.js:28:32)
-    at async i.createContextualChunks (.next/server/app/api/documents/upload/route.js:1:4879)
-    at async s (.next/server/app/api/documents/upload/route.js:35:5836)
-    at async r (.next/server/app/api/documents/upload/route.js:35:4326)
-    at async k (.next/server/app/api/documents/upload/route.js:35:12382)
-2025-08-31T22:02:36.924Z [info] Generated 3 contextual chunks
-2025-08-31T22:02:36.929Z [info] Redis operation successful
-2025-08-31T22:02:36.929Z [info] Cache miss for content hash: a5d55c5e2640fe91
-2025-08-31T22:02:37.140Z [info] Cached embedding for model text-embedding-004, key: a5d55c5e2640fe91
-2025-08-31T22:02:37.140Z [info] Redis operation successful
-2025-08-31T22:02:37.929Z [info] Processed chunk 0 with context: This section provides a detailed, point-by-point d...
-2025-08-31T22:02:37.934Z [info] Redis operation successful
-2025-08-31T22:02:37.934Z [info] Cache miss for content hash: 8187e8cf147455cc
-2025-08-31T22:02:38.146Z [info] Cached embedding for model text-embedding-004, key: 8187e8cf147455cc
-2025-08-31T22:02:38.146Z [info] Redis operation successful
-2025-08-31T22:02:38.445Z [info] Processed chunk 1 with context: This section details rating instructions for AI mo...
-2025-08-31T22:02:38.450Z [info] Redis operation successful
-2025-08-31T22:02:38.450Z [info] Cache miss for content hash: 963e74e5ea6c73f1
-2025-08-31T22:02:38.671Z [info] Cached embedding for model text-embedding-004, key: 963e74e5ea6c73f1
-2025-08-31T22:02:38.671Z [info] Redis operation successful
-2025-08-31T22:02:39.505Z [info] Processed chunk 2 with context: This section defines the desired language behavior...
+2025-09-11T04:13:01.550Z [info] 🔍 [SESSION API] Request received from: https://bitto.docsflow.app/dashboard/documents
+2025-09-11T04:13:01.550Z [info] 🔍 [SESSION API] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36...
+2025-09-11T04:13:01.552Z [info] 🔍 [SESSION API] Supabase auth result: {
+  hasUser: false,
+  userId: undefined,
+  userEmail: undefined,
+  hasSession: false,
+  hasAccessToken: false,
+  userError: 'Auth session missing!',
+  sessionError: undefined,
+  availableCookies: [
+    { name: 'access_token', hasValue: false, valueLength: 0 },
+    { name: 'docsflow_auth_token', hasValue: false, valueLength: 0 },
+    {
+      name: 'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+      hasValue: false,
+      valueLength: 0
+    }
+  ],
+  supabaseCookies: [
+    {
+      name: 'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+      hasValue: false,
+      valueLength: 0,
+      valuePreview: 'empty'
+    }
+  ]
+}
+2025-09-11T04:13:01.552Z [info] ❌ [SESSION API] No access token in session
+2025-09-11T04:13:01.552Z [info] ❌ [SESSION API] Authentication failed: Auth session missing!
+2025-09-11T04:13:01.408Z [info] 🔍 [MIDDLEWARE START] GET bitto.docsflow.app/api/auth/session
+2025-09-11T04:13:01.408Z [info] 🔍 [MIDDLEWARE] HOSTNAME DEBUG: 'bitto.docsflow.app' (length: 18)
+2025-09-11T04:13:01.408Z [info] 🔍 [MIDDLEWARE] User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...
+2025-09-11T04:13:01.408Z [info] 🔍 [MIDDLEWARE] Origin: null
+2025-09-11T04:13:01.408Z [info] 🔍 [MIDDLEWARE] Request URL: https://bitto.docsflow.app/api/auth/session
+2025-09-11T04:13:01.408Z [info] 🔍 [MIDDLEWARE] Extracted tenant: 'bitto' from hostname: 'bitto.docsflow.app'
+2025-09-11T04:13:01.408Z [info] 🔍 [MIDDLEWARE] Processing tenant subdomain: bitto
+2025-09-11T04:13:01.408Z [info] 🔍 [RESILIENT] Resolving tenant: bitto
+2025-09-11T04:13:01.408Z [info] ⚡ [RESILIENT] Memory cache HIT: bitto
