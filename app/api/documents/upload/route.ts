@@ -351,21 +351,39 @@ async function processDocumentContentEnhanced(
   // Determine document type for better context
   const documentType = getDocumentType(mimeType, filename);
   
-  // Create contextual chunks (49% accuracy improvement) with fallback
+  // 🎯 SMART CHUNKING: Skip complex chunking for simple content
   console.log(`Creating contextual chunks for ${filename}...`);
   let contextualChunks;
-  try {
-    contextualChunks = await enhancedChunking.createContextualChunks(
-      textContent,
-      filename,
-      documentType
-    );
-  } catch (error) {
-    console.error('AI chunking failed, using fallback basic chunking:', error);
-    
-    // Fallback to basic chunking when AI fails
-    contextualChunks = createBasicChunks(textContent, filename);
-    console.log(`Generated ${contextualChunks.length} basic fallback chunks`);
+  
+  // Check if content is simple enough to skip contextual chunking
+  const isSimpleContent = textContent.length < 2000 || 
+                         (mimeType.startsWith('image/') && textContent.length < 1000);
+  
+  if (isSimpleContent) {
+    console.log(`🚀 Simple content detected (${textContent.length} chars), using fast single-chunk processing`);
+    // Create a single chunk for simple content - no LLM calls needed
+    contextualChunks = [{
+      content: textContent,
+      contextual_content: `${documentType} content: ${textContent}`,
+      chunk_index: 0,
+      context_summary: `${documentType} document: ${filename}`,
+      confidence_indicators: { length: textContent.length, complexity: 'simple' }
+    }];
+  } else {
+    console.log(`📄 Complex content detected (${textContent.length} chars), using enhanced contextual chunking`);
+    try {
+      contextualChunks = await enhancedChunking.createContextualChunks(
+        textContent,
+        filename,
+        documentType
+      );
+    } catch (error) {
+      console.error('AI chunking failed, using fallback basic chunking:', error);
+      
+      // Fallback to basic chunking when AI fails
+      contextualChunks = createBasicChunks(textContent, filename);
+      console.log(`Generated ${contextualChunks.length} basic fallback chunks`);
+    }
   }
   
   // 🎯 SURGICAL FIX: Limit chunks to prevent timeout
