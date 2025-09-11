@@ -61,9 +61,9 @@ class AuthClient {
 
     // Store tokens in localStorage AND set cookies for middleware
     if (data.user?.access_token) {
-      localStorage.setItem('access_token', data.user.access_token);
-      localStorage.setItem('refresh_token', data.user.refresh_token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      if (typeof localStorage !== 'undefined') localStorage.setItem('access_token', data.user.access_token);
+      if (typeof localStorage !== 'undefined') localStorage.setItem('refresh_token', data.user.refresh_token);
+      if (typeof localStorage !== 'undefined') localStorage.setItem('user', JSON.stringify(data.user));
       
       // MULTI-TENANT: Use unified cookie management system
       const { MultiTenantCookieManager } = await import('@/lib/multi-tenant-cookie-manager');
@@ -116,9 +116,9 @@ class AuthClient {
 
     // Store tokens in localStorage
     if (data.user?.access_token) {
-      localStorage.setItem('access_token', data.user.access_token);
-      localStorage.setItem('refresh_token', data.user.refresh_token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      if (typeof localStorage !== 'undefined') localStorage.setItem('access_token', data.user.access_token);
+      if (typeof localStorage !== 'undefined') localStorage.setItem('refresh_token', data.user.refresh_token);
+      if (typeof localStorage !== 'undefined') localStorage.setItem('user', JSON.stringify(data.user));
     }
 
     return data;
@@ -139,14 +139,14 @@ class AuthClient {
       console.warn('🔍 [AUTH-CLIENT] Session token fetch failed, falling back to localStorage:', sessionError);
     }
     
-    // Fallback to localStorage for backward compatibility
-    return localStorage.getItem('access_token');
+    // Fallback to localStorage for backward compatibility (browser-only)
+    return typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : null;
   }
 
   // Get current user from storage
   getCurrentUser(): User | null {
     try {
-      const userStr = localStorage.getItem('user');
+      const userStr = typeof localStorage !== 'undefined' ? localStorage.getItem('user') : null;
       return userStr ? JSON.parse(userStr) : null;
     } catch (error) {
       console.error('Error parsing stored user data:', error);
@@ -172,7 +172,7 @@ class AuthClient {
   // Refresh access token (simplified - in production use proper refresh tokens)
   async refreshToken(): Promise<boolean> {
     try {
-      const refreshToken = localStorage.getItem('refresh_token');
+      const refreshToken = typeof localStorage !== 'undefined' ? localStorage.getItem('refresh_token') : null;
       if (!refreshToken) {
         return false;
       }
@@ -369,8 +369,8 @@ class AuthClient {
       };
 
       // Store tokens in localStorage
-      localStorage.setItem('access_token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+      if (typeof localStorage !== 'undefined') localStorage.setItem('access_token', token);
+      if (typeof localStorage !== 'undefined') localStorage.setItem('user', JSON.stringify(user));
 
       return {
         success: true,
@@ -393,7 +393,7 @@ class AuthClient {
       
       // Store subdomain for restoration after OAuth callback
       if (currentSubdomain && currentSubdomain !== 'www') {
-        localStorage.setItem('oauth-subdomain', currentSubdomain);
+        if (typeof localStorage !== 'undefined') localStorage.setItem('oauth-subdomain', currentSubdomain);
         console.log(`📝 Stored OAuth subdomain: ${currentSubdomain}`);
       }
       

@@ -104,7 +104,7 @@ export const apiClient = {
         headers['X-Tenant-Subdomain'] = subdomain;
         
         // RLS CONTEXT: Add tenant UUID from localStorage cache for session context
-        const tenantContext = localStorage.getItem('tenant_context');
+        const tenantContext = typeof localStorage !== 'undefined' ? localStorage.getItem('tenant_context') : null;
         if (tenantContext) {
           try {
             const context = JSON.parse(tenantContext);
@@ -155,9 +155,11 @@ export const apiClient = {
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (!error && session?.access_token) {
-        // JWT GATEWAY: Cache token for cross-domain use
-        localStorage.setItem('jwt_access_token', session.access_token);
-        localStorage.setItem('jwt_expires_at', session.expires_at?.toString() || '');
+        // JWT GATEWAY: Cache token for cross-domain use (browser-only)
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('jwt_access_token', session.access_token);
+          localStorage.setItem('jwt_expires_at', session.expires_at?.toString() || '');
+        }
         return session.access_token;
       }
     } catch (sessionError) {
@@ -165,8 +167,8 @@ export const apiClient = {
     }
     
     // JWT GATEWAY: Check legacy cached token for cross-domain scenarios
-    const cachedToken = localStorage.getItem('jwt_access_token');
-    const expiresAt = localStorage.getItem('jwt_expires_at');
+    const cachedToken = typeof localStorage !== 'undefined' ? localStorage.getItem('jwt_access_token') : null;
+    const expiresAt = typeof localStorage !== 'undefined' ? localStorage.getItem('jwt_expires_at') : null;
     
     if (cachedToken && expiresAt) {
       const expires = new Date(parseInt(expiresAt) * 1000);
@@ -174,9 +176,11 @@ export const apiClient = {
         console.log('🔍 [JWT-GATEWAY] Using legacy cached valid token for cross-domain request');
         return cachedToken;
       } else {
-        // Clean expired tokens
-        localStorage.removeItem('jwt_access_token');
-        localStorage.removeItem('jwt_expires_at');
+        // Clean expired tokens (browser-only)
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem('jwt_access_token');
+          localStorage.removeItem('jwt_expires_at');
+        }
       }
     }
     
@@ -221,7 +225,7 @@ export const apiClient = {
       .find(row => row.startsWith('auth-token=') || row.startsWith('docsflow_auth_token='))
       ?.split('=')[1];
     
-    return authCookie || localStorage.getItem('access_token') || null;
+    return authCookie || (typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : null) || null;
   },
 
   // Enhanced health check with tenant context
