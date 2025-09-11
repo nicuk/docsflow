@@ -34,15 +34,33 @@ export const apiClient = {
       'Accept': 'application/json',
     };
     
-    // SURGICAL FIX: Use custom header to bypass Vercel stripping
+    // SURGICAL FIX: Enhanced token retrieval with multiple fallbacks
     const authToken = await this.getAccessToken();
     if (authToken) {
       // Use BOTH headers - custom header survives Vercel proxy
       headers['Authorization'] = `Bearer ${authToken}`;
       headers['X-Auth-Token'] = authToken; // Custom header that Vercel won't strip
-      console.log('🔍 [SURGICAL] Auth headers set for cross-domain request');
+      console.log('🔍 [SURGICAL] Auth headers set for cross-domain request:', {
+        tokenPreview: authToken.substring(0, 30) + '...',
+        tokenLength: authToken.length,
+        hasValidFormat: authToken.includes('.')
+      });
     } else {
-      console.warn('⚠️ [SURGICAL] No auth token available - check session');
+      console.error('❌ [SURGICAL] No auth token available - debugging session state');
+      // Enhanced debugging for token retrieval issues
+      try {
+        const { createClient } = await import('@/lib/supabase-browser');
+        const supabase = createClient();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.error('🔍 [DEBUG] Session state:', {
+          hasSession: !!session,
+          hasAccessToken: !!session?.access_token,
+          sessionError: error,
+          tokenPreview: session?.access_token?.substring(0, 30) + '...' || 'none'
+        });
+      } catch (debugError) {
+        console.error('🔍 [DEBUG] Session check failed:', debugError);
+      }
     }
     
     // RLS CONTEXT: Add tenant context for database session
@@ -135,22 +153,32 @@ export const apiClient = {
       }
     }
     
-    // Fallback: Parse Supabase auth cookies directly
-    const supabaseAuthCookie = document.cookie
-      .split('; ')
+    // SURGICAL FIX: Enhanced Supabase cookie parsing with debugging
+    console.log('🔍 [TOKEN-DEBUG] Checking Supabase auth cookies...');
+    const allCookies = document.cookie.split('; ');
+    const authCookies = allCookies.filter(cookie => 
+      cookie.includes('auth-token') || cookie.includes('access_token')
+    );
+    
+    console.log('🔍 [TOKEN-DEBUG] Available auth cookies:', authCookies.map(c => c.split('=')[0]));
+    
+    const supabaseAuthCookie = allCookies
       .find(row => row.startsWith('sb-') && row.includes('auth-token'))
       ?.split('=')[1];
       
-    if (supabaseAuthCookie && supabaseAuthCookie !== '') {
+    if (supabaseAuthCookie && supabaseAuthCookie !== '' && supabaseAuthCookie !== 'undefined') {
       try {
         // Supabase cookies are base64-encoded JSON
         const decoded = JSON.parse(atob(supabaseAuthCookie));
         if (decoded.access_token) {
+          console.log('🔍 [TOKEN-DEBUG] Successfully extracted token from Supabase cookie');
           return decoded.access_token;
         }
       } catch (parseError) {
         console.warn('🔍 [API-CLIENT] Cookie parse failed:', parseError);
       }
+    } else {
+      console.warn('🔍 [TOKEN-DEBUG] Supabase auth cookie is empty or undefined');
     }
     
     // Final fallback to legacy cookies
