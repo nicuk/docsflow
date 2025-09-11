@@ -16,25 +16,68 @@ export async function GET(request: NextRequest) {
       console.log(`🔍 [SESSION API] User-Agent: ${userAgent.substring(0, 60)}...`);
     }
 
-    // OFFICIAL PATTERN: Use createServerClient that handles cookies automatically
-    const supabase = await createClient();
+    // 🎯 CRITICAL FIX: Create Supabase client with direct cookie access
+    // Parse cookies from request header (bypasses NextJS cookie isolation)
+    let parsedCookies: Record<string, string> = {};
+    const cookieHeader = request.headers.get('cookie');
+    
+    if (cookieHeader) {
+      parsedCookies = cookieHeader.split(';').reduce((acc, cookie) => {
+        const [key, value] = cookie.trim().split('=');
+        if (key && value) {
+          acc[key] = decodeURIComponent(value);
+        }
+        return acc;
+      }, {} as Record<string, string>);
+    }
+    
+    // Create Supabase client with direct cookie access
+    const { createServerClient } = await import('@supabase/ssr');
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return Object.entries(parsedCookies).map(([name, value]) => ({ name, value }));
+          },
+          setAll(cookiesToSet) {
+            // Can't set cookies from request header parsing, but that's ok for auth check
+          },
+        },
+      }
+    );
 
     // SURGICAL FIX: Get user and session with cookie debugging
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    // DEBUG: Log cookie state for server restart issues
+    // DEBUG: Log cookie state using parsed cookies (not NextJS cookies())
     if (!isVercelBot) {
-      const { cookies } = await import('next/headers');
-      const cookieStore = await cookies();
-      const authCookies = cookieStore.getAll().filter(c => 
-        c.name.includes('auth') || c.name.includes('session') || c.name.includes('token')
+      console.log(`🔍 [SESSION API] Cookie header present: ${!!cookieHeader}`);
+      console.log(`🔍 [SESSION API] Cookie header length: ${cookieHeader?.length || 0}`);
+      
+      const authCookieNames = Object.keys(parsedCookies).filter(name => 
+        name.includes('auth') || name.includes('session') || name.includes('token')
       );
       
-      // SURGICAL DEBUG: Check if Supabase is setting cookies properly
-      const supabaseCookies = cookieStore.getAll().filter(c => 
-        c.name.startsWith('sb-') || c.name.includes('supabase')
+      // SURGICAL DEBUG: Check if Supabase cookies are present in header
+      const supabaseCookieNames = Object.keys(parsedCookies).filter(name => 
+        name.startsWith('sb-') || name.includes('supabase')
       );
+      
+      const authCookies = authCookieNames.map(name => ({ 
+        name, 
+        hasValue: !!parsedCookies[name], 
+        valueLength: parsedCookies[name]?.length || 0 
+      }));
+      
+      const supabaseCookies = supabaseCookieNames.map(name => ({ 
+        name, 
+        hasValue: !!parsedCookies[name], 
+        valueLength: parsedCookies[name]?.length || 0, 
+        valuePreview: parsedCookies[name]?.substring(0, 20) || 'empty' 
+      }));
       
       console.log(`🔍 [SESSION API] Supabase auth result:`, {
         hasUser: !!user,
@@ -44,8 +87,8 @@ export async function GET(request: NextRequest) {
         hasAccessToken: !!session?.access_token,
         userError: userError?.message,
         sessionError: sessionError?.message,
-        availableCookies: authCookies.map(c => ({ name: c.name, hasValue: !!c.value, valueLength: c.value?.length || 0 })),
-        supabaseCookies: supabaseCookies.map(c => ({ name: c.name, hasValue: !!c.value, valueLength: c.value?.length || 0, valuePreview: c.value?.substring(0, 20) || 'empty' }))
+        availableCookies: authCookies,
+        supabaseCookies: supabaseCookies
       });
       
       // SURGICAL DEBUG: Check if session has access token
