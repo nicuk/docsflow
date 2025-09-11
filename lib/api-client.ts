@@ -257,6 +257,22 @@ export const apiClient = {
     }
   },
 
+  // SURGICAL FIX: Enhanced error handling for React Query retries
+  async handleApiResponse(response: Response, operation: string) {
+    if (!response.ok) {
+      if (response.status === 401) {
+        // 401 = auth token missing/expired - this is temporary, should retry
+        console.log(`🔄 [${operation}] Auth required - React Query will retry`);
+        const error = new Error(`Authentication required for ${operation}`);
+        (error as any).name = 'AuthError';
+        (error as any).retry = true;
+        throw error;
+      }
+      throw new Error(`API Error: ${response.status}`);
+    }
+    return response.json();
+  },
+
   // Conversation Management with better error handling
   async getConversations() {
     try {
@@ -275,11 +291,7 @@ export const apiClient = {
         credentials: 'include', // CRITICAL FIX: Include cookies for cross-domain auth
       });
       
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
-      }
-      
-      return await response.json();
+      return await this.handleApiResponse(response, 'CONVERSATIONS');
     } catch (error) {
       console.warn('Conversations endpoint not available, using local storage mode:', error);
       return { conversations: [] };
@@ -398,11 +410,7 @@ export const apiClient = {
         credentials: 'include',
       });
       
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
-      }
-      
-      return await response.json();
+      return await this.handleApiResponse(response, 'DOCUMENTS');
     } catch (error) {
       console.error('Documents API Error:', error);
       throw error;
