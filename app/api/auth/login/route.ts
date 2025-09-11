@@ -208,8 +208,21 @@ export async function POST(request: NextRequest) {
       maxAge: refreshTokenMaxAge
     });
     
-    // CRITICAL FIX: Also set Supabase native cookies to prevent empty token issues
-    authCookieStore.set('sb-lhcopwwiqwjpzbdnjovo-auth-token', authData.session.access_token, {
+    // 🎯 SURGICAL FIX: Set Supabase native cookies with COMPLETE SESSION OBJECT
+    // Supabase expects the entire session object (base64-encoded JSON), not just the token
+    const sessionData = {
+      access_token: authData.session.access_token,
+      refresh_token: authData.session.refresh_token,
+      expires_in: authData.session.expires_in,
+      expires_at: authData.session.expires_at,
+      token_type: authData.session.token_type,
+      user: authData.session.user
+    };
+    
+    const sessionString = JSON.stringify(sessionData);
+    const encodedSession = Buffer.from(sessionString).toString('base64');
+    
+    authCookieStore.set('sb-lhcopwwiqwjpzbdnjovo-auth-token', encodedSession, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -218,16 +231,12 @@ export async function POST(request: NextRequest) {
       maxAge: authTokenMaxAge
     });
     
-    if (authData.session.refresh_token) {
-      authCookieStore.set('sb-lhcopwwiqwjpzbdnjovo-refresh-token', authData.session.refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
-        maxAge: refreshTokenMaxAge
-      });
-    }
+    console.log(`🔧 [LOGIN FIX] Set complete Supabase session cookie:`, {
+      sessionSize: encodedSession.length,
+      hasAccessToken: !!sessionData.access_token,
+      hasRefreshToken: !!sessionData.refresh_token,
+      expiresAt: sessionData.expires_at
+    });
     
     console.log(`✅ [LOGIN API] Successfully set all auth cookies:`, {
       unifiedAuth: !!authData.session.access_token,
