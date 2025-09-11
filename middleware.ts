@@ -328,7 +328,17 @@ export default async function middleware(request: NextRequest) {
           for (const cookie of allAuthCookies) {
             if (cookie.value && cookie.value.length > 50) { // JWT tokens are long
               try {
-                // Check if it's a valid JWT format
+                // 🎯 SURGICAL FIX: Check if it's a Supabase session cookie first
+                if (cookie.name.startsWith('sb-') && cookie.name.endsWith('-auth-token')) {
+                  const extractedToken = SafeBase64Decoder.parseSupabaseCookie(cookie.value);
+                  if (extractedToken) {
+                    authToken = extractedToken;
+                    console.log(`✅ [MIDDLEWARE] Extracted JWT from Supabase session cookie: ${cookie.name}`);
+                    break;
+                  }
+                }
+                
+                // Check if it's a direct JWT format
                 const parts = cookie.value.split('.');
                 if (parts.length === 3 && cookie.value.startsWith('eyJ')) {
                   authToken = cookie.value;
@@ -558,7 +568,17 @@ export default async function middleware(request: NextRequest) {
           for (const cookie of allAuthCookies) {
             if (cookie.value && cookie.value.length > 50) { // JWT tokens are long
               try {
-                // Check if it's a valid JWT format
+                // 🎯 SURGICAL FIX: Check if it's a Supabase session cookie first
+                if (cookie.name.startsWith('sb-') && cookie.name.endsWith('-auth-token')) {
+                  const extractedToken = SafeBase64Decoder.parseSupabaseCookie(cookie.value);
+                  if (extractedToken) {
+                    authToken = extractedToken;
+                    console.log(`✅ [MIDDLEWARE] Extracted JWT from Supabase session cookie: ${cookie.name}`);
+                    break;
+                  }
+                }
+                
+                // Check if it's a direct JWT format
                 const parts = cookie.value.split('.');
                 if (parts.length === 3 && cookie.value.startsWith('eyJ')) {
                   authToken = cookie.value;
