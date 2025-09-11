@@ -235,10 +235,9 @@ export async function POST(request: NextRequest) {
     
     documentId = document.id;
 
-    // SURGICAL FIX: Add timeout to prevent 30s Vercel limit
-    // Process document with timeout protection
+    // 🚀 SURGICAL FIX: Enhanced timeout with parallel processing
     try {
-      const processingTimeout = 25000; // 25 seconds (before Vercel 30s limit)
+      const processingTimeout = 28000; // 28 seconds (with parallel processing buffer)
       
       const processingPromise = processDocumentContentEnhanced(
         document.id, 
@@ -252,11 +251,11 @@ export async function POST(request: NextRequest) {
       
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
-          reject(new Error('Document processing timeout - switching to async mode'));
+          reject(new Error('Document processing timeout - parallel processing taking longer than expected'));
         }, processingTimeout);
       });
       
-      // Race between processing and timeout
+      // Race between parallel processing and timeout
       await Promise.race([processingPromise, timeoutPromise]);
       
       // Update status to completed
@@ -377,8 +376,10 @@ async function processDocumentContentEnhanced(
   
   console.log(`Generated ${contextualChunks.length} contextual chunks`);
 
-  // Process each contextual chunk
-  for (const chunk of contextualChunks) {
+  // 🚀 SURGICAL FIX: Process chunks in parallel to reduce timeout
+  console.log(`🚀 Processing ${contextualChunks.length} chunks in PARALLEL to prevent timeout`);
+  
+  const chunkPromises = contextualChunks.map(async (chunk) => {
     try {
       // Generate embedding for the chunk with caching
       const { embedding } = await embeddingCache.getEmbedding(
@@ -419,11 +420,28 @@ async function processDocumentContentEnhanced(
       }
         
       console.log(`Processed chunk ${chunk.chunk_index} with context: ${chunk.context_summary.slice(0, 50)}...`);
+      return { success: true, chunkIndex: chunk.chunk_index };
         
     } catch (embeddingError) {
       console.error(`Failed to process chunk ${chunk.chunk_index}:`, embeddingError);
-      // Continue with other chunks even if one fails
+      return { success: false, chunkIndex: chunk.chunk_index, error: embeddingError };
     }
+  });
+  
+  // Execute all chunk processing in parallel with timeout protection
+  try {
+    const results = await Promise.allSettled(chunkPromises);
+    const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+    const failed = results.length - successful;
+    
+    console.log(`🎯 Parallel processing complete: ${successful} successful, ${failed} failed`);
+    
+    if (successful === 0) {
+      throw new Error('All chunk processing failed');
+    }
+  } catch (parallelError) {
+    console.error('Parallel chunk processing error:', parallelError);
+    throw parallelError;
   }
 }
 
