@@ -53,9 +53,31 @@ export class AuthService {
       }
 
       if (!session?.access_token) {
-        console.log('🔐 [AUTH-SERVICE] No active session');
-        this.clearTokenCache();
-        return null;
+        console.log('🔐 [AUTH-SERVICE] No active session - attempting refresh');
+        
+        // 🔄 AUTO-REFRESH: Try to refresh the session
+        try {
+          const { data: refreshData, error: refreshError } = await this.supabase.auth.refreshSession();
+          
+          if (refreshError || !refreshData.session?.access_token) {
+            console.warn('🔐 [AUTH-SERVICE] Session refresh failed, user needs to re-login');
+            this.clearTokenCache();
+            return null;
+          }
+          
+          console.log('✅ [AUTH-SERVICE] Session refreshed successfully');
+          
+          // Cache refreshed token
+          this.tokenCache = refreshData.session.access_token;
+          this.tokenExpiry = (refreshData.session.expires_at || 0) * 1000 - 60000;
+          
+          return refreshData.session.access_token;
+          
+        } catch (refreshError) {
+          console.error('❌ [AUTH-SERVICE] Session refresh error:', refreshError);
+          this.clearTokenCache();
+          return null;
+        }
       }
 
       // Cache token with expiry
