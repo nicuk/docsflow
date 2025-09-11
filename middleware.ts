@@ -21,6 +21,7 @@ import { redis, safeRedisOperation } from './lib/redis';
 // UNIFIED AUTH: Import new auth services for parallel testing
 import { AuthService } from './lib/services/auth-service';
 import { TenantService } from './lib/services/tenant-service';
+import { SafeBase64Decoder } from './lib/services/safe-base64-decoder';
 
 // SURGICAL HELPER: JWT email extraction with robust error handling
 function extractEmailFromJWT(authToken: string): string | null {
@@ -305,16 +306,14 @@ export default async function middleware(request: NextRequest) {
       authToken = request.cookies.get('docsflow_auth_token')?.value || 
                  request.cookies.get('access_token')?.value;
       
-      // If no direct token, parse Supabase session cookie
+      // If no direct token, parse Supabase session cookie with safe decoder
       if (!authToken && supabaseAuthCookie?.value) {
-        try {
-          const sessionData = JSON.parse(atob(supabaseAuthCookie.value));
-          authToken = sessionData.access_token;
-          if (authToken) {
-            console.log(`🔍 [MIDDLEWARE] Extracted JWT from Supabase session cookie`);
-          }
-        } catch (parseError) {
-          console.warn(`🔍 [MIDDLEWARE] Failed to parse Supabase session cookie:`, parseError);
+        const extractedToken = SafeBase64Decoder.parseSupabaseCookie(supabaseAuthCookie.value);
+        if (extractedToken) {
+          authToken = extractedToken;
+          console.log(`✅ [MIDDLEWARE] Successfully extracted JWT from Supabase session cookie`);
+        } else {
+          console.warn(`❌ [MIDDLEWARE] Failed to extract token from Supabase session cookie`);
         }
       }
       
@@ -538,16 +537,14 @@ export default async function middleware(request: NextRequest) {
       authToken = cookies.get('docsflow_auth_token')?.value || 
                  cookies.get('access_token')?.value;
       
-      // If no direct token, parse Supabase session cookie
+      // If no direct token, parse Supabase session cookie with safe decoder
       if (!authToken && supabaseMainAuthCookie?.value) {
-        try {
-          const sessionData = JSON.parse(atob(supabaseMainAuthCookie.value));
-          authToken = sessionData.access_token;
-          if (authToken) {
-            console.log(`🔍 [MIDDLEWARE] Extracted JWT from Supabase session cookie`);
-          }
-        } catch (parseError) {
-          console.warn(`🔍 [MIDDLEWARE] Failed to parse Supabase session cookie:`, parseError);
+        const extractedToken = SafeBase64Decoder.parseSupabaseCookie(supabaseMainAuthCookie.value);
+        if (extractedToken) {
+          authToken = extractedToken;
+          console.log(`✅ [MIDDLEWARE] Successfully extracted JWT from Supabase session cookie`);
+        } else {
+          console.warn(`❌ [MIDDLEWARE] Failed to extract token from Supabase session cookie`);
         }
       }
       

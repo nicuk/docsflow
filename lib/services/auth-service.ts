@@ -11,6 +11,7 @@
  */
 
 import { createClient } from '@/lib/supabase-browser';
+import { SafeBase64Decoder } from './safe-base64-decoder';
 import type { 
   AuthToken, 
   AuthUser, 
@@ -204,11 +205,10 @@ export class AuthService {
       if (supabaseCookie) {
         const value = supabaseCookie.split('=')[1];
         if (value) {
-          try {
-            const sessionData = JSON.parse(atob(value));
-            return sessionData.access_token || null;
-          } catch (parseError) {
-            console.warn('🔐 [AUTH-SERVICE] Cookie parse failed:', parseError);
+          // Use safe decoder instead of direct atob()
+          const accessToken = SafeBase64Decoder.parseSupabaseCookie(value);
+          if (accessToken) {
+            return accessToken;
           }
         }
       }
