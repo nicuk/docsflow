@@ -294,11 +294,25 @@ export default async function middleware(request: NextRequest) {
         c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
       );
       
-      // SURGICAL FIX: Enhanced token extraction (same as main domain logic)
-      let authToken = supabaseAuthCookie?.value ||
-                     request.cookies.get('docsflow_auth_token')?.value || 
-                     request.cookies.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value ||
-                     request.cookies.get('access_token')?.value;
+      // SURGICAL FIX: Enhanced token extraction with Supabase session parsing
+      let authToken = null;
+      
+      // First try direct token cookies
+      authToken = request.cookies.get('docsflow_auth_token')?.value || 
+                 request.cookies.get('access_token')?.value;
+      
+      // If no direct token, parse Supabase session cookie
+      if (!authToken && supabaseAuthCookie?.value) {
+        try {
+          const sessionData = JSON.parse(atob(supabaseAuthCookie.value));
+          authToken = sessionData.access_token;
+          if (authToken) {
+            console.log(`🔍 [MIDDLEWARE] Extracted JWT from Supabase session cookie`);
+          }
+        } catch (parseError) {
+          console.warn(`🔍 [MIDDLEWARE] Failed to parse Supabase session cookie:`, parseError);
+        }
+      }
       
       // SURGICAL FIX: If no direct token, try parsing all auth cookies
       if (!authToken) {
@@ -497,11 +511,25 @@ export default async function middleware(request: NextRequest) {
         c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
       );
       
-      // Try all possible auth token sources with validation
-      let authToken = supabaseMainAuthCookie?.value ||
-                     cookies.get('docsflow_auth_token')?.value || 
-                     cookies.get('sb-lhcopwwiqwjpzbdnjovo-auth-token')?.value ||
-                     cookies.get('access_token')?.value;
+      // SURGICAL FIX: Enhanced token extraction with Supabase session parsing
+      let authToken = null;
+      
+      // First try direct token cookies
+      authToken = cookies.get('docsflow_auth_token')?.value || 
+                 cookies.get('access_token')?.value;
+      
+      // If no direct token, parse Supabase session cookie
+      if (!authToken && supabaseMainAuthCookie?.value) {
+        try {
+          const sessionData = JSON.parse(atob(supabaseMainAuthCookie.value));
+          authToken = sessionData.access_token;
+          if (authToken) {
+            console.log(`🔍 [MIDDLEWARE] Extracted JWT from Supabase session cookie`);
+          }
+        } catch (parseError) {
+          console.warn(`🔍 [MIDDLEWARE] Failed to parse Supabase session cookie:`, parseError);
+        }
+      }
       
       // SURGICAL FIX: If no direct token, try parsing Supabase session cookies
       if (!authToken) {
