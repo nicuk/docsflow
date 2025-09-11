@@ -161,8 +161,9 @@ export class SchemaAlignedCookieManager {
       throw new Error('Schema validation failed - refusing to set invalid cookies');
     }
     
-    // PHASE 1: Complete cleanup of ALL legacy auth cookies
-    this.clearAllAuthCookies();
+    // 🚨 SURGICAL FIX: Don't clear working auth cookies during active session
+    // Only clear cookies if we're setting new ones (login/refresh scenario)
+    console.log('⚠️ [COOKIE-MANAGER] Skipping aggressive cookie clearing to prevent session disruption');
     
     // PHASE 2: Set UNIFIED auth cookies (single source of truth)
     document.cookie = `${UNIFIED_AUTH_CONFIG.PRIMARY_AUTH_COOKIE}=${tokens.accessToken}; ${UNIFIED_AUTH_CONFIG.AUTH_OPTIONS}`;

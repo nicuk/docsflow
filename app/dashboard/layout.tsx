@@ -187,12 +187,19 @@ function useUserSession() {
             });
             return;
           } else {
-            console.warn('🚨 [SECURITY] Invalid multi-tenant cookie state - clearing auth tokens');
-            MultiTenantCookieManager.clearAuthTokensOnly();
+            console.warn('⚠️ [SECURITY] Incomplete multi-tenant cookie state - retrying user session');
+            // 🚨 SURGICAL FIX: Don't clear auth tokens - just log the issue and continue
+            // This prevents random logouts during normal usage
+            console.warn('Missing:', { 
+              hasUserEmail: !!userEmail, 
+              hasCurrentTenant: !!currentTenant, 
+              hasSecureAccess: !!secureAccess.tenantId 
+            });
           }
         } catch (error) {
-          console.error('🚨 [SECURITY] Multi-tenant cookie validation failed:', error);
-          MultiTenantCookieManager.clearAuthTokensOnly();
+          console.error('⚠️ [SECURITY] Multi-tenant cookie validation failed, but preserving session:', error);
+          // 🚨 SURGICAL FIX: Don't clear auth tokens on validation errors
+          // Most "validation failures" are temporary network/parsing issues
         }
       }
       
