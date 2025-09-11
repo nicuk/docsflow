@@ -34,7 +34,16 @@ export async function POST(request: NextRequest) {
           },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options)
+              // 🎯 CRITICAL FIX: Force domain for ALL Supabase cookies
+              const enhancedOptions = {
+                ...options,
+                domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
+                path: '/',
+                sameSite: 'lax' as const
+              };
+              cookieStore.set(name, value, enhancedOptions);
+              
+              console.log(`🔧 [SUPABASE-COOKIE] Set ${name}: domain=${enhancedOptions.domain}, path=${enhancedOptions.path}`);
             })
           },
         },
