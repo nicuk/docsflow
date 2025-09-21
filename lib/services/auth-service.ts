@@ -12,7 +12,6 @@
 
 import { createClient } from '@/lib/supabase-browser';
 import { SafeBase64Decoder } from './safe-base64-decoder';
-import { sessionSync, type SessionSyncEvent } from '@/lib/session-sync';
 import type { 
   AuthToken, 
   AuthUser, 
@@ -25,7 +24,6 @@ export class AuthService {
   private static tokenCache: string | null = null;
   private static tokenExpiry: number = 0;
   private static isInitialized = false;
-  private static sessionSyncCleanup: (() => void) | null = null;
   private static timeoutWarningShown = false;
   private static sessionCheckInterval: NodeJS.Timeout | null = null;
 
@@ -88,14 +86,6 @@ export class AuthService {
       this.tokenCache = session.access_token;
       this.tokenExpiry = (session.expires_at || 0) * 1000 - 60000; // 1 minute buffer
       
-      // 🎯 SURGICAL FIX: Broadcast session update to other tabs
-      if (sessionSync.isActive) {
-        sessionSync.broadcastSessionUpdate({
-          access_token: session.access_token,
-          expires_at: session.expires_at || 0,
-          user: session.user
-        });
-      }
       
       console.log('✅ [AUTH-SERVICE] Token retrieved successfully');
       return session.access_token;
@@ -305,29 +295,15 @@ export class AuthService {
       if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
         this.clearTokenCache();
         
-        // 🎯 SURGICAL FIX: Broadcast logout to other tabs
-        if (event === 'SIGNED_OUT' && sessionSync.isActive) {
-          sessionSync.broadcastLogout();
-        }
       }
       
       if (session?.access_token) {
         this.tokenCache = session.access_token;
         this.tokenExpiry = (session.expires_at || 0) * 1000 - 60000;
         
-        // 🎯 SURGICAL FIX: Broadcast session update to other tabs
-        if (sessionSync.isActive) {
-          sessionSync.broadcastSessionUpdate({
-            access_token: session.access_token,
-            expires_at: session.expires_at || 0,
-            user: session.user
-          });
-        }
       }
     });
     
-    // 🎯 SURGICAL FIX: Setup cross-tab session sync listener
-    this.setupSessionSync();
 
     // 🎯 SURGICAL FIX: Setup session timeout monitoring
     this.setupSessionTimeoutMonitoring();
@@ -336,42 +312,6 @@ export class AuthService {
     console.log('✅ [AUTH-SERVICE] Initialized successfully');
   }
 
-  /**
-   * 🎯 SURGICAL FIX: Setup cross-tab session synchronization
-   */
-  private static setupSessionSync(): void {
-    if (!sessionSync.isActive) return;
-
-    this.sessionSyncCleanup = sessionSync.addListener((event: SessionSyncEvent) => {
-      console.log(`🔄 [AUTH-SERVICE] Session sync event: ${event.type}`);
-
-      switch (event.type) {
-        case 'SESSION_UPDATED':
-          if (event.sessionData) {
-            // Update local cache with session from another tab
-            this.tokenCache = event.sessionData.access_token;
-            this.tokenExpiry = event.sessionData.expires_at * 1000 - 60000;
-            console.log('✅ [AUTH-SERVICE] Session synchronized from another tab');
-          }
-          break;
-
-        case 'SESSION_EXPIRED':
-          // Clear local cache when session expires in another tab
-          this.clearTokenCache();
-          console.log('⚠️ [AUTH-SERVICE] Session expired - cleared from sync');
-          break;
-
-        case 'LOGOUT':
-          // Handle logout from another tab
-          this.clearTokenCache();
-          if (typeof window !== 'undefined') {
-            window.location.href = '/login';
-          }
-          console.log('🚪 [AUTH-SERVICE] Logout detected from another tab');
-          break;
-      }
-    });
-  }
 
   /**
    * 🎯 SURGICAL FIX: Setup session timeout monitoring and warnings
@@ -427,10 +367,6 @@ export class AuthService {
       console.warn(`⚠️ [SESSION-TIMEOUT] ${message}`);
     }
 
-    // Broadcast to other tabs
-    if (sessionSync.isActive) {
-      sessionSync.broadcastSessionExpired();
-    }
   }
 
   /**
@@ -441,10 +377,6 @@ export class AuthService {
     this.clearTokenCache();
     this.timeoutWarningShown = false;
 
-    // Broadcast to other tabs
-    if (sessionSync.isActive) {
-      sessionSync.broadcastSessionExpired();
-    }
 
     // Only redirect if not already on login page
     if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
@@ -478,10 +410,6 @@ export class AuthService {
    * Cleanup method for proper resource management
    */
   static destroy(): void {
-    if (this.sessionSyncCleanup) {
-      this.sessionSyncCleanup();
-      this.sessionSyncCleanup = null;
-    }
     if (this.sessionCheckInterval) {
       clearInterval(this.sessionCheckInterval);
       this.sessionCheckInterval = null;
