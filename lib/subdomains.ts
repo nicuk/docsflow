@@ -37,6 +37,10 @@ export async function getSubdomainData(
     // SECURITY FIX: Use secure database service
     // TODO: Update the function to use SecureDocumentService, SecureTenantService, or SecureUserService methods
 
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
     
     const { data: tenant, error } = await supabase
       .from('tenants')

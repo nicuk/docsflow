@@ -48,9 +48,39 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    // SURGICAL FIX: Get user and session with cookie debugging
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    // SURGICAL FIX: Try cookie-based auth first, then fallback to Authorization header
+    let { data: { user }, error: userError } = await supabase.auth.getUser();
+    let { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    // If cookie auth fails, try Authorization header BEFORE proceeding
+    if (!user || userError) {
+      const authHeader = request.headers.get('authorization');
+      const xAuthToken = request.headers.get('x-auth-token');
+      const token = authHeader?.replace('Bearer ', '') || xAuthToken;
+      
+      if (token) {
+        console.log(`🔍 [SESSION API] Cookie auth failed, trying Authorization header...`);
+        // SIMPLE APPROACH: Create service role client and validate JWT
+        const { createClient } = await import('@supabase/supabase-js');
+        const serviceSupabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        
+        // Use service role to validate the JWT token
+        const { data: tokenUser, error: tokenError } = await serviceSupabase.auth.getUser(token);
+        if (tokenUser && !tokenError) {
+          user = tokenUser;
+          session = { access_token: token, user: tokenUser } as any;
+          userError = null; // Clear the error since we found a valid user
+          console.log(`✅ [SESSION API] Authorization header auth successful for user: ${tokenUser.email}`);
+        } else {
+          console.log(`❌ [SESSION API] Authorization header auth failed:`, tokenError?.message || 'Unknown error');
+        }
+      }
+    }
+    
+    console.log(`🔍 [SESSION API] Final auth result - User: ${user?.email || 'null'}, Session: ${!!session}`);
     
     // DEBUG: Log cookie state using parsed cookies (not NextJS cookies())
     if (!isVercelBot) {

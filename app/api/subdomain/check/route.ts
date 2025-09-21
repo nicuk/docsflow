@@ -129,7 +129,16 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    // Handle empty or malformed requests
+    const text = await request.text();
+    if (!text || text.trim() === '') {
+      return NextResponse.json(
+        { error: 'Request body is empty' },
+        { status: 400 }
+      );
+    }
+    
+    const body = JSON.parse(text);
     const subdomain = body.subdomain;
 
     if (!subdomain) {
