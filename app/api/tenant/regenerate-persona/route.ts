@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCORSHeaders } from '@/lib/utils';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
-import { enhancedProvider } from '@/lib/ai/providers';
+import { aiProvider } from '@/lib/ai/providers';
 
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     console.log(`🧠 Regenerating persona for tenant: ${tenantId}`);
 
     // Generate new persona using AI provider
-    const personaResponse = await enhancedProvider.generatePersona(prompt);
+    const personaResponse = await aiProvider.generatePersona(prompt);
     
     if (!personaResponse) {
       throw new Error('Failed to generate persona');

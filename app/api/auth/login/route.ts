@@ -113,8 +113,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Return enterprise-standard response
-    return NextResponse.json({
+    // 🎯 SURGICAL FIX: Set tenant cookies like session API does
+    const response = NextResponse.json({
       success: true,
       user: {
         id: userProfile.id,
@@ -135,6 +135,38 @@ export async function POST(request: NextRequest) {
         expires_at: authData.session.expires_at
       }
     }, { headers: corsHeaders });
+
+    // 🎯 CRITICAL FIX: Set tenant cookies that middleware expects
+    if (userProfile.tenant_id && userProfile.email && userProfile.tenants?.subdomain) {
+      const cookieOptions = {
+        httpOnly: false, // Need access for client-side redirect logic
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax' as const,
+        path: '/',
+        domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
+        maxAge: rememberMe ? (60 * 60 * 24 * 30) : (60 * 60 * 24 * 7) // Match remember me duration
+      };
+
+      response.cookies.set('tenant-id', userProfile.tenant_id, cookieOptions);
+      response.cookies.set('user-email', userProfile.email, cookieOptions);
+      response.cookies.set('tenant-subdomain', userProfile.tenants.subdomain, cookieOptions);
+      
+      // Set tenant context for multi-tenant support
+      const tenantContext = {
+        tenantId: userProfile.tenant_id,
+        subdomain: userProfile.tenants.subdomain,
+        timestamp: Date.now()
+      };
+      response.cookies.set('tenant-context', JSON.stringify(tenantContext), cookieOptions);
+      
+      console.log(`🎯 [LOGIN] Set tenant cookies for middleware compatibility:`, {
+        tenantId: userProfile.tenant_id.substring(0, 8) + '...',
+        email: userProfile.email,
+        subdomain: userProfile.tenants.subdomain
+      });
+    }
+
+    return response;
 
   } catch (error: any) {
     console.error('❌ [LOGIN-UNIFIED] Server error:', error);

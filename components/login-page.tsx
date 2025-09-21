@@ -74,32 +74,32 @@ export default function LoginPage() {
     setErrors({})
 
     try {
-      // OFFICIAL PATTERN: Simple Supabase browser client
-      const supabase = createClient()
-      
-      // REMEMBER ME FIX: Supabase handles session persistence automatically
-      // We'll control this via cookie maxAge in the backend API
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password
+      // 🎯 SURGICAL FIX: Use our login API instead of Supabase direct
+      // This ensures proper cookie setting for cross-subdomain auth
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          rememberMe: formData.rememberMe
+        })
       })
-      
-      // Store remember me preference for backend API call if needed
-      if (formData.rememberMe && data.session) {
-        // Set a longer-lived session indicator
-        document.cookie = `remember-me=true; path=/; domain=.docsflow.app; max-age=${60 * 60 * 24 * 30}; secure; samesite=lax`
-      }
 
-      if (error) {
-        console.error('Login error:', error)
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        console.error('Login error:', result.error)
         
-        let errorMessage = "Invalid email or password"
+        let errorMessage = result.error || "Invalid email or password"
         
-        if (error.message.includes('Invalid login credentials')) {
+        if (errorMessage.includes('Invalid login credentials') || errorMessage.includes('Invalid email or password')) {
           errorMessage = "Invalid email or password. Please check your credentials."
-        } else if (error.message.includes('Email not confirmed')) {
+        } else if (errorMessage.includes('Email not confirmed')) {
           errorMessage = "Please check your email and confirm your account before signing in."
-        } else if (error.message.includes('Too many requests')) {
+        } else if (errorMessage.includes('Too many requests')) {
           errorMessage = "Too many login attempts. Please wait a moment and try again."
         }
         
@@ -107,11 +107,16 @@ export default function LoginPage() {
         return
       }
 
-      if (data.user) {
+      if (result.user) {
         setIsSuccess(true)
         
-        // SUPABASE SSR FIX: Graceful redirect with session check
-        // Check if we're on a tenant subdomain and redirect accordingly
+        console.log('✅ Login successful via API:', {
+          userId: result.user.id,
+          tenantId: result.user.tenant_id,
+          tenantSubdomain: result.user.tenant?.subdomain
+        })
+        
+        // IMPROVED REDIRECT: Use tenant info from API response
         const hostname = window.location.hostname;
         const isOnTenantSubdomain = hostname.includes('.docsflow.app') && 
                                    !hostname.startsWith('www.') && 
