@@ -47,7 +47,7 @@ const navigationItems = [
   { name: 'Documents', href: '/dashboard/documents', icon: FileText, badge: null, requiresAdmin: false },
   { name: 'Chat Assistant', href: '/dashboard/chat', icon: MessageSquare, badge: null, requiresAdmin: false },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings, badge: null, requiresAdmin: false },
-  { name: 'Help & Support', href: '/support', icon: HelpCircle, badge: null, requiresAdmin: false },
+  { name: 'Help & Support', href: '/dashboard/support', icon: HelpCircle, badge: null, requiresAdmin: false },
   
   // ADMIN-ONLY SECTION (separated for clarity)
   { name: 'User Management', href: '/dashboard/admin/users', icon: Users, badge: null, requiresAdmin: true },
@@ -111,7 +111,7 @@ const getUserFromCookies = () => {
 function useUserSession() {
   const [user, setUser] = useState({
     name: 'Loading...',
-    email: 'loading@example.com',
+    email: '', // 🎯 SURGICAL FIX: Empty instead of loading@example.com to prevent flash
     avatar: '/placeholder.svg',
     role: 'member',
   });
@@ -137,18 +137,26 @@ function useUserSession() {
             .single();
           
           if (userProfile) {
+            // 🎯 SURGICAL FIX: Ensure email is properly decoded from any URL encoding
+            const cleanEmail = userProfile.email || user.email || 'user@example.com';
+            const decodedEmail = decodeURIComponent(cleanEmail);
+            
             setUser({
-              name: userProfile.name || user.email?.split('@')[0] || 'User',
-              email: userProfile.email || user.email || 'user@example.com',
+              name: userProfile.name || decodedEmail.split('@')[0] || 'User',
+              email: decodedEmail,
               avatar: '/placeholder.svg',
               role: userProfile.role || 'member',
             });
             return;
           } else {
             // User exists in auth but not in users table yet
+            // 🎯 SURGICAL FIX: Also decode email here
+            const cleanEmail = user.email || 'user@example.com';
+            const decodedEmail = decodeURIComponent(cleanEmail);
+            
             setUser({
-              name: user.email?.split('@')[0] || 'User',
-              email: user.email || 'user@example.com',
+              name: decodedEmail.split('@')[0] || 'User',
+              email: decodedEmail,
               avatar: '/placeholder.svg',
               role: 'member',
             });

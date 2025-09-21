@@ -118,18 +118,13 @@ export default function LoginPage() {
         
         // IMPROVED REDIRECT: Use tenant info from API response
         const hostname = window.location.hostname;
-        const isOnTenantSubdomain = hostname.includes('.docsflow.app') && 
+        const isOnTenantSubdomain = (hostname.includes('.docsflow.app') || hostname.includes('localhost')) && 
                                    !hostname.startsWith('www.') && 
                                    !hostname.startsWith('api.');
         
         setTimeout(() => {
-          if (isOnTenantSubdomain) {
-            // Already on tenant subdomain, go to dashboard
-            router.push('/dashboard')
-          } else {
-            // On main domain, let middleware redirect to appropriate tenant
-            router.push('/dashboard')
-          }
+          // Always redirect to dashboard - let middleware handle tenant routing
+          router.push('/dashboard')
         }, 1500)
       }
       
