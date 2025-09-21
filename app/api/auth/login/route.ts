@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { getCORSHeaders } from '@/lib/utils';
 import { createResponseWithSessionCookies } from '@/lib/cookie-utils';
+import { rateLimiter } from '@/lib/rate-limiter';
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin');
@@ -15,6 +16,32 @@ export async function POST(request: NextRequest) {
 
   try {
     const { email, password, rememberMe } = await request.json();
+    
+    console.log(`🔐 [LOGIN API] Remember me preference: ${rememberMe}`);
+    
+    // 🎯 SURGICAL FIX: Rate limiting protection
+    const clientIP = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+    const rateLimitKey = rateLimiter.getLoginKey(email, clientIP);
+    
+    // Check current rate limit status
+    const rateLimitStatus = rateLimiter.getStatus(rateLimitKey);
+    
+    if (!rateLimitStatus.allowed) {
+      const timeUntilUnblocked = rateLimiter.getTimeUntilUnblocked(rateLimitKey);
+      console.warn(`🚨 [RATE-LIMITER] Login blocked for ${email} (${clientIP}) - ${timeUntilUnblocked}s remaining`);
+      
+      return NextResponse.json({
+        error: 'Too many login attempts',
+        message: `Please wait ${Math.ceil(timeUntilUnblocked / 60)} minutes before trying again.`,
+        retryAfter: timeUntilUnblocked
+      }, { 
+        status: 429, 
+        headers: {
+          ...corsHeaders,
+          'Retry-After': timeUntilUnblocked.toString()
+        }
+      });
+    }
 
     if (!email || !password) {
       return NextResponse.json(
@@ -68,6 +95,9 @@ export async function POST(request: NextRequest) {
     if (authError) {
       console.error('Login error:', authError);
       
+      // 🎯 SURGICAL FIX: Record failed login attempt
+      const failedAttemptResult = rateLimiter.recordFailedAttempt(rateLimitKey);
+      
       // Provide specific error messages based on error type
       let errorMessage = 'Invalid credentials';
       let statusCode = 401;
@@ -100,11 +130,18 @@ export async function POST(request: NextRequest) {
         errorMessage = 'No account found with this email address. Please check your email or sign up.';
       }
       
+      // Add rate limiting info to error response
+      if (failedAttemptResult.remainingAttempts <= 2 && failedAttemptResult.remainingAttempts > 0) {
+        errorMessage += `. ${failedAttemptResult.remainingAttempts} attempts remaining.`;
+      }
+      
       return NextResponse.json(
         { 
           error: errorMessage, 
           details: process.env.NODE_ENV === 'development' ? authError.message : undefined,
-          code: authError.status || statusCode 
+          code: authError.status || statusCode,
+          remainingAttempts: failedAttemptResult.remainingAttempts,
+          resetTime: failedAttemptResult.resetTime
         },
         { status: statusCode, headers: corsHeaders }
       );
@@ -194,9 +231,16 @@ export async function POST(request: NextRequest) {
     // Also set server-side cookies for immediate session compatibility
     const authCookieStore = await cookies();
     
-    // REMEMBER ME FIX: Set cookie duration based on user preference
-    const authTokenMaxAge = rememberMe ? (60 * 60 * 24 * 30) : 3600; // 30 days vs 1 hour
-    const refreshTokenMaxAge = rememberMe ? (60 * 60 * 24 * 30) : (60 * 60 * 24 * 7); // 30 days vs 7 days
+    // 🎯 SURGICAL FIX: Remember me cookie duration based on user preference
+    // Also check for client-side remember-me cookie as fallback
+    const cookieStore = await cookies();
+    const clientRememberMe = cookieStore.get('remember-me')?.value === 'true';
+    const effectiveRememberMe = rememberMe || clientRememberMe;
+    
+    const authTokenMaxAge = effectiveRememberMe ? (60 * 60 * 24 * 30) : 3600; // 30 days vs 1 hour
+    const refreshTokenMaxAge = effectiveRememberMe ? (60 * 60 * 24 * 30) : (60 * 60 * 24 * 7); // 30 days vs 7 days
+    
+    console.log(`🎯 [REMEMBER ME FIX] Backend rememberMe: ${rememberMe}, Client rememberMe: ${clientRememberMe}, Effective: ${effectiveRememberMe}`);
     
     // FIX #1: Set unified auth cookies on server-side
     authCookieStore.set('docsflow_auth_token', authData.session.access_token, {
@@ -240,6 +284,18 @@ export async function POST(request: NextRequest) {
       maxAge: authTokenMaxAge
     });
     
+    // 🎯 SURGICAL FIX: Set server-side remember-me indicator cookie for client reference
+    if (effectiveRememberMe) {
+      authCookieStore.set('remember-me', 'true', {
+        httpOnly: false, // Allow client-side access for UI state
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
+        maxAge: 60 * 60 * 24 * 30 // 30 days
+      });
+    }
+    
     console.log(`🔧 [LOGIN FIX] Set complete Supabase session cookie:`, {
       sessionSize: encodedSession.length,
       hasAccessToken: !!sessionData.access_token,
@@ -252,6 +308,9 @@ export async function POST(request: NextRequest) {
       supabaseAuth: !!authData.session.access_token,
       hasRefresh: !!authData.session.refresh_token
     });
+    
+    // 🎯 SURGICAL FIX: Record successful login (resets rate limit)
+    rateLimiter.recordSuccessfulAttempt(rateLimitKey);
     
     return response;
 

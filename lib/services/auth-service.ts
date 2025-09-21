@@ -12,6 +12,7 @@
 
 import { createClient } from '@/lib/supabase-browser';
 import { SafeBase64Decoder } from './safe-base64-decoder';
+import { sessionSync, type SessionSyncEvent } from '@/lib/session-sync';
 import type { 
   AuthToken, 
   AuthUser, 
@@ -24,6 +25,9 @@ export class AuthService {
   private static tokenCache: string | null = null;
   private static tokenExpiry: number = 0;
   private static isInitialized = false;
+  private static sessionSyncCleanup: (() => void) | null = null;
+  private static timeoutWarningShown = false;
+  private static sessionCheckInterval: NodeJS.Timeout | null = null;
 
   /**
    * CORE METHOD: Get current auth token
@@ -83,6 +87,15 @@ export class AuthService {
       // Cache token with expiry
       this.tokenCache = session.access_token;
       this.tokenExpiry = (session.expires_at || 0) * 1000 - 60000; // 1 minute buffer
+      
+      // 🎯 SURGICAL FIX: Broadcast session update to other tabs
+      if (sessionSync.isActive) {
+        sessionSync.broadcastSessionUpdate({
+          access_token: session.access_token,
+          expires_at: session.expires_at || 0,
+          user: session.user
+        });
+      }
       
       console.log('✅ [AUTH-SERVICE] Token retrieved successfully');
       return session.access_token;
@@ -291,16 +304,191 @@ export class AuthService {
       
       if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
         this.clearTokenCache();
+        
+        // 🎯 SURGICAL FIX: Broadcast logout to other tabs
+        if (event === 'SIGNED_OUT' && sessionSync.isActive) {
+          sessionSync.broadcastLogout();
+        }
       }
       
       if (session?.access_token) {
         this.tokenCache = session.access_token;
         this.tokenExpiry = (session.expires_at || 0) * 1000 - 60000;
+        
+        // 🎯 SURGICAL FIX: Broadcast session update to other tabs
+        if (sessionSync.isActive) {
+          sessionSync.broadcastSessionUpdate({
+            access_token: session.access_token,
+            expires_at: session.expires_at || 0,
+            user: session.user
+          });
+        }
       }
     });
+    
+    // 🎯 SURGICAL FIX: Setup cross-tab session sync listener
+    this.setupSessionSync();
+
+    // 🎯 SURGICAL FIX: Setup session timeout monitoring
+    this.setupSessionTimeoutMonitoring();
 
     this.isInitialized = true;
     console.log('✅ [AUTH-SERVICE] Initialized successfully');
+  }
+
+  /**
+   * 🎯 SURGICAL FIX: Setup cross-tab session synchronization
+   */
+  private static setupSessionSync(): void {
+    if (!sessionSync.isActive) return;
+
+    this.sessionSyncCleanup = sessionSync.addListener((event: SessionSyncEvent) => {
+      console.log(`🔄 [AUTH-SERVICE] Session sync event: ${event.type}`);
+
+      switch (event.type) {
+        case 'SESSION_UPDATED':
+          if (event.sessionData) {
+            // Update local cache with session from another tab
+            this.tokenCache = event.sessionData.access_token;
+            this.tokenExpiry = event.sessionData.expires_at * 1000 - 60000;
+            console.log('✅ [AUTH-SERVICE] Session synchronized from another tab');
+          }
+          break;
+
+        case 'SESSION_EXPIRED':
+          // Clear local cache when session expires in another tab
+          this.clearTokenCache();
+          console.log('⚠️ [AUTH-SERVICE] Session expired - cleared from sync');
+          break;
+
+        case 'LOGOUT':
+          // Handle logout from another tab
+          this.clearTokenCache();
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+          console.log('🚪 [AUTH-SERVICE] Logout detected from another tab');
+          break;
+      }
+    });
+  }
+
+  /**
+   * 🎯 SURGICAL FIX: Setup session timeout monitoring and warnings
+   */
+  private static setupSessionTimeoutMonitoring(): void {
+    if (typeof window === 'undefined') return;
+
+    // Check session every 30 seconds
+    this.sessionCheckInterval = setInterval(async () => {
+      const timeToExpiry = this.tokenExpiry - Date.now();
+      const fiveMinutes = 5 * 60 * 1000;
+      const oneMinute = 60 * 1000;
+
+      // Show warning 5 minutes before expiry
+      if (timeToExpiry > 0 && timeToExpiry <= fiveMinutes && !this.timeoutWarningShown) {
+        this.timeoutWarningShown = true;
+        this.showSessionTimeoutWarning(Math.floor(timeToExpiry / 1000));
+      }
+
+      // Auto-refresh if within 1 minute of expiry
+      if (timeToExpiry > 0 && timeToExpiry <= oneMinute) {
+        console.log('⏰ [AUTH-SERVICE] Session near expiry, attempting refresh...');
+        try {
+          await this.refreshSession();
+          this.timeoutWarningShown = false; // Reset warning flag
+        } catch (error) {
+          console.error('❌ [AUTH-SERVICE] Auto-refresh failed:', error);
+          this.handleSessionExpired();
+        }
+      }
+
+      // Handle expired session
+      if (timeToExpiry <= 0 && this.tokenCache) {
+        this.handleSessionExpired();
+      }
+    }, 30000); // Check every 30 seconds
+  }
+
+  /**
+   * Show session timeout warning to user
+   */
+  private static showSessionTimeoutWarning(secondsRemaining: number): void {
+    const minutes = Math.floor(secondsRemaining / 60);
+    const message = `Your session will expire in ${minutes} minute${minutes !== 1 ? 's' : ''}. Please save your work.`;
+    
+    // Create a non-intrusive notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('Session Expiring', {
+        body: message,
+        icon: '/favicon.ico'
+      });
+    } else {
+      console.warn(`⚠️ [SESSION-TIMEOUT] ${message}`);
+    }
+
+    // Broadcast to other tabs
+    if (sessionSync.isActive) {
+      sessionSync.broadcastSessionExpired();
+    }
+  }
+
+  /**
+   * Handle session expiration
+   */
+  private static handleSessionExpired(): void {
+    console.log('🚨 [AUTH-SERVICE] Session expired');
+    this.clearTokenCache();
+    this.timeoutWarningShown = false;
+
+    // Broadcast to other tabs
+    if (sessionSync.isActive) {
+      sessionSync.broadcastSessionExpired();
+    }
+
+    // Only redirect if not already on login page
+    if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+      window.location.href = '/login?reason=session-expired';
+    }
+  }
+
+  /**
+   * Manual session refresh method
+   */
+  private static async refreshSession(): Promise<boolean> {
+    try {
+      const { data, error } = await this.supabase.auth.refreshSession();
+      
+      if (error || !data.session?.access_token) {
+        throw new Error(`Session refresh failed: ${error?.message || 'No session returned'}`);
+      }
+
+      this.tokenCache = data.session.access_token;
+      this.tokenExpiry = (data.session.expires_at || 0) * 1000 - 60000;
+
+      console.log('✅ [AUTH-SERVICE] Session refreshed successfully');
+      return true;
+    } catch (error) {
+      console.error('❌ [AUTH-SERVICE] Session refresh failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Cleanup method for proper resource management
+   */
+  static destroy(): void {
+    if (this.sessionSyncCleanup) {
+      this.sessionSyncCleanup();
+      this.sessionSyncCleanup = null;
+    }
+    if (this.sessionCheckInterval) {
+      clearInterval(this.sessionCheckInterval);
+      this.sessionCheckInterval = null;
+    }
+    this.clearTokenCache();
+    this.isInitialized = false;
+    console.log('🧹 [AUTH-SERVICE] Destroyed and cleaned up');
   }
 }
 
