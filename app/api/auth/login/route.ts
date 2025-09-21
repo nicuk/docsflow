@@ -233,8 +233,7 @@ export async function POST(request: NextRequest) {
     
     // 🎯 SURGICAL FIX: Remember me cookie duration based on user preference
     // Also check for client-side remember-me cookie as fallback
-    const cookieStore = await cookies();
-    const clientRememberMe = cookieStore.get('remember-me')?.value === 'true';
+    const clientRememberMe = authCookieStore.get('remember-me')?.value === 'true';
     const effectiveRememberMe = rememberMe || clientRememberMe;
     
     const authTokenMaxAge = effectiveRememberMe ? (60 * 60 * 24 * 30) : 3600; // 30 days vs 1 hour
