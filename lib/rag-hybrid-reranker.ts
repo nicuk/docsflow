@@ -374,17 +374,25 @@ Return only a number between 0 and 1.`;
       includeProvenance = true
     } = options;
     
+    // 🎯 RAGAS PATTERN A DEBUG: Trace enhancedRAGPipeline execution
+    console.log(`🔍 [RAGAS PATTERN A] enhancedRAGPipeline started for query: "${query}"`);
+    
     // Step 1: Hybrid search with query rewriting
     const hybridResults = await this.hybridSearch(query, tenantId, topK * 2);
+    console.log(`📊 [RAGAS PATTERN A] Step 1 - hybridSearch returned: ${hybridResults.length} results`);
     
     // Step 2: Cross-encoder reranking
     const rerankedResults = await this.crossEncoderRerank(query, hybridResults, topK);
+    console.log(`📊 [RAGAS PATTERN A] Step 2 - crossEncoderRerank returned: ${rerankedResults.length} results`);
     
     // Step 3: Apply provenance and abstention logic
     const { results, shouldAbstain, abstentionReason, confidence } = 
       await this.applyProvenanceAndAbstention(query, rerankedResults, confidenceThreshold);
     
+    console.log(`📊 [RAGAS PATTERN A] Step 3 - applyProvenance returned: ${results.length} results, shouldAbstain: ${shouldAbstain}`);
+    
     if (shouldAbstain) {
+      console.log(`🚨 [RAGAS PATTERN A] ABSTAINING: ${abstentionReason}`);
       return {
         success: false,
         abstained: true,
@@ -397,12 +405,23 @@ Return only a number between 0 and 1.`;
     
     // Step 4: Generate response with citations
     const response = await this.generateCitedResponse(query, results);
+    console.log(`📊 [RAGAS PATTERN A] Step 4 - generateCitedResponse completed`);
+    
+    // 🎯 RAGAS PATTERN A SMOKING GUN FIX: Return actual result objects, not just provenance
+    const sources = includeProvenance ? results.map(r => ({
+      content: r.content,
+      source: r.provenance?.source || 'Unknown',
+      confidence: r.provenance?.confidence || confidence,
+      metadata: r.metadata
+    })) : [];
+    
+    console.log(`🎯 [RAGAS PATTERN A] FINAL RESULT: success=true, sources=${sources.length}, confidence=${confidence}`);
     
     return {
       success: true,
       response,
       confidence,
-      sources: includeProvenance ? results.map(r => r.provenance) : [],
+      sources, // 🎯 FIXED: Return full source objects instead of just provenance
       metadata: {
         totalDocumentsSearched: hybridResults.length,
         documentsUsed: results.length,
