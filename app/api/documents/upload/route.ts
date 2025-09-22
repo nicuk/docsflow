@@ -190,6 +190,8 @@ export async function POST(request: NextRequest) {
     // Get classification from request or auto-suggest
     const requestedClassification = formData.get('classification') as DocumentClassification | null;
     
+    // We'll use created_at + 10 minutes for timeout check (no DB changes needed)
+    
     // Get allowed classifications for this user
     const allowedClassifications = getAllowedUploadClassifications(userAccessLevel);
     

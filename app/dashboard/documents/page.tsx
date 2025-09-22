@@ -376,6 +376,27 @@ export default function DocumentsPage() {
     setUploadingFiles((prev) => prev.filter((f) => f.id !== fileId))
   }
 
+  // Cleanup stuck documents
+  const cleanupStuckDocuments = async () => {
+    try {
+      const response = await fetch('/api/documents/cleanup-stuck', {
+        method: 'POST'
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        console.log(`✅ Cleaned up ${data.cleaned} stuck documents`);
+        // Refresh the documents list
+        fetchDocuments();
+      } else {
+        console.error('Cleanup failed:', data.error);
+      }
+    } catch (error) {
+      console.error('Cleanup request failed:', error);
+    }
+  }
+
   // Handle document selection
   const toggleDocumentSelection = (id: string) => {
     setSelectedDocuments((prev) => (prev.includes(id) ? prev.filter((docId) => docId !== id) : [...prev, id]))
@@ -756,6 +777,14 @@ export default function DocumentsPage() {
         <div className="flex items-center gap-2">
           <Button onClick={() => setIsUploadDialogOpen(true)} className="gap-2 bg-blue-600 hover:bg-blue-700">
             <Upload className="h-4 w-4" /> Upload
+          </Button>
+          <Button 
+            onClick={cleanupStuckDocuments} 
+            variant="outline" 
+            className="gap-2"
+            disabled={isLoading}
+          >
+            <RefreshCw className="h-4 w-4" /> Cleanup
           </Button>
         </div>
       </div>
