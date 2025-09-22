@@ -188,7 +188,7 @@ Return only a number between 0 and 1.`;
   async applyProvenanceAndAbstention(
     query: string,
     results: SearchResult[],
-    confidenceThreshold: number = 0.7
+    confidenceThreshold: number = 0.4  // 🎯 CTO FIX: Lower threshold for business content
   ): Promise<{
     results: SearchResult[];
     shouldAbstain: boolean;
@@ -256,7 +256,7 @@ Return only a number between 0 and 1.`;
   ): Promise<any> {
     const {
       topK = 10,
-      confidenceThreshold = 0.7,
+      confidenceThreshold = 0.4,  // 🎯 CTO FIX: Lower default threshold
       includeProvenance = true
     } = options;
     
