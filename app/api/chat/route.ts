@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-// 🎯 LINT FIX: Comment out unused imports
-// import { google } from '@ai-sdk/google';
-// import { generateText } from 'ai';
+// 🎯 RUNTIME FIX: Restore imports needed for build
+import { google } from '@ai-sdk/google';
+import { generateText } from 'ai';
 import { getCORSHeaders } from '@/lib/utils';
 import { getTenantPrompt, calculateTenantConfidence } from '@/lib/tenant-prompts';
 import { ConfidenceScoring } from '@/lib/confidence-scoring';

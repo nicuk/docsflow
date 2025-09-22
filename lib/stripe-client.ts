@@ -1,16 +1,15 @@
 import Stripe from 'stripe';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is required');
-}
+// 🎯 BUILD FIX: Make Stripe optional during build time
+const stripeKey = process.env.STRIPE_SECRET_KEY;
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+export const stripe = stripeKey ? new Stripe(stripeKey, {
   apiVersion: '2024-06-20',
   appInfo: {
     name: 'AI Lead Router SaaS',
     version: '1.0.0',
   },
-});
+}) : null;
 
 // Stripe price IDs for your subscription plans
 export const STRIPE_PRICE_IDS = {
