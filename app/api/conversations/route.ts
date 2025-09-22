@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCORSHeaders } from '@/lib/utils';
 import { createClient } from '@/lib/supabase-server';
+import { validateTenantContext } from '@/lib/api-tenant-validation';
 
 // SECURITY FIX: Use secure database service instead of direct service role
 import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
