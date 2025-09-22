@@ -336,18 +336,52 @@ Return only a number between 0 and 1.`;
     tenantId: string,
     limit: number
   ): Promise<SearchResult[]> {
-    console.log(`🔍 [RAG SEARCH v3] SCHEMA FIX: Searching document_chunks for tenant ${tenantId}: "${query}"`);
-    console.log(`🔧 [RAG SEARCH v3] Using stored tenant ID: ${this.tenantId}`);
+    console.log(`🔍 [RAG SEARCH v4] SURGICAL DEBUG: Searching document_chunks for tenant ${tenantId}: "${query}"`);
+    console.log(`🔧 [RAG SEARCH v4] Using stored tenant ID: ${this.tenantId}`);
+    
+    // 🎯 SURGICAL FIX: Try broad search first, then narrow if needed
+    let searchQuery = query.toLowerCase();
+    
+    // For generic queries, search for any content
+    if (query.toLowerCase().includes('document') || query.toLowerCase().includes('what') || query.length < 20) {
+      console.log(`🔄 [RAG SEARCH v4] Generic query detected, using broad search`);
+      const { data: broadData, error: broadError } = await this.supabase
+        .from('document_chunks')
+        .select('id, document_id, content, metadata, tenant_id')
+        .eq('tenant_id', this.tenantId)
+        .limit(Math.min(limit, 5)); // Return any chunks for generic queries
+      
+      if (broadData && broadData.length > 0) {
+        console.log(`📊 [RAG SEARCH v4] BROAD SEARCH: ${broadData.length} chunks found for tenant ${this.tenantId}`);
+        return broadData.map((d: any) => ({
+          id: d.document_id,
+          content: d.content,
+          metadata: d.metadata,
+          vectorScore: 0,
+          keywordScore: 0.5 // Medium relevance for generic queries
+        }));
+      }
+    }
+    
+    // Original specific search
     const { data, error } = await this.supabase
       .from('document_chunks') // 🎯 SCHEMA FIX: Search chunks not documents
       .select('id, document_id, content, metadata, tenant_id')
       .eq('tenant_id', this.tenantId) // 🎯 SURGICAL FIX: Use stored tenant ID
-      .ilike('content', `%${query}%`)
+      .ilike('content', `%${searchQuery}%`)
       .limit(limit);
     
-    console.log(`📊 [RAG SEARCH v3] CHUNK RESULTS: ${data?.length || 0} chunks found for tenant ${this.tenantId}`);
+    console.log(`📊 [RAG SEARCH v4] SPECIFIC SEARCH: ${data?.length || 0} chunks found for tenant ${this.tenantId}`);
     
-    if (error || !data) return [];
+    if (error) {
+      console.error(`❌ [RAG SEARCH v4] Database error:`, error);
+      return [];
+    }
+    
+    if (!data || data.length === 0) {
+      console.log(`⚠️ [RAG SEARCH v4] No chunks found - returning empty results`);
+      return [];
+    }
     
     return data.map((d: any) => ({
       id: d.document_id, // 🎯 SCHEMA FIX: Use document_id for chunk results
