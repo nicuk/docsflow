@@ -9,6 +9,7 @@ import { Send, Paperclip, RotateCcw, Download, FileText, MessageSquare, Sparkles
 import { apiClient } from "@/lib/api-client"
 import ConfidenceIndicator from "@/components/confidence-indicator"
 import SourceViewerModal from "@/components/source-viewer-modal"
+import { useToast } from "@/hooks/use-toast"
 
 interface Message {
   id: string
@@ -136,6 +137,9 @@ export default function ChatInterface() {
   // 🚀 NEW: Source viewer modal state
   const [selectedSource, setSelectedSource] = useState<any>(null)
   const [isSourceModalOpen, setIsSourceModalOpen] = useState(false)
+  
+  // Toast notifications
+  const { toast } = useToast()
 
   const placeholderSuggestions = [
     "What were our Q3 expenses?",
@@ -835,16 +839,60 @@ Please try again in a moment. If the issue persists, you can still use the inter
                           const files = (e.target as HTMLInputElement).files;
                           if (files && files.length > 0) {
                             try {
+                              // Show initial upload toast
+                              toast({
+                                title: `Uploading ${files.length} file${files.length > 1 ? 's' : ''}...`,
+                                description: "Please wait while we process your documents.",
+                              });
+
                               // Process files sequentially to prevent server overload
+                              let successCount = 0;
+                              let failedFiles: string[] = [];
+                              
                               for (const file of Array.from(files)) {
-                                console.log('Uploading file:', file.name);
-                                // Use the API client to upload
-                                const { apiClient } = await import('@/lib/api-client');
-                                await apiClient.uploadDocument(file);
-                                console.log('File uploaded successfully:', file.name);
+                                try {
+                                  console.log('Uploading file:', file.name);
+                                  // Use the API client to upload
+                                  const { apiClient } = await import('@/lib/api-client');
+                                  await apiClient.uploadDocument(file);
+                                  console.log('File uploaded successfully:', file.name);
+                                  successCount++;
+                                } catch (fileError) {
+                                  console.error('File upload failed:', file.name, fileError);
+                                  failedFiles.push(file.name);
+                                }
+                              }
+
+                              // Show final result toast
+                              if (successCount > 0 && failedFiles.length === 0) {
+                                // All files succeeded
+                                toast({
+                                  title: "Upload successful! 🎉",
+                                  description: `${successCount} file${successCount > 1 ? 's' : ''} uploaded and processed successfully. You can now ask questions about ${successCount > 1 ? 'them' : 'it'}.`,
+                                  variant: "default",
+                                });
+                              } else if (successCount > 0 && failedFiles.length > 0) {
+                                // Partial success
+                                toast({
+                                  title: "Partial upload success ⚠️",
+                                  description: `${successCount} file${successCount > 1 ? 's' : ''} uploaded successfully. ${failedFiles.length} failed: ${failedFiles.slice(0, 2).join(', ')}${failedFiles.length > 2 ? '...' : ''}.`,
+                                  variant: "default",
+                                });
+                              } else {
+                                // All files failed
+                                toast({
+                                  title: "Upload failed ❌",
+                                  description: `Failed to upload ${failedFiles.length} file${failedFiles.length > 1 ? 's' : ''}. Please check file format and size (max 50MB).`,
+                                  variant: "destructive",
+                                });
                               }
                             } catch (error) {
-                              console.error('File upload failed:', error);
+                              console.error('Upload process failed:', error);
+                              toast({
+                                title: "Upload failed ❌",
+                                description: "An unexpected error occurred during upload. Please try again.",
+                                variant: "destructive",
+                              });
                             }
                           }
                         };

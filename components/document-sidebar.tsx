@@ -39,6 +39,7 @@ import {
   Check,
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
+import { useToast } from "@/hooks/use-toast"
 
 // Document types and interfaces
 type DocumentStatus = "processed" | "processing" | "failed"
@@ -89,6 +90,9 @@ export default function DocumentSidebar({
   // Refs
   const sidebarRef = useRef<HTMLDivElement>(null)
   const resizeHandleRef = useRef<HTMLDivElement>(null)
+  
+  // Toast notifications
+  const { toast } = useToast()
 
   // Sample documents data
   const [documents, setDocuments] = useState<Document[]>([
@@ -322,7 +326,16 @@ export default function DocumentSidebar({
       const files = (e.target as HTMLInputElement).files
       if (!files) return
       
+      // Show initial upload toast
+      toast({
+        title: `Uploading ${files.length} file${files.length > 1 ? 's' : ''}...`,
+        description: "Please wait while we process your documents.",
+      });
+      
       // Process files sequentially to prevent server overload
+      let successCount = 0;
+      let failedFiles: string[] = [];
+      
       for (const file of Array.from(files)) {
         // Add optimistic document to UI
         const tempDoc: Document = {
@@ -352,8 +365,12 @@ export default function DocumentSidebar({
               : doc
           ))
           
+          successCount++;
+          
         } catch (error) {
           console.error('Upload failed:', error)
+          failedFiles.push(file.name);
+          
           // Mark as failed
           setDocuments(prev => prev.map(doc => 
             doc.id === tempDoc.id 
@@ -361,6 +378,30 @@ export default function DocumentSidebar({
               : doc
           ))
         }
+      }
+      
+      // Show final result toast
+      if (successCount > 0 && failedFiles.length === 0) {
+        // All files succeeded
+        toast({
+          title: "Upload successful! 🎉",
+          description: `${successCount} file${successCount > 1 ? 's' : ''} uploaded and processed successfully. You can now ask questions about ${successCount > 1 ? 'them' : 'it'}.`,
+          variant: "default",
+        });
+      } else if (successCount > 0 && failedFiles.length > 0) {
+        // Partial success
+        toast({
+          title: "Partial upload success ⚠️",
+          description: `${successCount} file${successCount > 1 ? 's' : ''} uploaded successfully. ${failedFiles.length} failed: ${failedFiles.slice(0, 2).join(', ')}${failedFiles.length > 2 ? '...' : ''}.`,
+          variant: "default",
+        });
+      } else {
+        // All files failed
+        toast({
+          title: "Upload failed ❌",
+          description: `Failed to upload ${failedFiles.length} file${failedFiles.length > 1 ? 's' : ''}. Please check file format and size (max 50MB).`,
+          variant: "destructive",
+        });
       }
     }
     
@@ -482,10 +523,7 @@ export default function DocumentSidebar({
                     </p>
                     <Button
                       className="mt-4 bg-blue-600 hover:bg-blue-700"
-                      onClick={() => {
-                        handleUpload()
-                        // Close dialog in real implementation
-                      }}
+                      onClick={handleUpload}
                     >
                       Select Files
                     </Button>
