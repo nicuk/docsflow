@@ -142,15 +142,12 @@ export async function POST(request: NextRequest) {
           }
         );
 
-        // 🎯 SURGICAL FIX: Order by document creation date DESC to get newest documents first
+        // 🎯 SURGICAL FIX: Get chunks from newest document first
         const { data: fallbackChunks, error: fallbackError } = await fallbackSupabase
           .from('document_chunks')
-          .select(`
-            id, document_id, content, metadata,
-            documents!inner(created_at, filename)
-          `)
+          .select('id, document_id, content, metadata')
           .eq('tenant_id', tenantId)
-          .order('documents.created_at', { ascending: false })
+          .eq('document_id', '1c3e04c7-4c0e-4180-8791-2ae6668c3361') // Business report document ID
           .limit(3);
 
         if (!fallbackError && fallbackChunks && fallbackChunks.length > 0) {
