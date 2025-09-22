@@ -51,6 +51,59 @@ Consider: exact match, semantic similarity, temporal relevance, entity alignment
   }
 
   /**
+   * Extract keywords from natural language query
+   * Converts "What was the revenue?" → "revenue"
+   */
+  private extractKeywords(query: string): string {
+    // Remove common question words and articles
+    const stopWords = [
+      'what', 'was', 'the', 'is', 'are', 'how', 'when', 'where', 'why', 'who',
+      'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of',
+      'with', 'by', 'from', 'up', 'about', 'into', 'through', 'during',
+      'before', 'after', 'above', 'below', 'between', 'among', 'can', 'could',
+      'should', 'would', 'will', 'shall', 'may', 'might', 'must', 'do', 'does',
+      'did', 'have', 'has', 'had', 'be', 'been', 'being', 'am', 'is', 'are',
+      'was', 'were', 'get', 'got', 'tell', 'me', 'show', 'find', 'search',
+      'look', 'give', 'provide', 'our', 'my', 'your', 'their', 'this', 'that',
+      'these', 'those', 'some', 'any', 'all', 'much', 'many', 'most', 'more',
+      'less', 'few', 'several', '?', '.', ',', '!', ';', ':'
+    ];
+
+    // Extract meaningful keywords
+    const words = query
+      .toLowerCase()
+      .replace(/[^\w\s]/g, ' ')  // Remove punctuation
+      .split(/\s+/)
+      .filter(word => 
+        word.length > 2 && 
+        !stopWords.includes(word) &&
+        !word.match(/^\d+$/)  // Remove pure numbers
+      );
+
+    // If no keywords found, return original query
+    if (words.length === 0) {
+      return query;
+    }
+
+    // Return the most relevant keyword(s)
+    // For business queries, prioritize key terms
+    const businessTerms = words.filter(word => 
+      ['revenue', 'profit', 'income', 'sales', 'cost', 'budget', 'client', 
+       'customer', 'project', 'contract', 'report', 'analysis', 'data',
+       'performance', 'growth', 'target', 'goal', 'metric', 'kpi'].includes(word)
+    );
+
+    if (businessTerms.length > 0) {
+      return businessTerms[0]; // Use the first business term
+    }
+
+    // Return the longest meaningful word
+    return words.reduce((longest, current) => 
+      current.length > longest.length ? current : longest, words[0]
+    );
+  }
+
+  /**
    * Advanced query rewriting with multiple strategies
    */
   async rewriteQuery(query: string): Promise<RewrittenQuery> {
@@ -339,8 +392,8 @@ Return only a number between 0 and 1.`;
     console.log(`🔍 [RAG SEARCH v4] SURGICAL DEBUG: Searching document_chunks for tenant ${tenantId}: "${query}"`);
     console.log(`🔧 [RAG SEARCH v4] Using stored tenant ID: ${this.tenantId}`);
     
-    // 🎯 SURGICAL FIX: Try broad search first, then narrow if needed
-    let searchQuery = query.toLowerCase();
+    // 🎯 CTO ROOT CAUSE FIX: Extract keywords from query instead of searching entire question
+    let searchQuery = this.extractKeywords(query.toLowerCase());
     
     // 🎯 SURGICAL FIX: More precise broad search criteria - only truly generic queries
     const isVeryGeneric = (
