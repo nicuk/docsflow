@@ -344,7 +344,7 @@ Return only a number between 0 and 1.`;
     
     // For generic queries, search for any content
     if (query.toLowerCase().includes('document') || query.toLowerCase().includes('what') || query.length < 20) {
-      console.log(`🔄 [RAG SEARCH v4] Generic query detected, using broad search`);
+      console.log(`🔄 [RAG SEARCH v5] SURGICAL FIX: Generic query detected, returning ANY available chunks`);
       const { data: broadData, error: broadError } = await this.supabase
         .from('document_chunks')
         .select('id, document_id, content, metadata, tenant_id')
@@ -352,7 +352,7 @@ Return only a number between 0 and 1.`;
         .limit(Math.min(limit, 5)); // Return any chunks for generic queries
       
       if (broadData && broadData.length > 0) {
-        console.log(`📊 [RAG SEARCH v4] BROAD SEARCH: ${broadData.length} chunks found for tenant ${this.tenantId}`);
+        console.log(`📊 [RAG SEARCH v5] BROAD SEARCH SUCCESS: ${broadData.length} chunks found for tenant ${this.tenantId}`);
         return broadData.map((d: any) => ({
           id: d.document_id,
           content: d.content,
