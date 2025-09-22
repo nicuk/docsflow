@@ -48,9 +48,32 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    // SURGICAL FIX: Try cookie-based auth first, then fallback to Authorization header
+    // SURGICAL FIX: Try custom auth-token cookie first, then Supabase cookies
+    const customAuthToken = parsedCookies['auth-token'];
+    const customRefreshToken = parsedCookies['refresh-token'];
+    
     let { data: { user }, error: userError } = await supabase.auth.getUser();
     let { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    // If Supabase cookies don't work, try our custom auth-token cookie
+    if ((!user || userError) && customAuthToken) {
+      console.log(`🔍 [SESSION API] Supabase cookies failed, trying custom auth-token...`);
+      const { createClient } = await import('@supabase/supabase-js');
+      const serviceSupabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+      
+      const { data: tokenUser, error: tokenError } = await serviceSupabase.auth.getUser(customAuthToken);
+      if (tokenUser && !tokenError) {
+        user = tokenUser;
+        session = { access_token: customAuthToken, user: tokenUser } as any;
+        userError = null;
+        console.log(`✅ [SESSION API] Custom auth-token successful for user: ${tokenUser.email}`);
+      } else {
+        console.log(`❌ [SESSION API] Custom auth-token failed:`, tokenError?.message || 'Unknown error');
+      }
+    }
     
     // If cookie auth fails, try Authorization header BEFORE proceeding
     if (!user || userError) {
