@@ -102,8 +102,17 @@ export async function POST(request: NextRequest) {
     const tenantId = tenantValidation.tenantId!; // Use validated tenant UUID
     const supabaseClient = await createClient();
     
-    // For now, use demo user ID since we don't have full auth yet
-    const userId = '00000000-0000-0000-0000-000000000000';
+    // Get the authenticated user ID
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not authenticated' },
+        { status: 401, headers: corsHeaders }
+      );
+    }
+    
+    const userId = user.id;
     
     const { title } = await request.json();
     
