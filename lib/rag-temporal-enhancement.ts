@@ -33,8 +33,10 @@ export class TemporalRAGEnhancement {
   private supabase: any;
   private genAI: GoogleGenerativeAI;
   private model: any;
+  private tenantId: string; // 🎯 SCHEMA FIX: Store tenant context
 
-  constructor() {
+  constructor(tenantId: string) { // 🎯 SCHEMA FIX: Accept tenant ID
+    this.tenantId = tenantId;
     this.supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!

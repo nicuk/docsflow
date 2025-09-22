@@ -34,8 +34,10 @@ export class AgenticRAGEnhancement {
   private genAI: GoogleGenerativeAI;
   private supabase: any;
   private reasoningModel: any;
+  private tenantId: string; // 🎯 SCHEMA FIX: Store tenant context
 
-  constructor() {
+  constructor(tenantId: string) { // 🎯 SCHEMA FIX: Accept tenant ID
+    this.tenantId = tenantId;
     if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
       throw new Error('Google AI API key required');
     }
@@ -343,6 +345,7 @@ Provide a detailed, accurate response with proper source attribution.`;
         .from('chat_messages')
         .select('role, content, metadata')
         .eq('conversation_id', conversationId)
+        .eq('tenant_id', this.tenantId) // 🎯 SCHEMA FIX: Filter by tenant
         .order('created_at', { ascending: false })
         .limit(5);
 
