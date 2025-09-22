@@ -167,7 +167,9 @@ export class UnifiedRAGPipeline {
    */
   private async analyzeQuery(query: string): Promise<QueryAnalysis> {
     try {
+      console.log(`🔍 [QUERY ANALYSIS] Starting analysis for: "${query}"`);
       const agenticAnalysis = await this.agenticEnhancer.analyzeQuery(query, this.tenantId);
+      console.log(`✅ [QUERY ANALYSIS] Agentic analysis completed: ${agenticAnalysis.queryPlan.strategy}`);
       
       const isTemporalQuery = /latest|recent|last|ago|between|from.*to|changed|updated/i.test(query);
       const isComplexQuery = agenticAnalysis.queryPlan.strategy === 'multi_doc' || 
@@ -183,7 +185,8 @@ export class UnifiedRAGPipeline {
       };
       
     } catch (error) {
-      console.warn('Query analysis failed, using simple strategy:', error);
+      console.warn('🚨 [QUERY ANALYSIS] Failed, using simple strategy:', error.message);
+      console.log('🔧 [FALLBACK] Proceeding with simple query strategy');
       return {
         strategy: 'simple',
         isTemporalQuery: false,
@@ -273,7 +276,10 @@ export class UnifiedRAGPipeline {
    * Handle simple queries
    */
   private async handleSimpleQuery(query: string, options: RAGOptions): Promise<RAGResponse> {
-    return this.hybridReranker.enhancedRAGPipeline(
+    console.log(`🔧 [SIMPLE QUERY] Processing: "${query}" with threshold ${options.confidenceThreshold || 0.4}`);
+    console.log(`🚀 [DEPLOYMENT] RAG Pipeline v2.1 - Keyword extraction enabled`);
+    
+    const result = await this.hybridReranker.enhancedRAGPipeline(
       query,
       this.tenantId,
       {
@@ -282,6 +288,9 @@ export class UnifiedRAGPipeline {
         includeProvenance: options.includeProvenance !== false
       }
     );
+    
+    console.log(`📊 [SIMPLE QUERY RESULT] Success: ${result.success}, Sources: ${result.sources?.length || 0}`);
+    return result;
   }
 
   /**
