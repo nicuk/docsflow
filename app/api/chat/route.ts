@@ -113,8 +113,15 @@ export async function POST(request: NextRequest) {
       conversationId: conversationId // 🔧 FIX: Connect conversation context
     });
     
-    console.log(`🤖 [RAG v7] Unified RAG: ${ragResponse.metadata?.strategy || 'standard'} strategy, confidence: ${ragResponse.confidence}`);
-    console.log(`🎯 [RAG v7] Success: ${ragResponse.success}, Abstained: ${ragResponse.abstained}, Reason: ${ragResponse.reason}`);
+    console.log(`🤖 [RAG v8] Unified RAG: ${ragResponse.metadata?.strategy || 'standard'} strategy, confidence: ${ragResponse.confidence}`);
+    console.log(`🎯 [RAG v8] Success: ${ragResponse.success}, Abstained: ${ragResponse.abstained}, Reason: ${ragResponse.reason}`);
+    console.log(`📊 [RAG v8] Context found: ${ragResponse.context?.length || 0} chunks`);
+    
+    if (ragResponse.context && ragResponse.context.length > 0) {
+      console.log(`🔍 [RAG v8] First chunk preview: "${ragResponse.context[0].content?.substring(0, 100)}..."`);
+      const hasRevenue = ragResponse.context[0].content?.toLowerCase().includes('revenue');
+      console.log(`💰 [RAG v8] First chunk contains 'revenue': ${hasRevenue}`);
+    }
 
     // Handle RAG abstention (when confidence is too low)
     if (!ragResponse.success || ragResponse.abstained) {
@@ -135,10 +142,15 @@ export async function POST(request: NextRequest) {
           }
         );
 
+        // 🎯 SURGICAL FIX: Order by document creation date DESC to get newest documents first
         const { data: fallbackChunks, error: fallbackError } = await fallbackSupabase
           .from('document_chunks')
-          .select('id, document_id, content, metadata')
+          .select(`
+            id, document_id, content, metadata,
+            documents!inner(created_at, filename)
+          `)
           .eq('tenant_id', tenantId)
+          .order('documents.created_at', { ascending: false })
           .limit(3);
 
         if (!fallbackError && fallbackChunks && fallbackChunks.length > 0) {
