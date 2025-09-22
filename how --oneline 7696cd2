@@ -1,0 +1,20 @@
+[33mdf216a3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m  COMPLETE SURGICAL REVERT: Add back missing user variable declaration
+[33ma7c9959[m  SURGICAL REVERT: Remove unnecessary userId addition that broke tenant validation
+[33me9bdfb3[m  SCHEMA ALIGNMENT: Add userId to tenant validation + conversation debugging
+[33m7696cd2[m  CRITICAL FIX: Conversations API using wrong user ID - THE FINAL BLOCKER
+[33m1f3d090[m  SURGICAL FIX: Frontend API URL to use tenant subdomains
+[33mf9d333a[m  SCHEMA FIX: RAG searches document_chunks not documents table
+[33ma94dad8[m  FORCE CHAT API v3: Stronger cache invalidation
+[33ma6090bd[m  FORCE RAG DEPLOYMENT v2: Enhanced logging to verify tenant filtering
+[33m076128c[m  SCHEMA COMPLIANCE: All RAG implementations follow tenant isolation
+[33m035d602[m  SURGICAL FIX: Pass tenant context to RAG pipeline - HybridRAGReranker now filters by tenant_id
+[33m1ef320e[m  FORCE CHAT API REDEPLOY v2: Cache invalidation for RAG pipeline
+[33m12b1fc8[m  FORCE REDEPLOY: Chat API cache bust - Add request logging to ensure fresh deployment - Chat API missing auth context logs in production - Need to force Vercel serverless function cache invalidation
+[33m4aa8679[m  SURGICAL FIX: Complete authentication architecture - Session API and Chat API - Session API: Add auth context for user profile RLS queries - Chat API: Add auth context for RAG document/chunk queries - Both use same successful pattern as Documents API fix - Expected result: Frontend shows support@bitto.tech + Chat finds 27 documents - Completes the authentication context pattern across all APIs
+[33m780f12c[m  SURGICAL FIX: Add authentication context to Documents API for RLS compliance - Same RLS issue as Session API: SSR client needs auth context - Extract Bearer token and call setSession() before database queries - Expected result: 27 documents visible instead of 0 - This completes the authentication context pattern across all APIs
+[33mee21402[m  DEBUG: Add documents API response logging to diagnose missing documents issue
+[33m3535b6c[m  SURGICAL FIX: Establish SSR auth context for RLS queries - Root cause: Session API SSR client lacked authentication context - Symptom: PGRST116 error due to RLS blocking unauthenticated queries - Fix: Call supabase.auth.setSession() before database queries - Impact: Surgical - only affects session API, preserves all security - Fallback: Service role verification if session setting fails This resolves the final piece of the authentication puzzle.
+[33m5e58b4e[m Force redeploy: Session API cache invalidation
+[33mfd99a3f[m FIX: Session API query to match actual database schema
+[33m2e6f83a[m CRITICAL FIX: Extract user from Supabase getUser response - fixes RAG chat system breaking due to userId undefined
+[33mfbb1ba6[m  SURGICAL FIX: Add auth-token cookie to middleware

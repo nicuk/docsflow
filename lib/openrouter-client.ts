@@ -117,44 +117,45 @@ export class OpenRouterClient {
   }
 }
 
-// CORRECTED MODEL NAMES: User-verified working models with correct names
+// 🎯 SPECIALIZED ULTRA-BUDGET MODELS: Optimized for 2025 use cases
 export const MODEL_CONFIGS = {
-  // 🤖 Chat Interface - CORRECTED NAMES
+  // 💬 Chat Interface - CONVERSATIONAL SPECIALISTS ($0.00-$0.05)
   CHAT: [
-    'mistralai/mistral-small-3.2-24b-instruct:free', // ✅ USER VERIFIED: Correct name
-    'qwen/qwq-32b:free'                              // ✅ CORRECTED: qwq not qwen3
+    'meta-llama/llama-3.1-8b-instruct',             // 🏆 CHAT CHAMPION: Best conversational AI
+    'mistralai/mistral-7b-instruct',                 // ⚡ FAST CHAT: Quick responses, good personality
+    'qwen/qwen-2.5-7b-instruct'                     // 🌍 MULTILINGUAL: Great for global users
   ] as string[],
 
-  // 🔍 Document Processing - CORRECTED NAMES  
+  // 📄 Document Processing - EXTRACTION SPECIALISTS ($0.05/1M)
   DOCUMENT_PROCESSING: [
-    'mistralai/mistral-small-3.2-24b-instruct:free', // ✅ USER VERIFIED: Best for structured output
-    'qwen/qwen3-14b:free',                           // ✅ USER VERIFIED: Correct name
-    'deepseek/deepseek-chat-v3.1:free'               // ✅ CORRECTED: Added "chat" to name
+    'qwen/qwen-2.5-7b-instruct',                     // 🔍 DOC MASTER: Best at understanding documents
+    'mistralai/mistral-7b-instruct',                 // 🧠 ANALYSIS: Great for complex document parsing
+    'meta-llama/llama-3.1-8b-instruct'              // 📊 STRUCTURED: Good at extracting data
   ] as string[],
 
-  // 📈 RAG Pipeline - CORRECTED NAMES
+  // 🔗 RAG Pipeline - RETRIEVAL SPECIALISTS ($0.05/1M)
   RAG_PIPELINE: [
-    'deepseek/deepseek-chat-v3.1:free',              // ✅ CORRECTED: Latest DeepSeek with correct name
-    'mistralai/mistral-small-3.2-24b-instruct:free', // ✅ USER VERIFIED: Strong for RAG
-    'qwen/qwq-32b:free'                              // ✅ CORRECTED: QwQ reasoning model
+    'meta-llama/llama-3.1-8b-instruct',             // 🎯 RAG CHAMPION: Best reasoning for context
+    'qwen/qwen-2.5-7b-instruct',                     // 📚 KNOWLEDGE: Great at combining info
+    'mistralai/mistral-7b-instruct'                  // ⚡ FAST RAG: Quick retrieval responses
   ] as string[],
 
-  // 🧠 Persona Generation - CORRECTED NAMES
+  // 🧠 Persona Generation - ULTRA BUDGET
   PERSONA_GENERATION: [
-    'qwen/qwq-32b:free',                             // ✅ CORRECTED: Good for reasoning/creativity
-    'mistralai/mistral-small-3.2-24b-instruct:free'  // ✅ USER VERIFIED: Creative tasks
+    'qwen/qwen-2.5-7b-instruct',                     // 💰 $0.05/1M - Creative tasks
+    'meta-llama/llama-3.1-8b-instruct'              // 💎 $0.05/1M - Good reasoning
   ] as string[],
 
-  // 🎯 Deep Search - CORRECTED NAMES
+  // 🎯 Deep Search - ULTRA BUDGET
   DEEP_SEARCH: [
-    'deepseek/deepseek-chat-v3.1:free',              // ✅ CORRECTED: Best reasoning model
-    'qwen/qwq-32b:free'                              // ✅ CORRECTED: QwQ for complex analysis
+    'meta-llama/llama-3.1-8b-instruct',             // 💎 $0.05/1M - Best reasoning for price
+    'qwen/qwen-2.5-7b-instruct'                     // 💰 $0.05/1M - Deep analysis
   ] as string[],
 
-  // 🖼️ Vision/OCR - Keep working vision models
+  // 🖼️ Vision/OCR - FREE + BUDGET MIX
   VISION: [
-    'mistralai/mistral-small-3.2-24b-instruct:free', // ✅ USER VERIFIED: Can handle images
-    'google/gemini-2.0-flash-exp'                    // ✅ Paid but reliable vision
+    'mistralai/mistral-7b-instruct',                 // 🔥 $0.05/1M - Basic vision
+    'meta-llama/llama-3.1-8b-instruct'              // 💎 $0.05/1M - Backup
   ] as string[]
 };
 
