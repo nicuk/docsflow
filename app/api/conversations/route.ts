@@ -83,25 +83,23 @@ export async function POST(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
   
   try {
-    // SUPABASE SSR FIX: Use server client for proper authentication
-    const supabaseClient = await createClient();
-    
-    const tenantSubdomain = request.headers.get('X-Tenant-Subdomain') || 'demo-warehouse-dist';
-    
-    // Get the tenant UUID from subdomain using server client
-    const { data: tenant, error: tenantError } = await supabaseClient
-      .from('tenants')
-      .select('id')
-      .eq('subdomain', tenantSubdomain)
-      .single();
+    // 🔒 SECURE: Validate tenant context first (this already works correctly)
+    const tenantValidation = await validateTenantContext(request, {
+      requireAuth: true
+    });
 
-    if (tenantError || !tenant) {
-      console.error('Tenant not found:', tenantError);
+    if (!tenantValidation.isValid) {
       return NextResponse.json(
-        { error: 'Tenant not found' },
-        { status: 404, headers: corsHeaders }
+        { 
+          error: tenantValidation.error,
+          security_violation: 'Invalid tenant context'
+        },
+        { status: tenantValidation.statusCode || 400, headers: corsHeaders }
       );
     }
+
+    const tenantId = tenantValidation.tenantId!; // Use validated tenant UUID
+    const supabaseClient = await createClient();
     
     // For now, use demo user ID since we don't have full auth yet
     const userId = '00000000-0000-0000-0000-000000000000';
@@ -113,7 +111,7 @@ export async function POST(request: NextRequest) {
       .from('chat_conversations')
       .insert({
         title: title || 'New Conversation',
-        tenant_id: tenant.id,
+        tenant_id: tenantId, // Use the validated tenant UUID
         user_id: userId,
         status: 'active'
       })
