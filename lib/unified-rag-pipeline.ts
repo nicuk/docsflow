@@ -120,20 +120,11 @@ export class UnifiedRAGPipeline {
       // Step 3: Route to appropriate pipeline
       let response: RAGResponse;
       
-      switch (analysis.strategy) {
-        case 'temporal':
-          response = await this.handleTemporalQuery(enhancedQuery, options);
-          break;
-          
-        case 'complex':
-        case 'multi_doc':
-        case 'comparative':
-          response = await this.handleComplexQuery(enhancedQuery, analysis, options);
-          break;
-          
-        default:
-          response = await this.handleSimpleQuery(enhancedQuery, options);
-      }
+      // 🎯 SURGICAL REMOVAL TEST 2: Bypass TemporalRAGEnhancement
+      console.log(`🚀 [SURGICAL TEST 2] TemporalRAGEnhancement removed - all queries use simple strategy`);
+      
+      // Always use simple query strategy (temporal routing removed)
+      response = await this.handleSimpleQuery(enhancedQuery, options);
 
       // Step 4: Performance tracking
       const duration = Date.now() - startTime;
