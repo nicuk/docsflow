@@ -8,7 +8,17 @@ import { AuthService } from '@/lib/services/auth-service';
 
 // Enhanced API base URL logic
 const getAPIBaseURL = () => {
-  // Use environment variable first, then fallback to production API
+  // 🎯 SURGICAL FIX: Use current subdomain for API calls (tenant-aware)
+  if (typeof window !== 'undefined') {
+    const currentHost = window.location.host;
+    
+    // If we're on a tenant subdomain (e.g., bitto.docsflow.app), use it for API
+    if (currentHost.includes('.docsflow.app') && !currentHost.startsWith('www.')) {
+      return `https://${currentHost}/api`;
+    }
+  }
+  
+  // Fallback: Use environment variable or main API
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.docsflow.app/api';
   
   // 🚨 PRODUCTION SAFETY: Never allow localhost in production
@@ -16,8 +26,6 @@ const getAPIBaseURL = () => {
     console.warn('🚨 SECURITY: Blocking localhost URL in production build');
     return 'https://api.docsflow.app/api';
   }
-  
-  // Enterprise mode - extract tenant from subdomain
   
   return apiUrl;
 };

@@ -38,10 +38,13 @@ interface Conversation {
 // Get user-specific storage keys
 const getUserEmail = () => {
   if (typeof window !== 'undefined') {
-    return document.cookie
+    const userEmail = document.cookie
       .split('; ')
       .find(row => row.startsWith('user-email='))
-      ?.split('=')[1] || 'demo';
+      ?.split('=')[1];
+    
+    // Decode URL-encoded email (Support%40bitto.tech → support@bitto.tech)
+    return userEmail ? decodeURIComponent(userEmail) : 'demo';
   }
   return 'demo';
 };
