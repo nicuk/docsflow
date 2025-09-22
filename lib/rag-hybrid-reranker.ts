@@ -336,21 +336,21 @@ Return only a number between 0 and 1.`;
     tenantId: string,
     limit: number
   ): Promise<SearchResult[]> {
-    console.log(`🔍 [RAG SEARCH v2] DEPLOYMENT CHECK: Searching tenant ${tenantId}: "${query}"`);
-    console.log(`🔧 [RAG SEARCH v2] Using stored tenant ID: ${this.tenantId}`);
+    console.log(`🔍 [RAG SEARCH v3] SCHEMA FIX: Searching document_chunks for tenant ${tenantId}: "${query}"`);
+    console.log(`🔧 [RAG SEARCH v3] Using stored tenant ID: ${this.tenantId}`);
     const { data, error } = await this.supabase
-      .from('documents')
-      .select('*')
+      .from('document_chunks') // 🎯 SCHEMA FIX: Search chunks not documents
+      .select('id, document_id, content, metadata, tenant_id')
       .eq('tenant_id', this.tenantId) // 🎯 SURGICAL FIX: Use stored tenant ID
       .ilike('content', `%${query}%`)
       .limit(limit);
     
-    console.log(`📊 [RAG SEARCH v2] RESULTS: ${data?.length || 0} documents found for tenant ${this.tenantId}`);
+    console.log(`📊 [RAG SEARCH v3] CHUNK RESULTS: ${data?.length || 0} chunks found for tenant ${this.tenantId}`);
     
     if (error || !data) return [];
     
     return data.map((d: any) => ({
-      id: d.id,
+      id: d.document_id, // 🎯 SCHEMA FIX: Use document_id for chunk results
       content: d.content,
       metadata: d.metadata,
       vectorScore: 0,
