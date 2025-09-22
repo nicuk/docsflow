@@ -529,9 +529,14 @@ Return only a number between 0 and 1.`;
       
       const rrfScore = (1 / (k + vectorRank)) + (1 / (k + keywordRank));
       
+      // 🎯 SURGICAL FIX: Normalize RRF score to 0-1 range
+      // RRF scores are typically very small (0.01-0.05), normalize based on max possible score
+      const maxRRFScore = 2 / (k + 1); // Best possible score (rank 1 in both)
+      const normalizedScore = Math.min(1, rrfScore / maxRRFScore);
+      
       return {
         ...result,
-        hybridScore: rrfScore
+        hybridScore: normalizedScore
       };
     }).sort((a, b) => (b.hybridScore || 0) - (a.hybridScore || 0));
   }
