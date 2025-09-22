@@ -394,6 +394,8 @@ Return only a number between 0 and 1.`;
     
     // 🎯 CTO ROOT CAUSE FIX: Extract keywords from query instead of searching entire question
     let searchQuery = this.extractKeywords(query.toLowerCase());
+    console.log(`🔑 [KEYWORD EXTRACTION] Original: "${query}" → Extracted: "${searchQuery}"`);
+    console.log(`🔍 [SEARCH DEBUG] Will search for: "%${searchQuery}%"`);
     
     // 🎯 SURGICAL FIX: More precise broad search criteria - only truly generic queries
     const isVeryGeneric = (
@@ -424,6 +426,7 @@ Return only a number between 0 and 1.`;
     }
     
     // Original specific search
+    console.log(`🔍 [DB QUERY] Executing: document_chunks.ilike('content', '%${searchQuery}%')`);
     const { data, error } = await this.supabase
       .from('document_chunks') // 🎯 SCHEMA FIX: Search chunks not documents
       .select('id, document_id, content, metadata, tenant_id')
@@ -432,6 +435,11 @@ Return only a number between 0 and 1.`;
       .limit(limit);
     
     console.log(`📊 [RAG SEARCH v4] SPECIFIC SEARCH: ${data?.length || 0} chunks found for tenant ${this.tenantId}`);
+    if (data?.length > 0) {
+      console.log(`✅ [SEARCH SUCCESS] Sample chunk: "${data[0].content.substring(0, 80)}..."`);
+    } else {
+      console.log(`❌ [SEARCH FAILED] No chunks found for keyword: "${searchQuery}"`);
+    }
     
     if (error) {
       console.error(`❌ [RAG SEARCH v4] Database error:`, error);
