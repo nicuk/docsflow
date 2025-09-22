@@ -336,7 +336,8 @@ Return only a number between 0 and 1.`;
     tenantId: string,
     limit: number
   ): Promise<SearchResult[]> {
-    console.log(`🔍 [RAG SEARCH] Keyword search for tenant ${tenantId}: "${query}"`);
+    console.log(`🔍 [RAG SEARCH v2] DEPLOYMENT CHECK: Searching tenant ${tenantId}: "${query}"`);
+    console.log(`🔧 [RAG SEARCH v2] Using stored tenant ID: ${this.tenantId}`);
     const { data, error } = await this.supabase
       .from('documents')
       .select('*')
@@ -344,7 +345,7 @@ Return only a number between 0 and 1.`;
       .ilike('content', `%${query}%`)
       .limit(limit);
     
-    console.log(`📊 [RAG SEARCH] Keyword results: ${data?.length || 0} documents found`);
+    console.log(`📊 [RAG SEARCH v2] RESULTS: ${data?.length || 0} documents found for tenant ${this.tenantId}`);
     
     if (error || !data) return [];
     

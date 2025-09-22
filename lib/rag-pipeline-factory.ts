@@ -32,9 +32,10 @@ export class RAGPipelineFactory {
   ): UnifiedRAGPipeline {
     const flags = { ...this.DEFAULT_FLAGS, ...customFlags };
     
-    console.log(`🔧 [RAG Factory] Creating pipeline for tenant ${tenantId}`, {
+    console.log(`🔧 [RAG Factory v2] DEPLOYMENT CHECK: Creating pipeline for tenant ${tenantId}`, {
       flags,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      deploymentVersion: 'v2-tenant-fix'
     });
 
     if (flags.USE_UNIFIED_PIPELINE) {
