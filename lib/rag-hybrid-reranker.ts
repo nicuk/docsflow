@@ -171,8 +171,8 @@ Format as JSON:
       searchPromises.push(this.performVectorSearch(q, tenantId, topK));
     }
     
-    // Keyword search for all variations
-    for (const q of [...rewrittenQuery.rewritten, ...rewrittenQuery.expansions]) {
+    // Keyword search for all variations (including original query for keyword extraction)
+    for (const q of [rewrittenQuery.original, ...rewrittenQuery.rewritten, ...rewrittenQuery.expansions]) {
       searchPromises.push(this.performKeywordSearch(q, tenantId, topK));
     }
     
