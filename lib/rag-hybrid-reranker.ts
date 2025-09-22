@@ -171,9 +171,13 @@ Format as JSON:
       searchPromises.push(this.performVectorSearch(q, tenantId, topK));
     }
     
-    // Keyword search for all variations (including original query for keyword extraction)
-    for (const q of [rewrittenQuery.original, ...rewrittenQuery.rewritten, ...rewrittenQuery.expansions]) {
-      searchPromises.push(this.performKeywordSearch(q, tenantId, topK));
+    // 🎯 SURGICAL FIX: Force ALL query variations through keyword extraction
+    const allQueries = [rewrittenQuery.original, ...rewrittenQuery.rewritten, ...rewrittenQuery.expansions];
+    for (const q of allQueries) {
+      // Extract keywords from EVERY query variation before searching
+      const extractedKeywords = this.extractKeywords(q);
+      console.log(`🔧 [SURGICAL FIX] Query: "${q}" → Keywords: "${extractedKeywords}"`);
+      searchPromises.push(this.performKeywordSearch(extractedKeywords, tenantId, topK));
     }
     
     const allResults = await Promise.all(searchPromises);
@@ -393,10 +397,10 @@ Return only a number between 0 and 1.`;
     console.log(`🔍 [RAG SEARCH v4] SURGICAL DEBUG: Searching document_chunks for tenant ${tenantId}: "${query}"`);
     console.log(`🔧 [RAG SEARCH v4] Using stored tenant ID: ${this.tenantId}`);
     
-    // 🎯 CTO ROOT CAUSE FIX: Extract keywords from query instead of searching entire question
-    let searchQuery = this.extractKeywords(query.toLowerCase());
-    console.log(`🔑 [KEYWORD EXTRACTION] Original: "${query}" → Extracted: "${searchQuery}"`);
-    console.log(`🔍 [SEARCH DEBUG] Will search for: "%${searchQuery}%"`);
+    // 🎯 SURGICAL FIX: Query is already pre-processed with keywords in hybridSearch
+    // No need for additional extraction here since we now force extraction upstream
+    let searchQuery = query.toLowerCase();
+    console.log(`🔍 [SEARCH DEBUG] Searching for pre-processed query: "${searchQuery}"`);
     
     // 🎯 SURGICAL FIX: More precise broad search criteria - only truly generic queries
     const isVeryGeneric = (

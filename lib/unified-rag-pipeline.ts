@@ -109,11 +109,20 @@ export class UnifiedRAGPipeline {
       // Step 3: Route to appropriate pipeline
       let response: RAGResponse;
       
-      // 🎯 SURGICAL REMOVAL TEST 2: Bypass TemporalRAGEnhancement
-      console.log(`🚀 [SURGICAL TEST 2] TemporalRAGEnhancement removed - all queries use simple strategy`);
-      
-      // Always use simple query strategy (temporal routing removed)
-      response = await this.handleSimpleQuery(enhancedQuery, options);
+      switch (analysis.strategy) {
+        case 'temporal':
+          response = await this.handleTemporalQuery(enhancedQuery, options);
+          break;
+          
+        case 'complex':
+        case 'multi_doc':
+        case 'comparative':
+          response = await this.handleComplexQuery(enhancedQuery, analysis, options);
+          break;
+          
+        default:
+          response = await this.handleSimpleQuery(enhancedQuery, options);
+      }
 
       // Step 4: Performance tracking
       const duration = Date.now() - startTime;
@@ -146,19 +155,34 @@ export class UnifiedRAGPipeline {
    * Query analysis and routing logic
    */
   private async analyzeQuery(query: string): Promise<QueryAnalysis> {
-    // 🎯 SURGICAL REMOVAL TEST 1: Bypass AgenticRAGEnhancement completely
-    console.log(`🔍 [QUERY ANALYSIS - SIMPLIFIED] Bypassing agentic analysis for: "${query}"`);
-    console.log(`🚀 [SURGICAL TEST 1] AgenticRAGEnhancement removed - using direct routing`);
-    
-    // Direct routing without external AI calls
-    const isTemporalQuery = /latest|recent|last|ago|between|from.*to|changed|updated/i.test(query);
-    
-    return {
-      strategy: isTemporalQuery ? 'temporal' : 'simple',  // Simplified routing
-      isTemporalQuery,
-      isComplexQuery: false,  // No complex queries without agentic analysis
-      decomposedQueries: [query]
-    };
+    try {
+      console.log(`🔍 [QUERY ANALYSIS] Starting analysis for: "${query}"`);
+      const agenticAnalysis = await this.agenticEnhancer.analyzeQuery(query, this.tenantId);
+      console.log(`✅ [QUERY ANALYSIS] Agentic analysis completed: ${agenticAnalysis.queryPlan.strategy}`);
+      
+      const isTemporalQuery = /latest|recent|last|ago|between|from.*to|changed|updated/i.test(query);
+      const isComplexQuery = agenticAnalysis.queryPlan.strategy === 'multi_doc' || 
+                           agenticAnalysis.queryPlan.strategy === 'comparative' || 
+                           agenticAnalysis.queryPlan.strategy === 'hierarchical';
+
+      return {
+        strategy: isTemporalQuery ? 'temporal' : 
+                 isComplexQuery ? 'complex' : 'simple',
+        isTemporalQuery,
+        isComplexQuery,
+        decomposedQueries: agenticAnalysis.decomposedQueries
+      };
+      
+    } catch (error) {
+      console.warn('🚨 [QUERY ANALYSIS] Failed, using simple strategy:', error.message);
+      console.log('🔧 [FALLBACK] Proceeding with simple query strategy');
+      return {
+        strategy: 'simple',
+        isTemporalQuery: false,
+        isComplexQuery: false,
+        decomposedQueries: [query]
+      };
+    }
   }
 
   /**
