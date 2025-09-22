@@ -342,9 +342,16 @@ Return only a number between 0 and 1.`;
     // 🎯 SURGICAL FIX: Try broad search first, then narrow if needed
     let searchQuery = query.toLowerCase();
     
-    // For generic queries, search for any content
-    if (query.toLowerCase().includes('document') || query.toLowerCase().includes('what') || query.length < 20) {
-      console.log(`🔄 [RAG SEARCH v5] SURGICAL FIX: Generic query detected, returning ANY available chunks`);
+    // 🎯 SURGICAL FIX: More precise broad search criteria - only truly generic queries
+    const isVeryGeneric = (
+      query.toLowerCase() === 'what documents do you have' ||
+      query.toLowerCase() === 'show me documents' ||
+      query.toLowerCase() === 'list documents' ||
+      (query.toLowerCase().includes('document') && query.length < 15)
+    );
+    
+    if (isVeryGeneric) {
+      console.log(`🔄 [RAG SEARCH v6] GENERIC QUERY: "${query}" - returning any available chunks`);
       const { data: broadData, error: broadError } = await this.supabase
         .from('document_chunks')
         .select('id, document_id, content, metadata, tenant_id')
@@ -352,13 +359,13 @@ Return only a number between 0 and 1.`;
         .limit(Math.min(limit, 5)); // Return any chunks for generic queries
       
       if (broadData && broadData.length > 0) {
-        console.log(`📊 [RAG SEARCH v5] BROAD SEARCH SUCCESS: ${broadData.length} chunks found for tenant ${this.tenantId}`);
+        console.log(`📊 [RAG SEARCH v6] BROAD SEARCH SUCCESS: ${broadData.length} chunks found for tenant ${this.tenantId}`);
         return broadData.map((d: any) => ({
           id: d.document_id,
           content: d.content,
           metadata: d.metadata,
           vectorScore: 0,
-          keywordScore: 0.5 // Medium relevance for generic queries
+          keywordScore: 0.8 // 🎯 HIGH confidence for generic document listing
         }));
       }
     }
@@ -383,13 +390,40 @@ Return only a number between 0 and 1.`;
       return [];
     }
     
-    return data.map((d: any) => ({
-      id: d.document_id, // 🎯 SCHEMA FIX: Use document_id for chunk results
-      content: d.content,
-      metadata: d.metadata,
-      vectorScore: 0,
-      keywordScore: 1 // Simple binary score for keyword match
-    }));
+    return data.map((d: any) => {
+      // 🎯 SURGICAL FIX: Better confidence scoring based on term frequency and relevance
+      const content = d.content.toLowerCase();
+      const queryTerms = searchQuery.split(/\s+/).filter(term => term.length > 2);
+      
+      let matchScore = 0;
+      let termMatches = 0;
+      
+      queryTerms.forEach(term => {
+        if (content.includes(term)) {
+          termMatches++;
+          // Bonus for exact matches vs partial
+          if (content.includes(` ${term} `) || content.includes(`${term}.`) || content.includes(`${term},`)) {
+            matchScore += 0.3; // Exact word match
+          } else {
+            matchScore += 0.2; // Partial match
+          }
+        }
+      });
+      
+      // Calculate final confidence (0.7 minimum for any match, up to 1.0 for perfect matches)
+      const termCoverage = queryTerms.length > 0 ? termMatches / queryTerms.length : 0;
+      const confidence = Math.max(0.75, 0.7 + (termCoverage * 0.3) + (matchScore * 0.1));
+      
+      console.log(`🎯 [SCORING] "${searchQuery}" in chunk: ${termMatches}/${queryTerms.length} terms, confidence: ${confidence.toFixed(2)}`);
+      
+      return {
+        id: d.document_id, // 🎯 SCHEMA FIX: Use document_id for chunk results
+        content: d.content,
+        metadata: d.metadata,
+        vectorScore: 0,
+        keywordScore: Math.min(1.0, confidence) // 🎯 SURGICAL FIX: Smart confidence scoring
+      };
+    });
   }
 
   private async getEmbedding(text: string): Promise<number[]> {

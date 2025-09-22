@@ -43,8 +43,8 @@ export async function POST(request: NextRequest) {
     const tenantSubdomain = tenantValidation.tenantData?.subdomain || 'unknown';
     
     console.log('Chat API - Subdomain:', tenantSubdomain, 'Tenant UUID:', tenantId);
-    console.log('🔍 [CHAT API v3] FORCE DEPLOYMENT: Request received for message processing');
-    console.log('🚨 [CHAT API v3] TENANT CONTEXT CHECK:', { tenantId, tenantSubdomain });
+    console.log('🔍 [CHAT API v7] DEBUGGING RAG ABSTENTION: Request received for message processing');
+    console.log('🚨 [CHAT API v7] TENANT CONTEXT CHECK:', { tenantId, tenantSubdomain });
 
     // 🎯 SURGICAL FIX: Establish authentication context for RAG database queries
     // Apply same pattern as successful Documents API fix
@@ -113,11 +113,13 @@ export async function POST(request: NextRequest) {
       conversationId: conversationId // 🔧 FIX: Connect conversation context
     });
     
-    console.log(`🤖 Unified RAG: ${ragResponse.metadata?.strategy || 'standard'} strategy, confidence: ${ragResponse.confidence}`);
+    console.log(`🤖 [RAG v7] Unified RAG: ${ragResponse.metadata?.strategy || 'standard'} strategy, confidence: ${ragResponse.confidence}`);
+    console.log(`🎯 [RAG v7] Success: ${ragResponse.success}, Abstained: ${ragResponse.abstained}, Reason: ${ragResponse.reason}`);
 
     // Handle RAG abstention (when confidence is too low)
     if (!ragResponse.success || ragResponse.abstained) {
       console.log('🔄 [FALLBACK BYPASS] RAG abstained, attempting direct chunk retrieval...');
+      console.log(`🔍 [RAG DEBUG] Abstention reason: ${ragResponse.reason}, confidence: ${ragResponse.confidence}`);
       
       // 🎯 SURGICAL FIX: Fallback to direct chunk access when RAG abstains
       try {

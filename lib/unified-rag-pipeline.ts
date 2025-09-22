@@ -84,9 +84,27 @@ export class UnifiedRAGPipeline {
         }
       }
 
-      // Step 1: Edge case handling
-      const edgeCase = await this.edgeCaseHandler.handleEdgeCases(enhancedQuery);
+      // Step 1: Check for document availability first
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+      
+      const { count: documentCount } = await supabase
+        .from('documents')
+        .select('id', { count: 'exact' })
+        .eq('tenant_id', this.tenantId)
+        .eq('processing_status', 'completed');
+      
+      console.log(`📊 [RAG CONTEXT] Found ${documentCount || 0} completed documents for tenant ${this.tenantId}`);
+      
+      // Step 1: Edge case handling with proper context
+      const edgeCase = await this.edgeCaseHandler.handleEdgeCases(enhancedQuery, {
+        documentCount: documentCount || 0
+      });
       if (edgeCase.handled) {
+        console.log(`🚫 [EDGE CASE] ${edgeCase.errorType}: ${edgeCase.fallbackResponse}`);
         return {
           success: false,
           abstained: true,
