@@ -102,7 +102,8 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now();
 
     // 🚀 UNIFIED: Use RAG Pipeline for everything
-    console.log('🔧 [CHAT API v3] Creating RAG pipeline for tenant:', tenantId);
+    console.log('🔧 [CHAT API v4] FORCE DEPLOYMENT: Creating RAG pipeline for tenant:', tenantId);
+    console.log('🚀 [DEPLOYMENT CHECK] Chat API v4.0 - Enhanced debugging active');
     const ragPipeline = RAGPipelineFactory.createPipeline(tenantId);
     
     const ragResponse = await ragPipeline.processQuery(message, {
