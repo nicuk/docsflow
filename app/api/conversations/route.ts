@@ -100,6 +100,26 @@ export async function POST(request: NextRequest) {
     }
 
     const tenantId = tenantValidation.tenantId!; // Use validated tenant UUID
+    
+    // PLAN ENFORCEMENT: Check conversation limits before creation
+    try {
+      const { enforceSubscriptionLimits } = await import('@/lib/plan-enforcement');
+      const limitCheck = await enforceSubscriptionLimits(tenantId, 'conversation');
+      
+      if (!limitCheck.allowed) {
+        return NextResponse.json({
+          error: limitCheck.message || 'Monthly conversation limit reached',
+          upgradeRequired: limitCheck.upgradeRequired,
+          current: limitCheck.current,
+          limit: limitCheck.limit,
+          resetDate: limitCheck.resetDate
+        }, { status: 402, headers: corsHeaders }); // Payment Required
+      }
+    } catch (limitError) {
+      console.error('Error checking conversation limits:', limitError);
+      // Continue with creation on error to avoid blocking users
+    }
+    
     const supabaseClient = await createClient();
     
     // Get the authenticated user ID
@@ -134,6 +154,15 @@ export async function POST(request: NextRequest) {
         { error: 'Failed to create conversation' },
         { status: 500, headers: corsHeaders }
       );
+    }
+
+    // USAGE TRACKING: Track successful conversation creation
+    try {
+      const { trackUsage } = await import('@/lib/plan-enforcement');
+      await trackUsage(tenantId, 'conversation', 1);
+    } catch (trackingError) {
+      console.error('Error tracking conversation usage:', trackingError);
+      // Continue - don't fail the creation due to tracking issues
     }
 
     return NextResponse.json({

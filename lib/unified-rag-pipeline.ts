@@ -362,7 +362,7 @@ export class UnifiedRAGPipeline {
       const result = await this.multimodalParser.parseDocument(file, mimeType, fileName);
       
       const duration = Date.now() - startTime;
-      ragMonitor.trackParseOperation(
+      ragMonitor.trackSearch(
         this.tenantId,
         duration,
         true,
@@ -374,7 +374,7 @@ export class UnifiedRAGPipeline {
       
     } catch (error) {
       const duration = Date.now() - startTime;
-      ragMonitor.trackParseOperation(
+      ragMonitor.trackSearch(
         this.tenantId,
         duration,
         false,

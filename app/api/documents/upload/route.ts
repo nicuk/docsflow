@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { embed } from 'ai';
+// 🎯 LINT FIX: Comment out unused imports
+// import { embed } from 'ai';
 import { aiProvider, isRealAIAvailable } from '@/lib/ai/providers';
-import formidable from 'formidable';
+// import formidable from 'formidable';
 import { promises as fs } from 'fs';
 // Dynamic imports to prevent build hangs
 const loadPdfParse = () => import('pdf-parse');
@@ -98,6 +99,24 @@ export async function POST(request: NextRequest) {
         { error: 'No file provided' },
         { status: 400, headers: getCORSHeaders(origin) }
       );
+    }
+
+    // PLAN ENFORCEMENT: Check document upload limits
+    try {
+      const { enforceSubscriptionLimits } = await import('@/lib/plan-enforcement');
+      const limitCheck = await enforceSubscriptionLimits(tenantId, 'document_upload');
+      
+      if (!limitCheck.allowed) {
+        return NextResponse.json({
+          error: limitCheck.message || 'Document upload limit reached',
+          upgradeRequired: limitCheck.upgradeRequired,
+          current: limitCheck.current,
+          limit: limitCheck.limit
+        }, { status: 402, headers: getCORSHeaders(origin) }); // Payment Required
+      }
+    } catch (limitError) {
+      console.error('Error checking document limits:', limitError);
+      // Continue with upload on error to avoid blocking users
     }
 
     // Validate file type and size
@@ -260,11 +279,20 @@ export async function POST(request: NextRequest) {
       // Race between parallel processing and timeout
       await Promise.race([processingPromise, timeoutPromise]);
       
-      // Update status to completed
+      // Update status to completed and track usage
       await supabase
         .from('documents')
         .update({ processing_status: 'completed' })
         .eq('id', document.id);
+      
+      // USAGE TRACKING: Track successful document upload
+      try {
+        const { trackUsage } = await import('@/lib/plan-enforcement');
+        await trackUsage(tenantId, 'document_upload', 1);
+      } catch (trackingError) {
+        console.error('Error tracking document usage:', trackingError);
+        // Continue - don't fail the upload due to tracking issues
+      }
         
     } catch (processingError) {
       console.error('Document processing error:', processingError);

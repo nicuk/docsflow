@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { google } from '@ai-sdk/google';
-import { generateText } from 'ai';
+// 🎯 LINT FIX: Comment out unused imports
+// import { google } from '@ai-sdk/google';
+// import { generateText } from 'ai';
 import { getCORSHeaders } from '@/lib/utils';
 import { getTenantPrompt, calculateTenantConfidence } from '@/lib/tenant-prompts';
 import { ConfidenceScoring } from '@/lib/confidence-scoring';
@@ -45,6 +46,25 @@ export async function POST(request: NextRequest) {
     console.log('Chat API - Subdomain:', tenantSubdomain, 'Tenant UUID:', tenantId);
     console.log('🔍 [CHAT API v7] DEBUGGING RAG ABSTENTION: Request received for message processing');
     console.log('🚨 [CHAT API v7] TENANT CONTEXT CHECK:', { tenantId, tenantSubdomain });
+
+    // PLAN ENFORCEMENT: Check conversation limits
+    try {
+      const { enforceSubscriptionLimits } = await import('@/lib/plan-enforcement');
+      const limitCheck = await enforceSubscriptionLimits(tenantId, 'conversation');
+      
+      if (!limitCheck.allowed) {
+        return NextResponse.json({
+          error: limitCheck.message || 'Monthly conversation limit reached',
+          upgradeRequired: limitCheck.upgradeRequired,
+          current: limitCheck.current,
+          limit: limitCheck.limit,
+          resetDate: limitCheck.resetDate
+        }, { status: 402, headers: corsHeaders }); // Payment Required
+      }
+    } catch (limitError) {
+      console.error('Error checking conversation limits:', limitError);
+      // Continue with chat on error to avoid blocking users
+    }
 
     // 🎯 SURGICAL FIX: Establish authentication context for RAG database queries
     // Apply same pattern as successful Documents API fix
@@ -116,12 +136,12 @@ export async function POST(request: NextRequest) {
     
     console.log(`🤖 [RAG v8] Unified RAG: ${ragResponse.metadata?.strategy || 'standard'} strategy, confidence: ${ragResponse.confidence}`);
     console.log(`🎯 [RAG v8] Success: ${ragResponse.success}, Abstained: ${ragResponse.abstained}, Reason: ${ragResponse.reason}`);
-    console.log(`📊 [RAG v8] Context found: ${ragResponse.context?.length || 0} chunks`);
+    console.log(`📊 [RAG v8] Sources found: ${ragResponse.sources?.length || 0} chunks`);
     
-    if (ragResponse.context && ragResponse.context.length > 0) {
-      console.log(`🔍 [RAG v8] First chunk preview: "${ragResponse.context[0].content?.substring(0, 100)}..."`);
-      const hasRevenue = ragResponse.context[0].content?.toLowerCase().includes('revenue');
-      console.log(`💰 [RAG v8] First chunk contains 'revenue': ${hasRevenue}`);
+    if (ragResponse.sources && ragResponse.sources.length > 0) {
+        console.log(`🔍 [RAG v8] First chunk preview: "${ragResponse.sources[0].content?.substring(0, 100)}..."`);
+        const hasRevenue = ragResponse.sources[0].content?.toLowerCase().includes('revenue');
+        console.log(`💰 [RAG v8] First chunk contains 'revenue': ${hasRevenue}`);
     }
 
     // Handle RAG abstention (when confidence is too low)

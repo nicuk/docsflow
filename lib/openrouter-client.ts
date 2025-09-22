@@ -23,6 +23,7 @@ interface OpenRouterOptions {
   frequency_penalty?: number;
   presence_penalty?: number;
   response_format?: { type: 'json_object' };
+  timeout?: number; // 🎯 LINT FIX: Add timeout property
 }
 
 export class OpenRouterClient {
