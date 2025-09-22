@@ -1,0 +1,38 @@
+RAG Search Test Document
+
+This document contains specific information for testing RAG search capabilities.
+
+Project: DocsFlow AI Assistant
+Version: 2.0
+Status: Testing Phase
+
+Search Test Data:
+- Customer ID: CUST-12345
+- Order Number: ORD-67890
+- Product Code: PROD-AI-RAG
+- Price: $299.99
+- Delivery Date: December 25, 2024
+
+Features Tested:
+1. Document upload and processing
+2. Text extraction and chunking
+3. Embedding generation
+4. Semantic search
+5. AI-powered question answering
+
+Performance Metrics:
+- Average query response time: 2.5 seconds
+- Search accuracy: 92%
+- User satisfaction: 4.7/5 stars
+- System uptime: 99.9%
+
+Technical Implementation:
+The RAG system uses advanced embedding models to convert document text into numerical vectors. These vectors are stored in a vector database and searched using cosine similarity. When a user asks a question, their query is also converted to a vector and matched against the document vectors to find the most relevant content.
+
+Quality Assurance:
+This document serves as a test case for verifying that:
+- All text content is properly extracted
+- Specific data points can be retrieved accurately
+- Numerical values and dates are preserved
+- Technical terms and acronyms are handled correctly
+- Cross-referencing between different data points works

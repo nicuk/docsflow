@@ -195,21 +195,21 @@ export async function GET(request: NextRequest) {
           domain: '.docsflow.app',
           path: '/',
           secure: true,
-          sameSite: 'strict',
+          sameSite: 'lax',
           maxAge: 60 * 60 * 24 * 7
         });
         response.cookies.set('tenant-id', tenantId, {
           domain: '.docsflow.app',
           path: '/',
           secure: true,
-          sameSite: 'strict',
+          sameSite: 'lax',
           maxAge: 60 * 60 * 24 * 7
         });
         response.cookies.set('user_email', userData.email, {
           domain: '.docsflow.app',
           path: '/',
           secure: true,
-          sameSite: 'strict',
+          sameSite: 'lax',
           maxAge: 60 * 60 * 24 * 7
         });
         

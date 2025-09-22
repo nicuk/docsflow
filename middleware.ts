@@ -23,6 +23,13 @@ import { AuthService } from './lib/services/auth-service';
 import { TenantService } from './lib/services/tenant-service';
 import { SafeBase64Decoder } from './lib/services/safe-base64-decoder';
 
+// SURGICAL FIX: Import isolated admin route protection
+import { 
+  isAdminRoute, 
+  verifyAdminAccess, 
+  createAdminProtectionResponse 
+} from './lib/admin-route-protection';
+
 // SURGICAL HELPER: JWT email extraction with robust error handling
 function extractEmailFromJWT(authToken: string): string | null {
   try {
@@ -456,6 +463,16 @@ export default async function middleware(request: NextRequest) {
         response.headers.set('x-tenant-id', tenantUUID);
         response.headers.set('x-tenant-subdomain', tenant);
         return createSecureResponse(response, origin);
+      }
+      
+      // SURGICAL FIX: Admin route protection (before auth page bypass)
+      if (isAdminRoute(pathname)) {
+        console.log(`🔐 [ADMIN-PROTECTION] Admin route detected: ${pathname}`);
+        const adminVerification = await verifyAdminAccess(request);
+        if (!adminVerification.isAdmin) {
+          return createAdminProtectionResponse(request, adminVerification);
+        }
+        console.log(`✅ [ADMIN-PROTECTION] Admin access verified for: ${pathname}`);
       }
       
       // PREVENT REDIRECT LOOPS: Allow login/register pages to load normally (but AFTER session bridge check)

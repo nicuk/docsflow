@@ -1,0 +1,36 @@
+RAG Integration Test Document
+
+This document tests the RAG (Retrieval-Augmented Generation) integration.
+
+Key Information:
+- Test ID: RAG-TEST-2024
+- Document Type: Integration Test
+- Features: Upload, Processing, RAG Search, AI Analysis
+- Expected Behavior: Should be searchable via AI chat
+
+Important Facts:
+1. RAG systems combine document retrieval with AI generation
+2. Documents are chunked and embedded for semantic search
+3. AI can answer questions based on document content
+4. The system should maintain document context
+
+Test Queries to Try:
+- "What is the test ID in the uploaded document?"
+- "What features are being tested?"
+- "How many important facts are listed?"
+
+Technical Details:
+- Document processing involves text extraction, chunking, and embedding generation
+- Embeddings are stored in a vector database for similarity search
+- The system uses hybrid search combining semantic and keyword matching
+- AI models generate responses based on retrieved document chunks
+
+Business Context:
+This RAG test document simulates real-world business documents that would be uploaded to the system. It contains structured information that the AI should be able to extract and reason about when answering user questions.
+
+Expected Test Results:
+✓ Document uploads successfully
+✓ Text is extracted and processed
+✓ Document chunks are created and embedded
+✓ AI can find and retrieve relevant information
+✓ User queries return accurate, contextual responses

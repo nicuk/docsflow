@@ -1,0 +1,27 @@
+Document Actions Test File
+
+This document is used to test document action functionality such as:
+- Delete operations
+- Download operations  
+- Menu interactions
+- Document management features
+
+Document Properties:
+- Purpose: Action Testing
+- Status: Test Document
+- Actions Available: Delete, Download, Rename, Move
+- Access: Full Access
+
+Test Scenarios:
+1. Right-click context menu
+2. Action button menu
+3. Bulk selection actions
+4. Individual document actions
+
+Business Content:
+Invoice Number: INV-2025-001
+Amount: $1,250.00
+Due Date: October 1, 2025
+Client: Test Client LLC
+
+This document should support all standard document management operations.

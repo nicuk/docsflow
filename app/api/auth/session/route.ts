@@ -48,16 +48,18 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    // SURGICAL FIX: Try custom auth-token cookie first, then Supabase cookies
-    const customAuthToken = parsedCookies['auth-token'];
+    // SURGICAL FIX: Try custom auth-token cookies first, then Supabase cookies
+    const customAuthToken = parsedCookies['auth-token'] || 
+                           parsedCookies['access_token'] || 
+                           parsedCookies['docsflow_auth_token'];
     const customRefreshToken = parsedCookies['refresh-token'];
     
     let { data: { user }, error: userError } = await supabase.auth.getUser();
     let { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    // If Supabase cookies don't work, try our custom auth-token cookie
+    // If Supabase cookies don't work, try our custom auth-token cookies (from login API fix)
     if ((!user || userError) && customAuthToken) {
-      console.log(`🔍 [SESSION API] Supabase cookies failed, trying custom auth-token...`);
+      console.log(`🔍 [SESSION API] Supabase cookies failed, trying custom auth tokens...`);
       const { createClient } = await import('@supabase/supabase-js');
       const serviceSupabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,

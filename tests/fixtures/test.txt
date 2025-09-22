@@ -1,0 +1,16 @@
+Simple text file for file type testing.
+
+This file tests basic text file upload functionality.
+
+Content includes:
+- Plain text format
+- UTF-8 encoding
+- Multiple lines
+- Business-relevant sample data
+
+Company: Test Corp
+Revenue: $50,000
+Employees: 25
+Industry: Technology
+
+End of test file.

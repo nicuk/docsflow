@@ -1,0 +1,12 @@
+{
+  "name": "user-gap-diagnostic",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "diagnose": "node diagnose-user-gap.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "dotenv": "^16.0.0"
+  }
+}

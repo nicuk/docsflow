@@ -1,0 +1,20 @@
+This is a test document for Playwright testing.
+
+Document Content:
+- Test business document
+- Contains sample data for AI analysis
+- Used for upload functionality testing
+- Created on September 21, 2025
+
+Sample Business Information:
+Company: Test Company Ltd
+Department: Quality Assurance
+Purpose: Automated testing of document upload features
+
+This document is used to verify that:
+1. File upload mechanisms work correctly
+2. Document processing completes successfully  
+3. AI can analyze uploaded content
+4. Document metadata is captured properly
+
+End of test document.

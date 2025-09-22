@@ -159,10 +159,20 @@ export async function POST(request: NextRequest) {
       };
       response.cookies.set('tenant-context', JSON.stringify(tenantContext), cookieOptions);
       
-      console.log(`🎯 [LOGIN] Set tenant cookies for middleware compatibility:`, {
+      // 🚨 SURGICAL FIX: Set auth token cookies that middleware/session API expect
+      // This is the MISSING PIECE causing "Auth session missing!" errors
+      response.cookies.set('access_token', authData.session.access_token, cookieOptions);
+      response.cookies.set('docsflow_auth_token', authData.session.access_token, cookieOptions);
+      
+      // Also set a custom auth-token cookie as fallback for session API
+      response.cookies.set('auth-token', authData.session.access_token, cookieOptions);
+      
+      console.log(`🎯 [LOGIN] Set tenant AND auth cookies for middleware compatibility:`, {
         tenantId: userProfile.tenant_id.substring(0, 8) + '...',
         email: userProfile.email,
-        subdomain: userProfile.tenants.subdomain
+        subdomain: userProfile.tenants.subdomain,
+        hasAccessToken: !!authData.session.access_token,
+        tokenLength: authData.session.access_token.length
       });
     }
 

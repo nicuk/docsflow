@@ -1,0 +1,48 @@
+Technical Documentation: RAG System Architecture
+
+Section 1: Introduction
+The Retrieval-Augmented Generation (RAG) system combines document retrieval with AI generation.
+This architecture enables answering questions based on uploaded document content.
+
+Section 2: Document Processing
+Documents are processed through the following pipeline:
+1. Text extraction from various file formats
+2. Content chunking into smaller segments
+3. Embedding generation for semantic search
+4. Storage in vector database
+
+Section 3: Query Processing
+When a user asks a question:
+1. Query is converted to embedding
+2. Semantic search finds relevant chunks
+3. Top-K chunks are retrieved
+4. AI generates response using chunks as context
+
+Section 4: Performance Metrics
+- Average query response time: 2.5 seconds
+- Chunk retrieval accuracy: 92%
+- User satisfaction score: 4.7/5
+- System uptime: 99.9%
+
+Section 5: Technical Stack
+- Frontend: Next.js with TypeScript
+- Backend: Supabase PostgreSQL
+- AI Models: OpenAI GPT-4, Google Gemini
+- Vector Search: pgvector
+- Testing: Playwright
+
+Section 6: Data Flow
+Upload → Extract → Chunk → Embed → Store
+Query → Embed → Search → Retrieve → Generate
+
+Section 7: Security Measures
+- Multi-tenant data isolation
+- Encrypted document storage
+- API authentication and authorization
+- Audit logging for all operations
+
+Section 8: Scalability Features
+- Horizontal database scaling
+- Load balancing for AI services
+- Caching for frequently accessed content
+- Async processing for large documents

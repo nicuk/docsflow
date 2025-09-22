@@ -1,0 +1,24 @@
+Drag and Drop Upload Test Document
+
+This document tests the drag and drop upload functionality.
+
+File Information:
+- Upload Method: Drag & Drop
+- File Size: Small (for quick testing)
+- Format: Plain Text
+- Encoding: UTF-8
+
+Test Scenario:
+This file is dragged from the file system and dropped onto the upload zone to verify:
+1. Drag and drop detection works
+2. File is accepted and processed
+3. Upload progress is shown
+4. File appears in document list
+
+Business Content:
+Department: Operations
+Process: File Upload Testing
+Status: Active
+Priority: High
+
+Expected Result: File should be successfully uploaded via drag and drop interface.

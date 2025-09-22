@@ -1,0 +1,50 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Playwright Tests",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/playwright.cmd",
+      "args": ["test", "--debug", "--headed"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "PWDEBUG": "1"
+      },
+      "windows": {
+        "program": "${workspaceFolder}/node_modules/.bin/playwright.cmd"
+      }
+    },
+    {
+      "name": "Debug Playwright Tests (Current File)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/playwright.cmd",
+      "args": ["test", "${relativeFile}", "--debug", "--headed"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "PWDEBUG": "1"
+      },
+      "windows": {
+        "program": "${workspaceFolder}/node_modules/.bin/playwright.cmd"
+      }
+    },
+    {
+      "name": "Debug Simple Browser Test",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/playwright.cmd",
+      "args": ["test", "tests/simple-browser-test.spec.ts", "--debug", "--headed"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "PWDEBUG": "1"
+      },
+      "windows": {
+        "program": "${workspaceFolder}/node_modules/.bin/playwright.cmd"
+      }
+    }
+  ]
+}

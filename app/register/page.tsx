@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
+import { RegistrationRedirectHandler } from '@/lib/registration-redirect-handler';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -18,6 +19,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [redirectMessage, setRedirectMessage] = useState<string>('');
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -103,12 +105,18 @@ export default function RegisterPage() {
       
       if (result.success) {
         setSuccess(true);
-        // Store user info for onboarding
-        localStorage.setItem('user-email', formData.email);
-        // Redirect to onboarding after a short delay
-        setTimeout(() => {
-          window.location.href = '/onboarding';
-        }, 2000);
+        
+        // Use improved redirect handler
+        const redirectResult = RegistrationRedirectHandler.determineRedirect(
+          formData.email, 
+          result
+        );
+        
+        RegistrationRedirectHandler.redirectWithFeedback(
+          redirectResult,
+          setIsLoading,
+          setRedirectMessage
+        );
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -127,7 +135,7 @@ export default function RegisterPage() {
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <p className="text-gray-600">
-              Your account has been created successfully. Redirecting to onboarding...
+              {redirectMessage || 'Your account has been created successfully. Redirecting...'}
             </p>
             <div className="flex justify-center">
               <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
