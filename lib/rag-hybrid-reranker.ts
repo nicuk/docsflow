@@ -186,7 +186,15 @@ Format as JSON:
     const mergedResults = this.mergeSearchResults(allResults.flat());
     
     // Apply hybrid scoring (RRF - Reciprocal Rank Fusion)
-    return this.applyHybridScoring(mergedResults);
+    const hybridResults = this.applyHybridScoring(mergedResults);
+    
+    // 🎯 RAGAS INTEGRATION TRACER: Log final hybridSearch results
+    console.log(`🔍 [RAGAS TRACER] hybridSearch returning ${hybridResults.length} results to UnifiedRAGPipeline`);
+    if (hybridResults.length > 0) {
+      console.log(`📊 [RAGAS TRACER] Sample result: confidence=${hybridResults[0].hybridScore || hybridResults[0].keywordScore || 0}, content="${hybridResults[0].content?.substring(0, 50)}..."`);
+    }
+    
+    return hybridResults;
   }
 
   /**
@@ -234,9 +242,17 @@ Return only a number between 0 and 1.`;
     );
     
     // Sort by reranked score and return top K
-    return rerankedResults
+    const finalResults = rerankedResults
       .sort((a, b) => (b.rerankedScore || 0) - (a.rerankedScore || 0))
       .slice(0, topK);
+    
+    // 🎯 RAGAS INTEGRATION TRACER: Log final process() results
+    console.log(`🔍 [RAGAS TRACER] process() returning ${finalResults.length} final results`);
+    if (finalResults.length > 0) {
+      console.log(`📊 [RAGAS TRACER] Final result: rerankedScore=${finalResults[0].rerankedScore || 0}, hybridScore=${finalResults[0].hybridScore || 0}`);
+    }
+    
+    return finalResults;
   }
 
   /**

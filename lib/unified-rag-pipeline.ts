@@ -99,9 +99,20 @@ export class UnifiedRAGPipeline {
       
       console.log(`📊 [RAG CONTEXT] Found ${documentCount || 0} completed documents for tenant ${this.tenantId}`);
       
-      // 🎯 SURGICAL REMOVAL TEST 3: Bypass RAGEdgeCaseHandler completely
-      console.log(`🚀 [SURGICAL TEST 3] RAGEdgeCaseHandler removed - skipping edge case checks`);
-      console.log(`📊 [BYPASS] Proceeding directly to query processing with ${documentCount || 0} documents`);
+      // Step 1: Edge case handling with proper context
+      const edgeCase = await this.edgeCaseHandler.handleEdgeCases(enhancedQuery, {
+        documentCount: documentCount || 0
+      });
+      if (edgeCase.handled) {
+        console.log(`🚫 [EDGE CASE] ${edgeCase.errorType}: ${edgeCase.fallbackResponse}`);
+        return {
+          success: false,
+          abstained: true,
+          reason: edgeCase.errorType,
+          response: edgeCase.fallbackResponse,
+          suggestedAction: edgeCase.suggestedAction
+        };
+      }
 
       // Step 2: Analyze query complexity and routing
       const analysis = await this.analyzeQuery(enhancedQuery);
@@ -270,6 +281,9 @@ export class UnifiedRAGPipeline {
     console.log(`🚀 [DEPLOYMENT] RAG Pipeline v2.1 - Keyword extraction enabled`);
     console.log(`📊 [OPTIONS] Received: topK=${options.topK}, threshold=${options.confidenceThreshold}`);
     
+    // 🎯 RAGAS INTEGRATION TRACER: Log UnifiedRAGPipeline calling HybridRAGReranker
+    console.log(`🔍 [RAGAS TRACER] UnifiedRAGPipeline calling hybridReranker.enhancedRAGPipeline() with threshold=${threshold}`);
+    
     const result = await this.hybridReranker.enhancedRAGPipeline(
       query,
       this.tenantId,
@@ -279,6 +293,14 @@ export class UnifiedRAGPipeline {
         includeProvenance: options.includeProvenance !== false
       }
     );
+    
+    // 🎯 RAGAS INTEGRATION TRACER: Log what UnifiedRAGPipeline received back
+    console.log(`📊 [RAGAS TRACER] UnifiedRAGPipeline received result: success=${result?.success}, sources=${result?.sources?.length || 0}, abstained=${result?.abstained}`);
+    if (result?.sources?.length > 0) {
+      console.log(`🔍 [RAGAS TRACER] First source: "${result.sources[0]?.content?.substring(0, 50)}..."`);
+    } else if (result?.abstained) {
+      console.log(`⚠️ [RAGAS TRACER] Abstention reason: ${result.reason}`);
+    }
     
     console.log(`📊 [SIMPLE QUERY RESULT] Success: ${result.success}, Sources: ${result.sources?.length || 0}`);
     return result;
