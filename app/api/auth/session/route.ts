@@ -182,7 +182,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 🎯 SURGICAL FIX: Use proper join instead of nested relation
+    // 🎯 SURGICAL FIX: Use proper join instead of nested relation (force redeploy)
     const { data: userProfile, error: profileError } = await supabase
       .from('users')
       .select(`
