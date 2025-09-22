@@ -309,9 +309,10 @@ export default async function middleware(request: NextRequest) {
       // SURGICAL FIX: Enhanced token extraction with Supabase session parsing
       let authToken = null;
       
-      // First try direct token cookies
+      // First try direct token cookies (including our new auth-token from login fix)
       authToken = request.cookies.get('docsflow_auth_token')?.value || 
-                 request.cookies.get('access_token')?.value;
+                 request.cookies.get('access_token')?.value ||
+                 request.cookies.get('auth-token')?.value;
       
       // If no direct token, parse Supabase session cookie with safe decoder
       if (!authToken && supabaseAuthCookie?.value) {
@@ -559,9 +560,10 @@ export default async function middleware(request: NextRequest) {
       // SURGICAL FIX: Enhanced token extraction with Supabase session parsing
       let authToken = null;
       
-      // First try direct token cookies
+      // First try direct token cookies (including our new auth-token from login fix)
       authToken = cookies.get('docsflow_auth_token')?.value || 
-                 cookies.get('access_token')?.value;
+                 cookies.get('access_token')?.value ||
+                 cookies.get('auth-token')?.value;
       
       // If no direct token, parse Supabase session cookie with safe decoder
       if (!authToken && supabaseMainAuthCookie?.value) {
