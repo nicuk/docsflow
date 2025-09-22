@@ -60,30 +60,48 @@ export async function GET(request: NextRequest) {
     // If Supabase cookies don't work, try our custom auth-token cookies (from login API fix)
     if ((!user || userError) && customAuthToken) {
       console.log(`🔍 [SESSION API] Supabase cookies failed, trying custom auth tokens...`);
-      const { createClient } = await import('@supabase/supabase-js');
-      const serviceSupabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      );
       
-      const { data: tokenUserData, error: tokenError } = await serviceSupabase.auth.getUser(customAuthToken);
+      // 🎯 SURGICAL FIX: Establish authentication context for RLS queries
+      // Set the session in the SSR client to pass RLS security policies
+      const { error: setSessionError } = await supabase.auth.setSession({
+        access_token: customAuthToken,
+        refresh_token: customRefreshToken || 'mock-refresh-token'
+      });
       
-      // 🎯 SURGICAL FIX: Supabase getUser returns { user } in data, not the user directly
-      const tokenUser = tokenUserData?.user;
-      
-      if (tokenUser && !tokenError) {
-        user = tokenUser;
-        session = { access_token: customAuthToken, user: tokenUser } as any;
-        userError = null;
-        console.log(`✅ [SESSION API] Custom auth-token successful for user: ${tokenUser.email || 'email_missing'}`);
-        console.log(`🔍 [SESSION API] Token user data:`, { id: tokenUser.id, email: tokenUser.email, hasUser: !!tokenUser });
+      if (!setSessionError) {
+        // Re-fetch user now that auth context is established
+        const { data: { user: contextUser }, error: contextError } = await supabase.auth.getUser();
+        
+        if (contextUser && !contextError) {
+          user = contextUser;
+          session = { access_token: customAuthToken, user: contextUser } as any;
+          userError = null;
+          console.log(`✅ [SESSION API] Auth context established for user: ${contextUser.email || 'email_missing'}`);
+          console.log(`🔍 [SESSION API] RLS context ready for database queries`);
+        } else {
+          console.log(`❌ [SESSION API] Failed to get user after setting session:`, contextError?.message);
+        }
       } else {
-        console.log(`❌ [SESSION API] Custom auth-token failed:`, tokenError?.message || 'Unknown error');
-        console.log(`🔍 [SESSION API] Token response debug:`, { 
-          rawData: tokenUserData, 
-          extractedUser: tokenUser, 
-          error: tokenError 
-        });
+        console.log(`❌ [SESSION API] Failed to set session:`, setSessionError?.message);
+        
+        // Fallback to service role verification (previous method)
+        const { createClient } = await import('@supabase/supabase-js');
+        const serviceSupabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        
+        const { data: tokenUserData, error: tokenError } = await serviceSupabase.auth.getUser(customAuthToken);
+        const tokenUser = tokenUserData?.user;
+        
+        if (tokenUser && !tokenError) {
+          user = tokenUser;
+          session = { access_token: customAuthToken, user: tokenUser } as any;
+          userError = null;
+          console.log(`✅ [SESSION API] Service role fallback successful for user: ${tokenUser.email || 'email_missing'}`);
+        } else {
+          console.log(`❌ [SESSION API] Service role fallback failed:`, tokenError?.message || 'Unknown error');
+        }
       }
     }
     
