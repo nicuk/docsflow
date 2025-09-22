@@ -37,22 +37,38 @@ export async function POST(request: NextRequest) {
       }, { headers: corsHeaders });
     }
 
-    // Mark stuck documents as failed
-    const { error: updateError } = await supabase
-      .from('documents')
-      .update({
-        processing_status: 'error',
-        error_message: 'Processing timeout - document took too long to process'
-      })
-      .eq('processing_status', 'processing')
-      .lt('created_at', tenMinutesAgo.toISOString());
+    // 🎯 SURGICAL FIX: DELETE stuck documents instead of just marking as error
+    console.log(`🗑️ Deleting ${stuckDocuments.length} stuck documents that failed processing...`);
+    
+    // Delete associated chunks first (foreign key constraint)
+    const documentIds = stuckDocuments.map(doc => doc.id);
+    
+    if (documentIds.length > 0) {
+      const { error: chunksDeleteError } = await supabase
+        .from('document_chunks')
+        .delete()
+        .in('document_id', documentIds);
 
-    if (updateError) {
-      console.error('Error updating stuck documents:', updateError);
-      return NextResponse.json(
-        { error: 'Failed to cleanup stuck documents' },
-        { status: 500, headers: corsHeaders }
-      );
+      if (chunksDeleteError) {
+        console.error('Error deleting stuck document chunks:', chunksDeleteError);
+        // Continue anyway - chunks might not exist
+      } else {
+        console.log(`🧩 Deleted chunks for ${documentIds.length} stuck documents`);
+      }
+
+      // Delete the documents themselves
+      const { error: documentsDeleteError } = await supabase
+        .from('documents')
+        .delete()
+        .in('id', documentIds);
+
+      if (documentsDeleteError) {
+        console.error('Error deleting stuck documents:', documentsDeleteError);
+        return NextResponse.json(
+          { error: 'Failed to delete stuck documents' },
+          { status: 500, headers: corsHeaders }
+        );
+      }
     }
 
     console.log(`✅ Cleaned up ${stuckDocuments.length} stuck documents`);
