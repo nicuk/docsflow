@@ -99,20 +99,9 @@ export class UnifiedRAGPipeline {
       
       console.log(`📊 [RAG CONTEXT] Found ${documentCount || 0} completed documents for tenant ${this.tenantId}`);
       
-      // Step 1: Edge case handling with proper context
-      const edgeCase = await this.edgeCaseHandler.handleEdgeCases(enhancedQuery, {
-        documentCount: documentCount || 0
-      });
-      if (edgeCase.handled) {
-        console.log(`🚫 [EDGE CASE] ${edgeCase.errorType}: ${edgeCase.fallbackResponse}`);
-        return {
-          success: false,
-          abstained: true,
-          reason: edgeCase.errorType,
-          response: edgeCase.fallbackResponse,
-          suggestedAction: edgeCase.suggestedAction
-        };
-      }
+      // 🎯 SURGICAL REMOVAL TEST 3: Bypass RAGEdgeCaseHandler completely
+      console.log(`🚀 [SURGICAL TEST 3] RAGEdgeCaseHandler removed - skipping edge case checks`);
+      console.log(`📊 [BYPASS] Proceeding directly to query processing with ${documentCount || 0} documents`);
 
       // Step 2: Analyze query complexity and routing
       const analysis = await this.analyzeQuery(enhancedQuery);
