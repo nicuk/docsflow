@@ -30,8 +30,8 @@ const nextConfig = {
     ]
   },
   
-  // External packages for server components
-  serverExternalPackages: ['@google/generative-ai', '@supabase/supabase-js'],
+  // 🎯 SURGICAL FIX: serverExternalPackages deprecated in Next.js 14.0.4
+  // These packages are now handled automatically
   
   // Optimize images
   images: {

@@ -567,8 +567,6 @@ function getDocumentType(mimeType: string, filename: string): string {
   return 'Document';
 }
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-}; 
+// 🎯 SURGICAL FIX: Deprecated config export removed
+// Next.js 14.0.4 App Router handles file uploads differently
+// Body parsing is automatically disabled for file uploads 
