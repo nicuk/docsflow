@@ -43,7 +43,8 @@ export async function POST(request: NextRequest) {
     const tenantSubdomain = tenantValidation.tenantData?.subdomain || 'unknown';
     
     console.log('Chat API - Subdomain:', tenantSubdomain, 'Tenant UUID:', tenantId);
-    console.log('🔍 [CHAT API] Request received for message processing - CACHE BUST v2');
+    console.log('🔍 [CHAT API v3] FORCE DEPLOYMENT: Request received for message processing');
+    console.log('🚨 [CHAT API v3] TENANT CONTEXT CHECK:', { tenantId, tenantSubdomain });
 
     // 🎯 SURGICAL FIX: Establish authentication context for RAG database queries
     // Apply same pattern as successful Documents API fix
@@ -101,6 +102,7 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now();
 
     // 🚀 UNIFIED: Use RAG Pipeline for everything
+    console.log('🔧 [CHAT API v3] Creating RAG pipeline for tenant:', tenantId);
     const ragPipeline = RAGPipelineFactory.createPipeline(tenantId);
     
     const ragResponse = await ragPipeline.processQuery(message, {
