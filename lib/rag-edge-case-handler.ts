@@ -60,7 +60,9 @@ export class RAGEdgeCaseHandler {
    * Handle low confidence results
    */
   handleLowConfidence(confidence: number, threshold: number = 0.5): EdgeCaseResult {
-    if (confidence < threshold) {
+    // 🎯 RAGAS SMOKING GUN FIX: Don't block on undefined confidence - let the pipeline run first!
+    if (confidence !== undefined && confidence > 0 && confidence < threshold) {
+      console.log(`🚨 [RAGAS EDGE CASE] Low confidence detected: ${confidence} < ${threshold}`);
       return {
         handled: true,
         fallbackResponse: "I found some information but the confidence is too low to provide a reliable answer.",
@@ -68,6 +70,9 @@ export class RAGEdgeCaseHandler {
         errorType: "low_confidence"
       };
     }
+    
+    // Don't block if confidence is undefined/0 - let the search pipeline determine confidence
+    console.log(`✅ [RAGAS EDGE CASE] Allowing query through - confidence: ${confidence}`);
     return { handled: false };
   }
 
