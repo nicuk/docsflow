@@ -47,6 +47,14 @@ export class OpenRouterClient {
     options: OpenRouterOptions = {}
   ): Promise<string> {
     try {
+      // 🎯 SURGICAL FIX: Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutMs = options.timeout ?? 15000; // 15 second default timeout
+      const timeoutId = setTimeout(() => {
+        console.warn(`⏰ [OPENROUTER] ${model} timeout after ${timeoutMs}ms`);
+        controller.abort();
+      }, timeoutMs);
+
       const response = await fetch(this.baseUrl, {
         method: 'POST',
         headers: {
@@ -65,7 +73,10 @@ export class OpenRouterClient {
           presence_penalty: options.presence_penalty ?? 0,
           response_format: options.response_format,
         }),
+        signal: controller.signal, // 🎯 Enable request abortion
       });
+
+      clearTimeout(timeoutId); // 🎯 Clear timeout on successful response
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -75,6 +86,11 @@ export class OpenRouterClient {
       const data: OpenRouterResponse = await response.json();
       return data.choices?.[0]?.message?.content ?? '';
     } catch (error) {
+      // 🎯 SURGICAL FIX: Handle timeout errors specifically
+      if (error.name === 'AbortError') {
+        console.error(`⏰ [OPENROUTER] ${model} request timeout`);
+        throw new Error(`OpenRouter timeout: ${model} took longer than ${options.timeout ?? 15000}ms`);
+      }
       console.error(`OpenRouter API call failed for model ${model}:`, error);
       throw error;
     }

@@ -29,6 +29,44 @@ export class EnhancedChunking {
   }
 
   /**
+   * Basic contextual chunking - only document context, no per-chunk AI calls
+   * Faster for large documents while maintaining some quality improvement
+   */
+  async createBasicContextualChunks(
+    textContent: string, 
+    documentTitle: string,
+    documentType?: string
+  ): Promise<ContextualChunk[]> {
+    // Step 1: Smart chunking with overlap
+    const chunks = this.smartChunk(textContent);
+    
+    // Step 2: Generate document-level context ONLY (1 AI call instead of N+1)
+    const documentContext = await this.generateDocumentContext(textContent, documentTitle, documentType);
+    
+    // Step 3: Use document context for all chunks (no per-chunk AI calls)
+    const contextualChunks: ContextualChunk[] = [];
+    
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      
+      // Use document context + simple position info instead of AI-generated chunk context
+      const simpleChunkContext = `Section ${i + 1} of ${chunks.length} in ${documentType || 'document'}`;
+      const contextualContent = `${documentContext}\n\nSection Context: ${simpleChunkContext}\n\nContent: ${chunk.content}`;
+      
+      contextualChunks.push({
+        content: chunk.content,
+        contextual_content: contextualContent,
+        chunk_index: i,
+        context_summary: simpleChunkContext,
+        confidence_indicators: this.calculateConfidenceIndicators(chunk.content)
+      });
+    }
+    
+    console.log(`📚 Generated ${contextualChunks.length} basic contextual chunks with 1 AI call`);
+    return contextualChunks;
+  }
+
+  /**
    * Enhanced chunking with contextual information
    * This gives us 49% accuracy improvement over basic chunking
    */

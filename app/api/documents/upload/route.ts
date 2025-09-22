@@ -353,26 +353,29 @@ async function processDocumentContentEnhanced(
   // Determine document type for better context
   const documentType = getDocumentType(mimeType, filename);
   
-  // 🎯 SMART CHUNKING: Skip complex chunking for simple content
+  // 🎯 SMART TIERED PROCESSING: Optimize based on document size
   console.log(`Creating contextual chunks for ${filename}...`);
   let contextualChunks;
   
-  // Check if content is simple enough to skip contextual chunking
-  const isSimpleContent = textContent.length < 2000 || 
-                         (mimeType.startsWith('image/') && textContent.length < 1000);
+  const contentLength = textContent.length;
+  const fileSizeMB = contentLength / (1024 * 1024);
   
-  if (isSimpleContent) {
-    console.log(`🚀 Simple content detected (${textContent.length} chars), using fast single-chunk processing`);
-    // Create a single chunk for simple content - no LLM calls needed
+  console.log(`📊 Document analysis: ${contentLength.toLocaleString()} chars (${fileSizeMB.toFixed(2)} MB equivalent)`);
+  
+  if (contentLength < 5000) {
+    // TIER 1: Small documents (< 5KB) - Single chunk, no AI
+    console.log(`🚀 TIER 1: Small document - Single chunk processing (no AI calls)`);
     contextualChunks = [{
       content: textContent,
       contextual_content: `${documentType} content: ${textContent}`,
       chunk_index: 0,
       context_summary: `${documentType} document: ${filename}`,
-      confidence_indicators: { length: textContent.length, complexity: 'simple' }
+      confidence_indicators: { length: contentLength, complexity: 'simple' }
     }];
-  } else {
-    console.log(`📄 Complex content detected (${textContent.length} chars), using enhanced contextual chunking`);
+    
+  } else if (contentLength < 100000) {
+    // TIER 2: Medium documents (5KB-100KB) - Enhanced AI chunking
+    console.log(`📄 TIER 2: Medium document - Enhanced AI chunking (optimal quality)`);
     try {
       contextualChunks = await enhancedChunking.createContextualChunks(
         textContent,
@@ -380,12 +383,50 @@ async function processDocumentContentEnhanced(
         documentType
       );
     } catch (error) {
-      console.error('AI chunking failed, using fallback basic chunking:', error);
-      
-      // Fallback to basic chunking when AI fails
-      contextualChunks = createBasicChunks(textContent, filename);
-      console.log(`Generated ${contextualChunks.length} basic fallback chunks`);
+      console.error('TIER 2: AI chunking failed, using fallback basic chunking:', error);
+      // Fallback to basic chunking for Tier 2
+      contextualChunks = await createFallbackChunks(textContent, filename, documentType);
     }
+    
+  } else if (contentLength < 500000) {
+    // TIER 3: Large documents (100KB-500KB) - Basic AI chunking (document context only)
+    console.log(`📚 TIER 3: Large document - Basic AI chunking (document context only)`);
+    try {
+      contextualChunks = await enhancedChunking.createBasicContextualChunks(
+        textContent,
+        filename,
+        documentType
+      );
+    } catch (error) {
+      console.error('TIER 3: Basic AI chunking failed, using simple chunking:', error);
+      contextualChunks = await createFallbackChunks(textContent, filename, documentType);
+    }
+    
+  } else {
+    // TIER 4: Very large documents (>500KB) - No AI, fast processing
+    console.log(`🏗️ TIER 4: Very large document (${fileSizeMB.toFixed(2)}MB) - Fast processing (no AI calls)`);
+    contextualChunks = await createFallbackChunks(textContent, filename, documentType);
+  }
+
+  // Helper function for non-AI chunking
+  async function createFallbackChunks(text: string, title: string, docType: string) {
+    const maxChunkSize = 1000;
+    const overlap = 200;
+    const chunks = [];
+    
+    for (let i = 0; i < text.length; i += maxChunkSize - overlap) {
+      const chunkContent = text.slice(i, i + maxChunkSize);
+      chunks.push({
+        content: chunkContent,
+        contextual_content: `${docType} document "${title}": ${chunkContent}`,
+        chunk_index: chunks.length,
+        context_summary: `Section ${chunks.length + 1} of ${docType} document`,
+        confidence_indicators: { length: chunkContent.length, complexity: 'basic' }
+      });
+    }
+    
+    console.log(`📦 Generated ${chunks.length} fallback chunks for ${title}`);
+    return chunks;
   }
   
   // 🎯 SURGICAL FIX: Limit chunks to prevent timeout
