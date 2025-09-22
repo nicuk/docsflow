@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
     const tenantSubdomain = tenantValidation.tenantData?.subdomain || 'unknown';
     
     console.log('Chat API - Subdomain:', tenantSubdomain, 'Tenant UUID:', tenantId);
+    console.log('🔍 [CHAT API] Request received for message processing');
 
     // 🎯 SURGICAL FIX: Establish authentication context for RAG database queries
     // Apply same pattern as successful Documents API fix
