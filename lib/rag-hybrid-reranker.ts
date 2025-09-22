@@ -249,8 +249,9 @@ Return only a number between 0 and 1.`;
     confidence: number;
   }> {
     // Check if we have sufficient evidence
+    // 🎯 SURGICAL FIX: Include keywordScore and vectorScore in confidence check
     const highConfidenceResults = results.filter(
-      r => (r.rerankedScore || r.hybridScore || 0) >= confidenceThreshold
+      r => (r.rerankedScore || r.hybridScore || r.keywordScore || r.vectorScore || 0) >= confidenceThreshold
     );
     
     if (highConfidenceResults.length === 0) {
