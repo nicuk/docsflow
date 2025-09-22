@@ -53,7 +53,7 @@ export class UnifiedRAGPipeline {
     this.tenantId = tenantId;
     
     // Initialize existing components - NO rewrite needed
-    this.hybridReranker = new HybridRAGReranker();
+    this.hybridReranker = new HybridRAGReranker(tenantId); // 🎯 SURGICAL FIX: Pass tenant context
     this.agenticEnhancer = new AgenticRAGEnhancement();
     this.temporalEnhancer = new TemporalRAGEnhancement();
     this.multimodalParser = new MultimodalDocumentParser(tenantId);

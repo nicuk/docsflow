@@ -31,8 +31,10 @@ export class HybridRAGReranker {
   private genAI: GoogleGenerativeAI;
   private crossEncoder: any;
   private openRouterClient: OpenRouterClient;
+  private tenantId: string; // 🎯 SURGICAL FIX: Store tenant context
 
-  constructor() {
+  constructor(tenantId: string) { // 🎯 SURGICAL FIX: Accept tenant ID
+    this.tenantId = tenantId;
     this.supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -334,12 +336,15 @@ Return only a number between 0 and 1.`;
     tenantId: string,
     limit: number
   ): Promise<SearchResult[]> {
+    console.log(`🔍 [RAG SEARCH] Keyword search for tenant ${tenantId}: "${query}"`);
     const { data, error } = await this.supabase
       .from('documents')
       .select('*')
-      .eq('tenant_id', tenantId)
+      .eq('tenant_id', this.tenantId) // 🎯 SURGICAL FIX: Use stored tenant ID
       .ilike('content', `%${query}%`)
       .limit(limit);
+    
+    console.log(`📊 [RAG SEARCH] Keyword results: ${data?.length || 0} documents found`);
     
     if (error || !data) return [];
     
