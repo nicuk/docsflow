@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
     // Handle RAG abstention (when confidence is too low)
     if (!ragResponse.success || ragResponse.abstained) {
       return NextResponse.json({
-        answer: ragResponse.response || 'I don\'t have enough information to answer this question confidently.',
+        response: ragResponse.response || 'I don\'t have enough information to answer this question confidently.', // 🎯 SURGICAL FIX: Frontend expects 'response' field
         sources: [],
         confidence: ragResponse.confidence || 0.3,
         confidence_level: 'low',
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
 
     if (context.length === 0) {
       return NextResponse.json({
-        answer: 'I couldn\'t find any relevant information in your documents to answer this question.',
+        response: 'I couldn\'t find any relevant information in your documents to answer this question.', // 🎯 SURGICAL FIX: Frontend expects 'response' field
         sources: [],
         confidence: 0.2,
         confidence_level: 'very_low',
@@ -224,7 +224,7 @@ Provide a helpful, accurate answer based ONLY on the provided context. If the co
     
     // Return successful response
     return NextResponse.json({
-      answer: citedResponse.text,
+      response: citedResponse.text, // 🎯 SURGICAL FIX: Frontend expects 'response' field
       sources: context,
       confidence: confidenceResult.score,
       confidence_level: confidenceResult.level,
