@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     
     const ragResponse = await ragPipeline.processQuery(message, {
       topK: 8,
-      confidenceThreshold: 0.6,
+      confidenceThreshold: 0.3,  // 🔧 TEMPORARY: Lower threshold to find documents
       includeProvenance: true,
       temporalScope: 'all',
       conversationId: conversationId // 🔧 FIX: Connect conversation context
