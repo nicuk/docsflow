@@ -276,15 +276,17 @@ export class UnifiedRAGPipeline {
    * Handle simple queries
    */
   private async handleSimpleQuery(query: string, options: RAGOptions): Promise<RAGResponse> {
-    console.log(`🔧 [SIMPLE QUERY] Processing: "${query}" with threshold ${options.confidenceThreshold || 0.4}`);
+    const threshold = options.confidenceThreshold || 0.4;
+    console.log(`🔧 [SIMPLE QUERY] Processing: "${query}" with threshold ${threshold}`);
     console.log(`🚀 [DEPLOYMENT] RAG Pipeline v2.1 - Keyword extraction enabled`);
+    console.log(`📊 [OPTIONS] Received: topK=${options.topK}, threshold=${options.confidenceThreshold}`);
     
     const result = await this.hybridReranker.enhancedRAGPipeline(
       query,
       this.tenantId,
       {
         topK: options.topK || 5,
-        confidenceThreshold: options.confidenceThreshold || 0.4,  // 🎯 CTO FIX: Match HybridRAGReranker threshold
+        confidenceThreshold: threshold,  // 🎯 FINAL FIX: Use the threshold variable that respects passed options
         includeProvenance: options.includeProvenance !== false
       }
     );
