@@ -182,7 +182,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get user profile with tenant information
+    // 🎯 SURGICAL FIX: Use proper join instead of nested relation
     const { data: userProfile, error: profileError } = await supabase
       .from('users')
       .select(`
@@ -191,17 +191,21 @@ export async function GET(request: NextRequest) {
         name,
         role,
         tenant_id,
-        created_at,
-        tenants (
-          id,
-          subdomain,
-          name,
-          industry,
-          created_at
-        )
+        created_at
       `)
       .eq('id', user.id)
       .single();
+    
+    // Get tenant information separately if user exists
+    let tenantInfo = null;
+    if (userProfile && userProfile.tenant_id) {
+      const { data: tenant } = await supabase
+        .from('tenants')
+        .select('id, subdomain, name, industry, created_at')
+        .eq('id', userProfile.tenant_id)
+        .single();
+      tenantInfo = tenant;
+    }
 
     // SURGICAL DEBUG: Log the exact userProfile structure
     if (!isVercelBot) {
@@ -211,9 +215,9 @@ export async function GET(request: NextRequest) {
         emailValue: userProfile?.email,
         hasTenantId: !!userProfile?.tenant_id,
         tenantIdValue: userProfile?.tenant_id,
-        hasTenants: !!userProfile?.tenants,
-        tenantsValue: userProfile?.tenants,
-        tenantsSubdomain: userProfile?.tenants?.subdomain,
+        hasTenants: !!tenantInfo,
+        tenantsValue: tenantInfo,
+        tenantsSubdomain: tenantInfo?.subdomain,
         profileError: profileError
       });
     }
@@ -283,8 +287,8 @@ export async function GET(request: NextRequest) {
     // JWT GATEWAY: Create tenant context for client-side caching
     const jwtTenantContext = {
       tenantId: userProfile.tenant_id,
-      subdomain: userProfile.tenants?.subdomain,
-      tenantName: userProfile.tenants?.name,
+      subdomain: tenantInfo?.subdomain,
+      tenantName: tenantInfo?.name,
       userRole: userProfile.role,
       accessLevel: userProfile.access_level,
       timestamp: Date.now()
@@ -299,7 +303,7 @@ export async function GET(request: NextRequest) {
         name: userProfile.name,
         role: userProfile.role || 'user'
       },
-      tenant: userProfile.tenants || null,
+      tenant: tenantInfo || null,
       onboardingComplete: !!userProfile.tenant_id,
       tenantId: userProfile.tenant_id,
       // JWT GATEWAY: Include tenant context for client caching
@@ -308,7 +312,7 @@ export async function GET(request: NextRequest) {
     });
 
     // SUPABASE SSR FIX: Set tenant context cookies for compatibility with existing middleware
-    if (userProfile.tenant_id && userProfile.email && userProfile.tenants?.subdomain) {
+    if (userProfile.tenant_id && userProfile.email && tenantInfo?.subdomain) {
       const cookieOptions = {
         httpOnly: false, // Need access for client-side redirect logic
         secure: process.env.NODE_ENV === 'production',
@@ -320,12 +324,12 @@ export async function GET(request: NextRequest) {
 
       response.cookies.set('tenant-id', userProfile.tenant_id, cookieOptions);
       response.cookies.set('user-email', userProfile.email, cookieOptions);
-      response.cookies.set('tenant-subdomain', userProfile.tenants.subdomain, cookieOptions);
+      response.cookies.set('tenant-subdomain', tenantInfo.subdomain, cookieOptions);
       
       // SUPABASE SSR: Also set tenant context for multi-tenant support
       const tenantContext = {
         tenantId: userProfile.tenant_id,
-        subdomain: userProfile.tenants.subdomain,
+        subdomain: tenantInfo.subdomain,
         timestamp: Date.now()
       };
       response.cookies.set('tenant-context', JSON.stringify(tenantContext), cookieOptions);
@@ -333,14 +337,14 @@ export async function GET(request: NextRequest) {
       console.log(`🔧 [SESSION API] Set tenant context cookies:`, {
         tenantId: userProfile.tenant_id.substring(0, 8) + '...',
         email: userProfile.email,
-        subdomain: userProfile.tenants.subdomain
+        subdomain: tenantInfo.subdomain
       });
       
       // SURGICAL DEBUG: Log what cookies are actually being set
       console.log(`🔍 [SESSION API] Cookie values being set:`, {
         'tenant-id': userProfile.tenant_id,
         'user-email': userProfile.email,
-        'tenant-subdomain': userProfile.tenants?.subdomain,
+        'tenant-subdomain': tenantInfo?.subdomain,
         'tenant-context': JSON.stringify(tenantContext)
       });
     }
@@ -350,7 +354,7 @@ export async function GET(request: NextRequest) {
         userId: userProfile.id,
         email: userProfile.email,
         tenantId: userProfile.tenant_id,
-        tenantSubdomain: userProfile.tenants?.subdomain,
+        tenantSubdomain: tenantInfo?.subdomain,
         onboardingComplete: !!userProfile.tenant_id
       });
     }
