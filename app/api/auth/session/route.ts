@@ -66,14 +66,24 @@ export async function GET(request: NextRequest) {
         process.env.SUPABASE_SERVICE_ROLE_KEY!
       );
       
-      const { data: tokenUser, error: tokenError } = await serviceSupabase.auth.getUser(customAuthToken);
+      const { data: tokenUserData, error: tokenError } = await serviceSupabase.auth.getUser(customAuthToken);
+      
+      // 🎯 SURGICAL FIX: Supabase getUser returns { user } in data, not the user directly
+      const tokenUser = tokenUserData?.user;
+      
       if (tokenUser && !tokenError) {
         user = tokenUser;
         session = { access_token: customAuthToken, user: tokenUser } as any;
         userError = null;
-        console.log(`✅ [SESSION API] Custom auth-token successful for user: ${tokenUser.email}`);
+        console.log(`✅ [SESSION API] Custom auth-token successful for user: ${tokenUser.email || 'email_missing'}`);
+        console.log(`🔍 [SESSION API] Token user data:`, { id: tokenUser.id, email: tokenUser.email, hasUser: !!tokenUser });
       } else {
         console.log(`❌ [SESSION API] Custom auth-token failed:`, tokenError?.message || 'Unknown error');
+        console.log(`🔍 [SESSION API] Token response debug:`, { 
+          rawData: tokenUserData, 
+          extractedUser: tokenUser, 
+          error: tokenError 
+        });
       }
     }
     
@@ -93,7 +103,11 @@ export async function GET(request: NextRequest) {
         );
         
         // Use service role to validate the JWT token
-        const { data: tokenUser, error: tokenError } = await serviceSupabase.auth.getUser(token);
+        const { data: tokenUserData, error: tokenError } = await serviceSupabase.auth.getUser(token);
+        
+        // 🎯 SURGICAL FIX: Extract user from data.user
+        const tokenUser = tokenUserData?.user;
+        
         if (tokenUser && !tokenError) {
           user = tokenUser;
           session = { access_token: token, user: tokenUser } as any;
