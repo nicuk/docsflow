@@ -80,6 +80,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    console.log(`📋 [DOCUMENTS API] Found ${documents?.length || 0} documents for tenant ${tenantId}`);
+    if (documents && documents.length > 0) {
+      console.log('📄 [DOCUMENTS API] Sample documents:', documents.slice(0, 3).map(d => ({ filename: d.filename, id: d.id?.substring(0, 8) + '...' })));
+    } else {
+      console.log('❌ [DOCUMENTS API] No documents returned from query');
+    }
+
     return NextResponse.json(
       { documents: documents || [] },
       { headers: corsHeaders }
