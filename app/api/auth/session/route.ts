@@ -200,6 +200,26 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // 🎯 SURGICAL FIX: Establish authentication context for RLS queries
+    // Apply same pattern as successful Documents API fix
+    if (session?.access_token) {
+      try {
+        console.log('🔧 [SESSION API] Establishing auth context for RLS...');
+        const { error: setSessionError } = await supabase.auth.setSession({
+          access_token: session.access_token,
+          refresh_token: 'mock-refresh-token' // RLS only needs access token
+        });
+        
+        if (setSessionError) {
+          console.warn('⚠️ [SESSION API] Failed to set session:', setSessionError.message);
+        } else {
+          console.log('✅ [SESSION API] Auth context established for RLS queries');
+        }
+      } catch (authContextError) {
+        console.warn('⚠️ [SESSION API] Auth context setup failed:', authContextError);
+      }
+    }
+
     // 🎯 SURGICAL FIX: Use proper join instead of nested relation (force redeploy)
     const { data: userProfile, error: profileError } = await supabase
       .from('users')
