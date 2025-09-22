@@ -278,7 +278,7 @@ export class UnifiedRAGPipeline {
       this.tenantId,
       {
         topK: options.topK || 5,
-        confidenceThreshold: options.confidenceThreshold || 0.6,
+        confidenceThreshold: options.confidenceThreshold || 0.4,  // 🎯 CTO FIX: Match HybridRAGReranker threshold
         includeProvenance: options.includeProvenance !== false
       }
     );
