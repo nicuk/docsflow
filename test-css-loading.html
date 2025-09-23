@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSS Loading Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: #f5f5f5;
+        }
+        .test-box { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin: 10px 0;
+            border-left: 4px solid #2563eb;
+        }
+        .error { border-left-color: #dc2626; }
+        .success { border-left-color: #16a34a; }
+        .warning { border-left-color: #ea580c; }
+    </style>
+</head>
+<body>
+    <h1>🎯 DocsFlow CSS Loading Test</h1>
+    
+    <div class="test-box">
+        <h3>📋 Instructions:</h3>
+        <ol>
+            <li>Open your browser to <strong>localhost:3000</strong></li>
+            <li>Press <strong>F12</strong> to open Developer Tools</li>
+            <li>Go to the <strong>Network</strong> tab</li>
+            <li>Refresh the page (Ctrl+R or F5)</li>
+            <li>Look for CSS files loading</li>
+        </ol>
+    </div>
+
+    <div class="test-box warning">
+        <h3>🔍 What to Look For:</h3>
+        <ul>
+            <li><strong>_next/static/css/</strong> files - these should be present</li>
+            <li>Check if any CSS files have <strong>404 errors</strong> (red status)</li>
+            <li>Look for files with names like <strong>app-layout</strong> or similar</li>
+            <li>Check the <strong>Console</strong> tab for any CSS errors</li>
+        </ul>
+    </div>
+
+    <div class="test-box">
+        <h3>🎯 Elements Tab Test:</h3>
+        <ol>
+            <li>Go to <strong>Elements</strong> tab in DevTools</li>
+            <li>Find the <code>&lt;html&gt;</code> element</li>
+            <li>Look for any <code>&lt;style&gt;</code> or <code>&lt;link rel="stylesheet"&gt;</code> tags</li>
+            <li>Click on a button or styled element</li>
+            <li>Check if it has CSS classes applied in the <strong>Styles</strong> panel</li>
+        </ol>
+    </div>
+
+    <div class="test-box error">
+        <h3>🚨 Common Issues:</h3>
+        <ul>
+            <li><strong>No CSS files loading</strong> = Build issue</li>
+            <li><strong>CSS files 404</strong> = Path/routing issue</li>
+            <li><strong>CSS loaded but no styles</strong> = Tailwind compilation issue</li>
+            <li><strong>Generic styles only</strong> = Tailwind classes not working</li>
+        </ul>
+    </div>
+
+    <div class="test-box success">
+        <h3>✅ Manual Test:</h3>
+        <p>In the browser console, type this command:</p>
+        <code style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px;">
+            getComputedStyle(document.body).backgroundColor
+        </code>
+        <p>If Tailwind is working, you should see a color value, not "rgba(0, 0, 0, 0)"</p>
+    </div>
+
+    <script>
+        console.log('🎯 CSS DIAGNOSTIC HELPER LOADED');
+        console.log('👆 Check the network tab for CSS files when you refresh localhost:3000');
+        
+        // Auto-detect some common issues
+        setTimeout(() => {
+            if (typeof window !== 'undefined') {
+                const stylesheets = document.styleSheets.length;
+                console.log(`📊 Found ${stylesheets} stylesheets on this page`);
+                
+                // Test if we can access stylesheet rules
+                try {
+                    let totalRules = 0;
+                    for (let i = 0; i < document.styleSheets.length; i++) {
+                        if (document.styleSheets[i].cssRules) {
+                            totalRules += document.styleSheets[i].cssRules.length;
+                        }
+                    }
+                    console.log(`📏 Total CSS rules: ${totalRules}`);
+                } catch (e) {
+                    console.log('⚠️ Cannot access CSS rules (CORS restriction)');
+                }
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

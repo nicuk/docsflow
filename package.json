@@ -1,7 +1,6 @@
 {
   "name": "ai-lead-router-saas",
   "version": "0.1.0",
-  "type": "module",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -36,6 +35,7 @@
     "@upstash/redis": "^1.35.4",
     "ai": "^5.0.48",
     "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "exceljs": "^4.4.0",
     "framer-motion": "^12.23.18",
@@ -51,6 +51,7 @@
     "resend": "^6.1.0",
     "sonner": "^2.0.7",
     "stripe": "^18.5.0",
+    "tailwind-merge": "^3.3.1",
     "tailwindcss": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^4.1.11"
