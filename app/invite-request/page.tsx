@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ interface InvitationRequest {
   subdomain: string;
 }
 
-export default function InviteRequestPage() {
+function InviteRequestContent() {
   const searchParams = useSearchParams();
   const subdomain = searchParams.get('subdomain');
   
@@ -290,5 +290,13 @@ export default function InviteRequestPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function InviteRequestPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <InviteRequestContent />
+    </Suspense>
   );
 }
