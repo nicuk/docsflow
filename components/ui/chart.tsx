@@ -56,13 +56,13 @@ const ChartContainer = React.forwardRef<
 })
 ChartContainer.displayName = "ChartContainer"
 
-// Enterprise Chart Components (Tremor-based)
-const Chart = {
-  Area: AreaChart,
-  Bar: BarChart,
-  Line: LineChart,
-  Donut: DonutChart,
-}
+// Enterprise Chart Components (temporarily disabled until chart library integration)
+// const Chart = {
+//   Area: AreaChart,
+//   Bar: BarChart,
+//   Line: LineChart,
+//   Donut: DonutChart,
+// }
 
 // Tooltip component (Tremor handles this internally)
 const ChartTooltip = ({ children }: { children?: React.ReactNode }) => {
