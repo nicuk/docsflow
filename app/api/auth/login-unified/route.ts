@@ -74,7 +74,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch user profile with tenant information
-    const { data: userProfile, error: profileError } = await supabase
+    // SURGICAL FIX: Handle potential tenant relationship issues
+    let { data: userProfile, error: profileError } = await supabase
       .from('users')
       .select(`
         id,
@@ -91,14 +92,41 @@ export async function POST(request: NextRequest) {
         )
       `)
       .eq('id', authData.user.id)
-      .single();
+      .maybeSingle(); // Changed from .single() to .maybeSingle() to handle missing rows gracefully
 
     if (profileError || !userProfile) {
-      console.error('🔐 [LOGIN-UNIFIED] Profile fetch failed:', profileError);
-      return NextResponse.json(
-        { success: false, error: 'User profile not found' },
-        { status: 404, headers: corsHeaders }
-      );
+      console.error('🔐 [LOGIN-UNIFIED] Profile fetch failed:', {
+        error: profileError,
+        userId: authData.user.id,
+        userExists: !!userProfile,
+        errorCode: profileError?.code,
+        errorMessage: profileError?.message
+      });
+      
+      // SURGICAL FIX: Try fallback query without tenant relationship
+      if (!userProfile && !profileError) {
+        const { data: basicProfile, error: basicError } = await supabase
+          .from('users')
+          .select('id, email, name, role, access_level, tenant_id')
+          .eq('id', authData.user.id)
+          .maybeSingle();
+          
+        if (basicProfile) {
+          console.log('🔐 [LOGIN-UNIFIED] Fallback profile fetch succeeded:', basicProfile);
+          // Continue with basic profile (no tenant info)
+          userProfile = basicProfile;
+          profileError = null;
+        } else {
+          console.error('🔐 [LOGIN-UNIFIED] Fallback profile fetch also failed:', basicError);
+        }
+      }
+      
+      if (!userProfile) {
+        return NextResponse.json(
+          { success: false, error: 'User profile not found' },
+          { status: 404, headers: corsHeaders }
+        );
+      }
     }
 
     // Set remember me preference cookie
