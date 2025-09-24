@@ -156,4 +156,3 @@
 .frost-glass-input:focus {
   @apply border-primary/30 ring-2 ring-primary/20 ring-offset-0;
 }
-

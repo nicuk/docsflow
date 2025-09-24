@@ -32,7 +32,7 @@ import {
   X,
   Settings,
 } from "lucide-react"
-import { BarChart } from "@tremor/react"
+// Removed Tremor dependency - using native chart components
 
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"

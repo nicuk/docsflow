@@ -222,10 +222,10 @@ export class UnifiedAuth {
         role: userProfile.role,
         access_level: userProfile.access_level,
         tenant: userProfile.tenants ? {
-          id: userProfile.tenants.id,
-          subdomain: userProfile.tenants.subdomain,
-          name: userProfile.tenants.name,
-          industry: userProfile.tenants.industry
+          id: (userProfile.tenants as any).id,
+          subdomain: (userProfile.tenants as any).subdomain,
+          name: (userProfile.tenants as any).name,
+          industry: (userProfile.tenants as any).industry
         } : undefined
       };
     } catch (error) {

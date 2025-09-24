@@ -267,12 +267,10 @@ export async function GET(request: NextRequest) {
         console.log(`🔍 [SESSION API] Checking if this is a cross-domain session issue...`);
       }
       
-      // SUPABASE SSR FIX: Check for tenant context in cookies for cross-domain sessions
-      const { cookies } = await import('next/headers');
-      const cookieStore = await cookies();
-      const tenantId = cookieStore.get('tenant-id')?.value;
-      const tenantSubdomain = cookieStore.get('tenant-subdomain')?.value;
-      const tenantContext = cookieStore.get('tenant-context')?.value;
+      // SURGICAL FIX: Use already parsed cookies instead of cookies() from next/headers
+      const tenantId = parsedCookies['tenant-id'];
+      const tenantSubdomain = parsedCookies['tenant-subdomain'];
+      const tenantContext = parsedCookies['tenant-context'];
       
       if (!isVercelBot) {
         console.log(`🔍 [SESSION API] Checking cookie fallback - tenantId: ${tenantId}, subdomain: ${tenantSubdomain}`);

@@ -230,7 +230,7 @@ export default async function middleware(request: NextRequest) {
             
             // CRITICAL FIX: Get tenant UUID for proper API validation
             const { SecureTenantService } = await import('@/lib/secure-database');
-            const tenantData = await SecureTenantService.getTenantBySubdomain(tenantFromOrigin);
+            const tenantData = await SecureTenantService.getTenantBySubdomain(tenantFromOrigin) as any;
             if (tenantData && tenantData.id && typeof tenantData.id === 'string') {
               response.headers.set('x-tenant-id', tenantData.id);
               console.log(`✅ [API-MIDDLEWARE] Tenant ${tenantFromOrigin} verified for API call (UUID: ${tenantData.id.substring(0, 8)}...)`);
@@ -519,7 +519,7 @@ export default async function middleware(request: NextRequest) {
 
     // Handle root domain (docsflow.app) access
     console.log(`🔍 [MIDDLEWARE] Checking main domain condition: hostname='${hostname}' vs 'docsflow.app'|'www.docsflow.app'|'localhost'`);
-    if (hostname === 'docsflow.app' || hostname === 'www.docsflow.app' || hostname === 'localhost') {
+    if (hostname === 'docsflow.app' || hostname === 'www.docsflow.app' || hostname.startsWith('localhost')) {
       console.log(`🔍 [MIDDLEWARE] ✅ MATCHED main domain condition - Processing: ${hostname}${pathname}`);
       
       // Allow these routes on root domain

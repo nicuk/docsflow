@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
     if (parsedDocument.chunks.length > 0) {
       for (const [index, chunk] of parsedDocument.chunks.entries()) {
         await SecureDocumentService.insertDocumentChunk({
-          document_id: document.id,
+          document_id: (document as any).id,
           content: chunk.content,
           type: chunk.type,
           position: index,
@@ -152,13 +152,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       document: {
-        id: document.id,
-        name: document.name,
-        size: document.size,
+        id: (document as any).id,
+        name: (document as any).name,
+        size: (document as any).size,
         parseMethod,
         chunkCount: parsedDocument.chunks.length,
-        hasTables: document.has_tables,
-        hasImages: document.has_images
+        hasTables: (document as any).has_tables,
+        hasImages: (document as any).has_images
       },
       metrics: {
         parseTime: duration,

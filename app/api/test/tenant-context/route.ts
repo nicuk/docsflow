@@ -42,11 +42,11 @@ export async function GET(request: NextRequest) {
           available: !error && supabaseData !== null,
           error: error?.message,
           data: supabaseData ? {
-            id: supabaseData.id,
-            subdomain: supabaseData.subdomain,
-            name: supabaseData.name,
-            industry: supabaseData.industry,
-            created: supabaseData.created_at
+            id: (supabaseData as any).id,
+            subdomain: (supabaseData as any).subdomain,
+            name: (supabaseData as any).name,
+            industry: (supabaseData as any).industry,
+            created: (supabaseData as any).created_at
           } : null
         },
         header_propagation: headerTest,

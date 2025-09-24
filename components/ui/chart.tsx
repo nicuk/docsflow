@@ -1,15 +1,8 @@
 "use client"
 
 import * as React from "react"
-import {
-  AreaChart,
-  BarChart,
-  LineChart,
-  DonutChart,
-  Card,
-  Title,
-  Subtitle,
-} from "@tremor/react"
+// Chart component temporarily disabled - fix recharts imports
+// import { AreaChart, BarChart, LineChart } from "recharts"
 
 import { cn } from "@/lib/utils"
 
