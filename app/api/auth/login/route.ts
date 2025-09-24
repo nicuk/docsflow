@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
         )
       `)
       .eq('id', authData.user.id)
-      .single();
+      .maybeSingle(); // SURGICAL FIX: Handle missing tenant relationships gracefully
 
     if (profileError || !userProfile) {
       console.error('🔐 [LOGIN-UNIFIED] Profile fetch failed:', profileError);
