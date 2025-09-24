@@ -9,7 +9,7 @@ import { AuthProvider } from "@/contexts/AuthContext"
 import { QueryProvider } from "@/components/providers/query-provider"
 import { Toaster } from "@/components/ui/toaster"
 
-import { headers } from 'next/headers'
+// SURGICAL FIX: Removed headers() import that was forcing dynamic rendering and breaking CSS delivery
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -59,14 +59,15 @@ export const metadata: Metadata = {
   },
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const heads = await headers();
-  const tenantId = heads.get('x-tenant-id') || null;
-  const tenantSubdomain = heads.get('x-tenant-subdomain') || null;
+  // SURGICAL FIX: Removed headers() usage that was forcing dynamic rendering
+  // Tenant info will be handled by TenantProvider instead
+  const tenantId = null;
+  const tenantSubdomain = null;
 
   return (
     <html lang="en" suppressHydrationWarning>
