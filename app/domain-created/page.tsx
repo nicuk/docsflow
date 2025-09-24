@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 // Using built-in SVG icons instead of heroicons to avoid dependency issues
 import { motion } from 'framer-motion';
 
-export default function DomainCreatedPage() {
+function DomainCreatedContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [countdown, setCountdown] = useState(5);
@@ -227,5 +227,13 @@ export default function DomainCreatedPage() {
         </motion.div>
       </motion.div>
     </div>
+  );
+}
+
+export default function DomainCreatedPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DomainCreatedContent />
+    </Suspense>
   );
 }
