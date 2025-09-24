@@ -58,6 +58,19 @@ import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/hooks/use-toast"
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
+
+// Temporary chart component until Tremor is properly integrated
+const BarChart = ({ data, index, categories, colors, ...props }: any) => {
+  return (
+    <div className="h-64 flex items-center justify-center text-muted-foreground">
+      <div className="text-center">
+        <div className="text-lg font-medium mb-2">Usage Analytics</div>
+        <div className="text-sm">Chart visualization temporarily unavailable</div>
+        <div className="text-xs mt-2">Data: {JSON.stringify(data?.slice(0, 2) || [])}</div>
+      </div>
+    </div>
+  )
+}
 import SAMLConfiguration from "@/components/admin/saml-configuration"
 import { useAuth } from "@/contexts/AuthContext"
 
