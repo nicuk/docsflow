@@ -127,5 +127,5 @@ export {
   ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
-  Chart,
+  // Chart, // Temporarily disabled until chart library integration complete
 }
