@@ -74,19 +74,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 🎯 REAL FIX: Use service role to query users table (bypass RLS entirely)
-    // The issue: Server-side session context doesn't work reliably with RLS
-    // Solution: Use service role for this specific profile query
-    console.log('🔧 [LOGIN] Using service role to fetch user profile (bypassing RLS issues)');
+    // ✅ REAL SURGICAL FIX: Establish session context properly for SSR
+    console.log('🎯 [LOGIN] Establishing session context for RLS');
     
-    const { createClient } = await import('@supabase/supabase-js');
-    const serviceSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    // CRITICAL: Set the session in the supabase client for server-side RLS context
+    const { error: sessionError } = await supabase.auth.setSession({
+      access_token: authData.session.access_token,
+      refresh_token: authData.session.refresh_token
+    });
+    
+    if (sessionError) {
+      console.error('🔐 [LOGIN] Failed to establish session context:', sessionError.message);
+      // Don't fail here - try with service role as fallback
+    } else {
+      console.log('✅ [LOGIN] Session context established for RLS policies');
+    }
 
-    // Fetch user profile with tenant information using SERVICE ROLE
-    const { data: userProfile, error: profileError } = await serviceSupabase
+    // Now try to fetch user profile with proper RLS context
+    let { data: userProfile, error: profileError } = await supabase
       .from('users')
       .select(`
         id,
@@ -103,14 +108,52 @@ export async function POST(request: NextRequest) {
         )
       `)
       .eq('id', authData.user.id)
-      .maybeSingle(); // SURGICAL FIX: Handle missing tenant relationships gracefully
+      .single();
+
+    // FALLBACK: If RLS still fails, use service role as backup
+    if (profileError && profileError.code === 'PGRST116') {
+      console.log('🔧 [LOGIN] RLS context failed, falling back to service role');
+      
+      const { createClient } = await import('@supabase/supabase-js');
+      const serviceSupabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+
+      const result = await serviceSupabase
+        .from('users')
+        .select(`
+          id,
+          email,
+          name,
+          role,
+          access_level,
+          tenant_id,
+          tenants (
+            id,
+            subdomain,
+            name,
+            industry
+          )
+        `)
+        .eq('id', authData.user.id)
+        .single();
+      
+      userProfile = result.data;
+      profileError = result.error;
+      
+      if (!profileError) {
+        console.log('✅ [LOGIN] Service role fallback successful');
+      }
+    }
 
     if (profileError || !userProfile) {
-      console.error('🔐 [LOGIN] Profile fetch failed with service role:', {
+      console.error('🔐 [LOGIN] Profile fetch failed with RLS context:', {
         profileError: profileError,
         profileErrorCode: profileError?.code,
         profileErrorMessage: profileError?.message,
-        authUserId: authData.user.id
+        authUserId: authData.user.id,
+        sessionEstablished: !!authData.session
       });
       
       return NextResponse.json(

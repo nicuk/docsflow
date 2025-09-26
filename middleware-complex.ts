@@ -1,0 +1,696 @@
+import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { updateSession } from './lib/supabase/middleware';
+import { TenantContextManager } from './lib/tenant-context-manager';
+import { ResilientTenantResolver } from './lib/resilient-tenant-resolver';
+import { 
+  extractTenantFromHostname, 
+  createSecureResponse,
+  handlePreflight
+} from './lib/security-middleware';
+import { 
+  checkRateLimit,
+  detectSuspiciousActivity,
+  getSecurityHeaders 
+} from './lib/security-enhancements';
+import { redis, safeRedisOperation } from './lib/redis';
+
+// SECURITY FIX: Remove direct service role access from middleware
+// Service role operations now handled by secure backend APIs
+
+// UNIFIED AUTH: Import new auth services for parallel testing
+import { AuthService } from './lib/services/auth-service';
+import { TenantService } from './lib/services/tenant-service';
+import { SafeBase64Decoder } from './lib/services/safe-base64-decoder';
+
+// SURGICAL FIX: Import isolated admin route protection
+import { 
+  isAdminRoute, 
+  verifyAdminAccess, 
+  createAdminProtectionResponse 
+} from './lib/admin-route-protection';
+
+// SURGICAL HELPER: JWT email extraction with robust error handling
+function extractEmailFromJWT(authToken: string): string | null {
+  try {
+    if (!authToken || typeof authToken !== 'string') return null;
+    
+    const parts = authToken.split('.');
+    if (parts.length !== 3) return null;
+    
+    // Validate JWT structure
+    if (!authToken.startsWith('eyJ')) return null;
+    
+    const payload = JSON.parse(atob(parts[1]));
+    const email = payload?.email;
+    
+    // Validate email format
+    if (email && typeof email === 'string' && email.includes('@')) {
+      return email;
+    }
+    
+    return null;
+  } catch (error) {
+    // Silent fail for security - don't log JWT contents
+    return null;
+  }
+}
+
+// PERFORMANCE FIX: Use Redis for tenant verification with Supabase fallback
+async function verifyTenantExists(subdomain: string): Promise<boolean> {
+  try {
+    // First try Redis cache (fast)
+    const cachedTenant = await safeRedisOperation(
+      () => redis!.get(`subdomain:${subdomain}`),
+      null
+    );
+    
+    if (cachedTenant) {
+      console.log(`✅ Redis cache HIT for tenant: ${subdomain}`);
+      return true;
+    }
+    
+    // If not in Redis, check tenant cache
+    const tenantCacheKey = `tenant:${subdomain}`;
+    const tenantData = await safeRedisOperation(
+      () => redis!.get(tenantCacheKey),
+      null
+    );
+    
+    if (tenantData) {
+      console.log(`✅ Redis tenant cache HIT for: ${subdomain}`);
+      return true;
+    }
+    
+    // SECURITY FIX: Use secure internal API instead of direct database access
+    console.log(`🔍 Redis cache MISS for tenant: ${subdomain}, checking via secure API...`);
+    
+    try {
+      // Call internal secure API endpoint
+      const apiUrl = new URL('/api/internal/tenant-lookup', 'https://docsflow.app');
+      apiUrl.searchParams.set('subdomain', subdomain);
+      
+      const response = await fetch(apiUrl.toString(), {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'DocsFlow-Middleware/1.0',
+        },
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.tenant) {
+          const tenant = result.tenant;
+          console.log(`✅ Tenant found via secure API: ${subdomain} (ID: ${tenant.id})`);
+          // Cache it in Redis for next time
+          await safeRedisOperation(
+            () => redis!.set(tenantCacheKey, JSON.stringify({ 
+              id: tenant.id,
+              subdomain: tenant.subdomain,
+              name: tenant.name,
+              exists: true 
+            }), { ex: 3600 }),
+            null
+          );
+          return true;
+        } else {
+          console.log(`❌ Tenant ${subdomain} not found via secure API`);
+        }
+      } else {
+        console.error(`❌ Secure API error for ${subdomain}: ${response.status}`);
+      }
+    } catch (apiError) {
+      console.error('Secure API tenant check error:', apiError);
+    }
+    
+    console.log(`❌ Tenant not found anywhere: ${subdomain}`);
+    return false;
+  } catch (error) {
+    console.error('Tenant verification error:', error);
+    return false;
+  }
+}
+
+export default async function middleware(request: NextRequest) {
+  try {
+    // ✅ SURGICAL FIX: Establish proper SSR auth context first
+    const { response: authResponse, user, supabase } = await updateSession(request)
+    
+    const { pathname } = request.nextUrl;
+    const hostname = request.headers.get('host') || '';
+    const origin = request.headers.get('origin');
+    
+    // ✅ Now auth.uid() will work correctly in RLS policies
+    console.log(`🎯 [SSR-MIDDLEWARE] Auth context established:`, {
+      user: user ? `${user.email} (${user.id.substring(0, 8)}...)` : 'unauthenticated',
+      pathname,
+      hostname
+    });
+    
+    // Skip middleware for static files and assets FIRST (before any logging)
+    if (pathname.startsWith('/_next') || 
+        pathname.startsWith('/favicon') ||
+        pathname.startsWith('/logo') ||
+        pathname.startsWith('/docsflow-brand') ||
+        pathname.startsWith('/apple-touch-icon') ||
+        pathname.startsWith('/placeholder') ||
+        pathname.startsWith('/og-') ||
+        pathname.startsWith('/sitemap') ||
+        pathname.startsWith('/robots') ||
+        pathname.endsWith('.ico') ||
+        pathname.endsWith('.svg') ||
+        pathname.endsWith('.png') ||
+        pathname.endsWith('.jpg') ||
+        pathname.endsWith('.jpeg')) {
+      return NextResponse.next();
+    }
+    
+    // Skip verbose logging for Vercel automation
+    const userAgent = request.headers.get('user-agent') || '';
+    const isVercelBot = userAgent.includes('vercel-screenshot') || 
+                       userAgent.includes('vercel-bot') ||
+                       userAgent.includes('vercel/');
+    
+    if (!isVercelBot) {
+      console.log(`🔍 [MIDDLEWARE START] ${request.method} ${hostname}${pathname}`);
+      console.log(`🔍 [MIDDLEWARE] HOSTNAME DEBUG: '${hostname}' (length: ${hostname.length})`);
+      console.log(`🔍 [MIDDLEWARE] User-Agent: ${userAgent.substring(0, 50)}...`);
+      console.log(`🔍 [MIDDLEWARE] Origin: ${origin}`);
+      console.log(`🔍 [MIDDLEWARE] Request URL: ${request.url}`);
+    } else {
+      console.log(`🤖 [AUTOMATION] ${request.method} ${hostname}${pathname} (vercel-screenshot)`);
+    }
+    
+
+    
+    // FETCH FAILED DEBUGGING: Log all request headers for network debugging
+    if (pathname === '/login') {
+      console.log(`🔍 [LOGIN REQUEST DEBUG] Headers:`, Object.fromEntries(request.headers.entries()));
+    }
+    
+    if (request.method === 'OPTIONS') {
+      return handlePreflight(request);
+    }
+    
+    // Enhanced security checks
+    if (detectSuspiciousActivity(request)) {
+      return new NextResponse('Forbidden', { status: 403 });
+    }
+
+    // SECURITY FIX: Enhanced rate limiting with audit logging
+    if (!checkRateLimit(request, 100)) { // Reduced from 200 to 100 requests/minute
+      console.warn(`🚨 Rate limit exceeded for ${hostname}${pathname} from IP: ${request.headers.get('x-forwarded-for') || 'unknown'}`);
+      return new NextResponse('Rate limit exceeded', { 
+        status: 429,
+        headers: {
+          'Retry-After': '60',
+          'X-RateLimit-Limit': '100',
+          'X-RateLimit-Remaining': '0'
+        }
+      });
+    }
+
+
+
+    // DOMAIN NORMALIZATION: www redirect now handled by vercel.json
+
+    // REGIONAL PATHS: Redirect /my or /uk to root ONLY if not already at root
+    if ((hostname === 'docsflow.app' || hostname === 'api.docsflow.app' || hostname === 'localhost') &&
+        (pathname === '/my' || pathname.startsWith('/my/') || pathname === '/uk' || pathname.startsWith('/uk/'))) {
+      // FIX: Use relative redirect to avoid infinite loops
+      return NextResponse.redirect(new URL('/', request.url), 301);
+    }
+
+    // CRITICAL: Handle API subdomain separately - it's NOT a tenant BUT needs tenant context
+    if (hostname === 'api.docsflow.app' || hostname === 'api.localhost') {
+      const response = NextResponse.next();
+      
+      // SCALING FIX: Extract tenant from Origin header for cross-subdomain API calls
+      if (origin) {
+        try {
+          const originUrl = new URL(origin);
+          const originHostname = originUrl.hostname;
+          const tenantFromOrigin = extractTenantFromHostname(originHostname);
+          
+          if (tenantFromOrigin && tenantFromOrigin !== 'docsflow' && tenantFromOrigin !== 'www') {
+            console.log(`🔗 [API-MIDDLEWARE] Forwarding tenant context from origin: ${tenantFromOrigin}`);
+            
+            // Set tenant headers for API route validation
+            response.headers.set('x-tenant-subdomain', tenantFromOrigin);
+            
+            // CRITICAL FIX: Get tenant UUID for proper API validation
+            const { SecureTenantService } = await import('@/lib/secure-database');
+            const tenantData = await SecureTenantService.getTenantBySubdomain(tenantFromOrigin) as any;
+            if (tenantData && tenantData.id && typeof tenantData.id === 'string') {
+              response.headers.set('x-tenant-id', tenantData.id);
+              console.log(`✅ [API-MIDDLEWARE] Tenant ${tenantFromOrigin} verified for API call (UUID: ${tenantData.id.substring(0, 8)}...)`);
+            } else {
+              console.warn(`⚠️ [API-MIDDLEWARE] Tenant ${tenantFromOrigin} not found for API call`);
+              // Still set subdomain header for potential fallback handling
+            }
+          } else {
+            console.log(`🔍 [API-MIDDLEWARE] No valid tenant in origin: ${originHostname}`);
+          }
+        } catch (originError) {
+          console.warn('Failed to parse origin for tenant context:', originError);
+        }
+      }
+      
+      console.log('🔍 [MIDDLEWARE] API subdomain detected - forwarding tenant context from origin');
+      return createSecureResponse(response, origin);
+    }
+
+    // CRITICAL FIX: Accept www.docsflow.app as canonical main domain
+    // Do NOT redirect www to avoid infinite loops with DNS/Vercel configuration
+    // www is handled same as main domain (no tenant context)
+
+    // Extract tenant from hostname (returns null for www and main domain)
+    const tenant = extractTenantFromHostname(hostname);
+    console.log(`🔍 [MIDDLEWARE] Extracted tenant: '${tenant}' from hostname: '${hostname}'`);
+
+    // Route tenant subdomains to the tenant-specific dashboard
+    if (tenant) {
+      console.log(`🔍 [MIDDLEWARE] Processing tenant subdomain: ${tenant}`);
+      // CRITICAL: Allow API routes to pass through even if tenant doesn't exist yet
+      // This is essential for subdomain availability checks during onboarding
+      if (pathname.startsWith('/api')) {
+        const response = NextResponse.next();
+        
+        // SURGICAL FIX: Special handling for logout - clear tenant headers
+        if (pathname === '/api/auth/logout') {
+          response.headers.delete('x-tenant-id');
+          response.headers.delete('x-tenant-subdomain');
+          console.log('🚪 Logout request - clearing tenant context');
+          return createSecureResponse(response, origin);
+        }
+        
+        // FIX #2: Use ResilientTenantResolver (eliminates 404 cascades)
+        const tenantInfo = await ResilientTenantResolver.resolveTenant(tenant);
+        
+        // Set both headers properly for API routes
+        response.headers.set('x-tenant-subdomain', tenant);
+        if (tenantInfo?.uuid) {
+          response.headers.set('x-tenant-id', tenantInfo.uuid);
+        }
+        
+        return createSecureResponse(response, origin);
+      }
+      
+      // FIX #2: Use resilient tenant resolution (no more 404 cascades)
+      const tenantInfo = await ResilientTenantResolver.resolveTenant(tenant);
+      
+      if (!tenantInfo) {
+        // Tenant doesn't exist - redirect to main domain for onboarding
+        console.log(`❌ [RESILIENT] Tenant not found, redirecting to onboarding: ${tenant}`);
+        const mainDomainUrl = new URL('https://docsflow.app/onboarding');
+        return NextResponse.redirect(mainDomainUrl);
+      }
+
+      // MULTI-TENANT: Read from namespaced tenant contexts
+      const currentTenant = request.cookies.get('current-tenant')?.value;
+      const tenantContexts = request.cookies.get('tenant-contexts')?.value;
+      
+      // Get all cookies for debugging
+      const subdomainCookies = request.cookies.getAll();
+      const supabaseAuthCookie = subdomainCookies.find(c => 
+        c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
+      );
+      
+      // ✅ SURGICAL FIX: Use properly established SSR auth context
+      // No more complex token parsing needed - we have the user from updateSession()
+      const userEmail = user?.email || null;
+      const authToken = user ? 'AUTHENTICATED' : null; // We don't need the actual token anymore
+      
+      console.log(`🎯 [SSR-MIDDLEWARE] User context:`, {
+        authenticated: !!user,
+        email: userEmail,
+        userId: user?.id?.substring(0, 8) || 'none'
+      });
+      
+      // Extract tenant UUID from namespaced contexts
+      let storedTenantId: string | null = null;
+      if (tenantContexts && currentTenant) {
+        try {
+          const contexts = JSON.parse(tenantContexts);
+          storedTenantId = contexts[currentTenant] || null;
+        } catch (e) {
+          console.warn(`🔄 [SMART-TENANCY] Invalid tenant contexts cookie, falling back to legacy`);
+          // Fallback to legacy tenant-id cookie for backwards compatibility
+          storedTenantId = request.cookies.get('tenant-id')?.value || null;
+        }
+      } else {
+        // Fallback to legacy tenant-id cookie for backwards compatibility
+        storedTenantId = request.cookies.get('tenant-id')?.value || null;
+        
+        // 🎯 SURGICAL FIX: Direct cookie header parsing if Next.js cookies() fails
+        if (!storedTenantId) {
+          const cookieHeader = request.headers.get('cookie');
+          if (cookieHeader) {
+            const tenantIdMatch = cookieHeader.match(/tenant-id=([^;]+)/);
+            if (tenantIdMatch) {
+              storedTenantId = decodeURIComponent(tenantIdMatch[1]);
+              console.log(`🍪 [MIDDLEWARE] Extracted tenant-id from header fallback: ${storedTenantId.substring(0, 8)}...`);
+            }
+          }
+        }
+      }
+      
+      // FIX #2: Reuse tenantInfo from resilient resolver (already fetched above)
+      const tenantUUID = tenantInfo?.uuid || null;
+      
+      // DEBUGGING: Log detailed authentication state + raw cookies
+      const tenantCookies = request.cookies.getAll();
+      console.log(`🔍 [MIDDLEWARE] ${tenant} subdomain auth check:`, {
+        pathname,
+        storedTenantId: storedTenantId ? `${storedTenantId.substring(0, 8)}...` : 'MISSING',
+        userEmail: userEmail || 'MISSING',
+        authToken: authToken ? `${authToken.substring(0, 20)}...` : 'MISSING',
+        tenantUUID: tenantUUID ? `${tenantUUID.substring(0, 8)}...` : 'MISSING'
+      });
+      console.log(`🔍 [MIDDLEWARE] Raw cookies present:`, tenantCookies.map(c => c.name).join(', '));
+      
+      // ENTERPRISE SOLUTION: Smart tenant context management
+      if (storedTenantId && tenantUUID && storedTenantId !== tenantUUID) {
+        console.log(`🔄 [SMART-TENANCY] Tenant context mismatch detected - updating gracefully`);
+        console.log(`📝 [SMART-TENANCY] Stored: ${storedTenantId.substring(0, 8)}... → Required: ${tenantUUID.substring(0, 8)}... (subdomain: ${tenant})`);
+        
+        // Gracefully update tenant context without destroying other tenant access
+        const response = NextResponse.next();
+        response.headers.set('x-tenant-id', tenantUUID);
+        response.headers.set('x-tenant-subdomain', tenant);
+        
+        // Update current tenant context (preserving other tenant contexts)
+        response.cookies.set('current-tenant', tenant, {
+          domain: '.docsflow.app',
+          path: '/',
+          secure: true,
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 7
+        });
+        
+        console.log(`✅ [SMART-TENANCY] Updated current tenant context to: ${tenant}`);
+        return createSecureResponse(response, origin);
+      }
+
+      // If root path, check if user is authenticated
+      if (pathname === '/' || pathname === '') {
+        if (userEmail && authToken && storedTenantId && tenantUUID && storedTenantId === tenantUUID) {
+          // User is authenticated AND on the correct tenant - redirect to dashboard on same tenant subdomain
+          const dashboardUrl = `https://${tenant}.docsflow.app/dashboard`;
+          console.log(`🎯 Redirecting authenticated user to dashboard: ${dashboardUrl}`);
+          return NextResponse.redirect(new URL(dashboardUrl));
+        } else {
+          // User is NOT authenticated or tenant mismatch - redirect to LOGIN on tenant subdomain
+          const loginUrl = `https://${tenant}.docsflow.app/login`;
+          console.log(`🔐 Redirecting to tenant login: ${loginUrl}`);
+          return NextResponse.redirect(new URL(loginUrl));
+        }
+      }
+      
+      // CRITICAL: Check session bridge FIRST before any other logic
+      const sessionBridge = request.nextUrl.searchParams.get('session_bridge');
+      if (pathname === '/login' && sessionBridge === 'true') {
+        console.log(`🌉 Session bridge detected on login page - allowing token processing`);
+        const response = NextResponse.next();
+        response.headers.set('x-tenant-id', tenantUUID);
+        response.headers.set('x-tenant-subdomain', tenant);
+        return createSecureResponse(response, origin);
+      }
+      
+      // SURGICAL FIX: Admin route protection (before auth page bypass)
+      if (isAdminRoute(pathname)) {
+        console.log(`🔐 [ADMIN-PROTECTION] Admin route detected: ${pathname}`);
+        const adminVerification = await verifyAdminAccess(request);
+        if (!adminVerification.isAdmin) {
+          return createAdminProtectionResponse(request, adminVerification);
+        }
+        console.log(`✅ [ADMIN-PROTECTION] Admin access verified for: ${pathname}`);
+      }
+      
+      // PREVENT REDIRECT LOOPS: Allow login/register pages to load normally (but AFTER session bridge check)
+      if (pathname === '/login' || pathname === '/register' || pathname.startsWith('/auth/')) {
+        console.log(`✅ Allowing auth page to load: ${pathname}`);
+        const response = NextResponse.next();
+        response.headers.set('x-tenant-id', tenantUUID);
+        response.headers.set('x-tenant-subdomain', tenant);
+        return createSecureResponse(response, origin);
+      }
+      
+      // REMOVED: Over-engineered auto-tenant-context setting
+      // The session API should handle all cookie setting
+
+      // For authenticated users on correct tenant, allow access with proper tenant context
+      if (userEmail && authToken && storedTenantId && tenantUUID && storedTenantId === tenantUUID) {
+        console.log(`✅ [MIDDLEWARE] User authenticated for tenant ${tenant} - allowing access to ${pathname}`);
+        const response = NextResponse.next();
+        response.headers.set('x-tenant-id', tenantUUID);
+        response.headers.set('x-tenant-subdomain', tenant);
+        return createSecureResponse(response, origin);
+      }
+      
+      // For unauthenticated users on protected pages, redirect to login (but NOT if already on login)
+      if (pathname !== '/login' && pathname !== '/register') {
+        const loginUrl = `https://${tenant}.docsflow.app/login`;
+        console.log(`🔐 [MIDDLEWARE] Redirecting unauthenticated user to login: ${loginUrl}`);
+        console.log(`🔍 [MIDDLEWARE] Auth failure reason:`, {
+          hasEmail: !!userEmail,
+          hasToken: !!authToken,
+          hasTenantId: !!storedTenantId,
+          tenantMatch: storedTenantId === tenantUUID
+        });
+        return NextResponse.redirect(new URL(loginUrl));
+      }
+      
+      // Fallback: allow the request to continue
+      const response = NextResponse.next();
+      response.headers.set('x-tenant-id', tenantUUID);
+      response.headers.set('x-tenant-subdomain', tenant);
+      return createSecureResponse(response, origin);
+    }
+
+    // Handle root domain (docsflow.app) access
+    console.log(`🔍 [MIDDLEWARE] Checking main domain condition: hostname='${hostname}' vs 'docsflow.app'|'www.docsflow.app'|'localhost'`);
+    if (hostname === 'docsflow.app' || hostname === 'www.docsflow.app' || hostname.startsWith('localhost')) {
+      console.log(`🔍 [MIDDLEWARE] ✅ MATCHED main domain condition - Processing: ${hostname}${pathname}`);
+      
+      // Allow these routes on root domain
+      if (pathname.startsWith('/onboarding') || 
+          pathname.startsWith('/api') || 
+          pathname.startsWith('/login') ||
+          pathname.startsWith('/register') ||
+          pathname.startsWith('/dashboard') ||
+          pathname === '/') {
+        console.log(`🔍 [MIDDLEWARE] Allowing main domain route: ${pathname}`);
+        // Continue to the backend route handler
+        const response = NextResponse.next();
+        return createSecureResponse(response, origin);
+      }
+      
+      // SOLUTION 1: Smart Main Domain Detection with Multi-Tenant Support
+      console.log(`🔍 [MIDDLEWARE] Checking auth for main domain user on: ${pathname}`);
+      const cookies = request.cookies;
+      
+      // SAFETY: Skip smart redirect for bot/screenshot requests
+      const userAgent = request.headers.get('user-agent') || '';
+      if (userAgent.includes('vercel-screenshot') || userAgent.includes('bot')) {
+        console.log(`🤖 [MIDDLEWARE] Bot/screenshot request detected, skipping smart redirect`);
+        const response = NextResponse.next();
+        return createSecureResponse(response, origin);
+      }
+      
+      // SUPABASE SSR FIX: Read standard Supabase auth cookies first (main domain)
+      const tenantContexts = cookies.get('tenant-contexts')?.value;
+      const currentTenant = cookies.get('current-tenant')?.value;
+      
+      // SURGICAL FIX: Enhanced token extraction with more fallbacks
+      const allMainCookies = cookies.getAll();
+      const supabaseMainAuthCookie = allMainCookies.find(c => 
+        c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
+      );
+      
+      // SURGICAL FIX: Enhanced token extraction with Supabase session parsing
+      let authToken = null;
+      
+      // First try direct token cookies (including our new auth-token from login fix)
+      authToken = cookies.get('docsflow_auth_token')?.value || 
+                 cookies.get('access_token')?.value ||
+                 cookies.get('auth-token')?.value;
+      
+      // If no direct token, parse Supabase session cookie with safe decoder
+      if (!authToken && supabaseMainAuthCookie?.value) {
+        const extractedToken = SafeBase64Decoder.parseSupabaseCookie(supabaseMainAuthCookie.value);
+        if (extractedToken) {
+          authToken = extractedToken;
+          console.log(`✅ [MIDDLEWARE] Successfully extracted JWT from Supabase session cookie`);
+        } else {
+          console.warn(`❌ [MIDDLEWARE] Failed to extract token from Supabase session cookie`);
+        }
+      }
+      
+      // SURGICAL FIX: If no direct token, try parsing Supabase session cookies
+      if (!authToken) {
+        try {
+          const allAuthCookies = allMainCookies.filter(c => 
+            c.name.includes('auth') || c.name.includes('session')
+          );
+          
+          for (const cookie of allAuthCookies) {
+            if (cookie.value && cookie.value.length > 50) { // JWT tokens are long
+              try {
+                // 🎯 SURGICAL FIX: Check if it's a Supabase session cookie first
+                if (cookie.name.startsWith('sb-') && cookie.name.endsWith('-auth-token')) {
+                  const extractedToken = SafeBase64Decoder.parseSupabaseCookie(cookie.value);
+                  if (extractedToken) {
+                    authToken = extractedToken;
+                    console.log(`✅ [MIDDLEWARE] Extracted JWT from Supabase session cookie: ${cookie.name}`);
+                    break;
+                  }
+                }
+                
+                // Check if it's a direct JWT format
+                const parts = cookie.value.split('.');
+                if (parts.length === 3 && cookie.value.startsWith('eyJ')) {
+                  authToken = cookie.value;
+                  console.log(`🔍 [MIDDLEWARE] Found auth token in cookie: ${cookie.name}`);
+                  break;
+                }
+              } catch (e) {
+                // Not a valid token, continue
+              }
+            }
+          }
+        } catch (parseError) {
+          console.warn(`🔍 [MIDDLEWARE] Token parsing failed:`, parseError);
+        }
+      }
+      
+      // SURGICAL FIX: Extract user info from JWT token with robust error handling
+      const userEmail = extractEmailFromJWT(authToken) || 
+                       cookies.get('user-email')?.value || 
+                       cookies.get('user_email')?.value || 
+                       null;
+      
+      if (userEmail && authToken) {
+        console.log(`🔍 [MIDDLEWARE] User email extracted successfully`);
+      }
+      
+      // ENTERPRISE SMART REDIRECT: Bypass dashboard/onboarding for authenticated users
+      if ((pathname === '/dashboard' || pathname === '/onboarding' || pathname === '/') && 
+          tenantContexts && userEmail && authToken) {
+        try {
+          const contexts = JSON.parse(tenantContexts);
+          const availableTenants = Object.keys(contexts);
+          
+          // CRITICAL: Verify auth token is still valid before redirecting
+          // Check if user just logged out by looking for recent logout timestamp
+          const logoutTimestamp = cookies.get('logout-timestamp')?.value;
+          const recentLogout = logoutTimestamp && (Date.now() - parseInt(logoutTimestamp)) < 30000; // 30s grace
+          
+          if (recentLogout) {
+            console.log('🔄 [SMART-REDIRECT] Recent logout detected, skipping smart redirect');
+            const response = NextResponse.next();
+            return createSecureResponse(response, origin);
+          }
+          
+          // CRITICAL: Ensure we have BOTH tenant contexts AND valid auth before redirect
+          if (availableTenants.length === 1 && authToken && userEmail) {
+            const tenantSubdomain = availableTenants[0];
+            
+            // SURGICAL FIX: Comprehensive validation before redirect
+            if (tenantSubdomain && 
+                typeof tenantSubdomain === 'string' && 
+                tenantSubdomain.length > 0 &&
+                /^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/.test(tenantSubdomain)) {
+              const redirectUrl = `https://${tenantSubdomain}.docsflow.app/dashboard`;
+              console.log(`🚀 [SMART-REDIRECT] Single tenant user with valid auth - redirecting: ${redirectUrl}`);
+              return NextResponse.redirect(new URL(redirectUrl));
+            } else {
+              console.error(`🚨 [SMART-REDIRECT] Invalid subdomain: '${tenantSubdomain}' (type: ${typeof tenantSubdomain})`);
+            }
+          } else if (availableTenants.length > 1 && authToken && userEmail) {
+            const preferredTenant = (currentTenant && contexts[currentTenant]) ? currentTenant : availableTenants[0];
+            
+            // SURGICAL FIX: Comprehensive validation before redirect  
+            if (preferredTenant && 
+                typeof preferredTenant === 'string' && 
+                preferredTenant.length > 0 &&
+                /^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/.test(preferredTenant)) {
+              const redirectUrl = `https://${preferredTenant}.docsflow.app/dashboard`;
+              console.log(`🚀 [SMART-REDIRECT] Multi-tenant user with valid auth - redirecting: ${redirectUrl}`);
+              return NextResponse.redirect(new URL(redirectUrl));
+            } else {
+              console.error(`🚨 [SMART-REDIRECT] Invalid preferred tenant: '${preferredTenant}' (type: ${typeof preferredTenant})`);
+            }
+          } else {
+            console.log(`🔍 [SMART-REDIRECT] Skipping redirect - insufficient auth: tenants=${availableTenants.length}, token=${!!authToken}, email=${!!userEmail}`);
+          }
+        } catch (e) {
+          console.error(`🚨 [SMART-REDIRECT] Error parsing tenant contexts: ${e.message}`);
+        }
+      }
+      
+      // Legacy fallback for backwards compatibility
+      const storedTenantId = cookies.get('tenant-id')?.value;
+      
+      // ARCHITECTURAL FIX: Read subdomain directly from cookie (no database lookup needed)
+      const storedTenantSubdomain = cookies.get('tenant-subdomain')?.value;
+      
+      console.log(`🔍 [MIDDLEWARE] Auth check - Token: ${authToken ? 'EXISTS' : 'MISSING'}, Email: ${userEmail || 'MISSING'}, TenantId: ${storedTenantId || 'MISSING'}, Subdomain: ${storedTenantSubdomain || 'MISSING'}`);
+      
+      if (authToken && userEmail && storedTenantId && storedTenantSubdomain) {
+        // SECURITY FIX: Don't redirect auth/login routes to tenant subdomain (causes CORS)
+        const authRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/auth', '/api/auth'];
+        const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
+        
+        if (!isAuthRoute) {
+          // Direct redirect using subdomain from cookie - no database lookup needed
+          const tenantUrl = `https://${storedTenantSubdomain}.docsflow.app${pathname}`;
+          console.log(`🎯 [MIDDLEWARE] DIRECT REDIRECT authenticated user from main domain to tenant: ${tenantUrl}`);
+          return NextResponse.redirect(new URL(tenantUrl));
+        } else {
+          console.log(`🔒 [MIDDLEWARE] Skipping tenant redirect for auth route: ${pathname}`);
+        }
+      } else {
+        console.log(`🔍 [MIDDLEWARE] User not authenticated or missing tenant context on main domain`);
+      }
+    }
+
+    // Handle backend domain access - redirect to main domain for non-API routes
+    if (hostname.includes('ai-lead-router-saas') && hostname.includes('vercel.app')) {
+      
+      // Allow API routes and onboarding on backend domain
+      if (pathname.startsWith('/api') || pathname.startsWith('/onboarding') || pathname.startsWith('/app/')) {
+        const response = NextResponse.next();
+        return createSecureResponse(response, origin);
+      }
+      
+      // Redirect non-API routes to main domain
+      return NextResponse.redirect(new URL(`https://docsflow.app${pathname}`, request.url), 301);
+    }
+
+    // Default - allow frontend to handle
+    console.log(`🔍 [MIDDLEWARE] Default handler - allowing frontend to handle: ${hostname}${pathname}`);
+    const response = NextResponse.next();
+    return createSecureResponse(response, request.headers.get('origin'));
+    
+  } catch (error) {
+    console.error('Middleware error:', error);
+    const response = NextResponse.next();
+    return createSecureResponse(response, request.headers.get('origin'));
+  }
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Optimized matcher - only process routes that need tenant validation:
+     * - /api routes (except health checks and static endpoints)
+     * - /dashboard routes (need tenant context)
+     * - Exclude: static files, auth pages, health endpoints
+     */
+    '/api/((?!health|static).*)',
+    '/dashboard/:path*',
+    '/((?!_next|public|favicon.ico|login|signup|register|auth|forgot-password|reset-password|privacy|terms|support|docs|robots.txt|sitemap.xml).*)',
+  ],
+}; 
