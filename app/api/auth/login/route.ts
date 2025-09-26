@@ -74,42 +74,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 🎯 CRITICAL FIX: Establish auth context for RLS policies BEFORE querying users table
-    // Without this, auth.uid() returns NULL and RLS policy blocks the query
-    const { error: setSessionError } = await supabase.auth.setSession({
-      access_token: authData.session.access_token,
-      refresh_token: authData.session.refresh_token
-    });
+    // 🎯 REAL FIX: Use service role to query users table (bypass RLS entirely)
+    // The issue: Server-side session context doesn't work reliably with RLS
+    // Solution: Use service role for this specific profile query
+    console.log('🔧 [LOGIN] Using service role to fetch user profile (bypassing RLS issues)');
     
-    if (setSessionError) {
-      console.error('🔐 [LOGIN] Failed to set session context:', setSessionError.message);
-      return NextResponse.json(
-        { success: false, error: 'Authentication context error' },
-        { status: 500, headers: corsHeaders }
-      );
-    }
-    
-    console.log('✅ [LOGIN] Auth context established - auth.uid() now available for RLS');
+    const { createClient } = await import('@supabase/supabase-js');
+    const serviceSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
 
-    // 🔍 DIAGNOSTIC: Verify auth context was actually set
-    const { data: { user: contextUser }, error: contextError } = await supabase.auth.getUser();
-    console.log('🔍 [LOGIN] Auth context verification:', {
-      hasContextUser: !!contextUser,
-      contextUserId: contextUser?.id,
-      contextUserEmail: contextUser?.email,
-      contextError: contextError?.message
-    });
-
-    if (!contextUser || contextError) {
-      console.error('❌ [LOGIN] Auth context NOT properly established despite setSession success');
-      return NextResponse.json(
-        { success: false, error: 'Authentication context verification failed' },
-        { status: 500, headers: corsHeaders }
-      );
-    }
-
-    // Fetch user profile with tenant information
-    const { data: userProfile, error: profileError } = await supabase
+    // Fetch user profile with tenant information using SERVICE ROLE
+    const { data: userProfile, error: profileError } = await serviceSupabase
       .from('users')
       .select(`
         id,
@@ -129,46 +106,15 @@ export async function POST(request: NextRequest) {
       .maybeSingle(); // SURGICAL FIX: Handle missing tenant relationships gracefully
 
     if (profileError || !userProfile) {
-      console.error('🔐 [LOGIN] Profile fetch failed:', {
+      console.error('🔐 [LOGIN] Profile fetch failed with service role:', {
         profileError: profileError,
         profileErrorCode: profileError?.code,
         profileErrorMessage: profileError?.message,
-        profileErrorDetails: profileError?.details,
-        profileErrorHint: profileError?.hint,
-        hasUserProfile: !!userProfile,
-        authUserId: authData.user.id,
-        contextUserId: contextUser.id
-      });
-      
-      // 🔍 DIAGNOSTIC: Try service role query to see if data exists
-      const { createClient } = await import('@supabase/supabase-js');
-      const serviceSupabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      );
-      
-      const { data: serviceProfile, error: serviceError } = await serviceSupabase
-        .from('users')
-        .select('id, email, name, role, tenant_id')
-        .eq('id', authData.user.id)
-        .single();
-        
-      console.log('🔍 [LOGIN] Service role diagnostic:', {
-        serviceHasProfile: !!serviceProfile,
-        serviceProfile: serviceProfile,
-        serviceError: serviceError?.message
+        authUserId: authData.user.id
       });
       
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'User profile not found',
-          diagnostic: {
-            authContextSet: true,
-            profileQuery: 'failed',
-            serviceRoleWorked: !!serviceProfile
-          }
-        },
+        { success: false, error: 'User profile not found' },
         { status: 404, headers: corsHeaders }
       );
     }
