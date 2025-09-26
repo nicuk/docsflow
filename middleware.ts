@@ -402,6 +402,18 @@ export default async function middleware(request: NextRequest) {
       } else {
         // Fallback to legacy tenant-id cookie for backwards compatibility
         storedTenantId = request.cookies.get('tenant-id')?.value || null;
+        
+        // 🎯 SURGICAL FIX: Direct cookie header parsing if Next.js cookies() fails
+        if (!storedTenantId) {
+          const cookieHeader = request.headers.get('cookie');
+          if (cookieHeader) {
+            const tenantIdMatch = cookieHeader.match(/tenant-id=([^;]+)/);
+            if (tenantIdMatch) {
+              storedTenantId = decodeURIComponent(tenantIdMatch[1]);
+              console.log(`🍪 [MIDDLEWARE] Extracted tenant-id from header fallback: ${storedTenantId.substring(0, 8)}...`);
+            }
+          }
+        }
       }
       
       // FIX #2: Reuse tenantInfo from resilient resolver (already fetched above)
