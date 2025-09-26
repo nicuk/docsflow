@@ -73,6 +73,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 🎯 CRITICAL FIX: Establish auth context for RLS policies BEFORE querying users table
+    // Without this, auth.uid() returns NULL and RLS policy blocks the query
+    const { error: setSessionError } = await supabase.auth.setSession({
+      access_token: authData.session.access_token,
+      refresh_token: authData.session.refresh_token
+    });
+    
+    if (setSessionError) {
+      console.error('🔐 [LOGIN] Failed to set session context:', setSessionError.message);
+      return NextResponse.json(
+        { success: false, error: 'Authentication context error' },
+        { status: 500, headers: corsHeaders }
+      );
+    }
+    
+    console.log('✅ [LOGIN] Auth context established - auth.uid() now available for RLS');
+
     // Fetch user profile with tenant information
     const { data: userProfile, error: profileError } = await supabase
       .from('users')
