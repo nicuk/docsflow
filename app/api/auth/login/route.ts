@@ -169,6 +169,15 @@ export async function POST(request: NextRequest) {
       response.cookies.set('user-email', userProfile.email, cookieOptions);
       response.cookies.set('tenant-subdomain', userProfile.tenants.subdomain, cookieOptions);
       
+      console.log('🍪 [LOGIN] Cookies being set:', {
+        'tenant-id': userProfile.tenant_id,
+        'user-email': userProfile.email,
+        'tenant-subdomain': userProfile.tenants.subdomain,
+        domain: cookieOptions.domain,
+        secure: cookieOptions.secure,
+        sameSite: cookieOptions.sameSite
+      });
+      
       // Set tenant context for multi-tenant support
       const tenantContext = {
         tenantId: userProfile.tenant_id,
