@@ -229,3 +229,4 @@ For issues with this integration:
 ---
 
 **Next Steps**: Once Stripe is configured, test the full user journey from signup → trial → upgrade → billing management.
+

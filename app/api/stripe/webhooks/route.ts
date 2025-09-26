@@ -235,3 +235,4 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription, sup
     console.error('Error handling subscription canceled:', error);
   }
 }
+

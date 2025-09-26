@@ -1,8 +1,9 @@
 /**
- * SIMPLIFIED ENTERPRISE LOGIN API
+ * UNIFIED ENTERPRISE LOGIN API
  * 
- * Replaces complex login route with enterprise-grade simplicity
- * Preserves multi-tenant functionality, removes over-engineering
+ * Single source of truth for authentication
+ * Handles multi-tenant auth with proper RLS context establishment
+ * Consolidated from previous dual-route architecture
  */
 
 import { NextRequest, NextResponse } from 'next/server';

@@ -1,0 +1,5 @@
+[33mdb19afa[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m fix: Resolve PGRST116 profile fetch error in login-unified
+[33mbd6568c[m fix: Remove Chart export causing webpack build failure
+[33mfc2e81e[m fix: Remove undefined chart component references causing build failure
+[33m27d3676[m fix: Resolve BarChart undefined error in dashboard settings
+[33mef4cda8[m feat: Enhance README with technical architecture & fix TypeScript errors
