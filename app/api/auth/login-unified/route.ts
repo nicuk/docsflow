@@ -73,6 +73,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 🎯 CRITICAL FIX: Establish auth context for RLS policies BEFORE querying users table
+    // Without this, auth.uid() returns NULL and RLS policy blocks the query
+    const { error: setSessionError } = await supabase.auth.setSession({
+      access_token: authData.session.access_token,
+      refresh_token: authData.session.refresh_token
+    });
+    
+    if (setSessionError) {
+      console.error('🔐 [LOGIN-UNIFIED] Failed to set session context:', setSessionError.message);
+      return NextResponse.json(
+        { success: false, error: 'Authentication context error' },
+        { status: 500, headers: corsHeaders }
+      );
+    }
+    
+    console.log('✅ [LOGIN-UNIFIED] Auth context established - auth.uid() now available for RLS');
+
     // Fetch user profile with tenant information
     // SURGICAL FIX: Handle potential tenant relationship issues
     let { data: userProfile, error: profileError } = await supabase
@@ -142,7 +159,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Return enterprise-standard response
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: {
         id: userProfile.id,
@@ -163,6 +180,43 @@ export async function POST(request: NextRequest) {
         expires_at: authData.session.expires_at
       }
     }, { headers: corsHeaders });
+
+    // 🎯 CRITICAL FIX: Set tenant cookies that middleware expects
+    if (userProfile.tenant_id && userProfile.email && userProfile.tenants?.subdomain) {
+      const cookieOptions = {
+        httpOnly: false, // Need access for client-side redirect logic
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax' as const,
+        path: '/',
+        domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
+        maxAge: rememberMe ? (60 * 60 * 24 * 30) : (60 * 60 * 24 * 7) // Match remember me duration
+      };
+
+      response.cookies.set('tenant-id', userProfile.tenant_id, cookieOptions);
+      response.cookies.set('user-email', userProfile.email, cookieOptions);
+      response.cookies.set('tenant-subdomain', userProfile.tenants.subdomain, cookieOptions);
+      
+      // Set tenant context for multi-tenant support
+      const tenantContext = {
+        tenantId: userProfile.tenant_id,
+        subdomain: userProfile.tenants.subdomain,
+        timestamp: Date.now()
+      };
+      response.cookies.set('tenant-context', JSON.stringify(tenantContext), cookieOptions);
+      
+      // 🚨 SURGICAL FIX: Set auth token cookies that middleware/session API expect
+      response.cookies.set('auth-token', authData.session.access_token, cookieOptions);
+      
+      console.log(`🎯 [LOGIN-UNIFIED] Set tenant AND auth cookies for middleware compatibility:`, {
+        tenantId: userProfile.tenant_id.substring(0, 8) + '...',
+        email: userProfile.email,
+        subdomain: userProfile.tenants.subdomain,
+        hasAccessToken: !!authData.session.access_token,
+        tokenLength: authData.session.access_token.length
+      });
+    }
+
+    return response;
 
   } catch (error: any) {
     console.error('❌ [LOGIN-UNIFIED] Server error:', error);
