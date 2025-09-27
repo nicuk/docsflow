@@ -11,24 +11,14 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name) {
-          return request.cookies.get(name)?.value;
+        getAll() {
+          return request.cookies.getAll()
         },
-        set(name, value, options) {
-          // SURGICAL FIX: Match login API cookie domain
-          const enhancedOptions = {
-            ...options,
-            domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : '.localhost',
-            path: '/',
-            sameSite: 'lax' as const,
-            secure: process.env.NODE_ENV === 'production'
-          };
-          request.cookies.set(name, value)
-          supabaseResponse.cookies.set(name, value, enhancedOptions)
-        },
-        remove(name, options) {
-          request.cookies.delete(name)
-          supabaseResponse.cookies.set(name, '', { ...options, maxAge: 0 })
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value)
+            supabaseResponse.cookies.set(name, value, options)
+          })
         },
       },
     }
@@ -45,8 +35,7 @@ export async function middleware(request: NextRequest) {
   if (
     !user &&
     !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth') &&
-    !request.nextUrl.pathname.startsWith('/api/')
+    !request.nextUrl.pathname.startsWith('/auth')
   ) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()

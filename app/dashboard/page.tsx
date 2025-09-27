@@ -79,43 +79,7 @@ export default function DashboardPage() {
     return window.location.hostname === 'www.docsflow.app' || window.location.hostname === 'docsflow.app'
   })
 
-  // 🎯 IMMEDIATE REDIRECT FOR MAIN DOMAIN
-  useEffect(() => {
-    if (isMainDomain) {
-      setIsRedirecting(true)
-      setRedirectMessage("Connecting to your workspace...")
-      
-      // Quick redirect without heavy loading
-      const redirectToWorkspace = async () => {
-        try {
-          const { MultiTenantCookieManager } = await import('@/lib/multi-tenant-cookie-manager')
-          const tenantContexts = MultiTenantCookieManager.getCurrentTenantContexts()
-          const currentTenant = MultiTenantCookieManager.getCurrentTenantSubdomain()
-          
-          if (currentTenant && tenantContexts[currentTenant]) {
-            window.location.replace(`https://${currentTenant}.docsflow.app/dashboard`)
-            return
-          }
-          
-          // Check if user is already onboarded via session API
-          const sessionResponse = await fetch('/api/auth/session')
-          const sessionData = await sessionResponse.json()
-          
-          if (sessionData.authenticated && sessionData.onboardingComplete && sessionData.tenant?.subdomain) {
-            // User is onboarded - redirect to their tenant
-            window.location.replace(`https://${sessionData.tenant.subdomain}.docsflow.app/dashboard`)
-          } else {
-            window.location.replace('/onboarding')
-          }
-        } catch (error) {
-          console.error('Redirect error:', error)
-          window.location.replace('/onboarding')
-        }
-      }
-      
-      redirectToWorkspace()
-    }
-  }, [isMainDomain])
+  // Removed redundant main domain redirect - handled by loadTenantContext
 
   // Load tenant context and check onboarding completion
   useEffect(() => {

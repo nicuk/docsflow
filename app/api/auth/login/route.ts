@@ -25,29 +25,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create Supabase client with enterprise cookie configuration
+    // Create Supabase client with multi-tenant cookie domain
     const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          getAll() {
-            return cookieStore.getAll();
+          get(name) {
+            return cookieStore.get(name)?.value;
           },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              // Enterprise multi-tenant cookie configuration
-              const enhancedOptions = {
-                ...options,
-                domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
-                path: '/',
-                sameSite: 'lax' as const,
-                // Remember me affects cookie duration
-                maxAge: rememberMe ? (60 * 60 * 24 * 30) : (60 * 60 * 24 * 7) // 30 days vs 7 days
-              };
-              cookieStore.set(name, value, enhancedOptions);
-            });
+          set(name, value, options) {
+            // SURGICAL FIX: Set domain for cross-subdomain access
+            const enhancedOptions = {
+              ...options,
+              domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : '.localhost',
+              path: '/',
+              sameSite: 'lax' as const,
+              secure: process.env.NODE_ENV === 'production'
+            };
+            cookieStore.set(name, value, enhancedOptions);
+          },
+          remove(name, options) {
+            cookieStore.set(name, '', { ...options, maxAge: 0 });
           },
         },
       }
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 🎯 SURGICAL FIX: Set tenant cookies like session API does
+    // Let Supabase handle its own cookies, then add our tenant info
     const response = NextResponse.json({
       success: true,
       user: {
@@ -197,54 +197,8 @@ export async function POST(request: NextRequest) {
       }
     }, { headers: corsHeaders });
 
-    // 🎯 CRITICAL FIX: Set tenant cookies that middleware expects
-    if (userProfile.tenant_id && userProfile.email && userProfile.tenants?.subdomain) {
-      const cookieOptions = {
-        httpOnly: false, // Need access for client-side redirect logic
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax' as const,
-        path: '/',
-        domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
-        maxAge: rememberMe ? (60 * 60 * 24 * 30) : (60 * 60 * 24 * 7) // Match remember me duration
-      };
-
-      response.cookies.set('tenant-id', userProfile.tenant_id, cookieOptions);
-      response.cookies.set('user-email', userProfile.email, cookieOptions);
-      response.cookies.set('tenant-subdomain', userProfile.tenants.subdomain, cookieOptions);
-      
-      console.log('🍪 [LOGIN] Cookies being set:', {
-        'tenant-id': userProfile.tenant_id,
-        'user-email': userProfile.email,
-        'tenant-subdomain': userProfile.tenants.subdomain,
-        domain: cookieOptions.domain,
-        secure: cookieOptions.secure,
-        sameSite: cookieOptions.sameSite
-      });
-      
-      // Set tenant context for multi-tenant support
-      const tenantContext = {
-        tenantId: userProfile.tenant_id,
-        subdomain: userProfile.tenants.subdomain,
-        timestamp: Date.now()
-      };
-      response.cookies.set('tenant-context', JSON.stringify(tenantContext), cookieOptions);
-      
-      // 🚨 SURGICAL FIX: Set auth token cookies that middleware/session API expect
-      // This is the MISSING PIECE causing "Auth session missing!" errors
-      response.cookies.set('access_token', authData.session.access_token, cookieOptions);
-      response.cookies.set('docsflow_auth_token', authData.session.access_token, cookieOptions);
-      
-      // Also set a custom auth-token cookie as fallback for session API
-      response.cookies.set('auth-token', authData.session.access_token, cookieOptions);
-      
-      console.log(`🎯 [LOGIN] Set tenant AND auth cookies for middleware compatibility:`, {
-        tenantId: userProfile.tenant_id.substring(0, 8) + '...',
-        email: userProfile.email,
-        subdomain: userProfile.tenants.subdomain,
-        hasAccessToken: !!authData.session.access_token,
-        tokenLength: authData.session.access_token.length
-      });
-    }
+    console.log('✅ [LOGIN] Authentication successful, Supabase cookies should be set automatically');
+    console.log(`🎯 [LOGIN] User: ${userProfile.email}, Tenant: ${userProfile.tenants?.subdomain}`);
 
     return response;
 
