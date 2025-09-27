@@ -2,10 +2,8 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
+  let supabaseResponse = NextResponse.next({
+    request,
   })
 
   const supabase = createServerClient(
@@ -13,115 +11,50 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll()
+        get(name) {
+          return request.cookies.get(name)?.value
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value)
-            response.cookies.set(name, value, options)
-          })
+        set(name, value, options) {
+          request.cookies.set(name, value)
+          supabaseResponse.cookies.set(name, value, options)
+        },
+        remove(name, options) {
+          request.cookies.delete(name)
+          supabaseResponse.cookies.set(name, '', { ...options, maxAge: 0 })
         },
       },
     }
   )
 
-  // Get user session (establishes auth.uid() for RLS)
-  const { data: { user } } = await supabase.auth.getUser()
+  // IMPORTANT: Avoid writing any logic between createServerClient and
+  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
+  // issues with users being randomly logged out.
 
-  const { pathname } = request.nextUrl
-  const hostname = request.headers.get('host') || ''
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  // Skip static files
-  if (pathname.startsWith('/_next') || 
-      pathname.startsWith('/favicon') ||
-      pathname.endsWith('.ico') ||
-      pathname.endsWith('.svg') ||
-      pathname.endsWith('.png')) {
-    return response
+  if (
+    !user &&
+    !request.nextUrl.pathname.startsWith('/login') &&
+    !request.nextUrl.pathname.startsWith('/auth') &&
+    !request.nextUrl.pathname.startsWith('/api/')
+  ) {
+    // no user, potentially respond by redirecting the user to the login page
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
   }
 
-  // Extract tenant from subdomain (enhanced for development)
-  let tenant = null
-  
-  if (hostname.includes('.') && !hostname.startsWith('www.')) {
-    // Production subdomain: tenant.docsflow.app
-    if (hostname.includes('docsflow.app')) {
-      tenant = hostname.split('.')[0]
-    }
-  }
-  
-  // For development on localhost, check if user has a tenant and use it as default
-  if (!tenant && hostname.includes('localhost') && user) {
-    // Fallback: use the user's tenant for localhost testing
-    try {
-      const { data: userData } = await supabase
-        .from('users')
-        .select('tenants(subdomain)')
-        .eq('id', user.id)
-        .single()
-      
-      if (userData?.tenants?.subdomain) {
-        tenant = userData.tenants.subdomain
-        console.log(`🔧 [LOCALHOST] Using user's tenant: ${tenant}`)
-      }
-    } catch (e) {
-      console.log('Failed to get user tenant for localhost')
-    }
-  }
+  // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
+  // creating a new response object with NextResponse.next() make sure to:
+  // 1. Pass the request in it, like so:
+  //    const myNewResponse = NextResponse.next({ request })
+  // 2. Copy over the cookies, like so:
+  //    myNewResponse.cookies.set(supabaseResponse.cookies)
+  // 3. Change the myNewResponse object instead of the supabaseResponse object
 
-  // Public routes (no auth required)
-  const publicRoutes = ['/login', '/register', '/forgot-password', '/', '/pricing', '/about']
-  const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith('/api/auth'))
-
-  // If user is not authenticated and trying to access protected route
-  if (!user && !isPublicRoute) {
-    const loginUrl = tenant ? `https://${tenant}.docsflow.app/login` : `${request.nextUrl.origin}/login`
-    return NextResponse.redirect(loginUrl)
-  }
-
-  // Set tenant context headers for authenticated users
-  if (user) {
-    if (tenant) {
-      response.headers.set('x-tenant-subdomain', tenant)
-      
-      // Get tenant UUID
-      try {
-        const { data: tenantData } = await supabase
-          .from('tenants')
-          .select('id')
-          .eq('subdomain', tenant)
-          .single()
-        
-        if (tenantData?.id) {
-          response.headers.set('x-tenant-id', tenantData.id)
-          console.log(`✅ [MIDDLEWARE] Tenant context set: ${tenant} (${tenantData.id.substring(0, 8)}...)`)
-        }
-      } catch (e) {
-        console.log('Tenant lookup failed:', e)
-      }
-    } else {
-      // No tenant found - this might be a main domain request
-      // For localhost development, try to get user's tenant directly
-      try {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('tenant_id, tenants(subdomain)')
-          .eq('id', user.id)
-          .single()
-        
-        if (userData?.tenant_id && userData?.tenants?.subdomain) {
-          response.headers.set('x-tenant-id', userData.tenant_id)
-          response.headers.set('x-tenant-subdomain', userData.tenants.subdomain)
-          console.log(`🔧 [FALLBACK] Set tenant headers from user profile: ${userData.tenants.subdomain}`)
-        }
-      } catch (e) {
-        console.log('User tenant lookup failed:', e)
-      }
-    }
-  }
-
-  return response
+  return supabaseResponse
 }
 
 export const config = {
@@ -131,7 +64,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * Feel free to modify this pattern to include more paths.
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
