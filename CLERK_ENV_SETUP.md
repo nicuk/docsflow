@@ -6,24 +6,46 @@ Add these to your `.env.local` file:
 
 ```bash
 # ===================================
+# EXISTING SUPABASE (Keep these!)
+# ===================================
+NEXT_PUBLIC_SUPABASE_URL=your_existing_value
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_existing_value
+SUPABASE_SERVICE_ROLE_KEY=your_existing_value
+
+# ===================================
 # CLERK CONFIGURATION (Phase 2 Test)
 # ===================================
 
-# Get these from: https://dashboard.clerk.com
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-CLERK_SECRET_KEY=sk_test_...
+# From your Clerk dashboard (you have these!):
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_b...
+CLERK_SECRET_KEY=sk_test_iPpU0wvMCuMG495g8a...
 
 # Feature flag - Controls which auth provider to use
-# false = Supabase (default, current production)
-# true = Clerk (for testing only)
+# CRITICAL: Keep this FALSE for now!
+# false = Supabase (production - keep working)
+# true = Clerk (breaks production - only for Phase 4)
 NEXT_PUBLIC_USE_CLERK=false
 
-# Clerk URLs (isolated test routes)
+# Clerk URLs (isolated test routes - no impact on main app)
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in-clerk
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up-clerk
 NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard-clerk
 NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard-clerk
 ```
+
+### ⚠️ IMPORTANT: Don't Follow Clerk's Quickstart Yet!
+
+Clerk's quickstart wants you to:
+1. Replace your middleware with `clerkMiddleware()` ❌ **DON'T DO THIS**
+2. Wrap entire app with `ClerkProvider` ❌ **DON'T DO THIS**
+3. Replace all auth routes ❌ **DON'T DO THIS**
+
+**Why?** This would break your existing Supabase auth and prevent deployment!
+
+**Our surgical approach:**
+- ✅ Test Clerk in isolated routes (`/dashboard-clerk`)
+- ✅ Keep production working (`/dashboard` uses Supabase)
+- ✅ Migrate gradually (Phase 3-5)
 
 ## Setup Steps
 
