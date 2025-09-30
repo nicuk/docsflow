@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
+import { ClerkProvider } from '@clerk/nextjs'
 import { ThemeProvider } from "@/components/theme-provider"
 import { PerformanceMonitor } from "@/components/performance-monitor"
 import { TenantProvider } from "@/components/providers/tenant-provider"
@@ -70,27 +71,29 @@ export default function RootLayout({
   const tenantSubdomain = null;
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        {/* Force favicon refresh with explicit meta tags */}
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" />
-        <link rel="icon" type="image/x-icon" href="/favicon.ico?v=3" />
-        <link rel="shortcut icon" href="/favicon.ico?v=3" />
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning>
+        <head>
+          {/* Force favicon refresh with explicit meta tags */}
+          <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" />
+          <link rel="icon" type="image/x-icon" href="/favicon.ico?v=3" />
+          <link rel="shortcut icon" href="/favicon.ico?v=3" />
 
-      </head>
-      <body className={inter.className}>
-        <QueryProvider>
-          <AuthProvider>
-            <TenantProvider tenantId={tenantId} tenantSubdomain={tenantSubdomain}>
-              <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-                <PerformanceMonitor />
-                {children}
-                <Toaster />
-              </ThemeProvider>
-            </TenantProvider>
-          </AuthProvider>
-        </QueryProvider>
-      </body>
-    </html>
+        </head>
+        <body className={inter.className}>
+          <QueryProvider>
+            <AuthProvider>
+              <TenantProvider tenantId={tenantId} tenantSubdomain={tenantSubdomain}>
+                <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+                  <PerformanceMonitor />
+                  {children}
+                  <Toaster />
+                </ThemeProvider>
+              </TenantProvider>
+            </AuthProvider>
+          </QueryProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }

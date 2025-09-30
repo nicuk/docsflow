@@ -1,80 +1,57 @@
-import { createServerClient } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
 
-export async function middleware(request: NextRequest) {
-  // PHASE 2: Check Clerk routes FIRST, before any Supabase logic
-  const isClerkTestRoute = request.nextUrl.pathname.startsWith('/sign-in-clerk') ||
-                           request.nextUrl.pathname.startsWith('/sign-up-clerk') ||
-                           request.nextUrl.pathname.startsWith('/dashboard-clerk');
+// Define routes that require authentication
+const isProtectedRoute = createRouteMatcher([
+  '/dashboard(.*)',
+  '/onboarding(.*)',
+  '/chat(.*)',
+  '/documents(.*)',
+])
 
-  if (isClerkTestRoute) {
-    // Let Clerk handle these routes completely - skip all Supabase middleware
-    return NextResponse.next()
+// Define public routes (no auth required)
+const isPublicRoute = createRouteMatcher([
+  '/login(.*)',
+  '/signup(.*)',
+  '/auth(.*)',
+  '/',
+  '/api/webhooks(.*)', // Allow webhooks without auth
+])
+
+export default clerkMiddleware(async (auth, req) => {
+  const { userId, sessionClaims } = await auth()
+  
+  // Protect routes that require authentication
+  if (isProtectedRoute(req) && !userId) {
+    const loginUrl = new URL('/login', req.url)
+    return NextResponse.redirect(loginUrl)
   }
 
-  // Only run Supabase auth logic for non-Clerk routes
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name) {
-          return request.cookies.get(name)?.value;
-        },
-        set(name, value, options) {
-          // SURGICAL FIX: Match login API cookie domain
-          const enhancedOptions = {
-            ...options,
-            domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : '.localhost',
-            path: '/',
-            sameSite: 'lax' as const,
-            secure: process.env.NODE_ENV === 'production'
-          };
-          request.cookies.set(name, value)
-          supabaseResponse.cookies.set(name, value, enhancedOptions)
-        },
-        remove(name, options) {
-          request.cookies.delete(name)
-          supabaseResponse.cookies.set(name, '', { ...options, maxAge: 0 })
-        },
-      },
-    }
-  )
-
-  // IMPORTANT: Avoid writing any logic between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth') &&
-    !request.nextUrl.pathname.startsWith('/api/')
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+  // Extract tenant from subdomain for multi-tenant routing
+  const { hostname } = req.nextUrl
+  let tenant = null
+  
+  // Production: tenant.docsflow.app
+  if (hostname.includes('docsflow.app') && !hostname.startsWith('www.')) {
+    tenant = hostname.split('.')[0]
+  }
+  
+  // Development: localhost (we'll get tenant from user metadata after auth)
+  if (hostname.includes('localhost')) {
+    tenant = 'localhost-dev'
   }
 
-  // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
-  // creating a new response object with NextResponse.next() make sure to:
-  // 1. Pass the request in it, like so:
-  //    const myNewResponse = NextResponse.next({ request })
-  // 2. Copy over the cookies, like so:
-  //    myNewResponse.cookies.set(supabaseResponse.cookies)
-  // 3. Change the myNewResponse object instead of the supabaseResponse object
+  // Add tenant context to headers for API routes
+  const response = NextResponse.next()
+  if (tenant) {
+    response.headers.set('x-tenant-subdomain', tenant)
+  }
+  if (userId) {
+    response.headers.set('x-user-id', userId)
+  }
 
-  return supabaseResponse
-}
+  return response
+})
 
 export const config = {
   matcher: [
