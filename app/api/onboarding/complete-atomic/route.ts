@@ -108,28 +108,60 @@ export async function POST(request: NextRequest) {
     const accessLevel = isNewTenant ? 1 : (userRole === 'admin' ? 1 : 2);
     const role = accessLevel === 1 ? 'admin' : 'member';
 
-    // Create or update user in Supabase database
-    // Note: onboarding_complete is stored in Clerk metadata, not in Supabase
-    const { error: userError } = await supabaseAdmin
+    // 🎯 CLERK-SUPABASE INTEGRATION: Map Clerk string ID to Supabase UUID
+    // Check if user already exists in Supabase (by email, since Clerk IDs aren't UUIDs)
+    let supabaseUserId: string;
+    
+    const { data: existingUser } = await supabaseAdmin
       .from('users')
-      .upsert({
-        id: userId, // Use Clerk user ID
-        email: userEmail,
-        name: user.firstName || userEmail.split('@')[0],
-        tenant_id: tenantId,
-        role: role,
-        access_level: accessLevel,
-      }, {
-        onConflict: 'id'
-      });
+      .select('id')
+      .eq('email', userEmail)
+      .eq('tenant_id', tenantId)
+      .single();
 
-    if (userError) {
-      console.error('❌ [ONBOARDING] User upsert error:', userError);
-      throw userError;
+    if (existingUser) {
+      // User already exists in this tenant
+      supabaseUserId = existingUser.id;
+      
+      // Update existing user
+      const { error: updateError } = await supabaseAdmin
+        .from('users')
+        .update({
+          name: user.firstName || userEmail.split('@')[0],
+          role: role,
+          access_level: accessLevel,
+          last_login_at: new Date().toISOString(),
+        })
+        .eq('id', supabaseUserId);
+      
+      if (updateError) {
+        console.error('❌ [ONBOARDING] User update error:', updateError);
+        throw updateError;
+      }
+    } else {
+      // Create new user with generated UUID
+      supabaseUserId = crypto.randomUUID();
+      
+      const { error: insertError } = await supabaseAdmin
+        .from('users')
+        .insert({
+          id: supabaseUserId,
+          email: userEmail,
+          name: user.firstName || userEmail.split('@')[0],
+          tenant_id: tenantId,
+          role: role,
+          access_level: accessLevel,
+        });
+      
+      if (insertError) {
+        console.error('❌ [ONBOARDING] User insert error:', insertError);
+        throw insertError;
+      }
     }
 
     console.log('✅ [ONBOARDING] User created/updated:', {
-      userId,
+      clerkUserId: userId,
+      supabaseUserId,
       role,
       accessLevel,
       isFirstUser: isNewTenant,
@@ -140,7 +172,7 @@ export async function POST(request: NextRequest) {
       const { error: responsesError } = await supabaseAdmin
         .from('onboarding_responses')
         .insert({
-          user_id: userId,
+          user_id: supabaseUserId, // Use Supabase UUID, not Clerk ID
           tenant_id: tenantId,
           responses: {
             subdomain: cleanSubdomain,
@@ -156,7 +188,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 🎯 CLERK: Update user metadata with tenant info
+    // 🎯 CLERK: Update user metadata with tenant info AND Supabase user mapping
     await clerkClient().users.updateUserMetadata(userId, {
       publicMetadata: {
         tenantId: tenantId,
@@ -165,6 +197,7 @@ export async function POST(request: NextRequest) {
         role: role,
         accessLevel: accessLevel,
         onboardingComplete: true,
+        supabaseUserId: supabaseUserId, // Store mapping for future lookups
       }
     });
 
@@ -181,6 +214,7 @@ export async function POST(request: NextRequest) {
         },
         user: {
           id: userId,
+          supabaseUserId: supabaseUserId,
           email: userEmail,
           role: role,
           accessLevel: accessLevel,
