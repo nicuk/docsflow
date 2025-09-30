@@ -236,28 +236,21 @@ export async function POST(request: NextRequest) {
     console.log(`🎯 [LOGIN] User: ${userProfile.email}, Tenant: ${userProfile.tenants?.subdomain}`);
     console.log(`🌐 [LOGIN] Current host: ${hostname}, Is main domain: ${isMainDomain}`);
     
-    // SERVER-SIDE REDIRECT if logging in from main domain
+    // 🎯 CRITICAL FIX: Return redirect URL for CLIENT-SIDE redirect (avoids CORS)
+    // Server-side redirects across origins are blocked by CORS policy
+    let redirectUrl = null;
     if (isMainDomain && userProfile.tenants?.subdomain) {
-      const redirectUrl = process.env.NODE_ENV === 'production'
+      redirectUrl = process.env.NODE_ENV === 'production'
         ? `https://${userProfile.tenants.subdomain}.docsflow.app/dashboard`
         : `http://localhost:3000/dashboard`; // For local dev, stay on localhost
       
-      console.log(`🔄 [LOGIN] Redirecting to tenant subdomain: ${redirectUrl}`);
-      
-      const redirectResponse = NextResponse.redirect(redirectUrl, { status: 302 });
-      
-      // 🎯 CRITICAL FIX: Manually set CORS headers on redirect (headers option doesn't work on redirects)
-      Object.entries(corsHeaders).forEach(([key, value]) => {
-        redirectResponse.headers.set(key, value);
-      });
-      
-      // Ensure cookies are included in redirect response
-      return redirectResponse;
+      console.log(`🔄 [LOGIN] Client should redirect to: ${redirectUrl}`);
     }
     
     // For subdomain logins or local dev, return JSON (frontend handles navigation)
     const response = NextResponse.json({
       success: true,
+      redirectUrl: redirectUrl, // Client will use this for cross-origin redirect
       user: {
         id: userProfile.id,
         email: userProfile.email,

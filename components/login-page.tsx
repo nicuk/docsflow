@@ -113,18 +113,19 @@ export default function LoginPage() {
         console.log('✅ Login successful via API:', {
           userId: result.user.id,
           tenantId: result.user.tenant_id,
-          tenantSubdomain: result.user.tenant?.subdomain
+          tenantSubdomain: result.user.tenant?.subdomain,
+          redirectUrl: result.redirectUrl
         })
         
-        // IMPROVED REDIRECT: Use tenant info from API response
-        const hostname = window.location.hostname;
-        const isOnTenantSubdomain = (hostname.includes('.docsflow.app') || hostname.includes('localhost')) && 
-                                   !hostname.startsWith('www.') && 
-                                   !hostname.startsWith('api.');
-        
+        // 🎯 CRITICAL FIX: Use redirectUrl from API for cross-subdomain navigation
+        // This avoids CORS issues with server-side redirects
         setTimeout(() => {
-          // Always redirect to dashboard - let middleware handle tenant routing
-          router.push('/dashboard')
+          if (result.redirectUrl) {
+            console.log('🔄 Redirecting to tenant subdomain:', result.redirectUrl)
+            window.location.href = result.redirectUrl // Full page navigation for cross-origin
+          } else {
+            router.push('/dashboard') // Same-origin navigation
+          }
         }, 1500)
       }
       
