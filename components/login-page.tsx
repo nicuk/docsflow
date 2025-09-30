@@ -45,9 +45,35 @@ export default function LoginPage() {
   useEffect(() => {
     if (userLoaded && user) {
       console.log('✅ User already signed in, redirecting to dashboard')
+      // Clear old Supabase cookies
+      clearOldSupabaseCookies()
       router.push('/dashboard')
     }
   }, [userLoaded, user, router])
+
+  // Clear old Supabase auth cookies
+  const clearOldSupabaseCookies = () => {
+    const cookiesToClear = [
+      'sb-lhcopwwiqwjpzbdnjovo-auth-token',
+      'access_token',
+      'docsflow_auth_token',
+      'sb-lhcopwwiqwjpzbdnjovo-auth-token-code-verifier'
+    ]
+    
+    cookiesToClear.forEach(cookie => {
+      document.cookie = `${cookie}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.docsflow.app`
+      document.cookie = `${cookie}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
+    })
+    
+    // Clear localStorage
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('jwt_access_token')
+      localStorage.removeItem('jwt_expires_at')
+      localStorage.removeItem('access_token')
+    }
+    
+    console.log('🧹 Cleared old Supabase cookies')
+  }
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -101,6 +127,9 @@ export default function LoginPage() {
         setIsSuccess(true)
         
         console.log('✅ Login successful with Clerk')
+        
+        // Clear old Supabase cookies
+        clearOldSupabaseCookies()
         
         // Redirect to dashboard (Clerk session works across subdomains!)
         setTimeout(() => {

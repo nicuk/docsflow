@@ -133,107 +133,56 @@ export const apiClient = {
     return headers;
   },
 
-  // JWT GATEWAY: Get access token with cross-domain support
+  // 🎯 CLERK MIGRATION: Get Clerk session token for API calls
   async getAccessToken() {
     if (typeof window === 'undefined') {
-      console.log('🔍 [JWT-GATEWAY] Server-side context, no token available');
+      console.log('🔍 [CLERK-TOKEN] Server-side context, no token available');
       return null;
     }
     
-    console.log('🔍 [JWT-GATEWAY] Starting token retrieval process...');
-    
-    // JWT BRIDGE: First check cached token from session bridge
-    try {
-      const { jwtBridge } = await import('@/lib/jwt-session-bridge');
-      const cachedToken = jwtBridge.getCachedToken();
-      if (cachedToken) {
-        console.log('🔍 [JWT-GATEWAY] Using JWT bridge cached token');
-        return cachedToken;
-      } else {
-        console.log('🔍 [JWT-GATEWAY] No valid token in JWT bridge cache');
-      }
-    } catch (bridgeError) {
-      console.warn('🔍 [JWT-GATEWAY] JWT bridge unavailable, falling back:', bridgeError);
-    }
+    console.log('🔍 [CLERK-TOKEN] Starting token retrieval from Clerk...');
     
     try {
-      // CRITICAL FIX: Get token from active Supabase session using SSR client
-      const { createClient } = await import('@/lib/supabase-browser');
-      const supabase = createClient();
-      const { data: { session }, error } = await supabase.auth.getSession();
+      // Get Clerk session token using the global Clerk object
+      // This is available client-side after ClerkProvider loads
+      const { Clerk } = await import('@clerk/clerk-js');
       
-      if (!error && session?.access_token) {
-        // JWT GATEWAY: Cache token for cross-domain use (browser-only)
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('jwt_access_token', session.access_token);
-          localStorage.setItem('jwt_expires_at', session.expires_at?.toString() || '');
-        }
-        return session.access_token;
-      }
-    } catch (sessionError) {
-      console.warn('🔍 [API-CLIENT] Session token fetch failed, checking legacy cache:', sessionError);
-    }
-    
-    // JWT GATEWAY: Check legacy cached token for cross-domain scenarios
-    const cachedToken = typeof localStorage !== 'undefined' ? localStorage.getItem('jwt_access_token') : null;
-    const expiresAt = typeof localStorage !== 'undefined' ? localStorage.getItem('jwt_expires_at') : null;
-    
-    if (cachedToken && expiresAt) {
-      const expires = new Date(parseInt(expiresAt) * 1000);
-      if (expires > new Date()) {
-        console.log('🔍 [JWT-GATEWAY] Using legacy cached valid token for cross-domain request');
-        return cachedToken;
-      } else {
-        // Clean expired tokens (browser-only)
-        if (typeof localStorage !== 'undefined') {
-          localStorage.removeItem('jwt_access_token');
-          localStorage.removeItem('jwt_expires_at');
+      // Try to get the existing Clerk instance
+      if (typeof window !== 'undefined' && (window as any).Clerk) {
+        const clerk = (window as any).Clerk;
+        
+        // Get the session token
+        const token = await clerk.session?.getToken();
+        
+        if (token) {
+          console.log('✅ [CLERK-TOKEN] Retrieved Clerk session token:', {
+            tokenPreview: token.substring(0, 30) + '...',
+            tokenLength: token.length
+          });
+          return token;
+        } else {
+          console.warn('⚠️ [CLERK-TOKEN] No active Clerk session found');
         }
       }
+    } catch (clerkError) {
+      console.warn('⚠️ [CLERK-TOKEN] Failed to retrieve Clerk token:', clerkError);
     }
     
-    // SURGICAL FIX: Enhanced Supabase cookie parsing with debugging
-    console.log('🔍 [TOKEN-DEBUG] Checking Supabase auth cookies...');
-    
-    // 🛡️ CRITICAL FIX: Server-side safety check
-    if (typeof document === 'undefined') {
-      console.warn('🔍 [TOKEN-DEBUG] Server-side context - no cookies available');
-      return null;
-    }
-    
-    const allCookies = document.cookie.split('; ');
-    const authCookies = allCookies.filter(cookie => 
-      cookie.includes('auth-token') || cookie.includes('access_token')
-    );
-    
-    console.log('🔍 [TOKEN-DEBUG] Available auth cookies:', authCookies.map(c => c.split('=')[0]));
-    
-    const supabaseAuthCookie = allCookies
-      .find(row => row.startsWith('sb-') && row.includes('auth-token'))
-      ?.split('=')[1];
+    // Fallback: Try to get token from Clerk cookies
+    if (typeof document !== 'undefined') {
+      const allCookies = document.cookie.split('; ');
+      const clerkSession = allCookies.find(row => row.startsWith('__session='));
       
-    if (supabaseAuthCookie && supabaseAuthCookie !== '' && supabaseAuthCookie !== 'undefined') {
-      try {
-        // Supabase cookies are base64-encoded JSON
-        const decoded = JSON.parse(atob(supabaseAuthCookie));
-        if (decoded.access_token) {
-          console.log('🔍 [TOKEN-DEBUG] Successfully extracted token from Supabase cookie');
-          return decoded.access_token;
-        }
-      } catch (parseError) {
-        console.warn('🔍 [API-CLIENT] Cookie parse failed:', parseError);
+      if (clerkSession) {
+        // Extract JWT from __session cookie
+        const token = clerkSession.split('=')[1];
+        console.log('✅ [CLERK-TOKEN] Retrieved token from Clerk __session cookie');
+        return token;
       }
-    } else {
-      console.warn('🔍 [TOKEN-DEBUG] Supabase auth cookie is empty or undefined');
     }
     
-    // Final fallback to legacy cookies
-    const authCookie = (typeof document !== 'undefined' ? document.cookie : '')
-      .split('; ')
-      .find(row => row.startsWith('auth-token=') || row.startsWith('docsflow_auth_token='))
-      ?.split('=')[1];
-    
-    return authCookie || (typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : null) || null;
+    console.error('❌ [CLERK-TOKEN] No Clerk token available');
+    return null;
   },
 
   // Enhanced health check with tenant context
