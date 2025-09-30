@@ -51,27 +51,10 @@ export default function OnboardingFlow() {
       try {
         console.log('🔍 Checking user authentication...');
         
-        // CRITICAL: Check if we're on a tenant subdomain
-        if (typeof window !== 'undefined') {
-          const hostname = window.location.hostname;
-          const subdomain = hostname.split('.')[0];
-          
-          // If on a tenant subdomain, check if tenant exists and redirect to login
-          if (subdomain && subdomain !== 'www' && subdomain !== 'docsflow' && hostname.includes('docsflow.app')) {
-            console.log('🏢 Detected tenant subdomain:', subdomain);
-            
-            // Check if this tenant exists
-            const response = await fetch(`/api/subdomain/check?subdomain=${subdomain}`);
-            const result = await response.json();
-            
-            if (!result.available && result.existingTenant) {
-              console.log('✅ Tenant exists, redirecting to login for:', subdomain);
-              // Tenant exists - redirect to login for this tenant
-              window.location.href = `https://${subdomain}.docsflow.app/login`;
-              return;
-            }
-          }
-        }
+        // 🎯 CLERK MIGRATION FIX: Allow onboarding on any domain
+        // Don't redirect based on subdomain - let users complete onboarding wherever they are
+        // Clerk middleware will handle auth protection
+        console.log('🏢 Current hostname:', typeof window !== 'undefined' ? window.location.hostname : 'server');
             // CRITICAL: Check if we were redirected here after domain selection
             const onboardingStateStr = localStorage.getItem('onboarding-state');
             if (onboardingStateStr) {
@@ -217,25 +200,11 @@ export default function OnboardingFlow() {
     // This ensures all onboarding actions happen on the correct tenant subdomain
     const currentHostname = window.location.hostname;
     const currentParts = currentHostname.split('.');
-    const currentSubdomain = currentParts.length > 2 ? currentParts[0] : null;
+    // 🎯 CLERK MIGRATION FIX: Don't redirect to subdomain during onboarding
+    // Stay on current domain (www.docsflow.app) until onboarding is complete
+    // This prevents redirect loops with Clerk middleware
     
-    // Only redirect if we're not already on the selected subdomain
-    if (currentSubdomain !== domain) {
-      console.log(`🔄 Redirecting from ${currentSubdomain || 'main'} to ${domain} for onboarding`);
-      
-      // Store onboarding state before redirect
-      localStorage.setItem('onboarding-state', JSON.stringify({
-        domain,
-        joinExisting,
-        userRole: joinExisting ? 'technician' : 'admin',
-        step: joinExisting ? 0 : 1,
-        redirectedFrom: currentSubdomain || 'main'
-      }));
-      
-      // Redirect to the selected subdomain's onboarding page
-      window.location.href = `https://${domain}.docsflow.app/onboarding`;
-      return; // Stop execution here, page will reload on new subdomain
-    }
+    console.log(`✅ Domain selected: ${domain}, staying on current domain for onboarding`);
     
     if (joinExisting) {
       // Joining existing domain - user becomes TECHNICIAN/USER
