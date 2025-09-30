@@ -387,6 +387,9 @@ const tenantAssignment = {
         
         // Auto-redirect to dashboard after showing success
         setTimeout(() => {
+          // Set flag to prevent onboarding redirect loop
+          sessionStorage.setItem('onboarding-just-completed', 'true');
+          
           // Redirect directly to dashboard - session is already set
           window.location.href = `https://${selectedDomain}.docsflow.app/dashboard`;
         }, 3000);
@@ -594,6 +597,9 @@ const tenantAssignment = {
           }
           
           console.log('Redirecting to tenant subdomain:', customPersonality.tenantDomain);
+          // Set flag to prevent onboarding redirect loop
+          sessionStorage.setItem('onboarding-just-completed', 'true');
+          
           // Redirect to full tenant subdomain URL like invite acceptance does
           if (customPersonality.tenantDomain) {
             window.location.href = `https://${customPersonality.tenantDomain}.docsflow.app/`;
@@ -828,6 +834,8 @@ const tenantAssignment = {
                 }
                 
                 console.log('Redirecting to /dashboard');
+                // Set flag to prevent onboarding redirect loop
+                sessionStorage.setItem('onboarding-just-completed', 'true');
                 window.location.href = '/dashboard';
               }} 
               className="text-xl px-12 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-xl"
@@ -954,6 +962,8 @@ const tenantAssignment = {
           if (response.ok) {
             setCurrentStep(2);
             setTimeout(() => {
+              // Set flag to prevent onboarding redirect loop
+              sessionStorage.setItem('onboarding-just-completed', 'true');
               window.location.href = `https://${selectedDomain}.docsflow.app/dashboard`;
             }, 3000);
           }
