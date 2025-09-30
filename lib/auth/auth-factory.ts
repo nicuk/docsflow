@@ -8,6 +8,7 @@
 
 import type { AuthProvider, AuthProviderType } from './types'
 import { SupabaseAuthProvider } from './supabase-auth-provider'
+import { ClerkAuthProvider } from './clerk-auth-provider'
 
 // Singleton instances
 let authProviderInstance: AuthProvider | null = null
@@ -23,14 +24,14 @@ export function getAuthProvider(): AuthProvider {
   const useClerk = process.env.NEXT_PUBLIC_USE_CLERK === 'true'
   
   if (useClerk) {
-    // Clerk not implemented yet - Phase 2
-    throw new Error('Clerk auth provider not yet implemented. Set NEXT_PUBLIC_USE_CLERK=false')
+    // Clerk implementation ready for testing
+    authProviderInstance = new ClerkAuthProvider()
+    console.log(`[AuthFactory] Using Clerk auth provider`)
+  } else {
+    // Default to Supabase (existing working implementation)
+    authProviderInstance = new SupabaseAuthProvider()
+    console.log(`[AuthFactory] Using Supabase auth provider`)
   }
-
-  // Default to Supabase (existing working implementation)
-  authProviderInstance = new SupabaseAuthProvider()
-  
-  console.log(`[AuthFactory] Using ${authProviderInstance.getProviderName()} auth provider`)
   
   return authProviderInstance
 }

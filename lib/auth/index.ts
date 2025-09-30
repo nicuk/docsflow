@@ -25,3 +25,4 @@ export {
 
 // Providers
 export { SupabaseAuthProvider } from './supabase-auth-provider'
+export { ClerkAuthProvider } from './clerk-auth-provider'
