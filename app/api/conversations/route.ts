@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCORSHeaders } from '@/lib/utils';
-import { createClient } from '@/lib/supabase-server';
+import { createClient as createDirectClient } from '@supabase/supabase-js';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
 
 // SECURITY FIX: Use secure database service instead of direct service role
@@ -39,8 +39,11 @@ export async function GET(request: NextRequest) {
     
     console.log('Fetching conversations for validated tenant:', tenantSubdomain, 'UUID:', tenantId);
     
-    // SUPABASE SSR FIX: Use server client for proper authentication  
-    const supabase = await createClient();
+    // 🎯 CLERK MIGRATION: Use service role key (RLS disabled, app-level security via Clerk)
+    const supabase = createDirectClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
     
     // Get conversations for this tenant using the actual UUID
     const { data: conversations, error } = await supabase
@@ -120,19 +123,26 @@ export async function POST(request: NextRequest) {
       // Continue with creation on error to avoid blocking users
     }
     
-    const supabaseClient = await createClient();
+    // 🎯 CLERK MIGRATION: Use service role key (RLS disabled, app-level security via Clerk)
+    const supabaseClient = createDirectClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
     
-    // Get the authenticated user ID
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    
-    if (!user) {
+    // Get the authenticated user ID from Clerk (via middleware x-user-id header)
+    const clerkUserId = request.headers.get('x-user-id');
+    if (!clerkUserId) {
       return NextResponse.json(
         { error: 'User not authenticated' },
         { status: 401, headers: corsHeaders }
       );
     }
     
-    const userId = user.id;
+    // Get the Clerk user's mapped Supabase UUID from metadata
+    const { clerkClient } = await import('@clerk/nextjs/server');
+    const clerk = await clerkClient();
+    const clerkUser = await clerk.users.getUser(clerkUserId);
+    const userId = (clerkUser.publicMetadata?.supabaseUserId as string) || clerkUserId;
     
     const { title } = await request.json();
     

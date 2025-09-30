@@ -17,21 +17,15 @@ export async function GET(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
   
   try {
-    // SUPABASE SSR FIX: Use server client with fallback
-    console.log('🔧 [DOCUMENTS API] Creating Supabase client...');
-    let supabase;
-    
-    try {
-      supabase = await createClient();
-      console.log('✅ [DOCUMENTS API] Server client created successfully');
-    } catch (serverClientError) {
-      console.warn('⚠️ [DOCUMENTS API] Server client failed, using direct client:', serverClientError);
-      // Fallback to direct client if server client fails
-      supabase = createDirectClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-    }
+    // 🎯 CLERK MIGRATION: Use service role key to bypass RLS
+    // Authentication is handled by validateTenantContext (Clerk)
+    // Supabase is only used as a database, not for auth
+    console.log('🔧 [DOCUMENTS API] Creating Supabase client with service role...');
+    const supabase = createDirectClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY! // Service role bypasses RLS
+    );
+    console.log('✅ [DOCUMENTS API] Service role client created');
     
     // 🔒 SECURE: Validate tenant context with proper security checks
     const tenantValidation = await validateTenantContext(request, {
