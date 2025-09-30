@@ -250,39 +250,37 @@ export async function validateTenantContext(
         }
       }
       
-      // Try Bearer token first
-      if (authHeader && authHeader.startsWith('Bearer ')) {
+      // 🎯 CLERK MIGRATION: Use Clerk's auth() instead of Supabase JWT validation
+      // Bearer tokens are now Clerk JWTs (RS256), not Supabase JWTs (HS256)
+      // Clerk validation happens via x-user-id header set by middleware
+      const clerkUserId = request.headers.get('x-user-id');
+      const clerkAuthStatus = request.headers.get('x-clerk-auth-status');
+      
+      if (clerkUserId && clerkAuthStatus === 'signed-in') {
+        // Get Clerk user metadata for tenant/auth info
+        const { clerkClient } = await import('@clerk/nextjs/server');
+        const clerk = await clerkClient();
+        
         try {
-          const token = authHeader.replace('Bearer ', '');
-          console.log(`🔍 [TOKEN-VALIDATION] Attempting Bearer token validation:`, {
-            tokenPreview: token.substring(0, 30) + '...',
-            tokenLength: token.length,
-            hasValidJWTFormat: token.includes('.'),
-            tokenParts: token.split('.').length
+          const clerkUser = await clerk.users.getUser(clerkUserId);
+          const supabaseUserId = clerkUser.publicMetadata?.supabaseUserId as string | undefined;
+          
+          console.log('✅ [CLERK-AUTH] Clerk user authenticated:', {
+            clerkUserId: clerkUserId.substring(0, 20) + '...',
+            supabaseUserId: supabaseUserId ? supabaseUserId.substring(0, 8) + '...' : 'none',
+            email: clerkUser.emailAddresses[0]?.emailAddress
           });
           
-          const { data: { user: bearerUser }, error: authError } = await supabase.auth.getUser(token);
+          // Create user object compatible with Supabase user queries
+          // Use the mapped Supabase UUID from Clerk metadata
+          user = {
+            id: supabaseUserId || clerkUserId, // Use mapped Supabase UUID
+            email: clerkUser.emailAddresses[0]?.emailAddress,
+            user_metadata: clerkUser.publicMetadata
+          } as any;
           
-          console.log(`🔍 [TOKEN-VALIDATION] Supabase validation result:`, {
-            hasUser: !!bearerUser,
-            userId: bearerUser?.id?.substring(0, 8) + '...' || 'none',
-            userEmail: bearerUser?.email || 'none',
-            hasError: !!authError,
-            errorCode: authError?.message || 'none',
-            errorDetails: authError
-          });
-          
-          if (!authError && bearerUser) {
-            user = bearerUser;
-            console.log('✅ [TOKEN-VALIDATION] Bearer token validation successful');
-          } else {
-            console.warn('❌ [TOKEN-VALIDATION] Bearer token validation failed:', {
-              error: authError,
-              hasUser: !!bearerUser
-            });
-          }
-        } catch (bearerError) {
-          console.error('🚨 [TOKEN-VALIDATION] Bearer token validation exception:', bearerError);
+        } catch (clerkError) {
+          console.error('🚨 [CLERK-AUTH] Failed to get Clerk user:', clerkError);
         }
       }
       
