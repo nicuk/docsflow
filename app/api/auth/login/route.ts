@@ -210,9 +210,11 @@ export async function POST(request: NextRequest) {
       
       console.log(`🔄 [LOGIN] Redirecting to tenant subdomain: ${redirectUrl}`);
       
-      const redirectResponse = NextResponse.redirect(redirectUrl, {
-        status: 302,
-        headers: corsHeaders
+      const redirectResponse = NextResponse.redirect(redirectUrl, { status: 302 });
+      
+      // 🎯 CRITICAL FIX: Manually set CORS headers on redirect (headers option doesn't work on redirects)
+      Object.entries(corsHeaders).forEach(([key, value]) => {
+        redirectResponse.headers.set(key, value);
       });
       
       // Ensure cookies are included in redirect response
