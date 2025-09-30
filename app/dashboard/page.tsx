@@ -61,8 +61,7 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [tenantContext, setTenantContext] = useState<TenantContext | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [isRedirecting, setIsRedirecting] = useState(false)
-  const [redirectMessage, setRedirectMessage] = useState("")
+  // 🎯 CLERK MIGRATION: Removed isRedirecting/redirectMessage (legacy Supabase redirect logic)
   const [realStats, setRealStats] = useState({
     documentsCount: 0,
     questionsCount: 0,
@@ -87,9 +86,8 @@ export default function DashboardPage() {
       try {
         console.log(`🔍 [DASHBOARD] Starting loadTenantContext at ${new Date().toISOString()}`);
         
-        // Initialize redirect handler
-        const { RedirectHandler } = await import('@/utils/redirect-handler');
-        RedirectHandler.initialize(setIsRedirecting, setRedirectMessage);
+        // 🎯 CLERK MIGRATION: Removed RedirectHandler initialization (legacy Supabase logic)
+        // Clerk middleware handles all subdomain routing
         
         // CRITICAL FIX: Check if on main domain and redirect before API calls
         const hostname = window.location.hostname;
@@ -98,9 +96,7 @@ export default function DashboardPage() {
         if (hostname === 'www.docsflow.app' || hostname === 'docsflow.app') {
           console.log('🔍 [DASHBOARD] Main domain detected, checking for tenant context...');
           
-          // Check for cookie-based redirect first
-          const hasRedirected = await RedirectHandler.checkCookieRedirect();
-          if (hasRedirected) return;
+          // 🎯 CLERK MIGRATION: Cookie redirect logic removed (Clerk handles routing)
           
           // UNIFIED FIX: Use MultiTenantCookieManager for tenant detection
           const { MultiTenantCookieManager } = await import('@/lib/multi-tenant-cookie-manager');
@@ -118,13 +114,10 @@ export default function DashboardPage() {
             authToken: authToken ? 'PRESENT' : 'MISSING'
           });
           
-          // DEFENSIVE REDIRECT: Validate subdomain before redirect to prevent malformed URLs
+          // 🎯 CLERK MIGRATION: Subdomain redirect handled by Clerk middleware
           if (authToken && currentTenant && currentTenant.length > 0) {
             console.log(`🎯 [UNIFIED] Redirecting to tenant subdomain: ${currentTenant}`);
-            await RedirectHandler.redirectWithLoading({
-              destination: `https://${currentTenant}.docsflow.app/dashboard`,
-              message: `Redirecting to ${currentTenant}...`
-            });
+            window.location.href = `https://${currentTenant}.docsflow.app/dashboard`;
             return;
           }
           
@@ -133,10 +126,7 @@ export default function DashboardPage() {
             const firstTenantSubdomain = Object.keys(tenantContexts)[0];
             if (firstTenantSubdomain && firstTenantSubdomain.length > 0) {
               console.log(`🎯 [UNIFIED] Redirecting to first active tenant: ${firstTenantSubdomain}`);
-              await RedirectHandler.redirectWithLoading({
-                destination: `https://${firstTenantSubdomain}.docsflow.app/dashboard`,
-                message: `Connecting to ${firstTenantSubdomain}...`
-              });
+              window.location.href = `https://${firstTenantSubdomain}.docsflow.app/dashboard`;
               return;
             } else {
               console.warn(`⚠️ [ENTERPRISE] First tenant has invalid subdomain, will check API for tenant data before redirecting to login`);
@@ -163,10 +153,7 @@ export default function DashboardPage() {
           
           // No tenant context or not authenticated - redirect to onboarding
           console.log('🔐 No tenant context on main domain, redirecting to onboarding');
-          await RedirectHandler.redirectWithLoading({
-            destination: '/onboarding',
-            message: 'Setting up your workspace...'
-          });
+          window.location.href = '/onboarding';
           return;
         }
 
@@ -226,8 +213,7 @@ export default function DashboardPage() {
           );
           
           // Check for tenant subdomain redirect
-          const hasRedirected = await RedirectHandler.checkTenantRedirect(userData);
-          if (hasRedirected) return;
+          // 🎯 CLERK MIGRATION: Tenant redirect handled by Clerk middleware
         } else {
           console.warn('⚠️ [DASHBOARD] Skipping MultiTenantCookieManager - invalid tenant data:', {
             tenantId: userData.tenantId,
@@ -469,19 +455,8 @@ export default function DashboardPage() {
     }
   ]
 
-  // Loading state
-  // Show redirect overlay when redirecting
-  if (isRedirecting) {
-    return (
-      <div className="fixed inset-0 bg-white bg-opacity-95 backdrop-blur-sm z-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <h2 className="text-2xl font-semibold text-gray-800 mb-2">{redirectMessage}</h2>
-          <p className="text-gray-600">Please wait while we connect you to your workspace...</p>
-        </div>
-      </div>
-    )
-  }
+  // 🎯 CLERK MIGRATION: Removed redirect overlay (was blocking all UI clicks)
+  // Clerk middleware handles subdomain routing - no need for client-side redirect logic
 
   if (isLoading) {
     return (
