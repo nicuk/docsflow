@@ -143,15 +143,12 @@ export const apiClient = {
     console.log('🔍 [CLERK-TOKEN] Starting token retrieval from Clerk...');
     
     try {
-      // Get Clerk session token using the global Clerk object
-      // This is available client-side after ClerkProvider loads
-      const { Clerk } = await import('@clerk/clerk-js');
-      
-      // Try to get the existing Clerk instance
+      // Access the global Clerk instance (set by ClerkProvider)
+      // window.Clerk is available after ClerkProvider initializes
       if (typeof window !== 'undefined' && (window as any).Clerk) {
         const clerk = (window as any).Clerk;
         
-        // Get the session token
+        // Get the session token from Clerk
         const token = await clerk.session?.getToken();
         
         if (token) {
@@ -163,6 +160,8 @@ export const apiClient = {
         } else {
           console.warn('⚠️ [CLERK-TOKEN] No active Clerk session found');
         }
+      } else {
+        console.warn('⚠️ [CLERK-TOKEN] Clerk not initialized yet on window object');
       }
     } catch (clerkError) {
       console.warn('⚠️ [CLERK-TOKEN] Failed to retrieve Clerk token:', clerkError);
