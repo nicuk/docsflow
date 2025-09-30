@@ -387,11 +387,8 @@ const tenantAssignment = {
         
         // Auto-redirect to dashboard after showing success
         setTimeout(() => {
-          // Set flag to prevent onboarding redirect loop
-          sessionStorage.setItem('onboarding-just-completed', 'true');
-          
-          // Redirect directly to dashboard - session is already set
-          window.location.href = `https://${selectedDomain}.docsflow.app/dashboard`;
+          // Pass flag as URL parameter (sessionStorage doesn't work across subdomains)
+          window.location.href = `https://${selectedDomain}.docsflow.app/dashboard?onboarding=complete`;
         }, 3000);
       } else {
         throw new Error('Failed to complete onboarding');
@@ -597,15 +594,12 @@ const tenantAssignment = {
           }
           
           console.log('Redirecting to tenant subdomain:', customPersonality.tenantDomain);
-          // Set flag to prevent onboarding redirect loop
-          sessionStorage.setItem('onboarding-just-completed', 'true');
-          
-          // Redirect to full tenant subdomain URL like invite acceptance does
+          // Pass flag as URL parameter (sessionStorage doesn't work across subdomains)
           if (customPersonality.tenantDomain) {
-            window.location.href = `https://${customPersonality.tenantDomain}.docsflow.app/`;
+            window.location.href = `https://${customPersonality.tenantDomain}.docsflow.app/dashboard?onboarding=complete`;
           } else {
             console.error('No tenant domain found, falling back to /dashboard');
-            window.location.href = '/dashboard';
+            window.location.href = '/dashboard?onboarding=complete';
           }
         }}
       />
@@ -834,9 +828,8 @@ const tenantAssignment = {
                 }
                 
                 console.log('Redirecting to /dashboard');
-                // Set flag to prevent onboarding redirect loop
-                sessionStorage.setItem('onboarding-just-completed', 'true');
-                window.location.href = '/dashboard';
+                // Pass flag as URL parameter (sessionStorage doesn't work across subdomains)
+                window.location.href = '/dashboard?onboarding=complete';
               }} 
               className="text-xl px-12 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-xl"
               size="lg"
@@ -962,9 +955,8 @@ const tenantAssignment = {
           if (response.ok) {
             setCurrentStep(2);
             setTimeout(() => {
-              // Set flag to prevent onboarding redirect loop
-              sessionStorage.setItem('onboarding-just-completed', 'true');
-              window.location.href = `https://${selectedDomain}.docsflow.app/dashboard`;
+              // Pass flag as URL parameter (sessionStorage doesn't work across subdomains)
+              window.location.href = `https://${selectedDomain}.docsflow.app/dashboard?onboarding=complete`;
             }, 3000);
           }
         } catch (error) {

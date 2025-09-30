@@ -151,17 +151,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       // Handle onboarding redirect
-      // Skip if user just completed onboarding (check sessionStorage flag)
-      const justCompletedOnboarding = typeof window !== 'undefined' && 
-        sessionStorage.getItem('onboarding-just-completed') === 'true'
+      // Skip if user just completed onboarding (check URL parameter)
+      const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+      const justCompletedOnboarding = searchParams?.get('onboarding') === 'complete'
       
       if (!onboardingDone && pathname !== '/onboarding' && !justCompletedOnboarding) {
         router.push('/onboarding')
       }
       
-      // Clear the flag after first load
-      if (justCompletedOnboarding && onboardingDone) {
-        sessionStorage.removeItem('onboarding-just-completed')
+      // Clean up URL parameter after first load
+      if (justCompletedOnboarding && typeof window !== 'undefined') {
+        const url = new URL(window.location.href)
+        url.searchParams.delete('onboarding')
+        window.history.replaceState({}, '', url.toString())
       }
       
       console.log('✅ [CLERK AUTH CONTEXT] User synced:', {
