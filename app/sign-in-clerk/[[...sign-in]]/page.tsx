@@ -40,6 +40,7 @@ export default function SignInClerkPage() {
             }}
             afterSignInUrl="/dashboard-clerk"
             redirectUrl="/dashboard-clerk"
+            signUpUrl="/sign-up-clerk"
           />
         </div>
 
