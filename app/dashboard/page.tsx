@@ -193,9 +193,7 @@ export default function DashboardPage() {
           tenantSubdomain: userData.tenant?.subdomain
         });
         
-                // Consolidated onboarding check
-        const needsOnboarding = await RedirectHandler.checkOnboardingAndRedirect(userData);
-        if (needsOnboarding) return;
+        // 🎯 CLERK MIGRATION: Removed onboarding check - AuthContext handles this now
 
         // Set tenant context from backend data
         const context: TenantContext = {
@@ -423,16 +421,10 @@ export default function DashboardPage() {
     const fetchUserData = async () => {
       try {
         // Get user from session storage (set during login)
+        // 🎯 CLERK MIGRATION: Removed onboarding check - AuthContext handles this now
         const userData = sessionStorage.getItem('user');
         if (userData) {
           const parsedUser = JSON.parse(userData);
-          
-          // CRITICAL: Check onboarding completion per enterprise architecture plan
-          if (!parsedUser.onboarding_complete) {
-            // Redirect to onboarding if not completed
-            window.location.href = '/onboarding';
-            return;
-          }
           
           setUser({
             name: parsedUser.email?.split('@')[0] || "User",
