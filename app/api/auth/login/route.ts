@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
           email: authData.user.email,
           name: authData.user.user_metadata?.name || authData.user.email?.split('@')[0] || 'User',
           role: 'user',
-          access_level: 'basic',
+          access_level: 1, // Integer: 1 = basic, 2 = pro, 3 = enterprise
           tenant_id: null // Will be set during onboarding
         })
         .select(`
