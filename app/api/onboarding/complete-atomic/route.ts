@@ -109,6 +109,7 @@ export async function POST(request: NextRequest) {
     const role = accessLevel === 1 ? 'admin' : 'member';
 
     // Create or update user in Supabase database
+    // Note: onboarding_complete is stored in Clerk metadata, not in Supabase
     const { error: userError } = await supabaseAdmin
       .from('users')
       .upsert({
@@ -118,7 +119,6 @@ export async function POST(request: NextRequest) {
         tenant_id: tenantId,
         role: role,
         access_level: accessLevel,
-        onboarding_complete: true,
       }, {
         onConflict: 'id'
       });
