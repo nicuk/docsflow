@@ -122,7 +122,7 @@ export class MultiTenantCookieManager {
     
     console.log(`✅ [MULTI-TENANT] Added tenant context:`, {
       subdomain: context.subdomain,
-      tenantId: context.tenantId.substring(0, 8) + '...',
+      tenantId: context.tenantId ? context.tenantId.substring(0, 8) + '...' : 'undefined',
       totalTenants: Object.keys(existingContexts).length,
       allSubdomains: Object.keys(existingContexts)
     });

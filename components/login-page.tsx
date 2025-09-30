@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { useSignIn } from "@clerk/nextjs"
+import { useSignIn, useUser } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -30,6 +30,7 @@ export default function LoginPage() {
   const router = useRouter()
   const { isDarkMode } = useDarkMode()
   const { signIn, isLoaded, setActive } = useSignIn()
+  const { user, isLoaded: userLoaded } = useUser()
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
@@ -39,6 +40,14 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+
+  // 🎯 CLERK: Redirect if already signed in
+  useEffect(() => {
+    if (userLoaded && user) {
+      console.log('✅ User already signed in, redirecting to dashboard')
+      router.push('/dashboard')
+    }
+  }, [userLoaded, user, router])
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/

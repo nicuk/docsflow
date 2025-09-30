@@ -210,8 +210,8 @@ export default function DashboardPage() {
         // UNIFIED FIX: Use MultiTenantCookieManager instead of Enterprise system
         const { MultiTenantCookieManager } = await import('@/lib/multi-tenant-cookie-manager');
         
-        // DEFENSIVE STORAGE: Only store valid subdomain to prevent empty string corruption
-        if (userData.tenant?.subdomain && userData.tenant.subdomain.length > 0) {
+        // DEFENSIVE STORAGE: Only store valid subdomain and tenantId to prevent undefined errors
+        if (userData.tenantId && userData.tenant?.subdomain && userData.tenant.subdomain.length > 0) {
           // Add tenant context using unified cookie system
           MultiTenantCookieManager.addTenantContext(
             {
@@ -228,6 +228,11 @@ export default function DashboardPage() {
           // Check for tenant subdomain redirect
           const hasRedirected = await RedirectHandler.checkTenantRedirect(userData);
           if (hasRedirected) return;
+        } else {
+          console.warn('⚠️ [DASHBOARD] Skipping MultiTenantCookieManager - invalid tenant data:', {
+            tenantId: userData.tenantId,
+            subdomain: userData.tenant?.subdomain
+          });
         }
         
         // Note: MultiTenantCookieManager doesn't need explicit user session setting
