@@ -147,19 +147,53 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 🎯 CRITICAL FIX: Auto-create missing user record (auth.users exists but public.users missing)
     if (profileError || !userProfile) {
-      console.error('🔐 [LOGIN] Profile fetch failed with RLS context:', {
-        profileError: profileError,
-        profileErrorCode: profileError?.code,
-        profileErrorMessage: profileError?.message,
-        authUserId: authData.user.id,
-        sessionEstablished: !!authData.session
-      });
+      console.log('🔧 [LOGIN] User profile missing from public.users, creating record');
       
-      return NextResponse.json(
-        { success: false, error: 'User profile not found' },
-        { status: 404, headers: corsHeaders }
+      const { createClient } = await import('@supabase/supabase-js');
+      const serviceSupabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
       );
+      
+      // Create the missing user record
+      const { data: newProfile, error: createError } = await serviceSupabase
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          email: authData.user.email,
+          name: authData.user.user_metadata?.name || authData.user.email?.split('@')[0] || 'User',
+          role: 'user',
+          access_level: 'basic',
+          tenant_id: null // Will be set during onboarding
+        })
+        .select(`
+          id,
+          email,
+          name,
+          role,
+          access_level,
+          tenant_id,
+          tenants (
+            id,
+            subdomain,
+            name,
+            industry
+          )
+        `)
+        .single();
+      
+      if (createError) {
+        console.error('🔐 [LOGIN] Failed to create user profile:', createError);
+        return NextResponse.json(
+          { success: false, error: 'Failed to create user profile' },
+          { status: 500, headers: corsHeaders }
+        );
+      }
+      
+      userProfile = newProfile;
+      console.log('✅ [LOGIN] Auto-created user profile for:', authData.user.email);
     }
 
     // Set remember me preference cookie
