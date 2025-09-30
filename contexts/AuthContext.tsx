@@ -64,8 +64,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setLoading(true);
       
       // SURGICAL FIX: Skip session API call on public pages to avoid unnecessary "Auth session missing!" logs
+      // PHASE 2: Also skip Clerk test routes
       const publicPaths = ['/login', '/register', '/', '/auth/callback'];
-      if (publicPaths.includes(pathname)) {
+      const isClerkRoute = pathname.startsWith('/sign-in-clerk') || 
+                          pathname.startsWith('/sign-up-clerk') || 
+                          pathname.startsWith('/dashboard-clerk');
+      
+      if (publicPaths.includes(pathname) || isClerkRoute) {
         console.log(`🔍 [AUTH CONTEXT] Skipping session check on public page: ${pathname}`);
         setLoading(false);
         return;
@@ -107,10 +112,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setOnboardingComplete(false);
         
         // Redirect to login if on protected route
+        // PHASE 2: Exclude Clerk routes from protection - Clerk handles its own auth
         const protectedPaths = ['/dashboard', '/onboarding', '/settings'];
         const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
+        const isClerkRoute = pathname.startsWith('/sign-in-clerk') || 
+                            pathname.startsWith('/sign-up-clerk') || 
+                            pathname.startsWith('/dashboard-clerk');
         
-        if (isProtectedPath) {
+        if (isProtectedPath && !isClerkRoute) {
           router.push('/login');
         }
       }

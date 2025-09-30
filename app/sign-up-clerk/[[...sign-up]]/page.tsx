@@ -38,8 +38,7 @@ export default function SignUpClerkPage() {
                 card: "shadow-lg"
               }
             }}
-            afterSignUpUrl="/dashboard-clerk"
-            redirectUrl="/dashboard-clerk"
+            fallbackRedirectUrl="/dashboard-clerk"
             signInUrl="/sign-in-clerk"
           />
         </div>

@@ -153,29 +153,37 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Generate session for the user
-    const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
-      type: 'magiclink',
-      email: userData.email,
-      options: {
-        redirectTo: `${process.env.FRONTEND_URL || 'https://docsflow.app'}/auth/callback`
-      }
+    // 🎯 CRITICAL FIX: Create REAL Supabase session (not fake token)
+    // Use admin API to sign in the user and get a real JWT
+    const { data: sessionData, error: sessionError } = await supabase.auth.admin.createSession({
+      user_id: userId,
     });
 
-    if (sessionError) {
-      console.error('Session generation error:', sessionError);
+    if (sessionError || !sessionData.session) {
+      console.error('Session creation error:', sessionError);
       return NextResponse.redirect(`${process.env.FRONTEND_URL || 'https://docsflow.app'}?error=session_error`);
     }
 
-    // Create a session token that the frontend can use
-    const sessionToken = btoa(JSON.stringify({
-      user_id: userId,
-      email: userData.email,
-      access_level: accessLevel,
-      tenant_id: tenantId,
-      provider: 'google'
-    }));
+    console.log('✅ [GOOGLE OAuth] Real Supabase session created:', {
+      userId,
+      hasAccessToken: !!sessionData.session.access_token,
+      hasRefreshToken: !!sessionData.session.refresh_token
+    });
 
+    // Set Supabase session cookies with proper domain
+    const cookieOptions = {
+      domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      httpOnly: true, // Security: Prevent XSS
+      maxAge: 60 * 60 * 24 * 7 // 7 days
+    };
+    
+    // Create response that will be redirected
+    let redirectUrl: string;
+    let redirectResponse: NextResponse;
+    
     // DIRECT REDIRECT: Skip auth callback page entirely
     if (tenantId) {
       // Get tenant subdomain
@@ -186,50 +194,54 @@ export async function GET(request: NextRequest) {
         .single();
       
       if (tenantData?.subdomain) {
-        console.log(`✅ OAuth: Redirecting user to tenant ${tenantData.subdomain}`);
+        console.log(`✅ [GOOGLE OAuth] Redirecting user to tenant ${tenantData.subdomain}`);
         // Existing user: redirect directly to tenant dashboard
-        const response = NextResponse.redirect(`https://${tenantData.subdomain}.docsflow.app/dashboard`);
+        redirectUrl = process.env.NODE_ENV === 'production'
+          ? `https://${tenantData.subdomain}.docsflow.app/dashboard`
+          : `http://localhost:3000/dashboard`;
         
-        // Set session cookies for cross-subdomain auth
-        response.cookies.set('sb-lhcopwwiqwjpzbdnjovo-auth-token', sessionToken, {
-          domain: '.docsflow.app',
-          path: '/',
-          secure: true,
-          sameSite: 'lax',
-          maxAge: 60 * 60 * 24 * 7
-        });
-        response.cookies.set('tenant-id', tenantId, {
-          domain: '.docsflow.app',
-          path: '/',
-          secure: true,
-          sameSite: 'lax',
-          maxAge: 60 * 60 * 24 * 7
-        });
-        response.cookies.set('user_email', userData.email, {
-          domain: '.docsflow.app',
-          path: '/',
-          secure: true,
-          sameSite: 'lax',
-          maxAge: 60 * 60 * 24 * 7
+        redirectResponse = NextResponse.redirect(redirectUrl);
+        
+        // Set REAL Supabase session cookies
+        redirectResponse.cookies.set('sb-access-token', sessionData.session.access_token, cookieOptions);
+        redirectResponse.cookies.set('sb-refresh-token', sessionData.session.refresh_token, {
+          ...cookieOptions,
+          httpOnly: true
         });
         
-        return response;
+        // Set tenant info cookies
+        redirectResponse.cookies.set('tenant-id', tenantId, {
+          ...cookieOptions,
+          httpOnly: false // Allow client-side access
+        });
+        redirectResponse.cookies.set('user-email', userData.email, {
+          ...cookieOptions,
+          httpOnly: false
+        });
+        redirectResponse.cookies.set('tenant-subdomain', tenantData.subdomain, {
+          ...cookieOptions,
+          httpOnly: false
+        });
+        
+        return redirectResponse;
       } else {
-        console.error(`❌ OAuth: Tenant ${tenantId} has no subdomain:`, tenantError);
+        console.error(`❌ [GOOGLE OAuth] Tenant ${tenantId} has no subdomain:`, tenantError);
       }
     }
     
     // New user or no tenant: redirect to onboarding
-    console.log(`🆕 OAuth: New user redirecting to onboarding`);
-    const response = NextResponse.redirect(`${process.env.FRONTEND_URL || 'https://docsflow.app'}/onboarding`);
-    response.cookies.set('sb-lhcopwwiqwjpzbdnjovo-auth-token', sessionToken, {
-      domain: '.docsflow.app',
-      path: '/',
-      secure: true,
-      sameSite: 'strict',
-      maxAge: 60 * 60 * 24 * 7
+    console.log(`🆕 [GOOGLE OAuth] New user redirecting to onboarding`);
+    redirectUrl = `${process.env.FRONTEND_URL || 'https://docsflow.app'}/onboarding`;
+    redirectResponse = NextResponse.redirect(redirectUrl);
+    
+    // Set session cookies for onboarding flow
+    redirectResponse.cookies.set('sb-access-token', sessionData.session.access_token, cookieOptions);
+    redirectResponse.cookies.set('sb-refresh-token', sessionData.session.refresh_token, {
+      ...cookieOptions,
+      httpOnly: true
     });
-    return response;
+    
+    return redirectResponse;
 
   } catch (error: any) {
     console.error('Google OAuth callback error:', error);

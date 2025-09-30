@@ -174,7 +174,52 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Let Supabase handle its own cookies, then add our tenant info
+    // 🎯 CRITICAL FIX: SERVER-SIDE REDIRECT to tenant subdomain
+    const hostname = request.headers.get('host') || '';
+    const isMainDomain = hostname === 'docsflow.app' || hostname === 'www.docsflow.app' || hostname === 'localhost:3000';
+    
+    // Set additional tenant cookies for cross-subdomain access
+    const tenantCookieOptions = {
+      domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
+      path: '/',
+      sameSite: 'lax' as const,
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: false, // Allow client-side access
+      maxAge: 60 * 60 * 24 * 7 // 7 days
+    };
+    
+    if (userProfile.tenant_id) {
+      cookieStore.set('tenant-id', userProfile.tenant_id, tenantCookieOptions);
+    }
+    if (userProfile.email) {
+      cookieStore.set('user-email', userProfile.email, tenantCookieOptions);
+    }
+    if (userProfile.tenants?.subdomain) {
+      cookieStore.set('tenant-subdomain', userProfile.tenants.subdomain, tenantCookieOptions);
+    }
+    
+    console.log('✅ [LOGIN] Authentication successful, cookies set');
+    console.log(`🎯 [LOGIN] User: ${userProfile.email}, Tenant: ${userProfile.tenants?.subdomain}`);
+    console.log(`🌐 [LOGIN] Current host: ${hostname}, Is main domain: ${isMainDomain}`);
+    
+    // SERVER-SIDE REDIRECT if logging in from main domain
+    if (isMainDomain && userProfile.tenants?.subdomain) {
+      const redirectUrl = process.env.NODE_ENV === 'production'
+        ? `https://${userProfile.tenants.subdomain}.docsflow.app/dashboard`
+        : `http://localhost:3000/dashboard`; // For local dev, stay on localhost
+      
+      console.log(`🔄 [LOGIN] Redirecting to tenant subdomain: ${redirectUrl}`);
+      
+      const redirectResponse = NextResponse.redirect(redirectUrl, {
+        status: 302,
+        headers: corsHeaders
+      });
+      
+      // Ensure cookies are included in redirect response
+      return redirectResponse;
+    }
+    
+    // For subdomain logins or local dev, return JSON (frontend handles navigation)
     const response = NextResponse.json({
       success: true,
       user: {
@@ -196,9 +241,6 @@ export async function POST(request: NextRequest) {
         expires_at: authData.session.expires_at
       }
     }, { headers: corsHeaders });
-
-    console.log('✅ [LOGIN] Authentication successful, Supabase cookies should be set automatically');
-    console.log(`🎯 [LOGIN] User: ${userProfile.email}, Tenant: ${userProfile.tenants?.subdomain}`);
 
     return response;
 

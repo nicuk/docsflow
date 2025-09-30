@@ -18,12 +18,22 @@ export default function ClerkTestDashboard() {
   const { user, isLoaded: userLoaded } = useUser()
   const { organization, isLoaded: orgLoaded } = useOrganization()
 
+  // DEBUG: Log auth state
+  console.log('🔍 Clerk Auth State:', {
+    userLoaded,
+    orgLoaded,
+    hasUser: !!user,
+    userId: user?.id,
+    userEmail: user?.emailAddresses[0]?.emailAddress
+  })
+
   if (!userLoaded || !orgLoaded) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading Clerk authentication...</p>
+          <p className="text-xs text-gray-500 mt-2">userLoaded: {userLoaded.toString()}, orgLoaded: {orgLoaded.toString()}</p>
         </div>
       </div>
     )

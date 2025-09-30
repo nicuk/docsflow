@@ -2,6 +2,17 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  // PHASE 2: Check Clerk routes FIRST, before any Supabase logic
+  const isClerkTestRoute = request.nextUrl.pathname.startsWith('/sign-in-clerk') ||
+                           request.nextUrl.pathname.startsWith('/sign-up-clerk') ||
+                           request.nextUrl.pathname.startsWith('/dashboard-clerk');
+
+  if (isClerkTestRoute) {
+    // Let Clerk handle these routes completely - skip all Supabase middleware
+    return NextResponse.next()
+  }
+
+  // Only run Supabase auth logic for non-Clerk routes
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -41,16 +52,6 @@ export async function middleware(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-
-  // PHASE 2: Exclude Clerk test routes from Supabase middleware
-  const isClerkTestRoute = request.nextUrl.pathname.startsWith('/sign-in-clerk') ||
-                           request.nextUrl.pathname.startsWith('/sign-up-clerk') ||
-                           request.nextUrl.pathname.startsWith('/dashboard-clerk');
-
-  if (isClerkTestRoute) {
-    // Let Clerk handle these routes - skip Supabase auth
-    return NextResponse.next()
-  }
 
   if (
     !user &&
