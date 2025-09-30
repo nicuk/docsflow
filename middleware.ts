@@ -42,6 +42,16 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // PHASE 2: Exclude Clerk test routes from Supabase middleware
+  const isClerkTestRoute = request.nextUrl.pathname.startsWith('/sign-in-clerk') ||
+                           request.nextUrl.pathname.startsWith('/sign-up-clerk') ||
+                           request.nextUrl.pathname.startsWith('/dashboard-clerk');
+
+  if (isClerkTestRoute) {
+    // Let Clerk handle these routes - skip Supabase auth
+    return NextResponse.next()
+  }
+
   if (
     !user &&
     !request.nextUrl.pathname.startsWith('/login') &&
