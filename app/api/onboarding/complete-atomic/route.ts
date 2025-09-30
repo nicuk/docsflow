@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth, currentUser, clerkClient } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
+import { clerkClient } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
 
@@ -189,7 +190,8 @@ export async function POST(request: NextRequest) {
     }
 
     // 🎯 CLERK: Update user metadata with tenant info AND Supabase user mapping
-    await clerkClient().users.updateUserMetadata(userId, {
+    const clerk = await clerkClient();
+    await clerk.users.updateUserMetadata(userId, {
       publicMetadata: {
         tenantId: tenantId,
         tenantSubdomain: cleanSubdomain,
