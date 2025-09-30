@@ -67,39 +67,9 @@ export async function POST(request: NextRequest) {
     }
 
     // 🎯 SURGICAL FIX: Establish authentication context for RAG database queries
-    // Apply same pattern as successful Documents API fix
-    const authHeader = request.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.replace('Bearer ', '');
-      try {
-        console.log('🔧 [CHAT API] Establishing auth context for RAG queries...');
-        // Create a temporary Supabase client to set global auth context
-        const { createServerClient } = await import('@supabase/ssr');
-        const tempSupabase = createServerClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-          {
-            cookies: {
-              getAll() { return []; },
-              setAll(cookiesToSet) {}
-            }
-          }
-        );
-        
-        const { error: setSessionError } = await tempSupabase.auth.setSession({
-          access_token: token,
-          refresh_token: 'mock-refresh-token' // RLS only needs access token
-        });
-        
-        if (setSessionError) {
-          console.warn('⚠️ [CHAT API] Failed to set session:', setSessionError.message);
-        } else {
-          console.log('✅ [CHAT API] Auth context established for RAG database queries');
-        }
-      } catch (authContextError) {
-        console.warn('⚠️ [CHAT API] Auth context setup failed:', authContextError);
-      }
-    }
+    // 🎯 CLERK MIGRATION: Authentication is handled by validateTenantContext
+    // No need to set Supabase session - RAG queries work with tenant_id directly
+    console.log('✅ [CHAT API] Using tenant-scoped queries (no session needed)');
 
     // Check if AI service is available
     if (!googleAI) {

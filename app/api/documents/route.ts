@@ -53,27 +53,9 @@ export async function GET(request: NextRequest) {
     const tenantSubdomain = tenantValidation.tenantData?.subdomain || 'unknown';
     console.log('Fetching documents for validated tenant:', tenantSubdomain, 'UUID:', tenantId);
     
-    // 🎯 SURGICAL FIX: Establish authentication context for RLS queries
-    // Extract Bearer token and set session for authenticated database queries
-    const authHeader = request.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.replace('Bearer ', '');
-      try {
-        console.log('🔧 [DOCUMENTS API] Establishing auth context for RLS...');
-        const { error: setSessionError } = await supabase.auth.setSession({
-          access_token: token,
-          refresh_token: 'mock-refresh-token' // RLS only needs access token
-        });
-        
-        if (setSessionError) {
-          console.warn('⚠️ [DOCUMENTS API] Failed to set session:', setSessionError.message);
-        } else {
-          console.log('✅ [DOCUMENTS API] Auth context established for RLS queries');
-        }
-      } catch (authContextError) {
-        console.warn('⚠️ [DOCUMENTS API] Auth context setup failed:', authContextError);
-      }
-    }
+    // 🎯 CLERK MIGRATION: Authentication is handled by validateTenantContext
+    // No need to set Supabase session - we query by tenant_id directly
+    console.log('✅ [DOCUMENTS API] Using tenant-scoped queries (no session needed)');
     
     // Get documents for this tenant using the actual UUID
     const { data: documents, error } = await supabase
