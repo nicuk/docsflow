@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useUser } from "@clerk/nextjs"
 import { useDocuments, useConversations } from "@/lib/queries/documents"
 import {
   BarChart3,
@@ -58,6 +59,9 @@ interface TenantContext {
 }
 
 export default function DashboardPage() {
+  // 🎯 CRITICAL FIX: Wait for Clerk to initialize before making API calls
+  const { isLoaded: isClerkLoaded } = useUser()
+  
   const [searchQuery, setSearchQuery] = useState("")
   const [tenantContext, setTenantContext] = useState<TenantContext | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -82,9 +86,15 @@ export default function DashboardPage() {
 
   // Load tenant context and check onboarding completion
   useEffect(() => {
+    // 🎯 CRITICAL FIX: Wait for Clerk to initialize before making any API calls
+    if (!isClerkLoaded) {
+      console.log('⏳ [DASHBOARD] Waiting for Clerk to initialize...');
+      return;
+    }
+    
     const loadTenantContext = async () => {
       try {
-        console.log(`🔍 [DASHBOARD] Starting loadTenantContext at ${new Date().toISOString()}`);
+        console.log(`🔍 [DASHBOARD] Clerk initialized, starting loadTenantContext at ${new Date().toISOString()}`);
         
         // 🎯 CLERK MIGRATION: Removed RedirectHandler initialization (legacy Supabase logic)
         // Clerk middleware handles all subdomain routing
@@ -242,7 +252,7 @@ export default function DashboardPage() {
     }
 
     loadTenantContext();
-  }, [])
+  }, [isClerkLoaded])
 
   // 🚀 REACT QUERY: No manual data fetching needed
   // Documents and conversations are automatically loaded via useDocuments/useConversations hooks
@@ -458,7 +468,8 @@ export default function DashboardPage() {
   // 🎯 CLERK MIGRATION: Removed redirect overlay (was blocking all UI clicks)
   // Clerk middleware handles subdomain routing - no need for client-side redirect logic
 
-  if (isLoading) {
+  // 🎯 CRITICAL FIX: Show loading while Clerk initializes OR tenant context loads
+  if (!isClerkLoaded || isLoading) {
     return (
       <ScrollArea className="flex-1">
         <div className="container mx-auto p-4 md:p-6 max-w-7xl">

@@ -321,5 +321,81 @@ Keep `@supabase/supabase-js` for database access only.
 
 ---
 
-**Status:** ✅ **RESOLVED**  
+## 🔥 **CRITICAL UPDATE: Dashboard-Specific Navigation Issue**
+
+**Date:** September 30, 2025 (continued)  
+**New Issue:** Navigation only blocked on the **dashboard page**, works fine on all other pages
+
+### Root Cause #2: Race Condition
+
+**Evidence from logs:**
+```
+⚠️ [CLERK-TOKEN] Clerk not initialized yet on window object (MULTIPLE times)
+❌ Tenant not found in database: api
+```
+
+**The Problem:**
+The dashboard page's `useEffect` was firing **immediately on mount**, making API calls **BEFORE** Clerk finished initializing:
+
+1. Dashboard component mounts
+2. `useEffect` fires immediately (line 88)
+3. Tries to fetch `/api/auth/session` (line 161)
+4. `lib/api-client.ts` tries to get Clerk token
+5. ❌ `window.Clerk` not initialized yet!
+6. API calls fail without tokens
+7. Navigation system gets blocked
+
+**Why it worked on other pages:**
+- By the time you navigated to other pages, Clerk was fully initialized
+- Subsequent navigation worked because tokens were available
+
+### The Fix
+
+**Modified `app/dashboard/page.tsx`:**
+
+1. **Added Clerk hook:**
+```typescript
+import { useUser } from "@clerk/nextjs"
+
+export default function DashboardPage() {
+  // 🎯 CRITICAL FIX: Wait for Clerk to initialize before making API calls
+  const { isLoaded: isClerkLoaded } = useUser()
+```
+
+2. **Guard the useEffect:**
+```typescript
+useEffect(() => {
+  // 🎯 CRITICAL FIX: Wait for Clerk to initialize before making any API calls
+  if (!isClerkLoaded) {
+    console.log('⏳ [DASHBOARD] Waiting for Clerk to initialize...');
+    return;
+  }
+  
+  const loadTenantContext = async () => {
+    console.log(`🔍 [DASHBOARD] Clerk initialized, starting loadTenantContext at ${new Date().toISOString()}`);
+    // ... rest of the logic
+  }
+  
+  loadTenantContext();
+}, [isClerkLoaded]) // Added dependency
+```
+
+3. **Updated loading condition:**
+```typescript
+// Show loading while Clerk initializes OR tenant context loads
+if (!isClerkLoaded || isLoading) {
+  return <LoadingSpinner />
+}
+```
+
+**What this fixes:**
+- ✅ Dashboard waits for Clerk to initialize
+- ✅ API calls only happen when tokens are available
+- ✅ No more "Clerk not initialized" warnings
+- ✅ No more "Tenant not found: api" errors
+- ✅ Navigation works immediately after page load
+
+---
+
+**Status:** ✅ **RESOLVED** (Both Issues)  
 **Deployed:** Pending user verification
