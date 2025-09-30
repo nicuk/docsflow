@@ -126,13 +126,25 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
       const result = await response.json();
 
       if (!result.available && result.existingTenant) {
-        // Domain exists - check if user has invitation or can request access
+        // 🎯 CLERK MIGRATION FIX: If workspace exists but has NO users, treat as new workspace
+        // This handles orphaned tenants from incomplete signups
+        const userCount = result.existingTenant.userCount || 0;
+        
+        if (userCount === 0) {
+          console.log('🔄 [DOMAIN SELECTION] Workspace exists but has no users - treating as new workspace');
+          // Clear existing tenant flag and continue with new workspace flow
+          setExistingTenant(null);
+          setShowJoinOption(false);
+          return { available: true, domain }; // Treat as available
+        }
+        
+        // Domain exists with users - check if user has invitation or can request access
         const existingTenant: ExistingTenant = {
           id: result.existingTenant.id,
           subdomain: domain,
           name: result.existingTenant.name,
           industry: result.existingTenant.industry,
-          userCount: result.existingTenant.userCount || 1,
+          userCount: userCount,
           canJoin: true,
           hasInvitation: result.hasInvitation || false,
           invitationToken: result.invitationToken

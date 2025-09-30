@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth, currentUser, clerkClient } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
-import { createResponseWithSessionCookies } from '@/lib/cookie-utils';
 import { getCORSHeaders } from '@/lib/utils';
 
 /**
- * Atomic onboarding completion endpoint
- * Creates tenant and updates user in a single transaction
+ * 🎯 CLERK MIGRATION: Atomic onboarding completion
+ * Creates tenant in Supabase DB and updates Clerk metadata
  */
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin');
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
 
   try {
-    const { subdomain, industry, businessName, responses } = await request.json();
+    const { subdomain, industry, businessName, responses, displayName, userRole } = await request.json();
     
     // Validate required fields
     if (!subdomain) {
@@ -30,29 +30,30 @@ export async function POST(request: NextRequest) {
     // Clean subdomain
     const cleanSubdomain = subdomain.toLowerCase().trim().replace(/[^a-z0-9-]/g, '');
     
-    // Get session from our centralized session endpoint
-    const sessionResponse = await fetch(`${request.nextUrl.origin}/api/auth/session`, {
-      headers: {
-        cookie: request.headers.get('cookie') || ''
-      }
-    });
+    // 🎯 CLERK: Get authenticated user
+    const { userId } = await auth();
+    const user = await currentUser();
     
-    const sessionData = await sessionResponse.json();
-    
-    if (!sessionData.authenticated || !sessionData.user) {
+    if (!userId || !user) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401, headers: corsHeaders }
       );
     }
 
-    const userId = sessionData.user.id;
-    const userEmail = sessionData.user.email;
+    const userEmail = user.emailAddresses[0]?.emailAddress || '';
 
-    // Initialize Supabase with service role for atomic operations
+    console.log('🔄 [ONBOARDING] Starting atomic onboarding for:', {
+      userId,
+      email: userEmail,
+      subdomain: cleanSubdomain,
+      businessName: businessName || displayName,
+    });
+
+    // Initialize Supabase with service role for database operations
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, // SECURITY FIX: Use anon key + RLS
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
       {
         auth: {
           autoRefreshToken: false,
@@ -61,32 +62,34 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    // First create tenant if user doesn't have one
-    let tenantId;
-    
-    // Check if user already has a tenant
-    const { data: existingUser } = await supabaseAdmin
-      .from('users')
-      .select('tenant_id')
-      .eq('id', userId)
+    // Check if tenant already exists
+    const { data: existingTenant } = await supabaseAdmin
+      .from('tenants')
+      .select('id')
+      .eq('subdomain', cleanSubdomain)
       .single();
-    
-    if (existingUser?.tenant_id) {
-      tenantId = existingUser.tenant_id;
+
+    let tenantId;
+    let isNewTenant = false;
+
+    if (existingTenant) {
+      // Tenant exists - user is joining
+      tenantId = existingTenant.id;
+      console.log('✅ [ONBOARDING] User joining existing tenant:', tenantId);
     } else {
       // Create new tenant
-      const newTenantId = crypto.randomUUID();
-      
-      // Insert tenant
+      tenantId = crypto.randomUUID();
+      isNewTenant = true;
+
       const { error: tenantError } = await supabaseAdmin
         .from('tenants')
         .insert({
-          id: newTenantId,
+          id: tenantId,
           subdomain: cleanSubdomain,
-          name: businessName || cleanSubdomain,
+          name: businessName || displayName || cleanSubdomain,
           industry: industry || 'general'
         });
-      
+
       if (tenantError) {
         if (tenantError.message?.includes('duplicate key')) {
           return NextResponse.json(
@@ -94,25 +97,45 @@ export async function POST(request: NextRequest) {
             { status: 409, headers: corsHeaders }
           );
         }
+        console.error('❌ [ONBOARDING] Tenant creation error:', tenantError);
         throw tenantError;
       }
-      
-      // Update user with tenant_id and admin access level
-      const { error: userError } = await supabaseAdmin
-        .from('users')
-        .update({ 
-          tenant_id: newTenantId, 
-          role: 'admin',
-          access_level: 1  // Admin level in 1-2 system
-        })
-        .eq('id', userId);
-      
-      if (userError) throw userError;
-      
-      tenantId = newTenantId;
+
+      console.log('✅ [ONBOARDING] Created new tenant:', tenantId);
     }
 
-    // Store onboarding responses directly (no database function needed)
+    // Determine access level: first user (new tenant) = admin (level 1), others = member (level 2)
+    const accessLevel = isNewTenant ? 1 : (userRole === 'admin' ? 1 : 2);
+    const role = accessLevel === 1 ? 'admin' : 'member';
+
+    // Create or update user in Supabase database
+    const { error: userError } = await supabaseAdmin
+      .from('users')
+      .upsert({
+        id: userId, // Use Clerk user ID
+        email: userEmail,
+        name: user.firstName || userEmail.split('@')[0],
+        tenant_id: tenantId,
+        role: role,
+        access_level: accessLevel,
+        onboarding_complete: true,
+      }, {
+        onConflict: 'id'
+      });
+
+    if (userError) {
+      console.error('❌ [ONBOARDING] User upsert error:', userError);
+      throw userError;
+    }
+
+    console.log('✅ [ONBOARDING] User created/updated:', {
+      userId,
+      role,
+      accessLevel,
+      isFirstUser: isNewTenant,
+    });
+
+    // Store onboarding responses if provided
     if (responses && Object.keys(responses).length > 0) {
       const { error: responsesError } = await supabaseAdmin
         .from('onboarding_responses')
@@ -121,50 +144,62 @@ export async function POST(request: NextRequest) {
           tenant_id: tenantId,
           responses: {
             subdomain: cleanSubdomain,
-            business_name: businessName || cleanSubdomain,
+            business_name: businessName || displayName || cleanSubdomain,
             industry: industry || 'technology',
             ...responses
           }
-        })
-        .select()
-        .single();
+        });
 
       if (responsesError) {
-        console.warn('Failed to store onboarding responses:', responsesError.message);
-        // Don't fail the entire onboarding for this
+        console.warn('⚠️ [ONBOARDING] Failed to store responses:', responsesError.message);
+        // Don't fail onboarding for this
       }
     }
 
-    // Create success result
-    const response = createResponseWithSessionCookies(
+    // 🎯 CLERK: Update user metadata with tenant info
+    await clerkClient().users.updateUserMetadata(userId, {
+      publicMetadata: {
+        tenantId: tenantId,
+        tenantSubdomain: cleanSubdomain,
+        tenantName: businessName || displayName || cleanSubdomain,
+        role: role,
+        accessLevel: accessLevel,
+        onboardingComplete: true,
+      }
+    });
+
+    console.log('✅ [ONBOARDING] Updated Clerk metadata with tenant info');
+
+    return NextResponse.json(
       {
         success: true,
         tenant: {
           id: tenantId,
           subdomain: cleanSubdomain,
-          name: businessName || cleanSubdomain,
+          name: businessName || displayName || cleanSubdomain,
           industry: industry || 'general'
+        },
+        user: {
+          id: userId,
+          email: userEmail,
+          role: role,
+          accessLevel: accessLevel,
+          isFirstUser: isNewTenant,
         },
         redirectUrl: `https://${cleanSubdomain}.docsflow.app/dashboard`
       },
-      {
-        tenantId: tenantId,
-        onboardingComplete: true
-      }
+      { status: 200, headers: corsHeaders }
     );
 
-    // Add CORS headers
-    Object.entries(corsHeaders).forEach(([key, value]) => {
-      response.headers.set(key, value as string);
-    });
-
-    return response;
-
   } catch (error) {
-    console.error('Onboarding error:', error);
+    console.error('❌ [ONBOARDING] Error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: error instanceof Error ? error.message : 'Onboarding failed',
+        details: error instanceof Error ? error.stack : undefined
+      },
       { status: 500, headers: corsHeaders }
     );
   }
 }
+
