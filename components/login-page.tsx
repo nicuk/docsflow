@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { useSignIn } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,7 +13,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, Loader2 } from "lucide-react"
 import DocsFlowBrand from "@/components/DocsFlowBrand"
 import { useDarkMode } from "@/hooks/use-dark-mode"
-import { createClient } from '@/lib/supabase-browser'
 
 interface FormData {
   email: string
@@ -29,6 +29,7 @@ interface FormErrors {
 export default function LoginPage() {
   const router = useRouter()
   const { isDarkMode } = useDarkMode()
+  const { signIn, isLoaded, setActive } = useSignIn()
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
@@ -70,95 +71,66 @@ export default function LoginPage() {
       return
     }
 
+    if (!isLoaded) {
+      return
+    }
+
     setIsLoading(true)
     setErrors({})
 
     try {
-      // 🎯 SURGICAL FIX: Use our login API instead of Supabase direct
-      // This ensures proper cookie setting for cross-subdomain auth
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          rememberMe: formData.rememberMe
-        })
+      // 🎯 CLERK INTEGRATION: Use Clerk's signIn method
+      const result = await signIn.create({
+        identifier: formData.email,
+        password: formData.password,
       })
 
-      const result = await response.json()
-
-      if (!response.ok || !result.success) {
-        console.error('Login error:', result.error)
+      if (result.status === "complete") {
+        // Set the active session
+        await setActive({ session: result.createdSessionId })
         
-        let errorMessage = result.error || "Invalid email or password"
-        
-        if (errorMessage.includes('Invalid login credentials') || errorMessage.includes('Invalid email or password')) {
-          errorMessage = "Invalid email or password. Please check your credentials."
-        } else if (errorMessage.includes('Email not confirmed')) {
-          errorMessage = "Please check your email and confirm your account before signing in."
-        } else if (errorMessage.includes('Too many requests')) {
-          errorMessage = "Too many login attempts. Please wait a moment and try again."
-        }
-        
-        setErrors({ general: errorMessage })
-        return
-      }
-
-      if (result.user) {
         setIsSuccess(true)
         
-        console.log('✅ Login successful via API:', {
-          userId: result.user.id,
-          tenantId: result.user.tenant_id,
-          tenantSubdomain: result.user.tenant?.subdomain,
-          redirectUrl: result.redirectUrl
-        })
+        console.log('✅ Login successful with Clerk')
         
-        // 🎯 CRITICAL FIX: Use redirectUrl from API for cross-subdomain navigation
-        // This avoids CORS issues with server-side redirects
+        // Redirect to dashboard (Clerk session works across subdomains!)
         setTimeout(() => {
-          if (result.redirectUrl) {
-            console.log('🔄 Redirecting to tenant subdomain:', result.redirectUrl)
-            window.location.href = result.redirectUrl // Full page navigation for cross-origin
-          } else {
-            router.push('/dashboard') // Same-origin navigation
-          }
+          router.push('/dashboard')
         }, 1500)
+      } else {
+        // Handle other statuses (e.g., needs 2FA)
+        console.log('Login requires additional steps:', result.status)
+        setErrors({ general: "Please complete the sign-in process" })
       }
       
-    } catch (error) {
-      console.error('Unexpected login error:', error)
-      setErrors({
-        general: "An unexpected error occurred. Please try again.",
-      })
+    } catch (error: any) {
+      console.error('Clerk login error:', error)
+      
+      // Parse Clerk error messages
+      let errorMessage = "Invalid email or password"
+      if (error.errors && error.errors[0]) {
+        errorMessage = error.errors[0].message
+      }
+      
+      setErrors({ general: errorMessage })
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleGoogleAuth = async () => {
+    if (!isLoaded || !signIn) return
+    
     setIsLoading(true)
     
     try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
+      // 🎯 CLERK GOOGLE OAUTH: Built-in, works perfectly across subdomains
+      await signIn.authenticateWithRedirect({
+        strategy: "oauth_google",
+        redirectUrl: "/sso-callback",
+        redirectUrlComplete: "/dashboard"
       })
-      
-      if (error) {
-        console.error('Google OAuth error:', error)
-        setErrors({
-          general: 'Failed to sign in with Google. Please try again.'
-        })
-        setIsLoading(false)
-      }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Google OAuth error:', error)
       setErrors({
         general: 'Failed to sign in with Google. Please try again.'
