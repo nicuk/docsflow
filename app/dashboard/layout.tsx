@@ -1,8 +1,9 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useUser, useClerk } from '@clerk/nextjs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -39,8 +40,6 @@ import {
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import DocsFlowBrand from '@/components/DocsFlowBrand'
-import { MultiTenantCookieManager } from '@/lib/multi-tenant-cookie-manager'
-import { SchemaAlignedCookieManager } from '@/lib/schema-aligned-cookies' // Keep for getSecureUserAccess only
 
 const navigationItems = [
   { name: 'Dashboard', href: '/dashboard', icon: Home, badge: null, requiresAdmin: false },
@@ -107,122 +106,61 @@ const getUserFromCookies = () => {
   };
 };
 
-// Dynamic user session hook
+// 🎯 CLERK MIGRATION: Dynamic user session hook using Clerk
 function useUserSession() {
+  const { user: clerkUser, isLoaded } = useUser()
+  
   const [user, setUser] = useState({
     name: 'Loading...',
-    email: '', // 🎯 SURGICAL FIX: Empty instead of loading@example.com to prevent flash
+    email: '',
     avatar: '/placeholder.svg',
     role: 'member',
   });
 
   useEffect(() => {
     const getUserData = async () => {
-      // CRITICAL FIX: Check Supabase auth session FIRST
-      try {
-        const { createSupabaseClient } = await import('@/lib-frontend/supabase');
-        const supabase = createSupabaseClient();
-        
-        // SECURITY FIX: Use getUser() instead of getSession() for authenticated data
-        const { data: { user }, error } = await supabase.auth.getUser();
-        
-        if (!error && user) {
-          console.log('Found authenticated user:', user.email);
-          
-          // Get user profile from database
-          const { data: userProfile } = await supabase
-            .from('users')
-            .select('name, email, role')
-            .eq('id', user.id)
-            .single();
-          
-          if (userProfile) {
-            // 🎯 SURGICAL FIX: Ensure email is properly decoded from any URL encoding
-            const cleanEmail = userProfile.email || user.email || 'user@example.com';
-            const decodedEmail = decodeURIComponent(cleanEmail);
-            
-            setUser({
-              name: userProfile.name || decodedEmail.split('@')[0] || 'User',
-              email: decodedEmail,
-              avatar: '/placeholder.svg',
-              role: userProfile.role || 'member',
-            });
-            return;
-          } else {
-            // User exists in auth but not in users table yet
-            // 🎯 SURGICAL FIX: Also decode email here
-            const cleanEmail = user.email || 'user@example.com';
-            const decodedEmail = decodeURIComponent(cleanEmail);
-            
-            setUser({
-              name: decodedEmail.split('@')[0] || 'User',
-              email: decodedEmail,
-              avatar: '/placeholder.svg',
-              role: 'member',
-            });
-            return;
-          }
-        }
-      } catch (error) {
-        console.error('Error checking Supabase session:', error);
+      if (!isLoaded) {
+        return
       }
       
-      // SECURITY FIX: Use schema-aligned cookie manager instead of direct parsing
-      if (typeof window !== 'undefined') {
-        try {
-          // Use multi-tenant cookie system for reading tenant context
-          const tenantContexts = MultiTenantCookieManager.getCurrentTenantContexts();
-          const currentTenant = MultiTenantCookieManager.getCurrentTenantSubdomain();
-          const userEmail = MultiTenantCookieManager.getCurrentUserEmail();
-          
-          // Still use secure access for database-based security checks
-          const secureAccess = await SchemaAlignedCookieManager.getSecureUserAccess();
-          
-          if (userEmail && currentTenant && secureAccess.tenantId) {
-            console.log('✅ [SECURITY] Using multi-tenant session data:', {
-              email: userEmail,
-              currentTenant,
-              totalTenants: Object.keys(tenantContexts).length,
-              role: secureAccess.role,
-              isAdmin: secureAccess.isAdmin
-            });
-            
-            setUser({
-              name: userEmail.split('@')[0].charAt(0).toUpperCase() + userEmail.split('@')[0].slice(1),
-              email: userEmail,
-              avatar: '/placeholder.svg',
-              role: secureAccess.role, // From database, not hardcoded
-            });
-            return;
-          } else {
-            console.warn('⚠️ [SECURITY] Incomplete multi-tenant cookie state - retrying user session');
-            // 🚨 SURGICAL FIX: Don't clear auth tokens - just log the issue and continue
-            // This prevents random logouts during normal usage
-            console.warn('Missing:', { 
-              hasUserEmail: !!userEmail, 
-              hasCurrentTenant: !!currentTenant, 
-              hasSecureAccess: !!secureAccess.tenantId 
-            });
-          }
-        } catch (error) {
-          console.error('⚠️ [SECURITY] Multi-tenant cookie validation failed, but preserving session:', error);
-          // 🚨 SURGICAL FIX: Don't clear auth tokens on validation errors
-          // Most "validation failures" are temporary network/parsing issues
-        }
+      if (!clerkUser) {
+        // No user logged in
+        setUser({
+          name: 'User',
+          email: 'user@example.com',
+          avatar: '/placeholder.svg',
+          role: 'member',
+        })
+        return
       }
       
-      // Final fallback - but this indicates a session issue
-      console.warn('No valid user session found, falling back to mock data');
+      // Extract user data from Clerk
+      const firstName = clerkUser.firstName || clerkUser.emailAddresses[0]?.emailAddress?.split('@')[0] || 'User'
+      const email = clerkUser.emailAddresses[0]?.emailAddress || 'user@example.com'
+      const imageUrl = clerkUser.imageUrl || '/placeholder.svg'
+      
+      // Check role from metadata or organization
+      const role = (clerkUser.publicMetadata?.role as string) || 'member'
+      
+      console.log('✅ [CLERK] User authenticated:', {
+        name: firstName,
+        email,
+        role,
+        clerkId: clerkUser.id
+      })
+      
       setUser({
-        name: 'User',
-        email: 'user@example.com',
-        avatar: '/placeholder.svg',
-        role: 'member',
-      });
+        name: firstName,
+        email,
+        avatar: imageUrl,
+        role,
+      })
+      
+      // Old Supabase multi-tenant code removed */
     };
 
     getUserData();
-  }, []);
+  }, [isLoaded, clerkUser]);
 
   return user;
 }
@@ -253,17 +191,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const pathname = usePathname()
   const user = useUserSession() // Dynamic user session restoration
+  const { signOut } = useClerk() // 🎯 CLERK: Get signOut function
+  const router = useRouter()
 
-  // Add logout functionality
+  // 🎯 CLERK MIGRATION: Logout functionality using Clerk
   const handleLogout = async () => {
     try {
-      // Use the auth client's logout method which calls backend
-      const { authClient } = await import('@/lib/auth-client');
-      await authClient.logout();
+      await signOut()
+      router.push('/login')
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Clerk logout error:', error)
       // Force redirect even if logout fails
-      window.location.href = '/login';
+      window.location.href = '/login'
     }
   };
 

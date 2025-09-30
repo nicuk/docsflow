@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useUser, useClerk } from '@clerk/nextjs';
 
 interface User {
   id: string;
@@ -15,7 +16,18 @@ interface Tenant {
   subdomain: string;
   name: string;
   industry?: string;
-  created_at: string;
+  created_at?: string;
+  branding?: {
+    logoUrl?: string;
+    primaryColor?: string;
+    secondaryColor?: string;
+  };
+  settings?: {
+    maxUsers?: number;
+    features?: string[];
+  };
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface AuthContextType {
@@ -51,109 +63,109 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
+  // 🎯 CLERK MIGRATION: Use Clerk's hooks directly
+  const { user: clerkUser, isLoaded } = useUser()
+  const { signOut } = useClerk()
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [user, setUser] = useState<User | null>(null);
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
-  const router = useRouter();
-  const pathname = usePathname();
 
   const refreshSession = useCallback(async () => {
-    try {
-      setLoading(true);
-      
-      // SURGICAL FIX: Skip session API call on public pages to avoid unnecessary "Auth session missing!" logs
-      // PHASE 2: Also skip Clerk test routes
-      const publicPaths = ['/login', '/register', '/', '/auth/callback'];
-      const isClerkRoute = pathname.startsWith('/sign-in-clerk') || 
-                          pathname.startsWith('/sign-up-clerk') || 
-                          pathname.startsWith('/dashboard-clerk');
-      
-      if (publicPaths.includes(pathname) || isClerkRoute) {
-        console.log(`🔍 [AUTH CONTEXT] Skipping session check on public page: ${pathname}`);
-        setLoading(false);
-        return;
-      }
-      
-      const response = await fetch('/api/auth/session');
-      const data = await response.json();
-
-      if (data.authenticated && data.user) {
-        setUser(data.user);
-        setTenant(data.tenant);
-        setAuthenticated(true);
-        setOnboardingComplete(data.onboardingComplete);
-
-        // Handle routing based on auth state and current path
-        const publicPaths = ['/login', '/register', '/'];
-        const isPublicPath = publicPaths.includes(pathname);
-        
-        if (!data.onboardingComplete && pathname !== '/onboarding') {
-          // User needs onboarding
-          router.push('/onboarding');
-        } else if (data.onboardingComplete && data.tenant) {
-          // User has completed onboarding and has a tenant
-          const currentHost = window.location.hostname;
-          
-          // Only redirect authenticated users away from public pages if they're on the same domain
-          // Don't auto-redirect to tenant subdomains from main domain
-          if (isPublicPath && currentHost.includes(data.tenant.subdomain)) {
-            // User is on their tenant subdomain and visiting public pages - redirect to dashboard
-            router.push('/dashboard');
-          }
-          // If user is on main domain (docsflow.app), let them stay and use the login form
-        }
-      } else {
-        // Not authenticated
-        setUser(null);
-        setTenant(null);
-        setAuthenticated(false);
-        setOnboardingComplete(false);
-        
-        // Redirect to login if on protected route
-        // PHASE 2: Exclude Clerk routes from protection - Clerk handles its own auth
-        const protectedPaths = ['/dashboard', '/onboarding', '/settings'];
-        const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
-        const isClerkRoute = pathname.startsWith('/sign-in-clerk') || 
-                            pathname.startsWith('/sign-up-clerk') || 
-                            pathname.startsWith('/dashboard-clerk');
-        
-        if (isProtectedPath && !isClerkRoute) {
-          router.push('/login');
-        }
-      }
-    } catch (error) {
-      console.error('Session refresh error:', error);
-      setAuthenticated(false);
-      setUser(null);
-      setTenant(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [pathname, router]);
+    // No-op for Clerk - sync happens in useEffect
+  }, []);
 
   const logout = useCallback(async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await signOut()
       setUser(null);
       setTenant(null);
       setAuthenticated(false);
       setOnboardingComplete(false);
       router.push('/login');
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Clerk logout error:', error);
     }
-  }, [router]);
+  }, [signOut, router]);
 
+  // 🎯 CLERK MIGRATION: Sync Clerk user to our state
   useEffect(() => {
-    refreshSession();
-  }, [pathname]); // Refresh on route change
+    const syncClerkUser = () => {
+      if (!isLoaded) {
+        setLoading(true)
+        return
+      }
 
-  // Initial load
-  useEffect(() => {
-    refreshSession();
-  }, []);
+      setLoading(false)
+
+      if (!clerkUser) {
+        setUser(null)
+        setTenant(null)
+        setAuthenticated(false)
+        setOnboardingComplete(false)
+
+        // Redirect to login if on protected route
+        const protectedPaths = ['/dashboard', '/onboarding', '/settings']
+        const publicPaths = ['/login', '/signup', '/register', '/', '/verify-email']
+        const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path))
+        const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
+
+        if (isProtectedPath && !isPublicPath) {
+          router.push('/login')
+        }
+        return
+      }
+
+      // Extract user data from Clerk
+      const email = clerkUser.emailAddresses[0]?.emailAddress || ''
+      const name = clerkUser.firstName || email.split('@')[0] || 'User'
+      const role = (clerkUser.publicMetadata?.role as string) || 'member'
+      const tenantId = (clerkUser.publicMetadata?.tenantId as string) || ''
+      const onboardingDone = (clerkUser.publicMetadata?.onboardingComplete as boolean) || false
+
+      setUser({
+        id: clerkUser.id,
+        email,
+        name,
+        role,
+      })
+
+      setAuthenticated(true)
+      setOnboardingComplete(onboardingDone)
+
+      // Get tenant from metadata if available
+      if (tenantId) {
+        const tenantSubdomain = (clerkUser.publicMetadata?.tenantSubdomain as string) || ''
+        const tenantName = (clerkUser.publicMetadata?.tenantName as string) || ''
+        
+        setTenant({
+          id: tenantId,
+          subdomain: tenantSubdomain,
+          name: tenantName,
+          created_at: clerkUser.createdAt?.toString() || '',
+        })
+      }
+
+      // Handle onboarding redirect
+      if (!onboardingDone && pathname !== '/onboarding') {
+        router.push('/onboarding')
+      }
+      
+      console.log('✅ [CLERK AUTH CONTEXT] User synced:', {
+        email,
+        name,
+        role,
+        authenticated: true,
+        onboardingComplete: onboardingDone,
+      })
+    }
+
+    syncClerkUser()
+  }, [isLoaded, clerkUser, pathname, router])
 
   return (
     <AuthContext.Provider

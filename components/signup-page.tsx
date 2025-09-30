@@ -4,6 +4,8 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useSignUp } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -39,6 +41,8 @@ interface PasswordStrength {
 }
 
 export default function SignupPage() {
+  const router = useRouter()
+  const { signUp, isLoaded, setActive } = useSignUp()
   const [formData, setFormData] = useState<FormData>({
     companyName: "",
     email: "",
@@ -134,110 +138,84 @@ export default function SignupPage() {
 
     if (!validateForm()) return
 
+    if (!isLoaded) return
+
     setIsLoading(true)
     setErrors({})
 
     try {
-      // COMPREHENSIVE FIX: Direct API call with proper cookie handling
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // CRITICAL: Include cookies
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
+      // 🎯 CLERK SIGNUP: Create user with Clerk
+      const result = await signUp.create({
+        emailAddress: formData.email,
+        password: formData.password,
+        unsafeMetadata: {
           companyName: formData.companyName,
-          accessLevel: 2,
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || "Registration failed");
-      }
-      
-      console.log("✅ Registration API response:", data);
-      
-      // CRITICAL: Set client-side cookies as backup/supplement
-      if (data.user?.access_token) {
-        // Import cookie utilities
-        const { setAuthCookies } = await import('@/lib/cookies');
-        
-        // Store in localStorage as backup
-        localStorage.setItem("access_token", data.user.access_token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        
-        // Set client-side auth cookies
-        setAuthCookies(
-          data.user.access_token,
-          data.user.refresh_token || "",
-          formData.email
-        );
-      }
+        },
+      })
+
+      // Send email verification
+      await signUp.prepareEmailAddressVerification({
+        strategy: "email_code",
+      })
+
+      console.log('✅ Clerk signup successful, email verification sent')
       
       // Generate subdomain suggestion from company name
       const suggestedSubdomain = generateSubdomainFromCompany(formData.companyName);
       
-      // Check if subdomain already exists
-      const subdomainExists = await checkSubdomainExists(suggestedSubdomain);
-      
-      if (subdomainExists) {
-        // Subdomain exists - trigger invitation flow
-        localStorage.setItem('invitation-request', JSON.stringify({
-          companyName: formData.companyName,
-          suggestedSubdomain,
-          userEmail: formData.email,
-          requestType: 'join_existing'
-        }));
-        
-        // Redirect to invitation request page
-        window.location.href = `/invite-request?subdomain=${suggestedSubdomain}`;
-        return;
-      }
-      
-      // Subdomain doesn't exist - proceed with onboarding
+      // Store tenant context for post-verification setup
       const tenantContext = {
         subdomain: suggestedSubdomain,
         displayName: formData.companyName,
-        industry: 'general', // Will be determined in onboarding
-        tenantId: data.user?.tenant_id,
-        accessLevel: 1, // First user gets admin (level 1)
+        industry: 'general',
+        accessLevel: 1,
         onboardingComplete: false,
         isNewTenant: true
       };
       localStorage.setItem('tenant-context', JSON.stringify(tenantContext));
       
-      console.log("✅ Signup successful, auth cookies set");
+      setIsSuccess(true)
       
-      // CRITICAL: Small delay to ensure cookies are set
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Redirect to email verification page
+      setTimeout(() => {
+        router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`)
+      }, 2000)
       
-      // Use window.location for full page navigation to ensure cookies are sent
-      window.location.href = '/onboarding';
-      console.log("Signup successful, redirecting to onboarding for persona creation:", { tenantContext, data })
-    } catch (error) {
-      setErrors({
-        general: error instanceof Error ? error.message : "An error occurred during signup",
-      })
+    } catch (error: any) {
+      console.error('Clerk signup error:', error)
+      
+      // Parse Clerk error messages
+      let errorMessage = "An error occurred during signup"
+      if (error.errors && error.errors[0]) {
+        errorMessage = error.errors[0].message
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      setErrors({ general: errorMessage })
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleSocialAuth = async (provider: string) => {
-    if (provider === 'Google') {
-      try {
-        setIsLoading(true)
-        const { authClient } = await import('@/lib/auth-client');
-        await authClient.signInWithGoogle();
-      } catch (error) {
-        setErrors({
-          general: error instanceof Error ? error.message : "Google sign-in failed",
-        })
-      } finally {
-        setIsLoading(false)
-      }
+    if (!isLoaded || !signUp) return
+    
+    setIsLoading(true)
+    
+    try {
+      // 🎯 CLERK GOOGLE OAUTH: Built-in OAuth support
+      await signUp.authenticateWithRedirect({
+        strategy: "oauth_google",
+        redirectUrl: "/sso-callback",
+        redirectUrlComplete: "/onboarding"
+      })
+    } catch (error: any) {
+      console.error('Google OAuth error:', error)
+      setErrors({
+        general: 'Failed to sign up with Google. Please try again.'
+      })
+      setIsLoading(false)
     }
   }
 
