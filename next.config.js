@@ -27,6 +27,8 @@ const nextConfig = {
         destination: '/select-workspace',
         permanent: false,
       }
+      // ✅ NOTE: Tenant subdomains (*.docsflow.app) are NOT redirected
+      // They go directly to /dashboard as intended
     ]
   },
   

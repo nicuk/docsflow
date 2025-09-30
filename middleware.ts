@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
+import { TenantContextManager } from '@/lib/tenant-context-manager'
 
 // Define routes that require authentication
 const isProtectedRoute = createRouteMatcher([
@@ -30,6 +31,7 @@ export default clerkMiddleware(async (auth, req) => {
   // Extract tenant from subdomain for multi-tenant routing
   const { hostname } = req.nextUrl
   let tenant = null
+  let tenantId = null
   
   // Production: tenant.docsflow.app
   if (hostname.includes('docsflow.app') && !hostname.startsWith('www.')) {
@@ -41,10 +43,25 @@ export default clerkMiddleware(async (auth, req) => {
     tenant = 'localhost-dev'
   }
 
+  // Resolve tenant UUID from subdomain (cached in Redis)
+  if (tenant && tenant !== 'localhost-dev' && tenant !== 'docsflow') {
+    try {
+      const tenantInfo = await TenantContextManager.resolveTenant(tenant)
+      if (tenantInfo) {
+        tenantId = tenantInfo.uuid
+      }
+    } catch (error) {
+      console.error(`[Middleware] Failed to resolve tenant ${tenant}:`, error)
+    }
+  }
+
   // Add tenant context to headers for API routes
   const response = NextResponse.next()
   if (tenant) {
     response.headers.set('x-tenant-subdomain', tenant)
+  }
+  if (tenantId) {
+    response.headers.set('x-tenant-id', tenantId)
   }
   if (userId) {
     response.headers.set('x-user-id', userId)

@@ -3,8 +3,7 @@
 
 // Enterprise tenant configuration - extracted from subdomain or headers
 
-// UNIFIED AUTH: Import new auth service for parallel testing
-import { AuthService } from '@/lib/services/auth-service';
+// 🎯 CLERK MIGRATION: Removed legacy AuthService import - using Clerk tokens only
 
 // Enhanced API base URL logic
 const getAPIBaseURL = () => {
@@ -45,57 +44,22 @@ export const apiClient = {
       'Accept': 'application/json',
     };
     
-    // SURGICAL FIX: Enhanced token retrieval with multiple fallbacks
+    // 🎯 CLERK MIGRATION: Get Clerk token only
     const authToken = await this.getAccessToken();
-    
-    // 🧪 PARALLEL TESTING: Try new AuthService alongside existing logic
-    let unifiedToken: string | null = null;
-    try {
-      unifiedToken = await AuthService.getToken();
-      if (unifiedToken) {
-        console.log('🧪 [UNIFIED-AUTH] Token retrieved via AuthService (parallel test)');
-        // Compare tokens for validation
-        if (authToken && unifiedToken !== authToken) {
-          console.warn('⚠️ [UNIFIED-AUTH] Token mismatch - legacy vs unified');
-        }
-      } else {
-        console.log('🧪 [UNIFIED-AUTH] No token from AuthService');
-      }
-    } catch (unifiedError) {
-      console.warn('🧪 [UNIFIED-AUTH] Parallel test error:', unifiedError);
-    }
-    
-    // 🎯 CRITICAL FIX: Use unified token if primary token is missing
-    const finalToken = authToken || unifiedToken;
+    const finalToken = authToken;
     
     if (finalToken) {
       // Use BOTH headers - custom header survives Vercel proxy
       headers['Authorization'] = `Bearer ${finalToken}`;
       headers['X-Auth-Token'] = finalToken; // Custom header that Vercel won't strip
-      console.log('🔍 [SURGICAL] Auth headers set for cross-domain request:', {
+      console.log('🔍 [CLERK-AUTH] Auth headers set for API request:', {
         tokenPreview: finalToken.substring(0, 30) + '...',
         tokenLength: finalToken.length,
         hasValidFormat: finalToken.includes('.'),
-        tokenSource: authToken ? 'legacy' : 'unified',
-        unifiedMatch: unifiedToken === authToken
+        tokenSource: 'clerk'
       });
     } else {
-      console.error('❌ [SURGICAL] No auth token available - debugging session state');
-      // Enhanced debugging for token retrieval issues
-      try {
-        const { createClient } = await import('@/lib/supabase-browser');
-        const supabase = createClient();
-        const { data: { session }, error } = await supabase.auth.getSession();
-        console.error('🔍 [DEBUG] Session state:', {
-          hasSession: !!session,
-          hasAccessToken: !!session?.access_token,
-          sessionError: error,
-          tokenPreview: session?.access_token?.substring(0, 30) + '...' || 'none',
-          unifiedAvailable: !!unifiedToken
-        });
-      } catch (debugError) {
-        console.error('🔍 [DEBUG] Session check failed:', debugError);
-      }
+      console.error('❌ [CLERK-AUTH] No auth token available - user may need to re-authenticate');
     }
     
     // RLS CONTEXT: Add tenant context for database session
