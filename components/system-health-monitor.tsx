@@ -5,51 +5,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
-
-interface CircuitBreakerMetrics {
-  totalCalls: number;
-  failures: number;
-  successes: number;
-  lastFailureTime: number;
-  lastSuccessTime: number;
-  state: 'closed' | 'open' | 'half_open';
-}
-
-interface DegradationStatus {
-  currentLevel: number;
-  triggeredServices: string[];
-  activatedAt: number;
-  reason: string;
-  uptime: number;
-  affectedOperations: string[];
-}
-
-interface SystemHealth {
-  overallStatus: 'healthy' | 'degraded' | 'critical';
-  activeIssues: string[];
-  recommendations: string[];
-}
-
-interface HealthData {
-  timestamp: string;
-  circuitBreakers: Record<string, CircuitBreakerMetrics>;
-  degradation: DegradationStatus;
-  systemHealth: SystemHealth;
-}
+import { getCircuitBreakerHealth, controlCircuitBreaker, type HealthData } from '@/app/actions/circuit-breaker-actions';
+import { useToast } from '@/hooks/use-toast';
 
 export function SystemHealthMonitor() {
   const [healthData, setHealthData] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [controlLoading, setControlLoading] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const fetchHealthData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/health/circuit-breakers');
-      if (!response.ok) {
-        throw new Error('Failed to fetch health data');
-      }
-      const data = await response.json();
+      // ✅ Using Server Action instead of API endpoint
+      const data = await getCircuitBreakerHealth();
       setHealthData(data);
       setError(null);
     } catch (err) {
@@ -59,19 +29,34 @@ export function SystemHealthMonitor() {
     }
   };
 
-  const controlCircuitBreaker = async (service: string, action: string) => {
+  const handleControlCircuitBreaker = async (service: string, action: 'open' | 'close' | 'reset') => {
     try {
-      const response = await fetch('/api/health/circuit-breakers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ service, action })
-      });
+      setControlLoading(service);
+      // ✅ Using Server Action instead of API endpoint
+      const result = await controlCircuitBreaker(service, action);
       
-      if (response.ok) {
+      if (result.success) {
+        toast({
+          title: 'Success',
+          description: `Circuit breaker ${action}ed for ${service}`,
+        });
         await fetchHealthData(); // Refresh data
+      } else {
+        toast({
+          title: 'Error',
+          description: result.error || 'Failed to control circuit breaker',
+          variant: 'destructive',
+        });
       }
     } catch (err) {
       console.error('Circuit breaker control failed:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to control circuit breaker',
+        variant: 'destructive',
+      });
+    } finally {
+      setControlLoading(null);
     }
   };
 
@@ -216,18 +201,18 @@ export function SystemHealthMonitor() {
                     <Button 
                       size="sm" 
                       variant="outline"
-                      onClick={() => controlCircuitBreaker(service, 'close')}
-                      disabled={metrics.state === 'closed'}
+                      onClick={() => handleControlCircuitBreaker(service, 'close')}
+                      disabled={metrics.state === 'closed' || controlLoading === service}
                     >
-                      Close
+                      {controlLoading === service ? 'Processing...' : 'Close'}
                     </Button>
                     <Button 
                       size="sm" 
                       variant="outline"
-                      onClick={() => controlCircuitBreaker(service, 'open')}
-                      disabled={metrics.state === 'open'}
+                      onClick={() => handleControlCircuitBreaker(service, 'open')}
+                      disabled={metrics.state === 'open' || controlLoading === service}
                     >
-                      Open
+                      {controlLoading === service ? 'Processing...' : 'Open'}
                     </Button>
                   </div>
                 </CardContent>
