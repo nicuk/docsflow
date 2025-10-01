@@ -42,8 +42,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import BackendStatus from "@/components/backend-status"
-import { SecurityMonitor } from "@/components/security-monitor"
 import PersonaEditor from "@/components/persona-editor"
 import { ProgressiveStats } from "@/components/dashboard/progressive-stats"
 import { PersonaCardSkeleton } from "@/components/dashboard/stats-skeleton"
@@ -190,19 +188,55 @@ export default function DashboardPage() {
         
         // DIAGNOSTIC LOGGING: Track tenant data to find where it's lost
         console.log(`🔍 [DASHBOARD] Raw userData from API:`, {
-          email: userData.email,
-          tenantId: userData.tenantId,
+          email: userData.user?.email,
+          tenantId: userData.tenant?.id,
           hasTenant: !!userData.tenant,
           tenant: userData.tenant,
           tenantSubdomain: userData.tenant?.subdomain
         });
         
-        // 🎯 CLERK MIGRATION: Removed onboarding check - AuthContext handles this now
+        // 🚨 CRITICAL FIX: If tenant data is missing from Clerk metadata, sync it from database
+        if (!userData.tenant?.id) {
+          console.warn('⚠️ [DASHBOARD] Clerk metadata missing tenant ID - attempting auto-sync');
+          
+          // We're already on a subdomain (sculptai.docsflow.app), so get tenant from subdomain
+          const currentSubdomain = window.location.hostname.split('.')[0];
+          
+          if (currentSubdomain && currentSubdomain !== 'www' && currentSubdomain !== 'docsflow') {
+            console.log(`🔄 [DASHBOARD] Syncing metadata for subdomain: ${currentSubdomain}`);
+            
+            try {
+              // Call sync endpoint to update Clerk metadata from database
+              const syncResponse = await fetch('/api/auth/sync-metadata', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ subdomain: currentSubdomain }),
+                credentials: 'include',
+              });
+              
+              if (syncResponse.ok) {
+                console.log('✅ [DASHBOARD] Metadata synced successfully - reloading page');
+                // Reload page to get fresh metadata
+                window.location.reload();
+                return;
+              } else {
+                console.error('❌ [DASHBOARD] Metadata sync failed');
+              }
+            } catch (error) {
+              console.error('❌ [DASHBOARD] Error syncing metadata:', error);
+            }
+          }
+          
+          // If sync failed, show helpful error instead of crashing
+          alert('Unable to load your workspace data. Please contact support or try logging out and back in.');
+          window.location.href = '/login';
+          return;
+        }
 
         // Set tenant context from backend data
         const context: TenantContext = {
-          tenantId: userData.tenantId,
-          tenantSubdomain: userData.tenant?.subdomain || '',
+          tenantId: userData.tenant.id,
+          tenantSubdomain: userData.tenant.subdomain,
           industry: userData.tenant?.industry || 'general',
           businessType: userData.tenant?.industry || 'General Business',
           accessLevel: userData.user?.role === 'admin' ? 1 : 2, // Map role to access level: admin=1, user=2
@@ -214,34 +248,26 @@ export default function DashboardPage() {
         // UNIFIED FIX: Use MultiTenantCookieManager instead of Enterprise system
         const { MultiTenantCookieManager } = await import('@/lib/multi-tenant-cookie-manager');
         
-        // DEFENSIVE STORAGE: Only store valid subdomain and tenantId to prevent undefined errors
-        if (userData.tenantId && userData.tenant?.subdomain && userData.tenant.subdomain.length > 0) {
-          // Add tenant context using unified cookie system
-          MultiTenantCookieManager.addTenantContext(
-            {
-              tenantId: userData.tenantId,
-              subdomain: userData.tenant.subdomain,
-              userEmail: userData.email
-            },
-            {
-              accessToken: document.cookie.match(/(?:^|; )(?:access_token|docsflow_auth_token)=([^;]*)/)?.[1] || '',
-              refreshToken: document.cookie.match(/(?:^|; )(?:refresh_token|docsflow_refresh_token)=([^;]*)/)?.[1]
-            }
-          );
-          
-          // Check for tenant subdomain redirect
-          // 🎯 CLERK MIGRATION: Tenant redirect handled by Clerk middleware
-        } else {
-          console.warn('⚠️ [DASHBOARD] Skipping MultiTenantCookieManager - invalid tenant data:', {
-            tenantId: userData.tenantId,
-            subdomain: userData.tenant?.subdomain
-          });
-        }
+        // Store tenant context using unified cookie system (already validated above)
+        MultiTenantCookieManager.addTenantContext(
+          {
+            tenantId: userData.tenant.id,
+            subdomain: userData.tenant.subdomain,
+            userEmail: userData.user?.email || ''
+          },
+          {
+            accessToken: document.cookie.match(/(?:^|; )(?:access_token|docsflow_auth_token)=([^;]*)/)?.[1] || '',
+            refreshToken: document.cookie.match(/(?:^|; )(?:refresh_token|docsflow_refresh_token)=([^;]*)/)?.[1]
+          }
+        );
+        
+        // Check for tenant subdomain redirect
+        // 🎯 CLERK MIGRATION: Tenant redirect handled by Clerk middleware
         
         // Note: MultiTenantCookieManager doesn't need explicit user session setting
         // The tenant context includes all necessary user and tenant information
         
-        console.log(`✅ [DASHBOARD] Set unified tenant context for: ${userData.email}`);
+        console.log(`✅ [DASHBOARD] Set unified tenant context for: ${userData.user?.email}`);
         
         // 🚀 OPTIMISTIC UI: Set tenant context immediately, load documents in background
         setTenantContext(context);

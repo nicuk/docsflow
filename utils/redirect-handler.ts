@@ -42,7 +42,7 @@ export class RedirectHandler {
       return true
     }
 
-    if (!userData.tenantId) {
+    if (!userData.tenant?.id) {
       await this.redirectWithLoading({
         destination: '/onboarding', 
         message: 'Creating your workspace...'

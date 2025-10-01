@@ -247,7 +247,7 @@ export default function OnboardingFlow() {
       // Store invitation request data
       localStorage.setItem('invitation-request', JSON.stringify({
         subdomain: domain,
-        userEmail: userData.email,
+        userEmail: userData.user?.email || '',
         companyName: onboardingData?.displayName || 'Unknown Company',
         requestType: 'join_existing'
       }));
