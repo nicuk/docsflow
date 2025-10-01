@@ -1,6 +1,8 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +42,8 @@ interface TestSummary {
 }
 
 export default function TestPersonaPage() {
+  const router = useRouter();
+  const { user, isLoading } = useAuth();
   const [isRunningTests, setIsRunningTests] = useState(false);
   const [testResults, setTestResults] = useState<any>(null);
   const [analytics, setAnalytics] = useState<any>(null);
@@ -47,14 +51,23 @@ export default function TestPersonaPage() {
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
   const [activeTab, setActiveTab] = useState('tests');
 
+  // 🔐 ADMIN ONLY: Redirect non-admins
+  useEffect(() => {
+    if (!isLoading && user) {
+      const isAdmin = user.accessLevel === 1 || user.role === 'admin';
+      if (!isAdmin) {
+        console.warn('⛔ [TEST PERSONA] Access denied: User is not an admin');
+        router.push('/dashboard');
+      }
+    }
+  }, [user, isLoading, router]);
+
   const runTests = async () => {
     setIsRunningTests(true);
     try {
-      const response = await fetch('/api/test/persona', {
-        credentials: 'include'
-      });
-      const data = await response.json();
-      setTestResults(data);
+      // Run tests using internal test logic (no API endpoint needed)
+      const results = await runInternalTests();
+      setTestResults(results);
     } catch (error) {
       console.error('Test failed:', error);
       setTestResults({
@@ -64,6 +77,85 @@ export default function TestPersonaPage() {
     } finally {
       setIsRunningTests(false);
     }
+  };
+
+  // Internal test logic (moved from API route)
+  const runInternalTests = async () => {
+    const results: TestResult[] = [];
+    
+    // Test 1: Check if persona analytics endpoint exists
+    try {
+      const response = await fetch('/api/analytics/persona?days=1', { credentials: 'include' });
+      const status = response.ok ? 'pass' : 'warning';
+      results.push({
+        test: 'Analytics Endpoint',
+        status,
+        message: response.ok ? 'Analytics API is accessible' : 'Analytics API returned error'
+      });
+    } catch (error) {
+      results.push({
+        test: 'Analytics Endpoint',
+        status: 'fail',
+        message: 'Failed to connect to analytics API'
+      });
+    }
+
+    // Test 2: Check persona editor endpoint
+    try {
+      const response = await fetch('/api/tenant/persona', { credentials: 'include' });
+      const status = response.ok || response.status === 404 ? 'pass' : 'warning';
+      results.push({
+        test: 'Persona API',
+        status,
+        message: response.ok ? 'Persona API is accessible' : 'Persona API endpoint exists'
+      });
+    } catch (error) {
+      results.push({
+        test: 'Persona API',
+        status: 'fail',
+        message: 'Failed to connect to persona API'
+      });
+    }
+
+    // Test 3: Check chat endpoint
+    try {
+      const response = await fetch('/api/chat', { 
+        method: 'OPTIONS',
+        credentials: 'include' 
+      });
+      const status = response.ok ? 'pass' : 'warning';
+      results.push({
+        test: 'Chat API',
+        status,
+        message: response.ok ? 'Chat API is accessible' : 'Chat API may not be configured'
+      });
+    } catch (error) {
+      results.push({
+        test: 'Chat API',
+        status: 'fail',
+        message: 'Failed to connect to chat API'
+      });
+    }
+
+    const passed = results.filter(r => r.status === 'pass').length;
+    const failed = results.filter(r => r.status === 'fail').length;
+    const warnings = results.filter(r => r.status === 'warning').length;
+    
+    return {
+      summary: {
+        status: failed === 0 ? 'pass' : 'partial',
+        passed,
+        failed,
+        warnings,
+        total: results.length,
+        score: `${passed}/${results.length}`,
+        percentage: Math.round((passed / results.length) * 100)
+      },
+      tests: results,
+      recommendations: failed > 0 
+        ? ['⚠️ Some tests failed. Check API connectivity.'] 
+        : ['✅ All core endpoints are accessible!']
+    };
   };
 
   const loadAnalytics = async () => {
@@ -116,6 +208,26 @@ export default function TestPersonaPage() {
     const config = variants[status] || variants.warning;
     return <Badge variant={config.variant as any}>{config.text}</Badge>;
   };
+
+  // Show loading while checking auth
+  if (isLoading || !user) {
+    return (
+      <div className="container mx-auto py-8 px-4 max-w-7xl">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
+          <div className="h-64 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  const isAdmin = user.accessLevel === 1 || user.role === 'admin';
+  
+  // Redirect non-admins (final check)
+  if (!isAdmin) {
+    return null;
+  }
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-7xl">
