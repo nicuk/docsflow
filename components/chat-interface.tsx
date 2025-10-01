@@ -611,17 +611,14 @@ Please try again in a moment. If the issue persists, you can still use the inter
           <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
             <MessageSquare className="h-3.5 w-3.5 text-white" />
           </div>
-          <h1 className="text-base font-bold text-gray-900 dark:text-white">DocsFlow</h1>
+          <div>
+            <h1 className="text-base font-bold text-gray-900 dark:text-white">DocsFlow Chat</h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400">AI Document Assistant</p>
+          </div>
         </div>
 
-        {/* Animated conversation context */}
-        {currentConversationId && (
-          <div className="flex-1 px-3 text-center">
-            <p className="text-xs text-gray-600 dark:text-gray-400 truncate animate-pulse">
-              Chat Assistant • AI-powered document analysis
-            </p>
-          </div>
-        )}
+        {/* Spacer for centering buttons */}
+        <div className="flex-1"></div>
 
         <div className="flex items-center space-x-0.5">
           <Button 
@@ -752,9 +749,9 @@ Please try again in a moment. If the issue persists, you can still use the inter
                     <div key={message.id}>
                       {message.type === "user" && (
                         <div className="flex justify-end">
-                          <div className="max-w-[85%] sm:max-w-[70%]">
+                          <div className="max-w-[90%] sm:max-w-[80%]">
                             <div className="bg-blue-600 text-white rounded-xl rounded-br-md px-3 py-1.5 shadow-sm">
-                              <p className="text-sm leading-relaxed">{message.content}</p>
+                              <p className="text-sm leading-relaxed break-words">{message.content}</p>
                             </div>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 text-right">
                               {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -765,14 +762,14 @@ Please try again in a moment. If the issue persists, you can still use the inter
 
                       {message.type === "ai" && (
                         <div className="flex justify-start">
-                          <div className="max-w-[85%] sm:max-w-[75%]">
+                          <div className="max-w-[95%] sm:max-w-[85%]">
                             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl rounded-bl-md px-3 py-1.5 shadow-sm">
                               <div className="flex items-center space-x-1 mb-1">
                                 <Sparkles className="h-3 w-3 text-blue-600" />
                                 <span className="text-xs font-medium text-blue-600 dark:text-blue-400">AI Assistant</span>
                               </div>
 
-                              <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed mb-1.5">
+                              <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed mb-1.5 break-words">
                                 {message.content}
                               </p>
 
@@ -867,7 +864,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
 
                       {message.type === "loading" && (
                         <div className="flex justify-start">
-                          <div className="max-w-[85%] sm:max-w-[75%]">
+                          <div className="max-w-[95%] sm:max-w-[85%]">
                             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl rounded-bl-md px-3 py-1.5 shadow-sm">
                               <div className="flex items-center space-x-1 mb-1">
                                 <Sparkles className="h-3 w-3 text-blue-600" />
