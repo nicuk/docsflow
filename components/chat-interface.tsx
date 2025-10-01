@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { Send, Paperclip, RotateCcw, Download, FileText, MessageSquare, Sparkles, ChevronRight, Plus, History, Trash2 } from "lucide-react"
+import { Send, Paperclip, RotateCcw, Download, FileText, MessageSquare, Sparkles, ChevronRight, Plus, History, Trash2, X } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
 import ConfidenceIndicator from "@/components/confidence-indicator"
 import SourceViewerModal from "@/components/source-viewer-modal"
@@ -119,6 +119,45 @@ const storage = {
       }))
     }
     return []
+  },
+
+  // 🚀 SURGICAL FIX: Clean up invalid conversation IDs
+  cleanupInvalidConversations: () => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(STORAGE_KEYS.conversations)
+      if (!stored) return;
+      
+      try {
+        const conversations = JSON.parse(stored) as Conversation[]
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+        
+        // Filter out conversations with invalid IDs (not UUID and not starting with 'local-')
+        const validConversations = conversations.filter(conv => {
+          const isValid = uuidRegex.test(conv.id) || conv.id.startsWith('local-')
+          if (!isValid) {
+            console.log(`🧹 Removing invalid conversation ID: ${conv.id}`)
+          }
+          return isValid
+        })
+        
+        if (validConversations.length !== conversations.length) {
+          localStorage.setItem(STORAGE_KEYS.conversations, JSON.stringify(validConversations))
+          console.log(`✅ Cleaned up ${conversations.length - validConversations.length} invalid conversations`)
+        }
+      } catch (error) {
+        console.error('Error cleaning up conversations:', error)
+      }
+    }
+  },
+
+  // 🚀 Clear all chat data (useful for testing/debugging)
+  clearAll: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEYS.conversations)
+      localStorage.removeItem(STORAGE_KEYS.currentConversationId)
+      localStorage.removeItem(STORAGE_KEYS.messages)
+      console.log('✅ Cleared all chat localStorage data')
+    }
   }
 }
 
@@ -683,14 +722,14 @@ Please try again in a moment. If the issue persists, you can still use the inter
 
           <div className="flex-1 flex min-h-0">
             <div className="w-full max-w-none flex flex-col min-h-0">
-              <ScrollArea ref={scrollAreaRef} className="flex-1 px-6 py-4">
-                <div className="space-y-3 max-w-none">
+              <ScrollArea ref={scrollAreaRef} className="flex-1 px-4 py-2">
+                <div className="space-y-2 max-w-none">
                   {messages.map((message) => (
                     <div key={message.id}>
                       {message.type === "user" && (
                         <div className="flex justify-end">
                           <div className="max-w-[85%] sm:max-w-[70%]">
-                            <div className="bg-blue-600 text-white rounded-xl rounded-br-md px-3 py-2 shadow-sm">
+                            <div className="bg-blue-600 text-white rounded-xl rounded-br-md px-3 py-1.5 shadow-sm">
                               <p className="text-sm leading-relaxed">{message.content}</p>
                             </div>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 text-right">
@@ -703,25 +742,25 @@ Please try again in a moment. If the issue persists, you can still use the inter
                       {message.type === "ai" && (
                         <div className="flex justify-start">
                           <div className="max-w-[85%] sm:max-w-[75%]">
-                            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl rounded-bl-md px-3 py-2 shadow-sm">
+                            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl rounded-bl-md px-3 py-1.5 shadow-sm">
                               <div className="flex items-center space-x-1 mb-1">
                                 <Sparkles className="h-3 w-3 text-blue-600" />
                                 <span className="text-xs font-medium text-blue-600 dark:text-blue-400">AI Assistant</span>
                               </div>
 
-                              <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed mb-2">
+                              <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed mb-1.5">
                                 {message.content}
                               </p>
 
                               {/* Sources */}
                               {message.sources && message.sources.length > 0 && (
-                                <div className="border-t border-gray-100 dark:border-gray-700 pt-2 mt-2">
+                                <div className="border-t border-gray-100 dark:border-gray-700 pt-1.5 mt-1.5">
                                   <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Sources:</p>
-                                  <div className="space-y-2">
+                                  <div className="space-y-1.5">
                                     {message.sources.map((source, idx) => (
                                       <button
                                         key={idx}
-                                        className="flex items-start space-x-2 text-left w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                                        className="flex items-start space-x-2 text-left w-full p-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                                         onClick={() => {
                                           setSelectedSource({
                                             filename: source.document || 'Unknown Document',
@@ -755,7 +794,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
 
                               {/* Confidence Indicator */}
                               {message.confidence && (
-                                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                                <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
                                   <ConfidenceIndicator 
                                     score={message.confidence} 
                                     showLabel={true}
@@ -766,14 +805,14 @@ Please try again in a moment. If the issue persists, you can still use the inter
 
                               {/* Follow-up Suggestions */}
                               {message.suggestions && message.suggestions.length > 0 && (
-                                <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Ask about:</p>
-                                  <div className="flex flex-wrap gap-2">
+                                <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Ask about:</p>
+                                  <div className="flex flex-wrap gap-1.5">
                                     {message.suggestions.map((suggestion, idx) => (
                                       <button
                                         key={idx}
                                         onClick={() => handleSuggestionClick(suggestion)}
-                                        className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-xs hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
+                                        className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-xs hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
                                       >
                                         {suggestion}
                                         <ChevronRight className="h-3 w-3 ml-1" />
@@ -794,7 +833,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
                       {message.type === "loading" && (
                         <div className="flex justify-start">
                           <div className="max-w-[85%] sm:max-w-[75%]">
-                            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl rounded-bl-md px-3 py-2 shadow-sm">
+                            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl rounded-bl-md px-3 py-1.5 shadow-sm">
                               <div className="flex items-center space-x-1 mb-1">
                                 <Sparkles className="h-3 w-3 text-blue-600" />
                                 <span className="text-xs font-medium text-blue-600 dark:text-blue-400">AI Assistant</span>
@@ -825,13 +864,13 @@ Please try again in a moment. If the issue persists, you can still use the inter
               </ScrollArea>
 
               {/* Input Area */}
-              <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 shrink-0">
+              <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-2 shrink-0">
                 <div className="max-w-4xl mx-auto">
-                  <div className="flex items-end space-x-3">
+                  <div className="flex items-end space-x-2">
                     <Button
                       variant="outline"
                       size="icon"
-                      className="flex-shrink-0 mb-2 bg-transparent"
+                      className="flex-shrink-0 bg-transparent"
                       onClick={() => {
                         // Create file input and trigger file selection
                         const input = document.createElement('input');
@@ -917,7 +956,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
                           }
                         }}
                         placeholder={`Ask anything about your business documents... e.g., "${placeholderSuggestions[currentPlaceholder]}"`}
-                        className="min-h-[44px] resize-none rounded-xl border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500"
+                        className="h-10 resize-none rounded-xl border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500"
                         disabled={isLoading || isCreatingConversation}
                       />
                     </div>
@@ -925,13 +964,13 @@ Please try again in a moment. If the issue persists, you can still use the inter
                     <Button
                       onClick={() => handleSendMessage(inputValue)}
                       disabled={!inputValue.trim() || isLoading || isCreatingConversation}
-                      className="flex-shrink-0 mb-2 bg-blue-600 hover:bg-blue-700"
+                      className="flex-shrink-0 h-10 bg-blue-600 hover:bg-blue-700"
                     >
                       <Send className="h-4 w-4" />
                     </Button>
                   </div>
 
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-center">
                     AI can make mistakes. Verify important information with source documents.
                     {currentConversationId && <span className="text-blue-600"> • Conversation will be saved automatically</span>}
                   </p>
