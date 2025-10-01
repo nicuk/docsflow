@@ -162,7 +162,23 @@ export default function LoginPage() {
     setIsLoading(true)
     
     try {
-      // 🎯 CLERK GOOGLE OAUTH: Built-in, works perfectly across subdomains
+      // 🎯 CRITICAL FIX: Google OAuth doesn't support wildcards
+      // Must redirect to main domain for OAuth, then back to tenant subdomain
+      const currentHostname = typeof window !== 'undefined' ? window.location.hostname : '';
+      const isSubdomain = currentHostname.includes('.docsflow.app') && 
+                         !currentHostname.startsWith('www.') &&
+                         currentHostname !== 'docsflow.app';
+      
+      if (isSubdomain) {
+        // Redirect to main domain for OAuth (Google doesn't support tenant subdomains)
+        const mainDomain = process.env.NODE_ENV === 'production' 
+          ? 'https://docsflow.app'
+          : 'http://localhost:3000';
+        window.location.href = `${mainDomain}/login?oauth=google&return_subdomain=${currentHostname}`;
+        return;
+      }
+      
+      // 🎯 CLERK GOOGLE OAUTH: Only works from main domain
       await signIn.authenticateWithRedirect({
         strategy: "oauth_google",
         redirectUrl: "/sso-callback",

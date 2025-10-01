@@ -19,16 +19,21 @@ const isPublicRoute = createRouteMatcher([
   '/api/webhooks(.*)', // Allow webhooks without auth
 ])
 
-// Define admin routes (require Basic Auth)
+// Define admin routes (require auth)
 const isAdminRoute = createRouteMatcher([
   '/dashboard/admin(.*)',
+])
+
+// Define super admin routes (require HTTP Basic Auth + Clerk)
+const isSuperAdminRoute = createRouteMatcher([
+  '/dashboard/admin/system-health(.*)',
 ])
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth()
   
-  // 🔐 HTTP Basic Auth for Admin Routes (additional security layer)
-  if (isAdminRoute(req)) {
+  // 🔐 SUPER ADMIN ROUTES: HTTP Basic Auth (for system-health only)
+  if (isSuperAdminRoute(req)) {
     const basicAuth = req.headers.get('authorization')
     
     if (basicAuth) {
@@ -39,20 +44,19 @@ export default clerkMiddleware(async (auth, req) => {
       const validPassword = process.env.ADMIN_AUTH_PASSWORD
       
       if (user === validUser && pwd === validPassword) {
-        // Basic Auth successful, continue to Clerk auth
-        // (Don't return here, let it continue to Clerk checks below)
+        // Basic Auth successful, continue to Clerk auth below
       } else {
         // Invalid credentials
         return new NextResponse('Invalid credentials', {
           status: 401,
-          headers: { 'WWW-Authenticate': 'Basic realm="Admin Area"' },
+          headers: { 'WWW-Authenticate': 'Basic realm="Super Admin Area"' },
         })
       }
     } else {
       // No auth header, require Basic Auth
-      return new NextResponse('Authentication required', {
+      return new NextResponse('Super Admin authentication required', {
         status: 401,
-        headers: { 'WWW-Authenticate': 'Basic realm="Admin Area"' },
+        headers: { 'WWW-Authenticate': 'Basic realm="Super Admin Area"' },
       })
     }
   }

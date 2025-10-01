@@ -1,12 +1,26 @@
 # Admin System Health Security Setup
 
-## 🔒 Recommended Approach: HTTP Basic Authentication
+## 🔒 Two-Tier Admin Access Control
+
+### Access Levels:
+1. **Tenant Admin** (`/dashboard/admin/*`)
+   - Access: Clerk authentication only
+   - Users: Tenant administrators
+   - Permissions: Manage their tenant's users, documents, settings
+
+2. **Super Admin** (`/dashboard/admin/system-health`)
+   - Access: HTTP Basic Auth + Clerk authentication (double layer)
+   - Users: Platform owner only (you)
+   - Permissions: System health, all tenants, infrastructure monitoring
+
+## 🔒 HTTP Basic Authentication (Super Admin Only)
 
 ### Why This Approach?
 - ✅ **Free** - Works on Vercel free tier
 - ✅ **Secure** - Credentials stored as environment variables
 - ✅ **Simple** - Browser-native authentication
 - ✅ **Layered** - Works WITH Clerk role-based access (double protection)
+- ✅ **Specific** - Only protects `/dashboard/admin/system-health`
 - ✅ **No external dependencies** - Pure Next.js middleware
 
 ---
@@ -28,22 +42,17 @@ ADMIN_AUTH_USERNAME=admin
 ADMIN_AUTH_PASSWORD=<paste-generated-password-here>
 ```
 
-### Step 3: Enable the Middleware
+### Step 3: Enable the Middleware (ALREADY CONFIGURED ✅)
 
-Option A: **Add to existing middleware.ts** (Recommended)
+**Current Setup in `middleware.ts`:**
 ```typescript
-// In your existing middleware.ts, add:
-
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
-import { NextResponse } from 'next/server'
-
+// Two-tier admin access control
 const isAdminRoute = createRouteMatcher(['/dashboard/admin(.*)'])
+const isSuperAdminRoute = createRouteMatcher(['/dashboard/admin/system-health(.*)'])
 
 export default clerkMiddleware(async (auth, req) => {
-  // ... existing Clerk auth logic ...
-
-  // 🔐 HTTP Basic Auth for Admin Routes
-  if (isAdminRoute(req)) {
+  // 🔐 SUPER ADMIN ROUTES: HTTP Basic Auth (for system-health only)
+  if (isSuperAdminRoute(req)) {
     const basicAuth = req.headers.get('authorization')
     
     if (basicAuth) {
@@ -51,28 +60,30 @@ export default clerkMiddleware(async (auth, req) => {
       const [user, pwd] = Buffer.from(authValue, 'base64').toString().split(':')
       
       if (user === process.env.ADMIN_AUTH_USERNAME && pwd === process.env.ADMIN_AUTH_PASSWORD) {
-        // Auth successful, continue
-        return NextResponse.next()
+        // Auth successful, continue to Clerk auth
+      } else {
+        return new NextResponse('Invalid credentials', {
+          status: 401,
+          headers: { 'WWW-Authenticate': 'Basic realm="Super Admin Area"' },
+        })
       }
+    } else {
+      return new NextResponse('Super Admin authentication required', {
+        status: 401,
+        headers: { 'WWW-Authenticate': 'Basic realm="Super Admin Area"' },
+      })
     }
-    
-    // Return 401 with Basic Auth challenge
-    return new NextResponse('Authentication required', {
-      status: 401,
-      headers: {
-        'WWW-Authenticate': 'Basic realm="Admin Area", charset="UTF-8"',
-      },
-    })
   }
-
-  // ... rest of existing middleware logic ...
+  
+  // Regular admin routes only need Clerk auth (handled below)
+  // ... rest of middleware ...
 })
 ```
 
-Option B: **Separate middleware** (if you prefer isolation)
-- Rename `middleware-admin-auth.ts` to `middleware.ts`
-- Place in `app/dashboard/admin/` directory
-- Next.js will automatically use it for that route segment
+**Access Control Summary:**
+- ✅ `/dashboard/admin/users` → Clerk auth only (tenant admins)
+- ✅ `/dashboard/admin/settings` → Clerk auth only (tenant admins)
+- 🔐 `/dashboard/admin/system-health` → HTTP Basic Auth + Clerk (super admin only)
 
 ### Step 4: Redeploy to Vercel
 ```bash
