@@ -606,7 +606,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
   return (
     <div className="flex flex-col h-full w-full bg-gray-50 dark:bg-gray-900 overflow-hidden">
       {/* Minimal control bar integrated with layout */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-1 py-1 flex items-center justify-end shrink-0 w-full">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-2 py-1.5 flex items-center justify-end shrink-0 w-full">
         <div className="flex items-center space-x-0.5">
           <Button 
             variant="ghost" 
@@ -711,7 +711,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
         <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-hidden">
           {/* Current Conversation Info */}
           {currentConversationId && (
-            <div className="bg-blue-50 dark:bg-blue-950 border-b border-blue-200 dark:border-blue-800 px-1 py-1 shrink-0 w-full">
+            <div className="bg-blue-50 dark:bg-blue-950 border-b border-blue-200 dark:border-blue-800 px-2 py-1 shrink-0 w-full">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center space-x-2 min-w-0 flex-1">
                   <p className="text-xs font-medium text-blue-900 dark:text-blue-100 truncate">

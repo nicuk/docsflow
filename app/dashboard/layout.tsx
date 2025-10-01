@@ -306,7 +306,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 h-[calc(100vh-3rem)] w-full overflow-hidden p-2 md:p-3">
+        <main className={`flex-1 h-[calc(100vh-3rem)] w-full overflow-hidden ${pathname === '/dashboard/chat' ? 'p-0' : 'p-2 md:p-3'}`}>
           <div className="h-full w-full max-w-full overflow-hidden">
             {children}
           </div>
