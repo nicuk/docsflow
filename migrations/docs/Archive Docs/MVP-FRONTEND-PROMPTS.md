@@ -133,7 +133,7 @@ SUPPORTED FORMATS:
 - Documents: PDF, DOC, DOCX, TXT, RTF
 - Spreadsheets: XLS, XLSX, CSV
 - Images: JPG, JPEG, PNG (with OCR capability)
-- Maximum: 10 files per batch upload
+- Maximum: 5 files per batch upload (3 concurrent uploads)
 
 DESIGN REQUIREMENTS:
 - Intuitive drag-and-drop UX with clear visual cues

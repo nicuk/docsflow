@@ -198,6 +198,9 @@ export default function ChatInterface() {
   useEffect(() => {
     // Batch all initialization operations
     const initializeChat = async () => {
+      // 🚀 SURGICAL FIX: Clean up invalid conversations first
+      storage.cleanupInvalidConversations()
+      
       // Load conversations from localStorage first
       const storedConversations = storage.loadConversations()
       setConversations(storedConversations)

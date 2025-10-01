@@ -365,6 +365,8 @@ async function processDocumentContentEnhanced(
   const documentType = getDocumentType(mimeType, filename);
   
   // 🎯 SMART TIERED PROCESSING: Optimize based on document size
+  // 🚀 VERCEL TIMEOUT FIX: Increased TIER 1 threshold and added timeout protection
+  // Background processing has ~15s limit on Hobby plan, so we prioritize fast processing
   console.log(`Creating contextual chunks for ${filename}...`);
   let contextualChunks;
   
@@ -373,26 +375,23 @@ async function processDocumentContentEnhanced(
   
   console.log(`📊 Document analysis: ${contentLength.toLocaleString()} chars (${fileSizeMB.toFixed(2)} MB equivalent)`);
   
-  if (contentLength < 5000) {
-    // TIER 1: Small documents (< 5KB) - Single chunk, no AI
-    console.log(`🚀 TIER 1: Small document - Single chunk processing (no AI calls)`);
-    contextualChunks = [{
-      content: textContent,
-      contextual_content: `${documentType} content: ${textContent}`,
-      chunk_index: 0,
-      context_summary: `${documentType} document: ${filename}`,
-      confidence_indicators: { length: contentLength, complexity: 'simple' }
-    }];
+  if (contentLength < 10000) {
+    // TIER 1: Small documents (< 10KB) - Fast processing, no AI
+    // 🚀 INCREASED THRESHOLD: Prevent OpenRouter timeout issues for small files
+    console.log(`🚀 TIER 1: Small document - Fast processing (no AI calls)`);
+    contextualChunks = await createFallbackChunks(textContent, filename, documentType);
     
   } else if (contentLength < 100000) {
-    // TIER 2: Medium documents (5KB-100KB) - Enhanced AI chunking
+    // TIER 2: Medium documents (10KB-100KB) - Enhanced AI chunking with timeout protection
     console.log(`📄 TIER 2: Medium document - Enhanced AI chunking (optimal quality)`);
     try {
-      contextualChunks = await enhancedChunking.createContextualChunks(
-        textContent,
-        filename,
-        documentType
-      );
+      // 🚀 TIMEOUT PROTECTION: Use faster timeout to prevent Vercel function timeout
+      contextualChunks = await Promise.race([
+        enhancedChunking.createContextualChunks(textContent, filename, documentType),
+        new Promise<any>((_, reject) => 
+          setTimeout(() => reject(new Error('AI chunking timeout')), 8000) // 8 second timeout
+        )
+      ]);
     } catch (error) {
       console.error('TIER 2: AI chunking failed, using fallback basic chunking:', error);
       // Fallback to basic chunking for Tier 2
@@ -403,11 +402,13 @@ async function processDocumentContentEnhanced(
     // TIER 3: Large documents (100KB-500KB) - Basic AI chunking (document context only)
     console.log(`📚 TIER 3: Large document - Basic AI chunking (document context only)`);
     try {
-      contextualChunks = await enhancedChunking.createBasicContextualChunks(
-        textContent,
-        filename,
-        documentType
-      );
+      // 🚀 TIMEOUT PROTECTION: Prevent Vercel function timeout
+      contextualChunks = await Promise.race([
+        enhancedChunking.createBasicContextualChunks(textContent, filename, documentType),
+        new Promise<any>((_, reject) => 
+          setTimeout(() => reject(new Error('AI chunking timeout')), 8000) // 8 second timeout
+        )
+      ]);
     } catch (error) {
       console.error('TIER 3: Basic AI chunking failed, using simple chunking:', error);
       contextualChunks = await createFallbackChunks(textContent, filename, documentType);

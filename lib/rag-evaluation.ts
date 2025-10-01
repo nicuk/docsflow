@@ -35,8 +35,8 @@ export class RAGEvaluator {
     {
       id: 'fact-2',
       query: 'How many files can be uploaded at once?',
-      expectedAnswer: 'Maximum 10 files per upload',
-      requiredFacts: ['10 files', 'maximum', 'per upload'],
+      expectedAnswer: 'Maximum 5 files per upload with 3 concurrent uploads',
+      requiredFacts: ['5 files', 'maximum', 'per upload', 'concurrent'],
       category: 'factual',
       difficulty: 'easy'
     },

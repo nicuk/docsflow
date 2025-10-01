@@ -40,8 +40,13 @@ export async function GET(
     const supabase = getSupabaseClient();
     const conversationId = params.id;
 
-    // Handle local conversations (frontend localStorage-based)
-    if (conversationId.startsWith('local-')) {
+    // 🚀 SURGICAL FIX: Validate conversation ID format
+    // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(conversationId);
+    
+    // Handle non-UUID conversations (frontend localStorage-based or malformed IDs)
+    if (!isValidUUID) {
+      console.log(`🔍 Non-UUID conversation ID detected: ${conversationId} - treating as local`);
       return NextResponse.json(
         { 
           conversation: {
@@ -52,7 +57,8 @@ export async function GET(
           messages: [],
           metadata: {
             source: 'local',
-            tenantId
+            tenantId,
+            note: 'This conversation exists only in browser localStorage'
           }
         },
         { headers: corsHeaders }
@@ -90,9 +96,23 @@ export async function GET(
     }
 
     if (convError || !conversation) {
+      // 🚀 SURGICAL FIX: Instead of 404, return empty conversation
+      // This prevents error cascade in frontend and allows graceful recovery
+      console.log(`⚠️ Conversation ${conversationId} not found in database, returning empty conversation`);
       return NextResponse.json(
-        { error: 'Conversation not found' },
-        { status: 404, headers: corsHeaders }
+        {
+          conversation: {
+            id: conversationId,
+            title: 'Conversation Not Found',
+            createdAt: new Date().toISOString()
+          },
+          messages: [],
+          metadata: {
+            source: 'not_found',
+            note: 'This conversation may have been deleted or never existed'
+          }
+        },
+        { headers: corsHeaders }
       );
     }
 

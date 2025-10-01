@@ -171,14 +171,20 @@ export default function DocumentsPage() {
       "image/jpeg": [".jpg", ".jpeg"],
       "image/png": [".png"],
     },
-    maxFiles: 10,
+    maxFiles: 5, // 🚀 FIX: Reduced from 10 to 5 for better concurrent upload handling
     maxSize: 50 * 1024 * 1024, // 50MB max for any file
     // 🚀 FIX: Keep dropzone active even during uploads
     disabled: false,
   })
 
-  // Handle file uploads - REAL API INTEGRATION
-  const handleFilesUpload = (files: File[]) => {
+  // Handle file uploads - REAL API INTEGRATION with concurrent upload limiting
+  const handleFilesUpload = async (files: File[]) => {
+    // 🚀 FIX: Limit to 5 files max for better UX
+    if (files.length > 5) {
+      alert(`Please upload a maximum of 5 files at once. You selected ${files.length} files.`);
+      return;
+    }
+
     // Create uploading file objects
     const newUploadingFiles: UploadingFile[] = files.map((file) => ({
       id: `upload-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -190,10 +196,39 @@ export default function DocumentsPage() {
     setUploadingFiles((prev) => [...prev, ...newUploadingFiles])
     setIsUploadDialogOpen(true)
 
-    // Upload each file to the backend
-    newUploadingFiles.forEach((uploadingFile) => {
-      uploadFileToBackend(uploadingFile.id, uploadingFile.file)
-    })
+    // 🚀 FIX: Upload files with concurrency control (3 at a time)
+    await uploadFilesWithConcurrencyLimit(newUploadingFiles, 3)
+  }
+
+  // 🚀 NEW: Upload files with concurrent limit to prevent overwhelming browser/server
+  const uploadFilesWithConcurrencyLimit = async (files: UploadingFile[], limit: number) => {
+    const queue = [...files];
+    const active: Promise<void>[] = [];
+
+    while (queue.length > 0 || active.length > 0) {
+      // Fill up to the concurrent limit
+      while (active.length < limit && queue.length > 0) {
+        const uploadingFile = queue.shift()!;
+        const uploadPromise = uploadFileToBackend(uploadingFile.id, uploadingFile.file)
+          .then(() => {
+            // Remove from active when done
+            const index = active.indexOf(uploadPromise);
+            if (index > -1) active.splice(index, 1);
+          })
+          .catch(() => {
+            // Remove from active even on error
+            const index = active.indexOf(uploadPromise);
+            if (index > -1) active.splice(index, 1);
+          });
+        
+        active.push(uploadPromise);
+      }
+
+      // Wait for at least one to complete before continuing
+      if (active.length > 0) {
+        await Promise.race(active);
+      }
+    }
   }
 
   // Real backend file upload with progress tracking
@@ -787,14 +822,14 @@ export default function DocumentsPage() {
             {isDragActive ? "Drop your files here" : "Drag & drop your business documents here"}
           </h3>
           <p className="text-muted-foreground mb-4 max-w-md">
-            or click to browse your files. We support PDF, DOC, DOCX, XLS, XLSX, CSV, JPG, PNG and more.
+            or click to browse your files. We support PDF, DOC, DOCX, XLS, XLSX, CSV, JPG, PNG and more. <strong>Max 5 files at once.</strong>
           </p>
           <div className="flex flex-wrap justify-center gap-2 mb-4">
             <Badge variant="outline">PDF (50MB)</Badge>
             <Badge variant="outline">DOC/DOCX (50MB)</Badge>
             <Badge variant="outline">TXT/RTF (50MB)</Badge>
-            <Badge variant="outline">XLS/XLSX/CSV (25MB)</Badge>
-            <Badge variant="outline">JPG/PNG (10MB)</Badge>
+            <Badge variant="outline">XLS/XLSX/CSV (50MB)</Badge>
+            <Badge variant="outline">JPG/PNG (50MB)</Badge>
           </div>
           <Button variant="outline" className="gap-2 bg-transparent">
             <Upload className="h-4 w-4" /> Select files
@@ -1062,7 +1097,7 @@ export default function DocumentsPage() {
           )}
 
           <DialogFooter className="flex items-center justify-between">
-            <div className="text-xs text-muted-foreground">Maximum 10 files, 50MB per file</div>
+            <div className="text-xs text-muted-foreground">Maximum 5 files, 50MB per file (3 concurrent uploads)</div>
             <Button 
               type="submit" 
               onClick={() => {
