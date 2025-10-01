@@ -442,7 +442,7 @@ export default function TestPersonaPage() {
                           <div>
                             <p className="text-sm text-muted-foreground">Avg Quality</p>
                             <p className="text-3xl font-bold">
-                              {(analytics.data.quality.average * 100).toFixed(0)}%
+                              {((analytics.data.quality.average || 0) * 100).toFixed(0)}%
                             </p>
                           </div>
                           <Target className="w-8 h-8 text-blue-500" />
@@ -487,8 +487,8 @@ export default function TestPersonaPage() {
                     <CardContent>
                       <div className="space-y-3">
                         {['excellent', 'good', 'fair', 'poor'].map((level) => {
-                          const count = analytics.data.quality.distribution[level];
-                          const percentage = analytics.data.quality.distribution.percentages[level];
+                          const count = analytics.data.quality.distribution[level] || 0;
+                          const percentage = analytics.data.quality.distribution.percentages[level] || 0;
                           const colors = {
                             excellent: 'bg-green-500',
                             good: 'bg-blue-500',
@@ -500,7 +500,7 @@ export default function TestPersonaPage() {
                               <div className="flex items-center justify-between mb-1">
                                 <span className="text-sm font-medium capitalize">{level}</span>
                                 <span className="text-sm text-muted-foreground">
-                                  {count} ({percentage.toFixed(1)}%)
+                                  {count} ({Number(percentage).toFixed(1)}%)
                                 </span>
                               </div>
                               <div className="w-full bg-gray-200 rounded-full h-2">
@@ -576,19 +576,19 @@ export default function TestPersonaPage() {
                         <div>
                           <p className="text-sm text-blue-600">Usage Count</p>
                           <p className="text-2xl font-bold text-blue-900">
-                            {comparison.data.custom.count}
+                            {comparison.data.custom.count || 0}
                           </p>
                         </div>
                         <div>
                           <p className="text-sm text-blue-600">Avg Quality</p>
                           <p className="text-2xl font-bold text-blue-900">
-                            {(comparison.data.custom.avgQuality * 100).toFixed(1)}%
+                            {((comparison.data.custom.avgQuality || 0) * 100).toFixed(1)}%
                           </p>
                         </div>
                         <div>
                           <p className="text-sm text-blue-600">Avg Response Time</p>
                           <p className="text-lg font-semibold text-blue-900">
-                            {Math.round(comparison.data.custom.avgResponseTime)}ms
+                            {Math.round(comparison.data.custom.avgResponseTime || 0)}ms
                           </p>
                         </div>
                       </CardContent>
@@ -602,19 +602,19 @@ export default function TestPersonaPage() {
                         <div>
                           <p className="text-sm text-gray-600">Usage Count</p>
                           <p className="text-2xl font-bold text-gray-900">
-                            {comparison.data.default.count}
+                            {comparison.data.default.count || 0}
                           </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Avg Quality</p>
                           <p className="text-2xl font-bold text-gray-900">
-                            {(comparison.data.default.avgQuality * 100).toFixed(1)}%
+                            {((comparison.data.default.avgQuality || 0) * 100).toFixed(1)}%
                           </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Avg Response Time</p>
                           <p className="text-lg font-semibold text-gray-900">
-                            {Math.round(comparison.data.default.avgResponseTime)}ms
+                            {Math.round(comparison.data.default.avgResponseTime || 0)}ms
                           </p>
                         </div>
                       </CardContent>
@@ -630,9 +630,9 @@ export default function TestPersonaPage() {
                   }`}>
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-center gap-4">
-                        {comparison.data.comparison.qualityImprovement > 0 ? (
+                        {(comparison.data.comparison.qualityImprovement || 0) > 0 ? (
                           <TrendingUp className="w-8 h-8 text-green-600" />
-                        ) : comparison.data.comparison.qualityImprovement < 0 ? (
+                        ) : (comparison.data.comparison.qualityImprovement || 0) < 0 ? (
                           <TrendingDown className="w-8 h-8 text-red-600" />
                         ) : (
                           <Minus className="w-8 h-8 text-gray-600" />
@@ -640,8 +640,8 @@ export default function TestPersonaPage() {
                         <div className="text-center">
                           <p className="text-sm text-muted-foreground mb-1">Quality Improvement</p>
                           <p className="text-4xl font-bold">
-                            {comparison.data.comparison.qualityImprovement > 0 ? '+' : ''}
-                            {comparison.data.comparison.qualityImprovement.toFixed(1)}%
+                            {(comparison.data.comparison.qualityImprovement || 0) > 0 ? '+' : ''}
+                            {(comparison.data.comparison.qualityImprovement || 0).toFixed(1)}%
                           </p>
                         </div>
                       </div>
