@@ -218,7 +218,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Desktop sidebar */}
       <aside
         className={`fixed inset-y-0 z-30 hidden md:flex flex-col bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ${
-          sidebarOpen ? 'w-64' : 'w-16'
+          sidebarOpen ? 'w-56' : 'w-16'
         }`}
       >
         <DesktopSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} user={user} />
@@ -227,7 +227,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main content area */}
       <div
         className={`flex-1 flex flex-col transition-all duration-300 ${
-          sidebarOpen ? 'md:ml-64' : 'md:ml-16'
+          sidebarOpen ? 'md:ml-56' : 'md:ml-16'
         }`}
       >
         {/* Top header */}
@@ -327,7 +327,7 @@ function DesktopSidebar({ isOpen, setIsOpen, user }: {
   return (
     <>
       {/* Sidebar header */}
-      <div className="flex items-center justify-between p-4">
+      <div className="flex items-center justify-between px-3 py-3">
         <div className="flex items-center gap-2">
           {isOpen ? (
             <DocsFlowBrand size="sm" variant="horizontal" />
@@ -362,14 +362,14 @@ function DesktopSidebar({ isOpen, setIsOpen, user }: {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                className={`flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
                   isActive
                     ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
                     : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
                 }`}
                 title={!isOpen ? item.name : undefined}
               >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
+                <item.icon className="h-4.5 w-4.5 flex-shrink-0" />
                 {isOpen && (
                   <>
                     <span className="flex-1">{item.name}</span>
@@ -393,9 +393,9 @@ function DesktopSidebar({ isOpen, setIsOpen, user }: {
 
       {/* User info */}
       {isOpen && (
-        <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9">
+        <div className="border-t border-gray-200 dark:border-gray-700 px-3 py-2.5">
+          <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
               <AvatarImage src={user.avatar} alt={user.name} />
               <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
             </Avatar>
@@ -432,13 +432,13 @@ function MobileSidebar({ user }: { user: { name: string; email: string; avatar: 
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                className={`flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
                   isActive
                     ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
                     : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
                 }`}
               >
-                <item.icon className="h-5 w-5" />
+                <item.icon className="h-4.5 w-4.5" />
                 <span className="flex-1">{item.name}</span>
                 {item.badge && (
                   <Badge variant="outline">
@@ -452,9 +452,9 @@ function MobileSidebar({ user }: { user: { name: string; email: string; avatar: 
       </ScrollArea>
 
       {/* Mobile user info */}
-      <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-9 w-9">
+      <div className="border-t border-gray-200 dark:border-gray-700 px-3 py-2.5">
+        <div className="flex items-center gap-2">
+          <Avatar className="h-8 w-8">
             <AvatarImage src={user.avatar} alt={user.name} />
             <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
           </Avatar>
