@@ -11,6 +11,8 @@ import { CitationEnhancer } from '@/lib/citation-enhancer';
 import { CircuitBreakerFactory } from '@/lib/circuit-breaker';
 import { degradationManager } from '@/lib/emergency-degradation';
 import { OpenRouterClient, MODEL_CONFIGS } from '@/lib/openrouter-client';
+import { queryClassifier } from '@/lib/query-complexity-classifier';
+import { costMonitor } from '@/lib/model-cost-monitor';
 
 // Initialize OpenRouter client for chat (lazy-loaded)
 let openRouterClient: OpenRouterClient | null = null;
@@ -179,6 +181,31 @@ Provide a helpful, accurate answer based ONLY on the provided context. If the co
     let answerText: string;
     let modelUsed: string;
     
+    // 🎯 SURGICAL: Classify query complexity before LLM selection
+    const complexityAnalysis = queryClassifier.classify(message);
+    console.log(`🎯 [COMPLEXITY CLASSIFIER] ${complexityAnalysis.reasoning}`);
+    console.log(`📊 [CLASSIFIER] Stats:`, queryClassifier.getStatistics());
+    
+    // 🚨 GUARDRAIL: Select models based on complexity
+    let selectedModels: string[];
+    switch (complexityAnalysis.complexity) {
+      case 'simple':
+        selectedModels = MODEL_CONFIGS.SIMPLE;
+        console.log('🟢 [ROUTING] Using SIMPLE tier (Mistral-7B, fast & cheap)');
+        break;
+      case 'medium':
+        selectedModels = MODEL_CONFIGS.MEDIUM;
+        console.log('🟡 [ROUTING] Using MEDIUM tier (Llama-3.1-8B, balanced)');
+        break;
+      case 'complex':
+        selectedModels = MODEL_CONFIGS.COMPLEX;
+        console.log('🔴 [ROUTING] Using COMPLEX tier (Claude Sonnet 3.5, premium quality)');
+        console.warn(`⚠️ [COST ALERT] Complex query detected - using premium model`);
+        break;
+      default:
+        selectedModels = MODEL_CONFIGS.MEDIUM;
+    }
+    
     try {
       // Lazy-load OpenRouter client
       if (!openRouterClient) {
@@ -186,7 +213,7 @@ Provide a helpful, accurate answer based ONLY on the provided context. If the co
       }
       
       const llmResponse = await openRouterClient.generateWithFallback(
-        MODEL_CONFIGS.CHAT,
+        selectedModels, // 🎯 Use complexity-based model selection
         messages,
         {
           max_tokens: 500,
@@ -197,6 +224,10 @@ Provide a helpful, accurate answer based ONLY on the provided context. If the co
       answerText = llmResponse.response;
       modelUsed = llmResponse.modelUsed;
       console.log(`🤖 Chat response generated using ${modelUsed} (${llmResponse.fallbackCount} fallbacks)`);
+      
+      // 🚨 COST TRACKING: Monitor model usage and costs
+      const estimatedTokens = Math.ceil((message.length + answerText.length) / 4); // Rough estimate
+      costMonitor.trackUsage(modelUsed, estimatedTokens, complexityAnalysis.complexity);
       
     } catch (openRouterError) {
       console.warn('OpenRouter fallback chain failed, using Gemini:', openRouterError);
@@ -209,7 +240,6 @@ Provide a helpful, accurate answer based ONLY on the provided context. If the co
       const { text } = await generateText({
         model: googleAI,
         prompt: messages.map(m => m.content).join('\n\n'),
-        maxTokens: 500,
         temperature: 0.1,
       });
       
@@ -239,7 +269,12 @@ Provide a helpful, accurate answer based ONLY on the provided context. If the co
         model_used: modelUsed,
         response_time_ms: responseTime,
         source_count: context.length,
-        tenant_subdomain: tenantSubdomain
+        tenant_subdomain: tenantSubdomain,
+        // 🎯 NEW: Add complexity classification metadata
+        query_complexity: complexityAnalysis.complexity,
+        complexity_confidence: complexityAnalysis.confidence,
+        complexity_factors: complexityAnalysis.factors,
+        model_tier: complexityAnalysis.complexity === 'complex' ? 'premium' : 'standard'
       }
     }, { headers: corsHeaders });
 

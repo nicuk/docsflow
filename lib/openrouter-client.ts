@@ -134,13 +134,27 @@ export class OpenRouterClient {
   }
 }
 
-// 🎯 SPECIALIZED ULTRA-BUDGET MODELS: Optimized for 2025 use cases
+// 🎯 HYBRID MODEL CONFIGS: Strategic model selection with cost guardrails
 export const MODEL_CONFIGS = {
-  // 💬 Chat Interface - CONVERSATIONAL SPECIALISTS ($0.00-$0.05)
-  CHAT: [
-    'meta-llama/llama-3.1-8b-instruct',             // 🏆 CHAT CHAMPION: Best conversational AI
-    'mistralai/mistral-7b-instruct',                 // ⚡ FAST CHAT: Quick responses, good personality
-    'qwen/qwen-2.5-7b-instruct'                     // 🌍 MULTILINGUAL: Great for global users
+  // 🟢 SIMPLE QUERIES (70% of traffic) - Fast & Cheap ($0.05/1M)
+  SIMPLE: [
+    'mistralai/mistral-7b-instruct',                 // ⚡ FAST: 40-60ms, 6/10 quality
+    'qwen/qwen-2.5-7b-instruct',                     // 📚 BALANCED: 50-70ms, 7/10 quality
+    'meta-llama/llama-3.1-8b-instruct'              // 🛡️ FALLBACK: 100-200ms, 7/10 quality
+  ] as string[],
+
+  // 🟡 MEDIUM QUERIES (20% of traffic) - Balanced ($0.05/1M)
+  MEDIUM: [
+    'meta-llama/llama-3.1-8b-instruct',             // 🎯 PRIMARY: 100-200ms, 7/10 quality
+    'qwen/qwen-2.5-7b-instruct',                     // 📚 ALT: 50-70ms, 7/10 quality
+    'mistralai/mistral-7b-instruct'                  // 🛡️ FALLBACK: 40-60ms, 6/10 quality
+  ] as string[],
+
+  // 🔴 COMPLEX QUERIES (10% of traffic) - Premium Quality ($3/1M) 🚨 GUARDED
+  COMPLEX: [
+    'anthropic/claude-3.5-sonnet',                   // 🏆 PREMIUM: 200-400ms, 10/10 quality
+    'meta-llama/llama-3.1-8b-instruct',             // 🛡️ FALLBACK: 100-200ms, 7/10 quality
+    'qwen/qwen-2.5-7b-instruct'                     // 🛡️ BACKUP: 50-70ms, 7/10 quality
   ] as string[],
 
   // 📄 Document Processing - EXTRACTION SPECIALISTS ($0.05/1M)
@@ -157,22 +171,29 @@ export const MODEL_CONFIGS = {
     'mistralai/mistral-7b-instruct'                  // ⚡ FAST RAG: Quick retrieval responses
   ] as string[],
 
-  // 🧠 Persona Generation - ULTRA BUDGET
+  // 🧠 Persona Generation
   PERSONA_GENERATION: [
     'qwen/qwen-2.5-7b-instruct',                     // 💰 $0.05/1M - Creative tasks
     'meta-llama/llama-3.1-8b-instruct'              // 💎 $0.05/1M - Good reasoning
   ] as string[],
 
-  // 🎯 Deep Search - ULTRA BUDGET
+  // 🎯 Deep Search
   DEEP_SEARCH: [
     'meta-llama/llama-3.1-8b-instruct',             // 💎 $0.05/1M - Best reasoning for price
     'qwen/qwen-2.5-7b-instruct'                     // 💰 $0.05/1M - Deep analysis
   ] as string[],
 
-  // 🖼️ Vision/OCR - FREE + BUDGET MIX
+  // 🖼️ Vision/OCR
   VISION: [
     'mistralai/mistral-7b-instruct',                 // 🔥 $0.05/1M - Basic vision
     'meta-llama/llama-3.1-8b-instruct'              // 💎 $0.05/1M - Backup
+  ] as string[],
+
+  // 💬 Legacy Chat (for backward compatibility)
+  CHAT: [
+    'meta-llama/llama-3.1-8b-instruct',
+    'mistralai/mistral-7b-instruct',
+    'qwen/qwen-2.5-7b-instruct'
   ] as string[]
 };
 

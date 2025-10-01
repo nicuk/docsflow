@@ -445,12 +445,14 @@ Return only a number between 0 and 1.`;
     
     const queryEmbedding = await this.getEmbedding(query);
     
+    // 🎯 SURGICAL FIX: Use correct parameter names for secured similarity_search function
     const { data, error } = await this.supabase
       .rpc('similarity_search', {
         query_embedding: queryEmbedding,
+        tenant_filter: tenantId,
+        access_level_filter: 5,
         match_threshold: 0.7,
-        match_count: limit,
-        tenant_id: tenantId
+        match_count: limit
       });
     
     console.log(`📊 Search result count: ${data?.length || 0}`);
@@ -460,12 +462,17 @@ Return only a number between 0 and 1.`;
     
     if (error || !data) return [];
     
+    // 🎯 SURGICAL FIX: Map secured function response (chunk_id, document_id, etc.)
     return data.map((d: any) => ({
-      id: d.id,
+      id: d.document_id || d.id, // Use document_id from secured function
       content: d.content,
       metadata: d.metadata,
       vectorScore: d.similarity || 0,
-      keywordScore: 0
+      keywordScore: 0,
+      provenance: {
+        source: d.metadata?.filename || 'Unknown',
+        confidence: d.confidence_score || d.similarity || 0
+      }
     }));
   }
 
