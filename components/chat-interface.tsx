@@ -173,6 +173,7 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [hiddenSuggestions, setHiddenSuggestions] = useState<Set<string>>(new Set()) // Track hidden suggestion sections
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   
@@ -344,6 +345,10 @@ export default function ChatInterface() {
         lastActivity: new Date().toISOString(),
         createdAt: new Date().toISOString()
       }
+      
+      // Clear messages and reset suggestions for new conversation
+      setMessages([])
+      setHiddenSuggestions(new Set())
       
       // Add to conversations and set as current
       setConversations(prev => [localConversation, ...prev])
@@ -583,33 +588,31 @@ Please try again in a moment. If the issue persists, you can still use the inter
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
       {/* 🚀 UNIFIED HEADER: Logo + Actions in single compact row */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-2 flex items-center justify-between shrink-0">
-        <div className="flex items-center space-x-3">
-          <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
-            <MessageSquare className="h-4 w-4 text-white" />
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 py-1.5 flex items-center justify-between shrink-0">
+        <div className="flex items-center space-x-2">
+          <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
+            <MessageSquare className="h-3.5 w-3.5 text-white" />
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-gray-900 dark:text-white">DocsFlow</h1>
-          </div>
+          <h1 className="text-base font-bold text-gray-900 dark:text-white">DocsFlow</h1>
         </div>
 
         {/* Animated conversation context */}
         {currentConversationId && (
-          <div className="flex-1 px-4 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400 truncate animate-pulse">
+          <div className="flex-1 px-3 text-center">
+            <p className="text-xs text-gray-600 dark:text-gray-400 truncate animate-pulse">
               Chat Assistant • AI-powered document analysis
             </p>
           </div>
         )}
 
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-0.5">
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={() => setShowConversationHistory(!showConversationHistory)}
-            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 h-7 px-2 text-xs"
           >
-            <History className="h-4 w-4 mr-1" />
+            <History className="h-3.5 w-3.5 mr-1" />
             History
           </Button>
           <Button 
@@ -617,27 +620,27 @@ Please try again in a moment. If the issue persists, you can still use the inter
             size="sm" 
             onClick={createNewConversation} 
             disabled={isCreatingConversation}
-            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 h-7 px-2 text-xs"
           >
-            <Plus className="h-4 w-4 mr-1" />
+            <Plus className="h-3.5 w-3.5 mr-1" />
             New Chat
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={clearCurrentConversation} 
-            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 h-7 px-2 text-xs"
           >
-            <RotateCcw className="h-4 w-4 mr-1" />
+            <RotateCcw className="h-3.5 w-3.5 mr-1" />
             Clear
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={exportChat} 
-            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 h-7 px-2 text-xs"
           >
-            <Download className="h-4 w-4 mr-1" />
+            <Download className="h-3.5 w-3.5 mr-1" />
             Export
           </Button>
         </div>
@@ -648,14 +651,14 @@ Please try again in a moment. If the issue persists, you can still use the inter
         {/* Conversation History Sidebar */}
         {showConversationHistory && (
           <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white">Conversations</h2>
+            <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700 shrink-0">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Conversations</h2>
               <p className="text-xs text-gray-500 dark:text-gray-400">Your chat history</p>
             </div>
             
-            <ScrollArea className="flex-1 p-4">
+            <ScrollArea className="flex-1 p-3">
               {isLoadingConversations ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="animate-pulse">
                       <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
@@ -675,7 +678,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
                     <button
                       key={conversation.id}
                       onClick={() => switchToConversation(conversation.id)}
-                      className={`w-full text-left p-3 rounded-lg transition-colors ${
+                      className={`w-full text-left p-2 rounded-lg transition-colors ${
                         currentConversationId === conversation.id
                           ? 'bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800'
                           : 'hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -706,17 +709,17 @@ Please try again in a moment. If the issue persists, you can still use the inter
         <div className="flex-1 flex flex-col min-w-0">
           {/* Current Conversation Info */}
           {currentConversationId && (
-            <div className="bg-blue-50 dark:bg-blue-950 border-b border-blue-200 dark:border-blue-800 px-4 py-2 shrink-0">
+            <div className="bg-blue-50 dark:bg-blue-950 border-b border-blue-200 dark:border-blue-800 px-3 py-1 shrink-0">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                    {conversations.find(c => c.id === currentConversationId)?.title || 'Current Conversation'}
+                <div className="flex items-center space-x-2">
+                  <p className="text-xs font-medium text-blue-900 dark:text-blue-100">
+                    {conversations.find(c => c.id === currentConversationId)?.title || 'New Conversation'}
                   </p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400">
-                    Conversation will be saved automatically
-                  </p>
+                  <span className="text-xs text-blue-600 dark:text-blue-400">
+                    • Conversation will be saved automatically
+                  </span>
                 </div>
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs h-4 px-1.5">
                   Persistent
                 </Badge>
               </div>
@@ -807,9 +810,20 @@ Please try again in a moment. If the issue persists, you can still use the inter
                               )}
 
                               {/* Follow-up Suggestions */}
-                              {message.suggestions && message.suggestions.length > 0 && (
+                              {message.suggestions && message.suggestions.length > 0 && !hiddenSuggestions.has(message.id) && (
                                 <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-                                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Ask about:</p>
+                                  <div className="flex items-center justify-between mb-1.5">
+                                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Ask about:</p>
+                                    <button
+                                      onClick={() => {
+                                        setHiddenSuggestions(prev => new Set([...prev, message.id]))
+                                      }}
+                                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                                      title="Hide suggestions"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
                                   <div className="flex flex-wrap gap-1.5">
                                     {message.suggestions.map((suggestion, idx) => (
                                       <button
