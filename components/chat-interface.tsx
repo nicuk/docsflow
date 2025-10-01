@@ -728,17 +728,17 @@ Please try again in a moment. If the issue persists, you can still use the inter
             </div>
           )}
 
-          <div className="flex-1 flex min-h-0 w-full overflow-hidden">
-            <div className="w-full max-w-full flex flex-col min-h-0">
-              <ScrollArea ref={scrollAreaRef} className="flex-1 px-4 py-2 w-full">
-                <div className="space-y-2 w-full max-w-full overflow-x-hidden box-border">
+          <div className="flex-1 flex min-h-0 w-full max-w-full overflow-hidden">
+            <div className="w-full max-w-full flex flex-col min-h-0 overflow-hidden">
+              <ScrollArea ref={scrollAreaRef} className="flex-1 px-2 py-2 w-full max-w-full overflow-hidden">
+                <div className="space-y-2 w-full max-w-full overflow-x-hidden box-border pr-2">
                   {messages.map((message) => (
                     <div key={message.id}>
                       {message.type === "user" && (
-                        <div className="flex justify-end w-full">
-                          <div className="max-w-[90%] sm:max-w-[80%] min-w-0">
+                        <div className="flex justify-end w-full max-w-full">
+                          <div className="max-w-[85%] sm:max-w-[75%] min-w-0">
                             <div className="bg-blue-600 text-white rounded-xl rounded-br-md px-3 py-1.5 shadow-sm overflow-hidden">
-                              <p className="text-sm leading-relaxed break-words overflow-wrap-anywhere">{message.content}</p>
+                              <p className="text-sm leading-relaxed break-words overflow-wrap-anywhere word-wrap-break-word">{message.content}</p>
                             </div>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 text-right">
                               {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -748,9 +748,9 @@ Please try again in a moment. If the issue persists, you can still use the inter
                       )}
 
                       {message.type === "ai" && (
-                        <div className="flex justify-start w-full">
-                          <div className="max-w-[95%] sm:max-w-[85%] min-w-0">
-                            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl rounded-bl-md px-3 py-1.5 shadow-sm overflow-hidden">
+                        <div className="flex justify-start w-full max-w-full">
+                          <div className="max-w-[90%] sm:max-w-[80%] min-w-0">
+                            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl rounded-bl-md px-3 py-1.5 shadow-sm overflow-hidden box-border">
                               <div className="flex items-center space-x-1 mb-1">
                                 <Sparkles className="h-3 w-3 text-blue-600 flex-shrink-0" />
                                 <span className="text-xs font-medium text-blue-600 dark:text-blue-400">AI Assistant</span>
@@ -883,9 +883,9 @@ Please try again in a moment. If the issue persists, you can still use the inter
               </ScrollArea>
 
               {/* Input Area */}
-              <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-2 shrink-0 w-full overflow-hidden">
-                <div className="w-full max-w-full mx-auto px-2">
-                  <div className="flex items-end space-x-2">
+              <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-2 shrink-0 w-full max-w-full overflow-hidden">
+                <div className="w-full max-w-full px-1">
+                  <div className="flex items-end space-x-2 w-full max-w-full">
                     <Button
                       variant="outline"
                       size="icon"
