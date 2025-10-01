@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-// 🎯 LINT FIX: Comment out unused imports
-// import { embed } from 'ai';
+// 🎯 CLERK MIGRATION: Re-enable embed import for embeddings generation
+import { embed } from 'ai';
 import { aiProvider, isRealAIAvailable } from '@/lib/ai/providers';
 // import formidable from 'formidable';
 import { promises as fs } from 'fs';

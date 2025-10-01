@@ -65,6 +65,7 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [tenantContext, setTenantContext] = useState<TenantContext | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false) // Prevent multiple loads
   // 🎯 CLERK MIGRATION: Removed isRedirecting/redirectMessage (legacy Supabase redirect logic)
   const [realStats, setRealStats] = useState({
     documentsCount: 0,
@@ -89,6 +90,12 @@ export default function DashboardPage() {
     // 🎯 CRITICAL FIX: Wait for Clerk to initialize before making any API calls
     if (!isClerkLoaded) {
       console.log('⏳ [DASHBOARD] Waiting for Clerk to initialize...');
+      return;
+    }
+    
+    // 🎯 SURGICAL FIX: Prevent useEffect from running multiple times after initial load
+    if (hasLoadedOnce) {
+      console.log('⏭️ [DASHBOARD] Already loaded, skipping duplicate load');
       return;
     }
     
@@ -239,6 +246,7 @@ export default function DashboardPage() {
         // 🚀 OPTIMISTIC UI: Set tenant context immediately, load documents in background
         setTenantContext(context);
         setIsLoading(false); // Show dashboard immediately
+        setHasLoadedOnce(true); // Mark as loaded to prevent re-runs
         
         // 🎯 REACT QUERY: Data will automatically load in background
         // No manual API calls needed - React Query handles it
@@ -252,7 +260,7 @@ export default function DashboardPage() {
     }
 
     loadTenantContext();
-  }, [isClerkLoaded])
+  }, [isClerkLoaded, hasLoadedOnce])
 
   // 🚀 REACT QUERY: No manual data fetching needed
   // Documents and conversations are automatically loaded via useDocuments/useConversations hooks
