@@ -495,6 +495,19 @@ export default function DashboardPage() {
     )
   }
 
+  // 🔍 DIAGNOSTIC: Log when dashboard finishes loading
+  useEffect(() => {
+    if (!isLoading && tenantContext) {
+      console.log('📊 [DASHBOARD] Fully loaded:', {
+        hasLoadedOnce,
+        tenantContext,
+        isClerkLoaded,
+        documentsCount: documents.length,
+        conversationsCount: conversations.length
+      });
+    }
+  }, [isLoading, tenantContext, hasLoadedOnce, isClerkLoaded, documents.length, conversations.length]);
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Welcome section with industry context - Compact */}
@@ -539,19 +552,24 @@ export default function DashboardPage() {
 
         {/* Main Content Row - Takes remaining space */}
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-0">
-          {/* Admin-only Components - Backend Status & Security Monitor */}
+          {/* Admin-only Link to System Health Page */}
           {tenantContext?.accessLevel === 1 && (
-            <>
-              {/* Backend Status - ADMIN ONLY */}
-              <div>
-                <BackendStatus />
-              </div>
-              
-              {/* Security Monitor - ADMIN ONLY */}
-              <div>
-                <SecurityMonitor />
-              </div>
-            </>
+            <Card className="h-fit">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Wrench className="h-4 w-4" />
+                  System Health
+                </CardTitle>
+                <CardDescription className="text-xs">Admin-only monitoring dashboard</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/dashboard/admin/system-health">
+                    View System Health →
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
           )}
 
           {/* AI Persona Editor - ADMIN ONLY */}
