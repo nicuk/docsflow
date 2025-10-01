@@ -90,22 +90,36 @@ Consider: exact match, semantic similarity, temporal relevance, entity alignment
       return query;
     }
 
-    // Return the most relevant keyword(s)
-    // For business queries, prioritize key terms
+    // 🎯 FIX: Use ALL keywords for better matching, not just longest
+    // Priority order: file types > business terms > all keywords
+    
+    // 1. Prioritize file type terms (csv, pdf, excel, etc.)
+    const fileTypeTerms = words.filter(word => 
+      ['csv', 'pdf', 'json', 'xml', 'xlsx', 'xls', 'doc', 'docx', 'txt', 
+       'png', 'jpg', 'jpeg', 'image', 'spreadsheet', 'document', 'table'].includes(word)
+    );
+    
+    if (fileTypeTerms.length > 0) {
+      // Return all file type terms for comprehensive matching
+      return fileTypeTerms.join(' ');
+    }
+
+    // 2. Prioritize business terms
     const businessTerms = words.filter(word => 
       ['revenue', 'profit', 'income', 'sales', 'cost', 'budget', 'client', 
        'customer', 'project', 'contract', 'report', 'analysis', 'data',
-       'performance', 'growth', 'target', 'goal', 'metric', 'kpi'].includes(word)
+       'performance', 'growth', 'target', 'goal', 'metric', 'kpi', 'device',
+       'manufacturer', 'type', 'status', 'encryption', 'water', 'electricity'].includes(word)
     );
 
     if (businessTerms.length > 0) {
-      return businessTerms[0]; // Use the first business term
+      // Return all business terms for comprehensive matching
+      return businessTerms.join(' ');
     }
 
-    // Return the longest meaningful word
-    return words.reduce((longest, current) => 
-      current.length > longest.length ? current : longest, words[0]
-    );
+    // 3. Return ALL keywords for comprehensive matching
+    // This ensures we don't miss matches by picking wrong single keyword
+    return words.join(' ');
   }
 
   /**
@@ -497,13 +511,12 @@ Return only a number between 0 and 1.`;
     tenantId: string,
     limit: number
   ): Promise<SearchResult[]> {
-    console.log(`🔍 [RAG SEARCH v4] SURGICAL DEBUG: Searching document_chunks for tenant ${tenantId}: "${query}"`);
-    console.log(`🔧 [RAG SEARCH v4] Using stored tenant ID: ${this.tenantId}`);
+    console.log(`🔍 [RAG SEARCH v5] Searching document_chunks for tenant ${tenantId}: "${query}"`);
+    console.log(`🔧 [RAG SEARCH v5] Using stored tenant ID: ${this.tenantId}`);
     
-    // 🎯 SURGICAL FIX: Query is already pre-processed with keywords in hybridSearch
-    // No need for additional extraction here since we now force extraction upstream
-    let searchQuery = query.toLowerCase();
-    console.log(`🔍 [SEARCH DEBUG] Searching for pre-processed query: "${searchQuery}"`);
+    // 🎯 FIX: Handle multiple keywords from extraction (e.g., "csv file")
+    const keywords = query.toLowerCase().trim().split(/\s+/).filter(k => k.length > 0);
+    console.log(`🔍 [SEARCH DEBUG] Extracted keywords: [${keywords.join(', ')}]`);
     
     // 🎯 SURGICAL FIX: More precise broad search criteria - only truly generic queries
     const isVeryGeneric = (
@@ -514,7 +527,7 @@ Return only a number between 0 and 1.`;
     );
     
     if (isVeryGeneric) {
-      console.log(`🔄 [RAG SEARCH v6] GENERIC QUERY: "${query}" - returning any available chunks`);
+      console.log(`🔄 [RAG SEARCH v5] GENERIC QUERY: "${query}" - returning any available chunks`);
       const { data: broadData, error: broadError } = await this.supabase
         .from('document_chunks')
         .select('id, document_id, content, metadata, tenant_id')
@@ -522,7 +535,7 @@ Return only a number between 0 and 1.`;
         .limit(Math.min(limit, 5)); // Return any chunks for generic queries
       
       if (broadData && broadData.length > 0) {
-        console.log(`📊 [RAG SEARCH v6] BROAD SEARCH SUCCESS: ${broadData.length} chunks found for tenant ${this.tenantId}`);
+        console.log(`📊 [RAG SEARCH v5] BROAD SEARCH SUCCESS: ${broadData.length} chunks found for tenant ${this.tenantId}`);
         return broadData.map((d: any) => ({
           id: d.document_id,
           content: d.content,
@@ -533,45 +546,55 @@ Return only a number between 0 and 1.`;
       }
     }
     
-    // Original specific search
-    console.log(`🔍 [DB QUERY] Executing: document_chunks.ilike('content', '%${searchQuery}%')`);
-    const { data, error } = await this.supabase
-      .from('document_chunks') // 🎯 SCHEMA FIX: Search chunks not documents
-      .select('id, document_id, content, metadata, tenant_id')
-      .eq('tenant_id', this.tenantId) // 🎯 SURGICAL FIX: Use stored tenant ID
-      .ilike('content', `%${searchQuery}%`)
-      .limit(limit);
+    // 🎯 FIX: Search using OR logic for multiple keywords
+    // If query is "csv file", we want chunks containing "csv" OR "file"
+    console.log(`🔍 [DB QUERY] Searching for ANY of: [${keywords.join(', ')}]`);
     
-    console.log(`📊 [RAG SEARCH v4] SPECIFIC SEARCH: ${data?.length || 0} chunks found for tenant ${this.tenantId}`);
+    let queryBuilder = this.supabase
+      .from('document_chunks')
+      .select('id, document_id, content, metadata, tenant_id')
+      .eq('tenant_id', this.tenantId);
+    
+    // Build OR conditions for multiple keywords
+    if (keywords.length === 1) {
+      queryBuilder = queryBuilder.ilike('content', `%${keywords[0]}%`);
+    } else {
+      // For multiple keywords, use OR logic
+      const orConditions = keywords.map(k => `content.ilike.%${k}%`).join(',');
+      queryBuilder = queryBuilder.or(orConditions);
+    }
+    
+    const { data, error } = await queryBuilder.limit(limit);
+    
+    console.log(`📊 [RAG SEARCH v5] SPECIFIC SEARCH: ${data?.length || 0} chunks found for tenant ${this.tenantId}`);
     if (data?.length > 0) {
       console.log(`✅ [SEARCH SUCCESS] Sample chunk: "${data[0].content.substring(0, 80)}..."`);
     } else {
-      console.log(`❌ [SEARCH FAILED] No chunks found for keyword: "${searchQuery}"`);
+      console.log(`❌ [SEARCH FAILED] No chunks found for keywords: [${keywords.join(', ')}]`);
     }
     
     if (error) {
-      console.error(`❌ [RAG SEARCH v4] Database error:`, error);
+      console.error(`❌ [RAG SEARCH v5] Database error:`, error);
       return [];
     }
     
     if (!data || data.length === 0) {
-      console.log(`⚠️ [RAG SEARCH v4] No chunks found - returning empty results`);
+      console.log(`⚠️ [RAG SEARCH v5] No chunks found - returning empty results`);
       return [];
     }
     
     return data.map((d: any) => {
-      // 🎯 SURGICAL FIX: Better confidence scoring based on term frequency and relevance
+      // 🎯 FIX: Score based on how many keywords match
       const content = d.content.toLowerCase();
-      const queryTerms = searchQuery.split(/\s+/).filter(term => term.length > 2);
       
       let matchScore = 0;
       let termMatches = 0;
       
-      queryTerms.forEach(term => {
-        if (content.includes(term)) {
+      keywords.forEach(keyword => {
+        if (content.includes(keyword)) {
           termMatches++;
-          // Bonus for exact matches vs partial
-          if (content.includes(` ${term} `) || content.includes(`${term}.`) || content.includes(`${term},`)) {
+          // Bonus for exact word matches vs partial
+          if (content.includes(` ${keyword} `) || content.includes(`${keyword}.`) || content.includes(`${keyword},`)) {
             matchScore += 0.3; // Exact word match
           } else {
             matchScore += 0.2; // Partial match
@@ -579,18 +602,21 @@ Return only a number between 0 and 1.`;
         }
       });
       
-      // Calculate final confidence (0.7 minimum for any match, up to 1.0 for perfect matches)
-      const termCoverage = queryTerms.length > 0 ? termMatches / queryTerms.length : 0;
+      // Calculate final confidence
+      // Base: 0.7 for any match
+      // +0.3 for term coverage (all keywords found)
+      // +matchScore bonus for exact matches
+      const termCoverage = keywords.length > 0 ? termMatches / keywords.length : 0;
       const confidence = Math.max(0.75, 0.7 + (termCoverage * 0.3) + (matchScore * 0.1));
       
-      console.log(`🎯 [SCORING] "${searchQuery}" in chunk: ${termMatches}/${queryTerms.length} terms, confidence: ${confidence.toFixed(2)}`);
+      console.log(`🎯 [SCORING] Keywords [${keywords.join(', ')}] in chunk: ${termMatches}/${keywords.length} matched, confidence: ${confidence.toFixed(2)}`);
       
       return {
         id: d.document_id, // 🎯 SCHEMA FIX: Use document_id for chunk results
         content: d.content,
         metadata: d.metadata,
         vectorScore: 0,
-        keywordScore: Math.min(1.0, confidence) // 🎯 SURGICAL FIX: Smart confidence scoring
+        keywordScore: Math.min(1.0, confidence) // 🎯 FIX: Smart confidence scoring
       };
     });
   }
