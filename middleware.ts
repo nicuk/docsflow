@@ -19,8 +19,43 @@ const isPublicRoute = createRouteMatcher([
   '/api/webhooks(.*)', // Allow webhooks without auth
 ])
 
+// Define admin routes (require Basic Auth)
+const isAdminRoute = createRouteMatcher([
+  '/dashboard/admin(.*)',
+])
+
 export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth()
+  
+  // 🔐 HTTP Basic Auth for Admin Routes (additional security layer)
+  if (isAdminRoute(req)) {
+    const basicAuth = req.headers.get('authorization')
+    
+    if (basicAuth) {
+      const authValue = basicAuth.split(' ')[1]
+      const [user, pwd] = Buffer.from(authValue, 'base64').toString().split(':')
+      
+      const validUser = process.env.ADMIN_AUTH_USERNAME
+      const validPassword = process.env.ADMIN_AUTH_PASSWORD
+      
+      if (user === validUser && pwd === validPassword) {
+        // Basic Auth successful, continue to Clerk auth
+        // (Don't return here, let it continue to Clerk checks below)
+      } else {
+        // Invalid credentials
+        return new NextResponse('Invalid credentials', {
+          status: 401,
+          headers: { 'WWW-Authenticate': 'Basic realm="Admin Area"' },
+        })
+      }
+    } else {
+      // No auth header, require Basic Auth
+      return new NextResponse('Authentication required', {
+        status: 401,
+        headers: { 'WWW-Authenticate': 'Basic realm="Admin Area"' },
+      })
+    }
+  }
   
   // Protect routes that require authentication
   if (isProtectedRoute(req) && !userId) {
