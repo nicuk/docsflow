@@ -232,7 +232,7 @@ export default function TestPersonaPage() {
   return (
     <div className="container mx-auto py-8 px-4 max-w-7xl">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">AI Persona Testing Dashboard</h1>
+        <h1 className="text-4xl font-bold mb-2 text-foreground">AI Persona Testing Dashboard</h1>
         <p className="text-muted-foreground">
           Validate system health, measure response quality, and track persona performance
         </p>
@@ -594,26 +594,26 @@ export default function TestPersonaPage() {
                       </CardContent>
                     </Card>
 
-                    <Card className="border-2 border-gray-200">
+                    <Card className="border-2 border-gray-600 bg-gray-800">
                       <CardHeader>
-                        <CardTitle className="text-gray-900">Default Persona</CardTitle>
+                        <CardTitle className="text-gray-100">Default Persona</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-3">
                         <div>
-                          <p className="text-sm text-gray-600">Usage Count</p>
-                          <p className="text-2xl font-bold text-gray-900">
+                          <p className="text-sm text-gray-400">Usage Count</p>
+                          <p className="text-2xl font-bold text-gray-100">
                             {comparison.data.default.count || 0}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600">Avg Quality</p>
-                          <p className="text-2xl font-bold text-gray-900">
+                          <p className="text-sm text-gray-400">Avg Quality</p>
+                          <p className="text-2xl font-bold text-gray-100">
                             {((comparison.data.default.avgQuality || 0) * 100).toFixed(1)}%
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600">Avg Response Time</p>
-                          <p className="text-lg font-semibold text-gray-900">
+                          <p className="text-sm text-gray-400">Avg Response Time</p>
+                          <p className="text-lg font-semibold text-gray-100">
                             {Math.round(comparison.data.default.avgResponseTime || 0)}ms
                           </p>
                         </div>

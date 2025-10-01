@@ -27,12 +27,13 @@ const isAdminRoute = createRouteMatcher([
 // Define super admin routes (require HTTP Basic Auth + Clerk)
 const isSuperAdminRoute = createRouteMatcher([
   '/dashboard/admin/system-health(.*)',
+  '/dashboard/admin/testpersona(.*)',
 ])
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth()
   
-  // 🔐 SUPER ADMIN ROUTES: HTTP Basic Auth (for system-health only)
+  // 🔐 SUPER ADMIN ROUTES: HTTP Basic Auth (for system-health and testpersona)
   if (isSuperAdminRoute(req)) {
     const basicAuth = req.headers.get('authorization')
     
