@@ -15,6 +15,7 @@ import { queryClassifier } from '@/lib/query-complexity-classifier';
 import { costMonitor } from '@/lib/model-cost-monitor';
 import { createClient } from '@supabase/supabase-js';
 import { detectGibberish, getDefaultPersona } from '@/lib/persona-prompt-generator';
+import { logPersonaMetrics } from '@/lib/persona-metrics';
 
 // Initialize OpenRouter client for chat (lazy-loaded)
 let openRouterClient: OpenRouterClient | null = null;
@@ -143,9 +144,28 @@ export async function POST(request: NextRequest) {
       console.log('🚨 [GIBBERISH DETECTED] Query appears unclear:', message);
       
       const tenantPersona = await getTenantPersona(tenantId);
+      const fallbackResponse = tenantPersona.fallback_prompt || getDefaultPersona().fallback_prompt;
+      
+      // 🎯 METRICS: Log gibberish detection
+      logPersonaMetrics({
+        tenant_id: tenantId,
+        persona_role: tenantPersona.role,
+        query: message,
+        response: fallbackResponse,
+        response_length: fallbackResponse.length,
+        sources_count: 0,
+        confidence_score: 0.2,
+        response_time_ms: Date.now() - startTime,
+        used_custom_persona: tenantPersona.role !== 'Document Intelligence Assistant',
+        used_fallback: true,
+        gibberish_detected: true,
+        metadata: {
+          strategy: 'gibberish_fallback'
+        }
+      }).catch(err => console.error('Metrics logging failed:', err));
       
       return NextResponse.json({
-        response: tenantPersona.fallback_prompt || getDefaultPersona().fallback_prompt,
+        response: fallbackResponse,
         sources: [],
         confidence: 0.2,
         confidence_level: 'low',
@@ -320,6 +340,26 @@ ${tenantPersona.custom_instructions || 'Provide a helpful, accurate answer based
     const citedResponse = CitationEnhancer.enhanceWithCitations(answerText, context);
     
     const responseTime = Date.now() - startTime;
+    
+    // 🎯 METRICS: Log persona usage and response quality (async, non-blocking)
+    logPersonaMetrics({
+      tenant_id: tenantId,
+      persona_role: tenantPersona.role,
+      query: message,
+      response: citedResponse.text,
+      response_length: citedResponse.text.length,
+      sources_count: context.length,
+      confidence_score: confidenceResult.score,
+      response_time_ms: responseTime,
+      used_custom_persona: tenantPersona.role !== 'Document Intelligence Assistant', // Check if not default
+      used_fallback: false,
+      gibberish_detected: false,
+      metadata: {
+        model_used: modelUsed,
+        query_complexity: complexityAnalysis.complexity,
+        confidence_level: confidenceResult.level
+      }
+    }).catch(err => console.error('Metrics logging failed:', err));
     
     // Return successful response
     return NextResponse.json({
