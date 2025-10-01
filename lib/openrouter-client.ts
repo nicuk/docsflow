@@ -144,10 +144,11 @@ export const MODEL_CONFIGS = {
   ] as string[],
 
   // 🟡 MEDIUM QUERIES (20% of traffic) - Balanced ($0.05/1M)
+  // 🚀 PERFORMANCE: Switched to Mistral 7B (3x faster than Llama)
   MEDIUM: [
-    'meta-llama/llama-3.1-8b-instruct',             // 🎯 PRIMARY: 100-200ms, 7/10 quality
+    'mistralai/mistral-7b-instruct',                 // ⚡ PRIMARY: 40-60ms, 6/10 quality (FAST!)
     'qwen/qwen-2.5-7b-instruct',                     // 📚 ALT: 50-70ms, 7/10 quality
-    'mistralai/mistral-7b-instruct'                  // 🛡️ FALLBACK: 40-60ms, 6/10 quality
+    'meta-llama/llama-3.1-8b-instruct'              // 🛡️ FALLBACK: 100-200ms, 7/10 quality
   ] as string[],
 
   // 🔴 COMPLEX QUERIES (10% of traffic) - Premium Quality ($3/1M) 🚨 GUARDED
