@@ -9,9 +9,9 @@ Complete these steps to get the queue system running.
 ### Option A: Via Supabase Dashboard (Recommended)
 1. Go to: https://supabase.com/dashboard/project/YOUR_PROJECT/sql
 2. Click "New query"
-3. Copy and paste: `supabase/migrations/20250101000001_create_ingestion_jobs_safe.sql`
+3. Copy and paste: `supabase/migrations/20250101000002_create_ingestion_jobs_final.sql`
 4. Click "Run"
-5. Verify: Should see success messages
+5. Verify: Should see ✅ SUCCESS messages with verification report
 
 ### Option B: Via CLI
 ```bash
