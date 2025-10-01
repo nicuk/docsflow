@@ -76,11 +76,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // 🔧 PERFORMANCE: Only log count, not full document list (scales to 100+ files)
     console.log(`📋 [DOCUMENTS API] Found ${documents?.length || 0} documents for tenant ${tenantId}`);
-    if (documents && documents.length > 0) {
-      console.log('📄 [DOCUMENTS API] Sample documents:', documents.slice(0, 3).map(d => ({ filename: d.filename, id: d.id?.substring(0, 8) + '...' })));
-    } else {
-      console.log('❌ [DOCUMENTS API] No documents returned from query');
+    
+    // Only log details in development or when debugging
+    if (process.env.NODE_ENV === 'development' && documents && documents.length > 0) {
+      console.log('📄 [DOCUMENTS API] Sample (first 3):', documents.slice(0, 3).map(d => ({ filename: d.filename, id: d.id?.substring(0, 8) + '...' })));
     }
 
     return NextResponse.json(
