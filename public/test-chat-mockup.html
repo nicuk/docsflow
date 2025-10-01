@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocsFlow Chat - UI Mockup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-white">
+  <!-- Full screen container -->
+  <div class="flex flex-col h-screen overflow-hidden">
+    
+    <!-- Top Header -->
+    <div class="bg-gray-800 border-b border-gray-700 px-4 py-2 flex items-center justify-between shrink-0">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+          <span class="text-white">💬</span>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold">DocsFlow Chat</h1>
+          <p class="text-xs text-gray-400">AI Document Assistant</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button class="text-gray-400 hover:bg-gray-700 px-3 py-1.5 rounded text-sm">History</button>
+        <button class="text-gray-400 hover:bg-gray-700 px-3 py-1.5 rounded text-sm">New Chat</button>
+        <button class="text-gray-400 hover:bg-gray-700 px-3 py-1.5 rounded text-sm">Clear</button>
+        <button class="text-gray-400 hover:bg-gray-700 px-3 py-1.5 rounded text-sm">Export</button>
+      </div>
+    </div>
+
+    <!-- Conversation info banner -->
+    <div class="bg-blue-950 border-b border-blue-800 px-3 py-1 shrink-0">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <p class="text-xs font-medium text-blue-100">what documents or images do we have...</p>
+          <span class="text-xs text-blue-400">• Conversation will be saved automatically</span>
+        </div>
+        <span class="text-xs bg-gray-700 px-2 py-0.5 rounded">Persistent</span>
+      </div>
+    </div>
+
+    <!-- Main chat area -->
+    <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      
+      <!-- AI Message 1 -->
+      <div class="flex justify-start">
+        <div class="max-w-[95%] sm:max-w-[85%]">
+          <div class="bg-gray-800 border border-gray-700 rounded-xl rounded-bl-md px-3 py-2 shadow-sm">
+            <div class="flex items-center space-x-1 mb-1">
+              <span class="text-xs font-medium text-blue-400">✨ AI Assistant</span>
+            </div>
+            <p class="text-sm leading-relaxed break-words">
+              Hello! I'm your business docsflow.app assistant. Upload your documents and ask me anything about them. I can analyze contracts, financial reports, invoices, and more.
+            </p>
+            <div class="mt-2 pt-2 border-t border-gray-700">
+              <span class="text-xs text-green-400">✓ 95% High confidence - Reliable information</span>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-700">
+              <p class="text-xs text-gray-400 mb-2">Ask about:</p>
+              <div class="flex flex-wrap gap-2">
+                <button class="px-2.5 py-0.5 rounded-full bg-blue-950 text-blue-300 text-xs">Upload a document to get started →</button>
+                <button class="px-2.5 py-0.5 rounded-full bg-blue-950 text-blue-300 text-xs">What can you analyze? →</button>
+                <button class="px-2.5 py-0.5 rounded-full bg-blue-950 text-blue-300 text-xs">How does docsflow.app work? →</button>
+              </div>
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">05:41 PM</p>
+        </div>
+      </div>
+
+      <!-- User Message 1 - THIS IS WHERE TEXT GETS CUT OFF -->
+      <div class="flex justify-end">
+        <div class="max-w-[90%] sm:max-w-[80%]">
+          <div class="bg-blue-600 text-white rounded-xl rounded-br-md px-3 py-1.5 shadow-sm">
+            <p class="text-sm leading-relaxed break-words">give me understanding of both the csv files</p>
+          </div>
+          <p class="text-xs text-gray-500 mt-0.5 text-right">05:41 PM</p>
+        </div>
+      </div>
+
+      <!-- AI Message 2 -->
+      <div class="flex justify-start">
+        <div class="max-w-[95%] sm:max-w-[85%]">
+          <div class="bg-gray-800 border border-gray-700 rounded-xl rounded-bl-md px-3 py-2 shadow-sm">
+            <div class="flex items-center space-x-1 mb-1">
+              <span class="text-xs font-medium text-blue-400">✨ AI Assistant</span>
+            </div>
+            <p class="text-sm leading-relaxed break-words">
+              I don't have enough information to answer this question confidently.
+            </p>
+            <div class="mt-2 pt-2 border-t border-gray-700">
+              <span class="text-xs text-red-400">⚠ 30% Low confidence - Use as starting point only</span>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-700">
+              <p class="text-xs text-gray-400 mb-2">Ask about:</p>
+              <div class="flex flex-wrap gap-2">
+                <button class="px-2.5 py-0.5 rounded-full bg-blue-950 text-blue-300 text-xs">Tell me more about this →</button>
+                <button class="px-2.5 py-0.5 rounded-full bg-blue-950 text-blue-300 text-xs">Can you elaborate? →</button>
+                <button class="px-2.5 py-0.5 rounded-full bg-blue-950 text-blue-300 text-xs">Show me related information →</button>
+                <button class="px-2.5 py-0.5 rounded-full bg-blue-950 text-blue-300 text-xs">What else can you find? →</button>
+              </div>
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">05:42 PM</p>
+        </div>
+      </div>
+
+      <!-- User Message 2 - ANOTHER TEXT CUTOFF EXAMPLE -->
+      <div class="flex justify-end">
+        <div class="max-w-[90%] sm:max-w-[80%]">
+          <div class="bg-blue-600 text-white rounded-xl rounded-br-md px-3 py-1.5 shadow-sm">
+            <p class="text-sm leading-relaxed break-words">what info do you even have available to you about these files</p>
+          </div>
+          <p class="text-xs text-gray-500 mt-0.5 text-right">06:19 PM</p>
+        </div>
+      </div>
+
+      <!-- AI Message 3 -->
+      <div class="flex justify-start">
+        <div class="max-w-[95%] sm:max-w-[85%]">
+          <div class="bg-gray-800 border border-gray-700 rounded-xl rounded-bl-md px-3 py-2 shadow-sm">
+            <div class="flex items-center space-x-1 mb-1">
+              <span class="text-xs font-medium text-blue-400">✨ AI Assistant</span>
+            </div>
+            <p class="text-sm leading-relaxed break-words">
+              I don't have enough information to answer this question confidently.
+            </p>
+            <div class="mt-2 pt-2 border-t border-gray-700">
+              <span class="text-xs text-red-400">⚠ 30% Low confidence - Use as starting point only</span>
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">06:19 PM</p>
+        </div>
+      </div>
+
+      <!-- User Message 3 - LONG TEXT TO SHOW WRAPPING -->
+      <div class="flex justify-end">
+        <div class="max-w-[90%] sm:max-w-[80%]">
+          <div class="bg-blue-600 text-white rounded-xl rounded-br-md px-3 py-1.5 shadow-sm">
+            <p class="text-sm leading-relaxed break-words">give me understanding of both the csv files and tell me what you can analyze from them</p>
+          </div>
+          <p class="text-xs text-gray-500 mt-0.5 text-right">06:20 PM</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Input area -->
+    <div class="bg-gray-800 border-t border-gray-700 p-2 shrink-0">
+      <div class="max-w-4xl mx-auto flex items-end space-x-2">
+        <button class="flex-shrink-0 p-2 text-gray-400 hover:text-white">📎</button>
+        <input 
+          type="text" 
+          placeholder='Ask anything about your business documents... e.g., "Find all payment terms"'
+          class="flex-1 h-10 px-4 bg-gray-700 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+        />
+        <button class="flex-shrink-0 h-10 px-4 bg-blue-600 hover:bg-blue-700 rounded-xl">
+          ➤
+        </button>
+      </div>
+      <p class="text-xs text-gray-500 mt-1 text-center">
+        AI can make mistakes. Verify important information with source documents. • Conversation will be saved automatically
+      </p>
+    </div>
+
+  </div>
+
+  <div style="position: fixed; top: 0; left: 0; right: 0; background: yellow; color: black; padding: 8px; text-align: center; font-weight: bold; z-index: 9999;">
+    🧪 STATIC MOCKUP - NO FUNCTIONALITY - Open in Chrome to inspect UI issues
+  </div>
+
+</body>
+</html>
+

@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/queue/worker",
+      "schedule": "* * * * *"
+    }
+  ],
   "functions": {
     "app/api/**/*.ts": {
       "maxDuration": 30

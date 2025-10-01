@@ -285,6 +285,24 @@ CREATE TABLE public.tenant_admins (
   CONSTRAINT tenant_admins_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id),
   CONSTRAINT tenant_admins_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
+CREATE TABLE public.tenant_ai_persona (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  tenant_id uuid NOT NULL UNIQUE,
+  role text DEFAULT 'Business Intelligence Assistant'::text,
+  tone text DEFAULT 'Professional and helpful'::text,
+  business_context text,
+  industry text DEFAULT 'general'::text,
+  focus_areas ARRAY,
+  system_prompt text NOT NULL,
+  custom_instructions text,
+  fallback_prompt text NOT NULL,
+  confidence_threshold numeric DEFAULT 0.3,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  last_used_at timestamp with time zone,
+  CONSTRAINT tenant_ai_persona_pkey PRIMARY KEY (id),
+  CONSTRAINT tenant_ai_persona_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
+);
 CREATE TABLE public.tenants (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   subdomain text NOT NULL UNIQUE,
@@ -301,6 +319,19 @@ CREATE TABLE public.tenants (
   updated_at timestamp with time zone DEFAULT now(),
   custom_persona jsonb DEFAULT '{}'::jsonb,
   CONSTRAINT tenants_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.usage_tracking (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  tenant_id uuid NOT NULL,
+  period_start date NOT NULL,
+  period_end date NOT NULL,
+  documents_count integer DEFAULT 0,
+  conversations_count integer DEFAULT 0,
+  storage_used_mb integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT usage_tracking_pkey PRIMARY KEY (id),
+  CONSTRAINT usage_tracking_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
 );
 CREATE TABLE public.user_invitations (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
