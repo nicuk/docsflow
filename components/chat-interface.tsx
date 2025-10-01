@@ -604,30 +604,17 @@ Please try again in a moment. If the issue persists, you can still use the inter
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
-      {/* 🚀 UNIFIED HEADER: Logo + Actions in single compact row */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 py-1.5 flex items-center justify-between shrink-0">
-        <div className="flex items-center space-x-2">
-          <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
-            <MessageSquare className="h-3.5 w-3.5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-base font-bold text-gray-900 dark:text-white">DocsFlow Chat</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">AI Document Assistant</p>
-          </div>
-        </div>
-
-        {/* Spacer for centering buttons */}
-        <div className="flex-1"></div>
-
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      {/* Minimal control bar integrated with layout */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 py-1 flex items-center justify-end shrink-0">
         <div className="flex items-center space-x-0.5">
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={() => setShowConversationHistory(!showConversationHistory)}
-            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 h-7 px-2 text-xs"
+            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 h-6 px-2 text-xs"
           >
-            <History className="h-3.5 w-3.5 mr-1" />
+            <History className="h-3 w-3 mr-1" />
             History
           </Button>
           <Button 
@@ -635,34 +622,34 @@ Please try again in a moment. If the issue persists, you can still use the inter
             size="sm" 
             onClick={createNewConversation} 
             disabled={isCreatingConversation}
-            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 h-7 px-2 text-xs"
+            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 h-6 px-2 text-xs"
           >
-            <Plus className="h-3.5 w-3.5 mr-1" />
+            <Plus className="h-3 w-3 mr-1" />
             New Chat
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={clearCurrentConversation} 
-            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 h-7 px-2 text-xs"
+            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 h-6 px-2 text-xs"
           >
-            <RotateCcw className="h-3.5 w-3.5 mr-1" />
+            <RotateCcw className="h-3 w-3 mr-1" />
             Clear
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={exportChat} 
-            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 h-7 px-2 text-xs"
+            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 h-6 px-2 text-xs"
           >
-            <Download className="h-3.5 w-3.5 mr-1" />
+            <Download className="h-3 w-3 mr-1" />
             Export
           </Button>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex min-h-0">
+      <div className="flex-1 flex min-h-0 overflow-hidden">
         {/* Conversation History Sidebar */}
         {showConversationHistory && (
           <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
@@ -721,30 +708,30 @@ Please try again in a moment. If the issue persists, you can still use the inter
         )}
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Current Conversation Info */}
           {currentConversationId && (
             <div className="bg-blue-50 dark:bg-blue-950 border-b border-blue-200 dark:border-blue-800 px-3 py-1 shrink-0">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <p className="text-xs font-medium text-blue-900 dark:text-blue-100">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center space-x-2 min-w-0 flex-1">
+                  <p className="text-xs font-medium text-blue-900 dark:text-blue-100 truncate">
                     {conversations.find(c => c.id === currentConversationId)?.title || 'New Conversation'}
                   </p>
-                  <span className="text-xs text-blue-600 dark:text-blue-400">
-                    • Conversation will be saved automatically
+                  <span className="text-xs text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                    • Auto-saved
                   </span>
                 </div>
-                <Badge variant="secondary" className="text-xs h-4 px-1.5">
+                <Badge variant="secondary" className="text-xs h-4 px-1.5 flex-shrink-0">
                   Persistent
                 </Badge>
               </div>
             </div>
           )}
 
-          <div className="flex-1 flex min-h-0">
-            <div className="w-full max-w-none flex flex-col min-h-0">
+          <div className="flex-1 flex min-h-0 overflow-hidden">
+            <div className="w-full flex flex-col min-h-0">
               <ScrollArea ref={scrollAreaRef} className="flex-1 px-4 py-2">
-                <div className="space-y-2 max-w-none">
+                <div className="space-y-2 max-w-full overflow-x-hidden">
                   {messages.map((message) => (
                     <div key={message.id}>
                       {message.type === "user" && (
@@ -896,8 +883,8 @@ Please try again in a moment. If the issue persists, you can still use the inter
               </ScrollArea>
 
               {/* Input Area */}
-              <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-2 shrink-0">
-                <div className="max-w-4xl mx-auto">
+              <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-2 shrink-0 overflow-hidden">
+                <div className="w-full max-w-4xl mx-auto">
                   <div className="flex items-end space-x-2">
                     <Button
                       variant="outline"

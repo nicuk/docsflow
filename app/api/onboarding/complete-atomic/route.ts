@@ -3,6 +3,7 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { clerkClient } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
+import { detectGibberish } from '@/lib/persona-prompt-generator';
 
 /**
  * 🎯 CLERK MIGRATION: Atomic onboarding completion
@@ -168,8 +169,27 @@ export async function POST(request: NextRequest) {
       isFirstUser: isNewTenant,
     });
 
-    // Store onboarding responses if provided
+    // 🎯 SMART FALLBACK: Filter out gibberish responses before storing
+    let cleanedResponses = responses;
+    let gibberishCount = 0;
+    
     if (responses && Object.keys(responses).length > 0) {
+      cleanedResponses = Object.entries(responses).reduce((acc: any, [key, value]) => {
+        if (typeof value === 'string' && detectGibberish(value)) {
+          console.warn(`⚠️ [ONBOARDING] Gibberish detected in ${key}: "${value.substring(0, 50)}..." - filtering out`);
+          gibberishCount++;
+          return acc; // Skip this answer
+        }
+        acc[key] = value;
+        return acc;
+      }, {});
+      
+      // Log if significant gibberish detected
+      if (gibberishCount > 0) {
+        console.warn(`⚠️ [ONBOARDING] Filtered ${gibberishCount}/${Object.keys(responses).length} gibberish responses. Using defaults for missing data.`);
+      }
+      
+      // Store cleaned responses
       const { error: responsesError } = await supabaseAdmin
         .from('onboarding_responses')
         .insert({
@@ -179,7 +199,10 @@ export async function POST(request: NextRequest) {
             subdomain: cleanSubdomain,
             business_name: businessName || displayName || cleanSubdomain,
             industry: industry || 'technology',
-            ...responses
+            ...cleanedResponses,
+            _gibberish_filtered: gibberishCount > 0, // Track if filtering occurred
+            _original_response_count: Object.keys(responses).length,
+            _cleaned_response_count: Object.keys(cleanedResponses).length
           }
         });
 

@@ -89,14 +89,21 @@ export function generatePersonaPrompts(settings: PersonaSettings): GeneratedProm
 /**
  * Get default persona for new tenants
  * Provides optimal RAG configuration out of the box
+ * 🎯 OPTIMIZED: Best practices for document intelligence and retrieval accuracy
  */
 export function getDefaultPersona(): PersonaSettings & GeneratedPrompts {
   const defaultSettings: PersonaSettings = {
-    role: 'Business Intelligence Assistant',
-    tone: 'Professional and helpful',
-    business_context: 'AI-powered business intelligence',
+    role: 'Document Intelligence Assistant',
+    tone: 'Clear, accurate, and helpful',
+    business_context: 'Multi-domain document intelligence and business insights. Specialized in extracting actionable information from uploaded documents with high accuracy and proper source attribution.',
     industry: 'general',
-    focus_areas: ['document analysis', 'business insights', 'decision support']
+    focus_areas: [
+      'document analysis and summarization',
+      'data extraction and insights',
+      'question answering from documents',
+      'business intelligence and reporting',
+      'information retrieval and search'
+    ]
   };
   
   const prompts = generatePersonaPrompts(defaultSettings);

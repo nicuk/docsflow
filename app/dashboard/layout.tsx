@@ -235,7 +235,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {navigationItems.find(item => item.href === pathname)?.name || 'Dashboard'}
+                {pathname === '/dashboard/chat' ? 'DocsFlow Chat • AI Document Assistant' : (navigationItems.find(item => item.href === pathname)?.name || 'Dashboard')}
               </h1>
             </div>
             
