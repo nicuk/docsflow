@@ -182,7 +182,17 @@ export async function POST(request: NextRequest) {
         });
         textContent = sheets.join('\n\n');
       } else if (file.type === 'text/csv') {
-        textContent = buffer.toString('utf-8');
+        // 🎯 SEMANTIC CSV PROCESSING: Convert delimiter spam to meaningful text
+        const { CSVSemanticChunker } = await import('@/lib/csv-semantic-chunker');
+        
+        const rawCSV = buffer.toString('utf-8');
+        const semanticChunks = CSVSemanticChunker.parseCSVToSemanticChunks(rawCSV, file.name);
+        const batchedChunks = CSVSemanticChunker.batchChunks(semanticChunks, 20);
+        
+        // Convert to text for embedding
+        textContent = batchedChunks.map(chunk => chunk.content).join('\n\n');
+        
+        console.log(`📊 CSV processed: ${semanticChunks.length} semantic chunks created, batched to ${batchedChunks.length}`);
       } else if (file.type === 'text/plain') {
         textContent = buffer.toString('utf-8');
       } else if (file.type.startsWith('image/')) {

@@ -160,28 +160,44 @@ Format as JSON:
 
   /**
    * Hybrid search combining vector and keyword search
+   * 🚀 PERFORMANCE: Optimized to reduce unnecessary searches
    */
   async hybridSearch(
     query: string,
     tenantId: string,
     topK: number = 20
   ): Promise<SearchResult[]> {
-    const rewrittenQuery = await this.rewriteQuery(query);
+    // 🚀 PERFORMANCE: Fast path for simple queries (skip rewriting)
+    const isSimpleQuery = query.length < 50 && 
+                         !query.toLowerCase().includes('compare') && 
+                         !query.toLowerCase().includes('analyze') &&
+                         !query.toLowerCase().includes('difference') &&
+                         !query.toLowerCase().includes('explain');
     
-    // Perform multiple searches in parallel
+    let searchQueries: string[];
+    
+    if (isSimpleQuery) {
+      console.log(`⚡ [PERFORMANCE] Simple query detected - skipping rewrite`);
+      searchQueries = [query];
+    } else {
+      console.log(`🔄 [PERFORMANCE] Complex query - performing rewrite`);
+      const rewrittenQuery = await this.rewriteQuery(query);
+      // 🚀 PERFORMANCE: Limit to top 2 rewrites only (not all)
+      searchQueries = [rewrittenQuery.original, ...rewrittenQuery.rewritten.slice(0, 2)];
+    }
+    
+    // 🚀 PERFORMANCE: Limit to 4 searches max (2 vector + 2 keyword)
     const searchPromises = [];
     
-    // Vector search for original and rewrites
-    for (const q of [rewrittenQuery.original, ...rewrittenQuery.rewritten]) {
+    // Vector search for original and top rewrite only
+    for (const q of searchQueries.slice(0, 2)) {
       searchPromises.push(this.performVectorSearch(q, tenantId, topK));
     }
     
-    // 🎯 SURGICAL FIX: Force ALL query variations through keyword extraction
-    const allQueries = [rewrittenQuery.original, ...rewrittenQuery.rewritten, ...rewrittenQuery.expansions];
-    for (const q of allQueries) {
-      // Extract keywords from EVERY query variation before searching
+    // Keyword search for original and top rewrite only
+    for (const q of searchQueries.slice(0, 2)) {
       const extractedKeywords = this.extractKeywords(q);
-      console.log(`🔧 [SURGICAL FIX] Query: "${q}" → Keywords: "${extractedKeywords}"`);
+      console.log(`🔧 [SEARCH] Query: "${q}" → Keywords: "${extractedKeywords}"`);
       searchPromises.push(this.performKeywordSearch(extractedKeywords, tenantId, topK));
     }
     
