@@ -33,9 +33,16 @@ export default clerkMiddleware(async (auth, req) => {
   let tenant = null
   let tenantId = null
   
+  // 🎯 SURGICAL FIX: Skip tenant lookup for special subdomains
+  const specialSubdomains = ['api', 'www', 'm', 'admin', 'app', 'clerk']
+  
   // Production: tenant.docsflow.app
   if (hostname.includes('docsflow.app') && !hostname.startsWith('www.')) {
-    tenant = hostname.split('.')[0]
+    const subdomain = hostname.split('.')[0]
+    // Only treat as tenant if NOT a special subdomain
+    if (!specialSubdomains.includes(subdomain)) {
+      tenant = subdomain
+    }
   }
   
   // Development: localhost (we'll get tenant from user metadata after auth)

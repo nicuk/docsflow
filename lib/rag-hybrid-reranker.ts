@@ -29,7 +29,8 @@ interface RewrittenQuery {
 export class HybridRAGReranker {
   private supabase: any;
   private genAI: GoogleGenerativeAI;
-  private crossEncoder: any;
+  private crossEncoder: any;  // For embeddings
+  private textModel: any;      // For text generation
   private openRouterClient: OpenRouterClient;
   private tenantId: string; // 🎯 SURGICAL FIX: Store tenant context
 
@@ -41,7 +42,11 @@ export class HybridRAGReranker {
     );
     
     this.genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY!);
+    // 🎯 SURGICAL FIX: Use text-embedding-004 for embeddings, gemini-2.0-flash for text generation
     this.crossEncoder = this.genAI.getGenerativeModel({ 
+      model: 'text-embedding-004'  // Use embedding model for embedContent
+    });
+    this.textModel = this.genAI.getGenerativeModel({
       model: 'gemini-2.0-flash',
       systemInstruction: `You are a cross-encoder reranking expert. Score relevance from 0-1.
 Consider: exact match, semantic similarity, temporal relevance, entity alignment, and answer completeness.`
@@ -127,7 +132,7 @@ Format as JSON:
 }`;
 
     try {
-      const result = await this.crossEncoder.generateContent(prompt);
+      const result = await this.textModel.generateContent(prompt);
       const response = result.response.text()
         .replace(/```json\s*/gi, '')
         .replace(/```\s*/g, '');
@@ -224,7 +229,7 @@ Consider:
 Return only a number between 0 and 1.`;
 
         try {
-          const response = await this.crossEncoder.generateContent(prompt);
+          const response = await this.textModel.generateContent(prompt);
           const score = parseFloat(response.response.text().trim());
           
           return {
@@ -657,7 +662,7 @@ If information is not in sources, say "Information not found in provided documen
       console.warn('OpenRouter failed for RAG synthesis, using Gemini fallback:', error);
       
       // Fallback to Gemini
-      const response = await this.crossEncoder.generateContent(messages[0].content);
+      const response = await this.textModel.generateContent(messages[0].content);
       return response.response.text();
     }
   }
