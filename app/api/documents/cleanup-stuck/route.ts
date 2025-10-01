@@ -37,16 +37,34 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
     
-    // Find documents that have been processing for more than 10 minutes FOR THIS TENANT ONLY
-    const tenMinutesAgo = new Date();
-    tenMinutesAgo.setMinutes(tenMinutesAgo.getMinutes() - 10);
+    // 🎯 SURGICAL FIX: Reduced threshold from 10 minutes to 2 minutes
+    // Background processing should complete within seconds, so 2 minutes is plenty
+    const twoMinutesAgo = new Date();
+    twoMinutesAgo.setMinutes(twoMinutesAgo.getMinutes() - 2);
+    
+    console.log(`🔍 [CLEANUP] Looking for documents stuck in processing since before: ${twoMinutesAgo.toISOString()}`);
+    
+    // First, let's see ALL processing documents for debugging
+    const { data: allProcessing } = await supabase
+      .from('documents')
+      .select('id, filename, created_at, processing_status')
+      .eq('tenant_id', tenantId)
+      .eq('processing_status', 'processing');
+    
+    console.log(`📊 [CLEANUP] Found ${allProcessing?.length || 0} total processing documents:`, 
+      allProcessing?.map(d => ({ 
+        filename: d.filename, 
+        created: d.created_at,
+        age_minutes: ((new Date().getTime() - new Date(d.created_at).getTime()) / 60000).toFixed(1)
+      }))
+    );
     
     const { data: stuckDocuments, error: fetchError } = await supabase
       .from('documents')
       .select('id, filename, created_at')
       .eq('tenant_id', tenantId) // 🔒 CRITICAL: Only clean THIS tenant's stuck files
       .eq('processing_status', 'processing')
-      .lt('created_at', tenMinutesAgo.toISOString());
+      .lt('created_at', twoMinutesAgo.toISOString());
 
     if (fetchError) {
       console.error('Error fetching stuck documents:', fetchError);
