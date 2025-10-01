@@ -216,7 +216,7 @@ Provide a helpful, accurate answer based ONLY on the provided context. If the co
         selectedModels, // 🎯 Use complexity-based model selection
         messages,
         {
-          max_tokens: 300,  // 🚀 PERFORMANCE: Reduced from 500 to 300 (40% less generation time)
+          max_tokens: 600,  // 🎯 FIX: Increased to 600 to prevent truncated responses
           temperature: 0.1
         }
       );

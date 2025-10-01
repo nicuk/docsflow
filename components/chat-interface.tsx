@@ -18,6 +18,7 @@ interface Message {
   timestamp: Date
   sources?: Array<{
     document: string
+    documentId?: string  // 🎯 FIX: Add document UUID for loading full content
     page: number
     snippet: string
     confidence?: number // 0-1 confidence score for each source
@@ -435,17 +436,26 @@ export default function ChatInterface() {
     setInputValue("")
     setIsLoading(true)
 
-    // Add loading message
+    // Add loading message with content
     const loadingMessage: Message = {
       id: `loading-${Date.now()}`,
       type: "loading",
-      content: "",
+      content: "Analyzing your documents...",
       timestamp: new Date(),
     }
     setMessages((prev) => [...prev, loadingMessage])
 
+    // 🎯 FIX: Track if response received to prevent race condition
+    let responseReceived = false;
+
     // ✅ ADD TIMEOUT PROTECTION to prevent stuck analyzing state
     const timeoutId = setTimeout(() => {
+      // 🎯 FIX: Only show timeout if response not already received
+      if (responseReceived) {
+        console.log('Response already received, skipping timeout message')
+        return;
+      }
+      
       console.warn('API call timed out, showing fallback response')
       
       // Remove loading message
@@ -476,6 +486,9 @@ export default function ChatInterface() {
         conversationId: conversationId || undefined
       });
 
+      // 🎯 FIX: Mark response as received before clearing timeout
+      responseReceived = true;
+      
       // Clear timeout since we got a response
       clearTimeout(timeoutId)
 
@@ -489,9 +502,11 @@ export default function ChatInterface() {
         content: response.answer || response.response || "I received your message but couldn't generate a response.",
         timestamp: new Date(),
         sources: response.sources?.map((source: any) => ({
-          document: source.filename || "Unknown Document",
-          page: 1, // Backend doesn't provide page numbers yet
-          snippet: source.content ? source.content.substring(0, 200) + '...' : "No snippet available"
+          document: source.filename || source.source || "Unknown Document",
+          documentId: source.document_id,  // 🎯 FIX: Pass document UUID for loading full content
+          page: source.metadata?.page || 1,
+          snippet: source.content ? source.content.substring(0, 200) + '...' : "No snippet available",
+          confidence: source.confidence
         })) || [],
         confidence: response.confidence || 0.7,
         suggestions: [
@@ -509,6 +524,9 @@ export default function ChatInterface() {
 
     } catch (error) {
       console.error('Chat API Error:', error);
+      
+      // 🎯 FIX: Mark response as received (error counts as response)
+      responseReceived = true;
       
       // Clear timeout
       clearTimeout(timeoutId)
@@ -771,7 +789,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
                                           setSelectedSource({
                                             filename: source.document || 'Unknown Document',
                                             content: source.snippet || '',
-                                            document_id: `temp-${idx}`, // Use temp ID since document_id not available
+                                            document_id: source.documentId || `temp-${idx}`,  // 🎯 FIX: Use real document UUID
                                             page: source.page,
                                             confidence: source.confidence
                                           });
