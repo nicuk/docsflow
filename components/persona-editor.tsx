@@ -52,26 +52,41 @@ export default function PersonaEditor({ currentPersona, tenantId, onPersonaUpdat
     setSaveStatus('idle');
     
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ai-lead-router-saas.vercel.app/api';
-      const response = await fetch(`${apiUrl}/tenant/update-persona`, {
+      // 🎯 FIX: Use correct API endpoint
+      const response = await fetch('/api/tenant/persona', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies for authentication
         body: JSON.stringify({
-          tenantId,
-          customPersona: persona
+          role: persona.role,
+          tone: persona.tone,
+          business_context: persona.business_context,
+          industry: persona.industry,
+          focus_areas: persona.focus_areas
         })
       });
 
       if (response.ok) {
+        const data = await response.json();
         setSaveStatus('success');
         onPersonaUpdated?.(persona);
-        console.log('✅ Persona updated successfully');
+        console.log('✅ Persona updated successfully:', data);
+        
+        // Auto-hide success message after 3 seconds
+        setTimeout(() => setSaveStatus('idle'), 3000);
       } else {
-        throw new Error('Failed to update persona');
+        const error = await response.json();
+        console.error('Failed to update persona:', error);
+        throw new Error(error.error || 'Failed to update persona');
       }
     } catch (error) {
       console.error('Persona update error:', error);
       setSaveStatus('error');
+      
+      // Auto-hide error message after 5 seconds
+      setTimeout(() => setSaveStatus('idle'), 5000);
     } finally {
       setIsSaving(false);
     }

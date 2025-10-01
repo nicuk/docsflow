@@ -13,6 +13,8 @@ import { degradationManager } from '@/lib/emergency-degradation';
 import { OpenRouterClient, MODEL_CONFIGS } from '@/lib/openrouter-client';
 import { queryClassifier } from '@/lib/query-complexity-classifier';
 import { costMonitor } from '@/lib/model-cost-monitor';
+import { createClient } from '@supabase/supabase-js';
+import { detectGibberish, getDefaultPersona } from '@/lib/persona-prompt-generator';
 
 // Initialize OpenRouter client for chat (lazy-loaded)
 let openRouterClient: OpenRouterClient | null = null;
@@ -21,6 +23,49 @@ let openRouterClient: OpenRouterClient | null = null;
 const googleAI = process.env.GOOGLE_GENERATIVE_AI_API_KEY 
   ? google('gemini-2.0-flash')
   : null;
+
+/**
+ * 🎯 NEW: Get tenant AI persona from database
+ * Returns persona settings or defaults if not customized
+ */
+async function getTenantPersona(tenantId: string) {
+  try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    
+    const { data: persona, error } = await supabase
+      .from('tenant_ai_persona')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .single();
+      
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching persona:', error);
+      return getDefaultPersona();
+    }
+    
+    if (!persona) {
+      console.log(`No custom persona for tenant ${tenantId}, using default`);
+      return getDefaultPersona();
+    }
+    
+    // Update last_used_at timestamp
+    supabase
+      .from('tenant_ai_persona')
+      .update({ last_used_at: new Date().toISOString() })
+      .eq('tenant_id', tenantId)
+      .then(() => console.log(`✅ Persona last_used_at updated`));
+    
+    console.log(`✅ Using custom persona for tenant ${tenantId}: ${persona.role}`);
+    return persona;
+    
+  } catch (error) {
+    console.error('Error in getTenantPersona:', error);
+    return getDefaultPersona();
+  }
+}
 
 export async function POST(request: NextRequest) {
   const origin = request.headers.get('origin');
@@ -93,6 +138,26 @@ export async function POST(request: NextRequest) {
 
     const startTime = Date.now();
 
+    // 🎯 NEW: Detect gibberish and return fallback prompt
+    if (detectGibberish(message)) {
+      console.log('🚨 [GIBBERISH DETECTED] Query appears unclear:', message);
+      
+      const tenantPersona = await getTenantPersona(tenantId);
+      
+      return NextResponse.json({
+        response: tenantPersona.fallback_prompt || getDefaultPersona().fallback_prompt,
+        sources: [],
+        confidence: 0.2,
+        confidence_level: 'low',
+        confidence_explanation: 'Query unclear or unrecognized - using fallback guidance',
+        metadata: {
+          strategy: 'gibberish_fallback',
+          detected_issue: 'unclear_query',
+          persona_role: tenantPersona.role
+        }
+      }, { headers: corsHeaders });
+    }
+
     // 🚀 UNIFIED: Use RAG Pipeline for everything
     console.log('🔧 [CHAT API v4] FORCE DEPLOYMENT: Creating RAG pipeline for tenant:', tenantId);
     console.log('🚀 [DEPLOYMENT CHECK] Chat API v4.0 - Enhanced debugging active');
@@ -156,8 +221,8 @@ export async function POST(request: NextRequest) {
       }, { headers: corsHeaders });
     }
 
-    // Get tenant-specific prompt
-    const tenantPromptConfig = getTenantPrompt(tenantSubdomain);
+    // 🎯 NEW: Get tenant persona from database (includes custom prompts)
+    const tenantPersona = await getTenantPersona(tenantId);
     
     // Generate final answer using OpenRouter with fallback
     const contextText = context.map(ctx => `Source: ${ctx.source}\nContent: ${ctx.content}`).join('\n\n');
@@ -165,7 +230,7 @@ export async function POST(request: NextRequest) {
     const messages = [
       {
         role: 'system' as const,
-        content: tenantPromptConfig.systemPrompt
+        content: tenantPersona.system_prompt || getDefaultPersona().system_prompt
       },
       {
         role: 'user' as const,
@@ -174,7 +239,7 @@ ${contextText}
 
 User Question: ${message}
 
-Provide a helpful, accurate answer based ONLY on the provided context. If the context doesn't contain enough information, say so clearly. Include relevant details and be specific.`
+${tenantPersona.custom_instructions || 'Provide a helpful, accurate answer based ONLY on the provided context. If the context doesn\'t contain enough information, say so clearly. Include relevant details and be specific.'}`
       }
     ];
 
