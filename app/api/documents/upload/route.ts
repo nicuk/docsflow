@@ -266,9 +266,25 @@ export async function POST(request: NextRequest) {
     
     documentId = document.id;
 
-    // 🎯 SURGICAL FIX: Process asynchronously to prevent timeout
+    // 🎯 SURGICAL FIX: Process asynchronously with timeout protection
     // Return immediately, process in background
     console.log(`🚀 Starting background processing for document ${document.id}`);
+    
+    // 🚀 FAILSAFE: Set maximum processing time (30 seconds)
+    const processingTimeout = setTimeout(async () => {
+      console.error(`⏰ TIMEOUT: Background processing exceeded 30s for document ${document.id}`);
+      try {
+        await supabase
+          .from('documents')
+          .update({ 
+            processing_status: 'error',
+            error_message: 'Processing timeout (30s limit)'
+          })
+          .eq('id', document.id);
+      } catch (err) {
+        console.error('Failed to update timeout status:', err);
+      }
+    }, 30000); // 30 second absolute timeout
     
     // Start processing without awaiting (fire and forget)
     processDocumentContentEnhanced(
@@ -280,6 +296,7 @@ export async function POST(request: NextRequest) {
       supabase, 
       userAccessLevel
     ).then(async () => {
+      clearTimeout(processingTimeout); // Cancel timeout on success
       // Processing completed successfully
       await supabase
         .from('documents')
@@ -297,16 +314,23 @@ export async function POST(request: NextRequest) {
         // Continue - don't fail the upload due to tracking issues
       }
     }).catch(async (processingError) => {
-      console.error('Background processing error:', processingError);
+      clearTimeout(processingTimeout); // Cancel timeout on error
+      console.error('❌ Background processing error:', processingError);
+      console.error('❌ Error stack:', processingError instanceof Error ? processingError.stack : 'No stack trace');
       
       // Mark as error
-      await supabase
-        .from('documents')
-        .update({ 
-          processing_status: 'error',
-          error_message: processingError instanceof Error ? processingError.message : 'Failed to process document content'
-        })
-        .eq('id', document.id);
+      try {
+        await supabase
+          .from('documents')
+          .update({ 
+            processing_status: 'error',
+            error_message: processingError instanceof Error ? processingError.message : 'Failed to process document content'
+          })
+          .eq('id', document.id);
+        console.log(`📝 Updated document ${document.id} status to error`);
+      } catch (updateError) {
+        console.error('Failed to update error status:', updateError);
+      }
     });
 
     // 🎯 SURGICAL FIX: Return immediately with processing status
@@ -352,12 +376,16 @@ async function processDocumentContentEnhanced(
   supabase: any, 
   accessLevel: number = 1
 ) {
+  console.log(`📝 [PROCESSING START] Document ${documentId}: ${filename}`);
+  
   // Initialize enhanced chunking with error handling
   let enhancedChunking;
   try {
+    console.log(`🔧 [PROCESSING] Initializing EnhancedChunking...`);
     enhancedChunking = new EnhancedChunking(aiProvider.getApiKey());
+    console.log(`✅ [PROCESSING] EnhancedChunking initialized`);
   } catch (error) {
-    console.error('EnhancedChunking initialization error:', error);
+    console.error('❌ EnhancedChunking initialization error:', error);
     throw new Error('Failed to initialize document processing');
   }
   
@@ -443,14 +471,14 @@ async function processDocumentContentEnhanced(
   
   // 🎯 SURGICAL FIX: Limit chunks to prevent timeout
   if (contextualChunks.length > 10) {
-    console.log(`⚡ Too many chunks (${contextualChunks.length}), limiting to 10 to prevent timeout`);
+    console.log(`⚡ [PROCESSING] Too many chunks (${contextualChunks.length}), limiting to 10 to prevent timeout`);
     contextualChunks = contextualChunks.slice(0, 10);
   }
   
-  console.log(`Generated ${contextualChunks.length} contextual chunks`);
+  console.log(`✅ [PROCESSING] Generated ${contextualChunks.length} contextual chunks for ${documentId}`);
 
   // 🚀 SURGICAL FIX: Process chunks in parallel to reduce timeout
-  console.log(`🚀 Processing ${contextualChunks.length} chunks in PARALLEL to prevent timeout`);
+  console.log(`🚀 [PROCESSING] Starting parallel processing of ${contextualChunks.length} chunks for ${documentId}`);
   
   const chunkPromises = contextualChunks.map(async (chunk) => {
     try {
@@ -503,17 +531,21 @@ async function processDocumentContentEnhanced(
   
   // Execute all chunk processing in parallel with timeout protection
   try {
+    console.log(`⏳ [PROCESSING] Waiting for ${chunkPromises.length} chunk promises to settle...`);
     const results = await Promise.allSettled(chunkPromises);
     const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
     const failed = results.length - successful;
     
-    console.log(`🎯 Parallel processing complete: ${successful} successful, ${failed} failed`);
+    console.log(`🎯 [PROCESSING] Parallel processing complete for ${documentId}: ${successful} successful, ${failed} failed`);
     
     if (successful === 0) {
+      console.error(`❌ [PROCESSING] All ${failed} chunks failed for ${documentId}`);
       throw new Error('All chunk processing failed');
     }
+    
+    console.log(`✅ [PROCESSING COMPLETE] Document ${documentId} processed successfully`);
   } catch (parallelError) {
-    console.error('Parallel chunk processing error:', parallelError);
+    console.error(`❌ [PROCESSING ERROR] Parallel chunk processing failed for ${documentId}:`, parallelError);
     throw parallelError;
   }
 }
