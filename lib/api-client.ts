@@ -375,6 +375,39 @@ export const apiClient = {
     }
   },
 
+  async deleteDocument(documentId: string) {
+    try {
+      const headers = await this.getAuthHeaders();
+      const response = await fetch(`${API_BASE_URL}/documents`, {
+        method: 'DELETE',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({ documentId }),
+      });
+      
+      return await this.handleApiResponse(response, 'DELETE_DOCUMENT');
+    } catch (error) {
+      console.error('Delete Document API Error:', error);
+      throw error;
+    }
+  },
+
+  async cleanupStuckDocuments() {
+    try {
+      const headers = await this.getAuthHeaders();
+      const response = await fetch(`${API_BASE_URL}/documents/cleanup-stuck`, {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+      });
+      
+      return await this.handleApiResponse(response, 'CLEANUP_STUCK');
+    } catch (error) {
+      console.error('Cleanup Stuck Documents API Error:', error);
+      throw error;
+    }
+  },
+
   async healthCheck() {
     try {
       const response = await fetch(`${API_BASE_URL}/health`, {

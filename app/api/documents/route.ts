@@ -103,12 +103,8 @@ export async function DELETE(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
   
   try {
-    // SUPABASE SSR FIX: Use server client for proper authentication
-    const supabase = await createClient();
-    
     // 🔒 SECURE: Validate tenant context with proper security checks
     const tenantValidation = await validateTenantContext(request, {
-
       requireAuth: true // ✅ PRODUCTION: Authentication enabled
     });
 
@@ -122,24 +118,13 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Get the tenant UUID - use validated data if available
-    let tenantId = tenantValidation.tenantData?.id;
-    if (!tenantId) {
-      const { data: tenant, error: tenantError } = await supabase
-        .from('tenants')
-        .select('id')
-        .eq('subdomain', tenantValidation.tenantId!)
-        .single();
-
-      if (tenantError || !tenant) {
-        console.error('Tenant not found:', tenantError);
-        return NextResponse.json(
-          { error: 'Tenant not found' },
-          { status: 404, headers: corsHeaders }
-        );
-      }
-      tenantId = tenant.id;
-    }
+    const tenantId = tenantValidation.tenantId!; // This is the tenant UUID
+    
+    // Use service role to bypass RLS for deletion
+    const supabase = createDirectClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
 
     const { documentId } = await request.json();
 
@@ -150,12 +135,27 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    console.log(`🗑️ [DELETE] Deleting document ${documentId} for tenant ${tenantId}`);
+
+    // 🎯 SURGICAL FIX: Delete chunks first (foreign key constraint)
+    const { error: chunksDeleteError } = await supabase
+      .from('document_chunks')
+      .delete()
+      .eq('document_id', documentId);
+
+    if (chunksDeleteError) {
+      console.error('Error deleting document chunks:', chunksDeleteError);
+      // Continue anyway - chunks might not exist
+    } else {
+      console.log(`🧩 [DELETE] Deleted chunks for document ${documentId}`);
+    }
+
     // Verify document belongs to tenant and delete
     const { error } = await supabase
       .from('documents')
       .delete()
       .eq('id', documentId)
-      .eq('tenant_id', tenantId);
+      .eq('tenant_id', tenantId); // 🔒 CRITICAL: Ensure tenant isolation
 
     if (error) {
       console.error('Delete error:', error);
@@ -164,6 +164,8 @@ export async function DELETE(request: NextRequest) {
         { status: 500, headers: corsHeaders }
       );
     }
+
+    console.log(`✅ [DELETE] Successfully deleted document ${documentId}`);
 
     return NextResponse.json({
       message: 'Document deleted successfully',

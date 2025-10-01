@@ -307,7 +307,7 @@ async function checkSubdomainLimit(
   };
 }
 
-// Usage tracking function
+// Usage tracking function - FIXED to properly increment counters
 export async function trackUsage(
   tenantId: string,
   action: 'document_upload' | 'conversation' | 'storage_used',
@@ -321,20 +321,74 @@ export async function trackUsage(
     const periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-    // Upsert usage tracking record
-    const { error } = await supabase
+    // Map action to column name
+    const columnMap = {
+      document_upload: 'documents_count',
+      conversation: 'conversations_count',
+      storage_used: 'storage_used_mb',
+    };
+    
+    const column = columnMap[action];
+    
+    // Get or create current period record
+    const { data: existing, error: fetchError } = await supabase
       .from('usage_tracking')
-      .upsert({
-        tenant_id: tenantId,
-        period_start: periodStart.toISOString().split('T')[0],
-        period_end: periodEnd.toISOString().split('T')[0],
-        [`${action.replace('_upload', '').replace('_used', '')}_count`]: amount,
-      }, {
-        onConflict: 'tenant_id,period_start,period_end',
-      });
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('period_start', periodStart.toISOString().split('T')[0])
+      .eq('period_end', periodEnd.toISOString().split('T')[0])
+      .single();
 
-    if (error) {
-      console.error('Error tracking usage:', error);
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      // PGRST116 = no rows returned, which is fine
+      // PGRST204 = column not found (table might not exist)
+      if (fetchError.code === 'PGRST204') {
+        console.warn('⚠️ usage_tracking table missing or outdated schema. Run database/create-usage-tracking-table.sql');
+        return;
+      }
+      console.error('Error fetching usage:', fetchError);
+      return;
+    }
+
+    if (existing) {
+      // Increment existing count
+      const { error: updateError } = await supabase
+        .from('usage_tracking')
+        .update({
+          [column]: (existing[column] || 0) + amount,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existing.id);
+
+      if (updateError) {
+        if (updateError.code === 'PGRST204') {
+          console.warn('⚠️ usage_tracking table schema outdated. Run database/create-usage-tracking-table.sql');
+        } else {
+          console.error('Error updating usage:', updateError);
+        }
+      } else {
+        console.log(`✅ Updated usage for ${tenantId}: ${column} += ${amount}`);
+      }
+    } else {
+      // Create new record
+      const { error: insertError } = await supabase
+        .from('usage_tracking')
+        .insert({
+          tenant_id: tenantId,
+          period_start: periodStart.toISOString().split('T')[0],
+          period_end: periodEnd.toISOString().split('T')[0],
+          [column]: amount,
+        });
+
+      if (insertError) {
+        if (insertError.code === 'PGRST204') {
+          console.warn('⚠️ usage_tracking table missing. Run database/create-usage-tracking-table.sql');
+        } else {
+          console.error('Error inserting usage:', insertError);
+        }
+      } else {
+        console.log(`✅ Created usage record for ${tenantId}: ${column} = ${amount}`);
+      }
     }
   } catch (error) {
     console.error('Error in trackUsage:', error);

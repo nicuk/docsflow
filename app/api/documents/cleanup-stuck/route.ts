@@ -1,24 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
+import { validateTenantContext } from '@/lib/api-tenant-validation';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  return new NextResponse(null, { status: 200, headers: getCORSHeaders(origin) });
+}
 
 export async function POST(request: NextRequest) {
   const origin = request.headers.get('origin');
   const corsHeaders = getCORSHeaders(origin);
 
   try {
-    // Find documents that have been processing for more than 10 minutes
+    // 🔒 SECURE: Validate tenant context with proper security checks
+    const tenantValidation = await validateTenantContext(request, {
+      requireAuth: true // ✅ PRODUCTION: Authentication enabled
+    });
+
+    if (!tenantValidation.isValid) {
+      return NextResponse.json(
+        { 
+          error: tenantValidation.error,
+          security_violation: 'Invalid tenant context'
+        },
+        { status: tenantValidation.statusCode || 400, headers: corsHeaders }
+      );
+    }
+
+    const tenantId = tenantValidation.tenantId!; // This is the tenant UUID
+    console.log('🧹 [CLEANUP] Cleaning stuck documents for tenant:', tenantId);
+
+    // Use service role to bypass RLS
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    
+    // Find documents that have been processing for more than 10 minutes FOR THIS TENANT ONLY
     const tenMinutesAgo = new Date();
     tenMinutesAgo.setMinutes(tenMinutesAgo.getMinutes() - 10);
     
     const { data: stuckDocuments, error: fetchError } = await supabase
       .from('documents')
       .select('id, filename, created_at')
+      .eq('tenant_id', tenantId) // 🔒 CRITICAL: Only clean THIS tenant's stuck files
       .eq('processing_status', 'processing')
       .lt('created_at', tenMinutesAgo.toISOString());
 
@@ -31,6 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!stuckDocuments || stuckDocuments.length === 0) {
+      console.log('✅ [CLEANUP] No stuck documents found');
       return NextResponse.json({
         message: 'No stuck documents found',
         cleaned: 0
@@ -38,7 +65,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 🎯 SURGICAL FIX: DELETE stuck documents instead of just marking as error
-    console.log(`🗑️ Deleting ${stuckDocuments.length} stuck documents that failed processing...`);
+    console.log(`🗑️ [CLEANUP] Deleting ${stuckDocuments.length} stuck documents that failed processing...`);
     
     // Delete associated chunks first (foreign key constraint)
     const documentIds = stuckDocuments.map(doc => doc.id);
@@ -53,7 +80,7 @@ export async function POST(request: NextRequest) {
         console.error('Error deleting stuck document chunks:', chunksDeleteError);
         // Continue anyway - chunks might not exist
       } else {
-        console.log(`🧩 Deleted chunks for ${documentIds.length} stuck documents`);
+        console.log(`🧩 [CLEANUP] Deleted chunks for ${documentIds.length} stuck documents`);
       }
 
       // Delete the documents themselves
@@ -71,7 +98,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log(`✅ Cleaned up ${stuckDocuments.length} stuck documents`);
+    console.log(`✅ [CLEANUP] Successfully cleaned up ${stuckDocuments.length} stuck documents`);
     
     return NextResponse.json({
       message: `Successfully cleaned up ${stuckDocuments.length} stuck documents`,

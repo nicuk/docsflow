@@ -266,34 +266,27 @@ export async function POST(request: NextRequest) {
     
     documentId = document.id;
 
-    // 🚀 SURGICAL FIX: Enhanced timeout with parallel processing
-    try {
-      const processingTimeout = 28000; // 28 seconds (with parallel processing buffer)
-      
-      const processingPromise = processDocumentContentEnhanced(
-        document.id, 
-        textContent, 
-        file.name, 
-        file.type, 
-        tenantId, 
-        supabase, 
-        userAccessLevel
-      );
-      
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-          reject(new Error('Document processing timeout - parallel processing taking longer than expected'));
-        }, processingTimeout);
-      });
-      
-      // Race between parallel processing and timeout
-      await Promise.race([processingPromise, timeoutPromise]);
-      
-      // Update status to completed and track usage
+    // 🎯 SURGICAL FIX: Process asynchronously to prevent timeout
+    // Return immediately, process in background
+    console.log(`🚀 Starting background processing for document ${document.id}`);
+    
+    // Start processing without awaiting (fire and forget)
+    processDocumentContentEnhanced(
+      document.id, 
+      textContent, 
+      file.name, 
+      file.type, 
+      tenantId, 
+      supabase, 
+      userAccessLevel
+    ).then(async () => {
+      // Processing completed successfully
       await supabase
         .from('documents')
         .update({ processing_status: 'completed' })
         .eq('id', document.id);
+      
+      console.log(`✅ Background processing completed for document ${document.id}`);
       
       // USAGE TRACKING: Track successful document upload
       try {
@@ -303,46 +296,26 @@ export async function POST(request: NextRequest) {
         console.error('Error tracking document usage:', trackingError);
         // Continue - don't fail the upload due to tracking issues
       }
-        
-    } catch (processingError) {
-      console.error('Document processing error:', processingError);
+    }).catch(async (processingError) => {
+      console.error('Background processing error:', processingError);
       
-      // Check if it's a timeout error
-      if (processingError instanceof Error && processingError.message.includes('timeout')) {
-        // Mark as processing (will complete in background)
-        await supabase
-          .from('documents')
-          .update({ 
-            processing_status: 'processing',
-            error_message: 'Processing continues in background due to file complexity'
-          })
-          .eq('id', document.id);
-          
-        console.log(`⏱️ Document ${document.id} processing moved to background due to timeout`);
-      } else {
-        // Actual processing error
-        await supabase
-          .from('documents')
-          .update({ 
-            processing_status: 'error',
-            error_message: processingError instanceof Error ? processingError.message : 'Failed to process document content'
-          })
-          .eq('id', document.id);
-      }
-    }
+      // Mark as error
+      await supabase
+        .from('documents')
+        .update({ 
+          processing_status: 'error',
+          error_message: processingError instanceof Error ? processingError.message : 'Failed to process document content'
+        })
+        .eq('id', document.id);
+    });
 
-    // Get final status after processing
-    const { data: finalDocument } = await supabase
-      .from('documents')
-      .select('processing_status')
-      .eq('id', document.id)
-      .single();
-
+    // 🎯 SURGICAL FIX: Return immediately with processing status
+    // Background job will update to completed/error
     return NextResponse.json({
       documentId: document.id,
       filename: file.name,
-      status: finalDocument?.processing_status || 'completed',
-      message: 'Document uploaded and processed successfully'
+      status: 'processing',
+      message: 'Document uploaded successfully. Processing in background.'
     }, { headers: getCORSHeaders(origin) });
 
   } catch (error) {

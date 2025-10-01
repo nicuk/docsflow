@@ -279,43 +279,6 @@ export default function DocumentsPage() {
     const maxPolls = 30 // Max 5 minutes (30 * 10 seconds)
     let pollCount = 0
     
-    // Cleanup stuck processing files on page load
-    useEffect(() => {
-      const cleanupStuckFiles = async () => {
-        try {
-          const { apiClient } = await import('@/lib/api-client')
-          const documents = await apiClient.getDocuments()
-          
-          // Find files stuck in processing for more than 10 minutes
-          const stuckFiles = documents.documents?.filter((doc: any) => {
-            if (doc.processing_status === 'processing') {
-              const createdAt = new Date(doc.created_at)
-              const now = new Date()
-              const minutesSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60)
-              return minutesSinceCreation > 10 // More than 10 minutes old
-            }
-            return false
-          })
-          
-          if (stuckFiles && stuckFiles.length > 0) {
-            console.log(`Found ${stuckFiles.length} stuck processing files, marking as error`)
-            setDocuments((prev) => 
-              prev.map((doc) => {
-                const isStuck = stuckFiles.find((stuck: any) => stuck.id === doc.id)
-                return isStuck 
-                  ? { ...doc, status: "error", errorMessage: "Processing timeout - file stuck" }
-                  : doc
-              })
-            )
-          }
-        } catch (error) {
-          console.error('Failed to cleanup stuck files:', error)
-        }
-      }
-      
-      cleanupStuckFiles()
-    }, [])
-    
     const poll = async () => {
       if (pollCount >= maxPolls) {
         // Timeout - mark as error
@@ -379,18 +342,12 @@ export default function DocumentsPage() {
   // Cleanup stuck documents
   const cleanupStuckDocuments = async () => {
     try {
-      const response = await fetch('/api/documents/cleanup-stuck', {
-        method: 'POST'
-      });
+      const response = await apiClient.cleanupStuckDocuments();
       
-      const data = await response.json();
-      
-      if (response.ok) {
-        console.log(`✅ Cleaned up ${data.cleaned} stuck documents`);
+      if (response) {
+        console.log(`✅ Cleaned up ${response.cleaned || 0} stuck documents`);
         // Refresh the documents list
         fetchDocuments();
-      } else {
-        console.error('Cleanup failed:', data.error);
       }
     } catch (error) {
       console.error('Cleanup request failed:', error);
@@ -412,10 +369,31 @@ export default function DocumentsPage() {
   }
 
   // Delete selected documents
-  const deleteSelectedDocuments = () => {
-    setDocuments((prev) => prev.filter((doc) => !selectedDocuments.includes(doc.id)))
-    setSelectedDocuments([])
-    setIsDeleteDialogOpen(false)
+  const deleteSelectedDocuments = async () => {
+    try {
+      // Delete each document from backend
+      const deletePromises = selectedDocuments.map(docId => 
+        apiClient.deleteDocument(docId)
+      );
+      
+      await Promise.all(deletePromises);
+      
+      console.log(`✅ Deleted ${selectedDocuments.length} documents`);
+      
+      // Update local state
+      setDocuments((prev) => prev.filter((doc) => !selectedDocuments.includes(doc.id)))
+      setSelectedDocuments([])
+      setIsDeleteDialogOpen(false)
+      
+      // Refresh the documents list to ensure sync
+      fetchDocuments();
+    } catch (error) {
+      console.error('Failed to delete documents:', error);
+      // Still update UI optimistically
+      setDocuments((prev) => prev.filter((doc) => !selectedDocuments.includes(doc.id)))
+      setSelectedDocuments([])
+      setIsDeleteDialogOpen(false)
+    }
   }
 
   // Toggle document favorite status
