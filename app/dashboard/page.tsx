@@ -499,6 +499,21 @@ export default function DashboardPage() {
     }
   ]
 
+  // 🔍 DIAGNOSTIC: Log when dashboard finishes loading (run once only)
+  // 🎯 CRITICAL: This useEffect MUST be before any conditional returns to comply with Rules of Hooks
+  useEffect(() => {
+    if (!isLoading && tenantContext && hasLoadedOnce) {
+      console.log('📊 [DASHBOARD] Fully loaded:', {
+        hasLoadedOnce,
+        tenantContext,
+        isClerkLoaded,
+        documentsCount: documents?.length ?? 0,
+        conversationsCount: conversations?.length ?? 0
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasLoadedOnce]); // Only run when hasLoadedOnce changes to prevent loops
+
   // 🎯 CLERK MIGRATION: Removed redirect overlay (was blocking all UI clicks)
   // Clerk middleware handles subdomain routing - no need for client-side redirect logic
 
@@ -520,20 +535,6 @@ export default function DashboardPage() {
       </ScrollArea>
     )
   }
-
-  // 🔍 DIAGNOSTIC: Log when dashboard finishes loading (run once only)
-  useEffect(() => {
-    if (!isLoading && tenantContext && hasLoadedOnce) {
-      console.log('📊 [DASHBOARD] Fully loaded:', {
-        hasLoadedOnce,
-        tenantContext,
-        isClerkLoaded,
-        documentsCount: documents?.length ?? 0,
-        conversationsCount: conversations?.length ?? 0
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasLoadedOnce]); // Only run when hasLoadedOnce changes to prevent loops
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
