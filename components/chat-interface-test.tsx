@@ -604,9 +604,9 @@ Please try again in a moment. If the issue persists, you can still use the inter
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-gray-50 dark:bg-gray-900 overflow-hidden">
       {/* Minimal control bar integrated with layout */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 py-1 flex items-center justify-end shrink-0">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 py-1 flex items-center justify-end shrink-0 w-full">
         <div className="flex items-center space-x-0.5">
           <Button 
             variant="ghost" 
@@ -649,10 +649,10 @@ Please try again in a moment. If the issue persists, you can still use the inter
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex min-h-0 overflow-hidden">
+      <div className="flex-1 flex min-h-0 w-full overflow-hidden">
         {/* Conversation History Sidebar */}
         {showConversationHistory && (
-          <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+          <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col flex-shrink-0">
             <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700 shrink-0">
               <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Conversations</h2>
               <p className="text-xs text-gray-500 dark:text-gray-400">Your chat history</p>
@@ -708,10 +708,10 @@ Please try again in a moment. If the issue persists, you can still use the inter
         )}
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-hidden">
           {/* Current Conversation Info */}
           {currentConversationId && (
-            <div className="bg-blue-50 dark:bg-blue-950 border-b border-blue-200 dark:border-blue-800 px-3 py-1 shrink-0">
+            <div className="bg-blue-50 dark:bg-blue-950 border-b border-blue-200 dark:border-blue-800 px-3 py-1 shrink-0 w-full">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center space-x-2 min-w-0 flex-1">
                   <p className="text-xs font-medium text-blue-900 dark:text-blue-100 truncate">
@@ -728,17 +728,17 @@ Please try again in a moment. If the issue persists, you can still use the inter
             </div>
           )}
 
-          <div className="flex-1 flex min-h-0 overflow-hidden">
-            <div className="w-full flex flex-col min-h-0">
-              <ScrollArea ref={scrollAreaRef} className="flex-1 px-4 py-2">
-                <div className="space-y-2 max-w-full overflow-x-hidden">
+          <div className="flex-1 flex min-h-0 w-full overflow-hidden">
+            <div className="w-full max-w-full flex flex-col min-h-0">
+              <ScrollArea ref={scrollAreaRef} className="flex-1 px-4 py-2 w-full">
+                <div className="space-y-2 w-full max-w-full overflow-x-hidden box-border">
                   {messages.map((message) => (
                     <div key={message.id}>
                       {message.type === "user" && (
-                        <div className="flex justify-end">
-                          <div className="max-w-[90%] sm:max-w-[80%]">
-                            <div className="bg-blue-600 text-white rounded-xl rounded-br-md px-3 py-1.5 shadow-sm">
-                              <p className="text-sm leading-relaxed break-words">{message.content}</p>
+                        <div className="flex justify-end w-full">
+                          <div className="max-w-[90%] sm:max-w-[80%] min-w-0">
+                            <div className="bg-blue-600 text-white rounded-xl rounded-br-md px-3 py-1.5 shadow-sm overflow-hidden">
+                              <p className="text-sm leading-relaxed break-words overflow-wrap-anywhere">{message.content}</p>
                             </div>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 text-right">
                               {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -748,23 +748,23 @@ Please try again in a moment. If the issue persists, you can still use the inter
                       )}
 
                       {message.type === "ai" && (
-                        <div className="flex justify-start">
-                          <div className="max-w-[95%] sm:max-w-[85%]">
-                            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl rounded-bl-md px-3 py-1.5 shadow-sm">
+                        <div className="flex justify-start w-full">
+                          <div className="max-w-[95%] sm:max-w-[85%] min-w-0">
+                            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl rounded-bl-md px-3 py-1.5 shadow-sm overflow-hidden">
                               <div className="flex items-center space-x-1 mb-1">
-                                <Sparkles className="h-3 w-3 text-blue-600" />
+                                <Sparkles className="h-3 w-3 text-blue-600 flex-shrink-0" />
                                 <span className="text-xs font-medium text-blue-600 dark:text-blue-400">AI Assistant</span>
                               </div>
 
-                              <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed mb-1.5 break-words">
+                              <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed mb-1.5 break-words overflow-wrap-anywhere word-break-break-word">
                                 {message.content}
                               </p>
 
                               {/* Sources */}
                               {message.sources && message.sources.length > 0 && (
-                                <div className="border-t border-gray-100 dark:border-gray-700 pt-1.5 mt-1.5">
+                                <div className="border-t border-gray-100 dark:border-gray-700 pt-1.5 mt-1.5 w-full">
                                   <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Sources:</p>
-                                  <div className="space-y-1.5">
+                                  <div className="space-y-1.5 w-full">
                                     {message.sources.map((source, idx) => (
                                       <button
                                         key={idx}
@@ -781,11 +781,11 @@ Please try again in a moment. If the issue persists, you can still use the inter
                                         }}
                                       >
                                         <FileText className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                                        <div className="flex-1 min-w-0">
-                                          <p className="text-xs font-medium text-gray-900 dark:text-gray-100">
+                                        <div className="flex-1 min-w-0 overflow-hidden">
+                                          <p className="text-xs font-medium text-gray-900 dark:text-gray-100 break-words">
                                             {source.document} (page {source.page})
                                           </p>
-                                          <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                                          <p className="text-xs text-gray-600 dark:text-gray-400 break-words line-clamp-2">
                                             {source.snippet}
                                           </p>
                                           {source.confidence && (
@@ -850,9 +850,9 @@ Please try again in a moment. If the issue persists, you can still use the inter
                       )}
 
                       {message.type === "loading" && (
-                        <div className="flex justify-start">
-                          <div className="max-w-[95%] sm:max-w-[85%]">
-                            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl rounded-bl-md px-3 py-1.5 shadow-sm">
+                        <div className="flex justify-start w-full">
+                          <div className="max-w-[95%] sm:max-w-[85%] min-w-0">
+                            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl rounded-bl-md px-3 py-1.5 shadow-sm overflow-hidden">
                               <div className="flex items-center space-x-1 mb-1">
                                 <Sparkles className="h-3 w-3 text-blue-600" />
                                 <span className="text-xs font-medium text-blue-600 dark:text-blue-400">AI Assistant</span>
@@ -883,8 +883,8 @@ Please try again in a moment. If the issue persists, you can still use the inter
               </ScrollArea>
 
               {/* Input Area */}
-              <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-2 shrink-0 overflow-hidden">
-                <div className="w-full max-w-4xl mx-auto">
+              <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-2 shrink-0 w-full overflow-hidden">
+                <div className="w-full max-w-full mx-auto px-2">
                   <div className="flex items-end space-x-2">
                     <Button
                       variant="outline"
@@ -963,7 +963,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
                       <Paperclip className="h-4 w-4" />
                     </Button>
 
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <Input
                         ref={inputRef}
                         value={inputValue}
@@ -975,7 +975,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
                           }
                         }}
                         placeholder={`Ask anything about your business documents... e.g., "${placeholderSuggestions[currentPlaceholder]}"`}
-                        className="h-10 resize-none rounded-xl border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500"
+                        className="h-10 w-full resize-none rounded-xl border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500"
                         disabled={isLoading || isCreatingConversation}
                       />
                     </div>
