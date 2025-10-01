@@ -164,6 +164,28 @@ CREATE TABLE public.file_uploads (
   CONSTRAINT file_uploads_lead_id_fkey FOREIGN KEY (lead_id) REFERENCES public.leads(id),
   CONSTRAINT file_uploads_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id)
 );
+CREATE TABLE public.ingestion_jobs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  tenant_id uuid NOT NULL,
+  document_id uuid,
+  filename text NOT NULL,
+  file_size bigint,
+  file_path text NOT NULL,
+  file_type text,
+  status text NOT NULL DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'processing'::text, 'completed'::text, 'failed'::text, 'cancelled'::text])),
+  attempts integer NOT NULL DEFAULT 0,
+  max_attempts integer NOT NULL DEFAULT 3,
+  next_retry_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  started_at timestamp with time zone,
+  completed_at timestamp with time zone,
+  error_message text,
+  error_stack text,
+  processing_metadata jsonb DEFAULT '{}'::jsonb,
+  CONSTRAINT ingestion_jobs_pkey PRIMARY KEY (id),
+  CONSTRAINT ingestion_jobs_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id),
+  CONSTRAINT ingestion_jobs_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id)
+);
 CREATE TABLE public.lead_interactions (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   lead_id uuid,

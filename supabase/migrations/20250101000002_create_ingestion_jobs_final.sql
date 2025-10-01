@@ -157,7 +157,9 @@ DROP INDEX IF EXISTS idx_jobs_retry;
 CREATE INDEX idx_jobs_retry ON ingestion_jobs(next_retry_at, status)
   WHERE status = 'pending' AND next_retry_at IS NOT NULL;
 
-RAISE NOTICE '✅ Created 5 optimized indexes';
+DO $$ BEGIN
+  RAISE NOTICE '✅ Created 5 optimized indexes';
+END $$;
 
 -- =====================================================
 -- STEP 5: ENABLE ROW LEVEL SECURITY
@@ -200,7 +202,9 @@ CREATE POLICY "Service role has full access"
   FOR ALL
   USING (auth.role() = 'service_role');
 
-RAISE NOTICE '✅ Created 3 RLS policies';
+DO $$ BEGIN
+  RAISE NOTICE '✅ Created 3 RLS policies';
+END $$;
 
 -- =====================================================
 -- STEP 7: ATOMIC JOB FETCHING FUNCTION
@@ -231,7 +235,9 @@ $$;
 -- Grant permissions
 GRANT EXECUTE ON FUNCTION get_pending_jobs(INT) TO service_role;
 
-RAISE NOTICE '✅ Created get_pending_jobs() function';
+DO $$ BEGIN
+  RAISE NOTICE '✅ Created get_pending_jobs() function';
+END $$;
 
 -- =====================================================
 -- STEP 8: STALE JOB RESET FUNCTION
@@ -266,7 +272,9 @@ $$;
 -- Grant permissions
 GRANT EXECUTE ON FUNCTION reset_stale_jobs(INT) TO service_role;
 
-RAISE NOTICE '✅ Created reset_stale_jobs() function';
+DO $$ BEGIN
+  RAISE NOTICE '✅ Created reset_stale_jobs() function';
+END $$;
 
 -- =====================================================
 -- STEP 9: JOB STATISTICS FUNCTION
@@ -299,7 +307,9 @@ $$;
 -- Grant permissions
 GRANT EXECUTE ON FUNCTION get_job_stats(UUID) TO authenticated, service_role;
 
-RAISE NOTICE '✅ Created get_job_stats() function';
+DO $$ BEGIN
+  RAISE NOTICE '✅ Created get_job_stats() function';
+END $$;
 
 -- =====================================================
 -- STEP 10: ADD DOCUMENTATION
