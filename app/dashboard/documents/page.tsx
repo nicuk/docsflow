@@ -196,11 +196,12 @@ export default function DocumentsPage() {
     setUploadingFiles((prev) => [...prev, ...newUploadingFiles])
     setIsUploadDialogOpen(true)
 
-    // 🚀 FIX: Upload files with concurrency control (3 at a time)
-    await uploadFilesWithConcurrencyLimit(newUploadingFiles, 3)
+    // 🚀 FIX: Upload files with concurrency control (1 at a time to prevent backend overload)
+    await uploadFilesWithConcurrencyLimit(newUploadingFiles, 1)
   }
 
   // 🚀 NEW: Upload files with concurrent limit to prevent overwhelming browser/server
+  // REDUCED TO 1: Multiple concurrent uploads overwhelm backend processing (AI APIs, embeddings, DB)
   const uploadFilesWithConcurrencyLimit = async (files: UploadingFile[], limit: number) => {
     const queue = [...files];
     const active: Promise<void>[] = [];
@@ -1097,7 +1098,7 @@ export default function DocumentsPage() {
           )}
 
           <DialogFooter className="flex items-center justify-between">
-            <div className="text-xs text-muted-foreground">Maximum 5 files, 50MB per file (3 concurrent uploads)</div>
+            <div className="text-xs text-muted-foreground">Maximum 5 files, 50MB per file (sequential processing)</div>
             <Button 
               type="submit" 
               onClick={() => {
