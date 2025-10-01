@@ -231,18 +231,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         }`}
       >
         {/* Top header */}
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 lg:px-6 py-4">
+        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 lg:px-6 py-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <div className="flex items-center gap-3">
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {navigationItems.find(item => item.href === pathname)?.name || 'Dashboard'}
               </h1>
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {/* Search */}
-              <Button variant="ghost" size="icon">
-                <Search className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Search className="h-4 w-4" />
                 <span className="sr-only">Search</span>
               </Button>
               
@@ -250,8 +250,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <ThemeToggle />
               
               {/* Notifications */}
-              <Button variant="ghost" size="icon">
-                <Bell className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Bell className="h-4 w-4" />
                 <span className="sr-only">Notifications</span>
               </Button>
               
@@ -306,7 +306,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 h-[calc(100vh-4rem)] overflow-hidden p-4 md:p-6">
+        <main className="flex-1 h-[calc(100vh-3rem)] overflow-hidden p-2 md:p-3">
           <div className="h-full max-w-7xl mx-auto">
             {children}
           </div>
