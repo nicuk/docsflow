@@ -37,109 +37,90 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    // 🚀 ASYNC PROCESSING: Queue the file for background processing
+    console.log(`[Documents Upload] Queuing file for background processing: ${file.name}`);
+    
     // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     
-    // Use secure database service instead of direct service role key
+    // Create Supabase client for storage upload
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    
+    // 1. Upload file to storage
+    const filePath = `${tenantId}/${Date.now()}-${file.name}`;
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('documents')
+      .upload(filePath, buffer, {
+        contentType: file.type,
+        upsert: false
+      });
+    
+    if (uploadError) {
+      throw new Error(`Failed to upload file to storage: ${uploadError.message}`);
+    }
+    
+    console.log(`[Documents Upload] File uploaded to storage: ${filePath}`);
+    
+    // 2. Create document record with "queued" status
     const { SecureDocumentService } = await import('@/lib/secure-database');
     
-    // Tenant context is handled by secure service layer
-    
-    let parsedDocument;
-    let parseMethod: 'advanced' | 'basic' = 'basic';
-    
-    // Check if multimodal parsing is enabled for this tenant
-    if (isFeatureEnabled('MULTIMODAL_PARSING', tenantId)) {
-      console.log(`[Documents Upload] Using multimodal parser for tenant ${tenantId}`);
-      
-      try {
-        const parser = new MultimodalDocumentParser(tenantId);
-        parsedDocument = await parser.parseDocument(
-          buffer,
-          file.type,
-          file.name
-        );
-        parseMethod = parsedDocument.metadata.parse_method as 'advanced' | 'basic';
-        
-        // Generate embeddings for chunks if advanced parsing succeeded
-        if (parseMethod === 'advanced') {
-          parsedDocument = await parser.generateEmbeddings(parsedDocument.chunks);
-        }
-      } catch (error) {
-        console.error('[Documents Upload] Multimodal parsing failed, using fallback:', error);
-        // Fallback to basic parsing
-        parsedDocument = {
-          text: buffer.toString('utf-8').substring(0, 100000),
-          metadata: {
-            tenant_id: tenantId,
-            mime_type: file.type,
-            parse_method: 'basic'
-          },
-          chunks: []
-        };
-      }
-    } else {
-      // Use basic parsing for tenants without the feature
-      console.log(`[Documents Upload] Using basic parser for tenant ${tenantId}`);
-      parsedDocument = {
-        text: buffer.toString('utf-8').substring(0, 100000),
-        metadata: {
-          tenant_id: tenantId,
-          mime_type: file.type,
-          parse_method: 'basic'
-        },
-        chunks: []
-      };
-    }
-    
-    // Verify tenant isolation - CRITICAL CHECK
-    if (parsedDocument.metadata.tenant_id !== tenantId) {
-      trackTenantViolation(
-        tenantId,
-        parsedDocument.metadata.tenant_id,
-        'Document parser returned different tenant ID'
-      );
-      return NextResponse.json(
-        { error: 'Tenant isolation violation detected' },
-        { status: 500 }
-      );
-    }
-    
-    // Store document using secure service
     const document = await SecureDocumentService.insertDocument({
       tenant_id: tenantId,
       name: file.name,
-      content: parsedDocument.text,
+      content: '', // Will be populated by worker
       mime_type: file.type,
       size: buffer.length,
-      metadata: parsedDocument.metadata,
-      parse_method: parseMethod,
-      has_tables: (parsedDocument.metadata.tables?.length || 0) > 0,
-      has_images: (parsedDocument.metadata.images?.length || 0) > 0,
-      chunk_count: parsedDocument.chunks.length
+      metadata: {
+        tenant_id: tenantId,
+        mime_type: file.type,
+        storage_path: filePath,
+        queued_at: new Date().toISOString()
+      },
+      parse_method: 'pending', // Will be determined by worker
+      has_tables: false,
+      has_images: false,
+      chunk_count: 0
     });
     
     if (!document) {
-      throw new Error('Failed to insert document');
+      throw new Error('Failed to create document record');
     }
     
-    // Store chunks if available using secure service
-    if (parsedDocument.chunks.length > 0) {
-      for (const [index, chunk] of parsedDocument.chunks.entries()) {
-        await SecureDocumentService.insertDocumentChunk({
-          document_id: (document as any).id,
-          content: chunk.content,
-          type: chunk.type,
-          position: index,
-          metadata: {
-            ...chunk.metadata,
-            filename: file.name // 🎯 FIX: Include filename for search
-          },
-          embedding: chunk.embedding
-        }, tenantId);
-      }
+    const documentId = (document as any).id;
+    
+    // 3. Create ingestion job for background processing
+    const { data: job, error: jobError } = await supabase
+      .from('ingestion_jobs')
+      .insert({
+        tenant_id: tenantId,
+        document_id: documentId,
+        filename: file.name,
+        file_size: buffer.length,
+        file_path: filePath,
+        file_type: file.type,
+        status: 'pending',
+        attempts: 0,
+        max_attempts: 3,
+        processing_metadata: {
+          use_multimodal: isFeatureEnabled('MULTIMODAL_PARSING', tenantId),
+          created_at: new Date().toISOString()
+        }
+      })
+      .select()
+      .single();
+    
+    if (jobError) {
+      // Clean up if job creation fails
+      await supabase.storage.from('documents').remove([filePath]);
+      await supabase.from('documents').delete().eq('id', documentId);
+      throw new Error(`Failed to create ingestion job: ${jobError.message}`);
     }
+    
+    console.log(`[Documents Upload] Job created: ${job.id}`);
     
     // Track metrics
     const duration = Date.now() - startTime;
@@ -147,25 +128,24 @@ export async function POST(request: NextRequest) {
       tenantId,
       duration,
       true,
-      parseMethod,
+      'queued',
       file.type
     );
     
-    // Return success response
+    // Return success response immediately
     return NextResponse.json({
       success: true,
       document: {
-        id: (document as any).id,
-        name: (document as any).name,
-        size: (document as any).size,
-        parseMethod,
-        chunkCount: parsedDocument.chunks.length,
-        hasTables: (document as any).has_tables,
-        hasImages: (document as any).has_images
+        id: documentId,
+        name: file.name,
+        size: buffer.length,
+        status: 'queued',
+        jobId: job.id,
+        message: 'Document queued for processing. This may take 30s-2min depending on file size.'
       },
       metrics: {
-        parseTime: duration,
-        method: parseMethod
+        uploadTime: duration,
+        method: 'async'
       }
     });
     

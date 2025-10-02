@@ -216,15 +216,10 @@ async function processJob(
     
     console.log(`📥 [JOB ${job.id}] File downloaded: ${fileData.size} bytes`);
     
-    // 2. Convert blob to text content
-    const textContent = await fileData.text();
-    
-    // 3. Process document
-    // For now, we'll create a basic processing function
-    // TODO: Extract processDocumentContentEnhanced to shared lib
+    // 2. Process document with enhanced multimodal parsing
     await processDocumentContent(
       job,
-      textContent,
+      fileData,
       supabase
     );
     
@@ -320,55 +315,135 @@ async function handleJobFailure(
 
 async function processDocumentContent(
   job: IngestionJob,
-  textContent: string,
+  fileData: Blob,
   supabase: ReturnType<typeof createClient>
 ): Promise<void> {
-  // TODO: Extract this to shared library with full processing logic
-  // For now, implement basic chunking and storage
+  // 🚀 ENHANCED PROCESSING: Use multimodal parser for high-quality chunking
+  console.log(`📝 [JOB ${job.id}] Starting enhanced document processing`);
   
-  const { embed } = await import('ai');
-  const { aiProvider } = await import('@/lib/ai/providers');
+  const { SecureDocumentService } = await import('@/lib/secure-database');
+  const { MultimodalDocumentParser } = await import('@/lib/rag-multimodal-parser');
+  const { isFeatureEnabled } = await import('@/lib/feature-flags');
   
-  // 1. Create basic chunks (simple text splitting for MVP)
-  const chunkSize = 1000;
-  const chunks: string[] = [];
+  // Convert blob to buffer
+  const arrayBuffer = await fileData.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
   
-  for (let i = 0; i < textContent.length; i += chunkSize) {
-    chunks.push(textContent.substring(i, i + chunkSize));
-  }
+  let parsedDocument;
+  let parseMethod: 'advanced' | 'basic' = 'basic';
   
-  console.log(`📝 [JOB ${job.id}] Created ${chunks.length} chunks`);
+  // Check if multimodal parsing is enabled
+  const useMultimodal = job.processing_metadata?.use_multimodal || 
+                       isFeatureEnabled('MULTIMODAL_PARSING', job.tenant_id);
   
-  // 2. Generate embeddings and store chunks
-  for (let i = 0; i < chunks.length; i++) {
-    const chunkText = chunks[i];
+  if (useMultimodal) {
+    console.log(`[JOB ${job.id}] Using multimodal parser`);
     
     try {
-      // Generate embedding
-      const { embedding } = await embed({
-        model: aiProvider.getEmbedding(),
-        value: chunkText
-      });
+      const parser = new MultimodalDocumentParser(job.tenant_id);
+      parsedDocument = await parser.parseDocument(
+        buffer,
+        job.file_type || 'application/octet-stream',
+        job.filename
+      );
+      parseMethod = parsedDocument.metadata.parse_method as 'advanced' | 'basic';
       
-      // Store chunk
-      await supabase
-        .from('document_chunks')
-        .insert({
-          document_id: job.document_id,
+      // Generate embeddings for chunks if advanced parsing succeeded
+      if (parseMethod === 'advanced') {
+        parsedDocument = await parser.generateEmbeddings(parsedDocument.chunks);
+      }
+    } catch (error) {
+      console.error(`[JOB ${job.id}] Multimodal parsing failed, using fallback:`, error);
+      // Fallback to basic parsing
+      const textContent = buffer.toString('utf-8').substring(0, 100000);
+      parsedDocument = {
+        text: textContent,
+        metadata: {
           tenant_id: job.tenant_id,
-          chunk_index: i,
-          content: chunkText,
-          embedding: JSON.stringify(embedding),
-          token_count: Math.ceil(chunkText.length / 4) // Rough estimate
-        });
+          mime_type: job.file_type,
+          parse_method: 'basic'
+        },
+        chunks: []
+      };
+    }
+  } else {
+    console.log(`[JOB ${job.id}] Using basic parser`);
+    const textContent = buffer.toString('utf-8').substring(0, 100000);
+    parsedDocument = {
+      text: textContent,
+      metadata: {
+        tenant_id: job.tenant_id,
+        mime_type: job.file_type,
+        parse_method: 'basic'
+      },
+      chunks: []
+    };
+  }
+  
+  console.log(`📝 [JOB ${job.id}] Parsed document with ${parsedDocument.chunks.length} chunks (method: ${parseMethod})`);
+  
+  // Update document record with parsed content
+  await supabase
+    .from('documents')
+    .update({
+      content: parsedDocument.text || '',
+      metadata: {
+        ...parsedDocument.metadata,
+        parse_method: parseMethod,
+        processed_at: new Date().toISOString()
+      },
+      processing_status: 'processing', // Still processing chunks
+      processing_progress: 50
+    })
+    .eq('id', job.document_id);
+  
+  // Store chunks with embeddings
+  if (parsedDocument.chunks.length > 0) {
+    console.log(`💾 [JOB ${job.id}] Storing ${parsedDocument.chunks.length} chunks...`);
+    
+    for (const [index, chunk] of parsedDocument.chunks.entries()) {
+      try {
+        await SecureDocumentService.insertDocumentChunk({
+          document_id: job.document_id!,
+          content: chunk.content,
+          type: chunk.type,
+          position: index,
+          metadata: {
+            ...chunk.metadata,
+            filename: job.filename // 🎯 Include filename for search
+          },
+          embedding: chunk.embedding
+        }, job.tenant_id);
+        
+        // Update progress
+        const progress = 50 + Math.floor((index + 1) / parsedDocument.chunks.length * 50);
+        await supabase
+          .from('documents')
+          .update({ processing_progress: progress })
+          .eq('id', job.document_id);
       
     } catch (error) {
-      console.error(`⚠️ [JOB ${job.id}] Failed to process chunk ${i}:`, error);
+        console.error(`⚠️ [JOB ${job.id}] Failed to store chunk ${index}:`, error);
       // Continue with other chunks
+      }
     }
   }
   
-  console.log(`✅ [JOB ${job.id}] Stored ${chunks.length} chunks`);
+  // Update final document metadata
+  await supabase
+    .from('documents')
+    .update({
+      processing_progress: 100,
+      metadata: {
+        ...parsedDocument.metadata,
+        chunk_count: parsedDocument.chunks.length,
+        has_tables: (parsedDocument.metadata.tables?.length || 0) > 0,
+        has_images: (parsedDocument.metadata.images?.length || 0) > 0
+      }
+    })
+    .eq('id', job.document_id);
+  
+  console.log(`✅ [JOB ${job.id}] Successfully processed ${parsedDocument.chunks.length} chunks`);
 }
 
 // =====================================================

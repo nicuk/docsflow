@@ -107,8 +107,8 @@ CREATE TABLE public.document_chunks (
   metadata jsonb DEFAULT '{}'::jsonb,
   access_level integer NOT NULL DEFAULT 1 CHECK (access_level >= 1 AND access_level <= 2),
   created_at timestamp with time zone DEFAULT now(),
-  embedding USER-DEFINED,
   tenant_id uuid,
+  embedding USER-DEFINED,
   CONSTRAINT document_chunks_pkey PRIMARY KEY (id),
   CONSTRAINT document_chunks_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id),
   CONSTRAINT document_chunks_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
@@ -163,6 +163,28 @@ CREATE TABLE public.file_uploads (
   CONSTRAINT file_uploads_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id),
   CONSTRAINT file_uploads_lead_id_fkey FOREIGN KEY (lead_id) REFERENCES public.leads(id),
   CONSTRAINT file_uploads_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.ingestion_jobs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  tenant_id uuid NOT NULL,
+  document_id uuid,
+  filename text NOT NULL,
+  file_size bigint,
+  file_path text NOT NULL,
+  file_type text,
+  status text NOT NULL DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'processing'::text, 'completed'::text, 'failed'::text, 'cancelled'::text])),
+  attempts integer NOT NULL DEFAULT 0,
+  max_attempts integer NOT NULL DEFAULT 3,
+  next_retry_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  started_at timestamp with time zone,
+  completed_at timestamp with time zone,
+  error_message text,
+  error_stack text,
+  processing_metadata jsonb DEFAULT '{}'::jsonb,
+  CONSTRAINT ingestion_jobs_pkey PRIMARY KEY (id),
+  CONSTRAINT ingestion_jobs_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id),
+  CONSTRAINT ingestion_jobs_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id)
 );
 CREATE TABLE public.lead_interactions (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -285,6 +307,24 @@ CREATE TABLE public.tenant_admins (
   CONSTRAINT tenant_admins_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id),
   CONSTRAINT tenant_admins_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
+CREATE TABLE public.tenant_ai_persona (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  tenant_id uuid NOT NULL UNIQUE,
+  role text DEFAULT 'Business Intelligence Assistant'::text,
+  tone text DEFAULT 'Professional and helpful'::text,
+  business_context text,
+  industry text DEFAULT 'general'::text,
+  focus_areas ARRAY,
+  system_prompt text NOT NULL,
+  custom_instructions text,
+  fallback_prompt text NOT NULL,
+  confidence_threshold numeric DEFAULT 0.3,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  last_used_at timestamp with time zone,
+  CONSTRAINT tenant_ai_persona_pkey PRIMARY KEY (id),
+  CONSTRAINT tenant_ai_persona_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
+);
 CREATE TABLE public.tenants (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   subdomain text NOT NULL UNIQUE,
@@ -301,6 +341,19 @@ CREATE TABLE public.tenants (
   updated_at timestamp with time zone DEFAULT now(),
   custom_persona jsonb DEFAULT '{}'::jsonb,
   CONSTRAINT tenants_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.usage_tracking (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  tenant_id uuid NOT NULL,
+  period_start date NOT NULL,
+  period_end date NOT NULL,
+  documents_count integer DEFAULT 0,
+  conversations_count integer DEFAULT 0,
+  storage_used_mb integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT usage_tracking_pkey PRIMARY KEY (id),
+  CONSTRAINT usage_tracking_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id)
 );
 CREATE TABLE public.user_invitations (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
