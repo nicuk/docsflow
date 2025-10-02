@@ -178,6 +178,7 @@ export default function ChatInterface() {
   const [suggestionsDisabledPermanently, setSuggestionsDisabledPermanently] = useState(false) // Track if user has permanently dismissed suggestions
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null) // Ref to scroll to bottom
   
   // 🚀 NEW: Source viewer modal state
   const [selectedSource, setSelectedSource] = useState<any>(null)
@@ -280,20 +281,8 @@ export default function ChatInterface() {
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (!scrollAreaRef.current) return
-
-    // Use multiple requestAnimationFrame calls to ensure DOM is fully rendered
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const scrollContainer = scrollAreaRef.current?.querySelector("[data-radix-scroll-area-viewport]")
-        if (scrollContainer) {
-          scrollContainer.scrollTo({
-            top: scrollContainer.scrollHeight,
-            behavior: 'smooth'
-          })
-        }
-      })
-    })
+    // Scroll to the bottom element
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages])
 
   // Load user's conversations (enhanced with localStorage fallback)
@@ -895,6 +884,8 @@ Please try again in a moment. If the issue persists, you can still use the inter
                       )}
                     </div>
                   ))}
+                  {/* Invisible element to scroll to */}
+                  <div ref={messagesEndRef} />
                 </div>
               </ScrollArea>
 
