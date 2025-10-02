@@ -8,25 +8,18 @@ export default function ChatPage() {
   useEffect(() => {
     // Save original overflow
     const originalOverflow = document.body.style.overflow
-    const originalPosition = document.body.style.position
     
-    // Lock body scroll
+    // Lock body scroll (but don't change position to avoid layout issues)
     document.body.style.overflow = 'hidden'
-    document.body.style.position = 'fixed'
-    document.body.style.width = '100%'
-    document.body.style.height = '100%'
     
     // Restore on unmount
     return () => {
       document.body.style.overflow = originalOverflow
-      document.body.style.position = originalPosition
-      document.body.style.width = ''
-      document.body.style.height = ''
     }
   }, [])
   
   return (
-    <div className="fixed inset-0 h-full w-full overflow-hidden">
+    <div className="h-full w-full max-w-full overflow-hidden">
       <ChatInterface />
     </div>
   )
