@@ -278,38 +278,17 @@ export default function ChatInterface() {
     return () => clearInterval(interval)
   }, [])
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll messages to bottom when new messages arrive
   useEffect(() => {
     if (!scrollAreaRef.current) return
     
     const scrollContainer = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement
     if (!scrollContainer) return
     
-    // Try multiple approaches to force scroll
-    const scrollToBottom = () => {
-      const maxScroll = scrollContainer.scrollHeight
-      console.log('📜 ATTEMPTING SCROLL. scrollHeight:', maxScroll)
-      
-      // Method 1: Direct scrollTop
-      scrollContainer.scrollTop = maxScroll
-      
-      // Method 2: scrollTo with behavior
-      scrollContainer.scrollTo({
-        top: maxScroll,
-        behavior: 'auto'
-      })
-      
-      // Method 3: Force again after tiny delay
-      setTimeout(() => {
-        scrollContainer.scrollTop = maxScroll
-        console.log('📜 AFTER SCROLL. New scrollTop:', scrollContainer.scrollTop)
-      }, 50)
-    }
-    
-    // Wait for DOM to settle, then scroll multiple times
-    setTimeout(scrollToBottom, 150)
-    setTimeout(scrollToBottom, 300)
-    
+    // Simple immediate scroll to bottom
+    setTimeout(() => {
+      scrollContainer.scrollTop = scrollContainer.scrollHeight
+    }, 100)
   }, [messages])
 
   // Load user's conversations (enhanced with localStorage fallback)
