@@ -33,6 +33,7 @@ export class TemporalRAGEnhancement {
   private supabase: any;
   private genAI: GoogleGenerativeAI;
   private model: any;
+  private embeddingModel: any; // 🎯 FIX: Add embedding model for vector search
   private tenantId: string; // 🎯 SCHEMA FIX: Store tenant context
 
   constructor(tenantId: string) { // 🎯 SCHEMA FIX: Accept tenant ID
@@ -50,6 +51,10 @@ export class TemporalRAGEnhancement {
 2. Entity relationships (companies, people, contracts)
 3. Document relationships (amendments, renewals, supersedes)
 4. Temporal conflicts and resolutions`
+    });
+    // 🎯 FIX: Initialize embedding model (768 dimensions)
+    this.embeddingModel = this.genAI.getGenerativeModel({ 
+      model: 'text-embedding-004'
     });
   }
 
@@ -315,9 +320,14 @@ Return JSON format:
   }
 
   private async getEmbedding(text: string): Promise<number[]> {
-    // This would call your embedding service
-    // For now, returning placeholder
-    return new Array(1536).fill(0).map(() => Math.random());
+    try {
+      // 🎯 FIX: Use real text-embedding-004 model (768 dimensions)
+      const result = await this.embeddingModel.embedContent(text);
+      return result.embedding.values;
+    } catch (error) {
+      console.error('🔴 [RAG Temporal] Failed to generate embedding:', error);
+      throw error;
+    }
   }
 
   private async generateTemporalResponse(
