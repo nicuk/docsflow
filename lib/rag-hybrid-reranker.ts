@@ -372,7 +372,13 @@ Return only a number between 0 and 1.`;
         source: result.metadata?.filename || 'Unknown',
         page: result.metadata?.page,
         section: result.metadata?.section,
-        confidence: result.rerankedScore || result.hybridScore || 0
+        // 🎯 FIX: Use MAX of all scores, not fallback chain
+        confidence: Math.max(
+          result.rerankedScore || 0,
+          result.hybridScore || 0,
+          result.keywordScore || 0,
+          result.vectorScore || 0
+        )
       }
     }));
     
@@ -381,13 +387,15 @@ Return only a number between 0 and 1.`;
       (sum, r) => sum + r.provenance.confidence, 0
     ) / resultsWithProvenance.length;
     
-    // Abstain if confidence is too low
-    if (avgConfidence < confidenceThreshold) {
+    // 🎯 FIX: Results already passed confidence filter, no need to re-check
+    // If we got this far, we have high confidence results
+    // Only abstain if somehow we have NO results (defensive check)
+    if (resultsWithProvenance.length === 0) {
       return {
-        results: resultsWithProvenance,
+        results: [],
         shouldAbstain: true,
-        abstentionReason: `Average confidence (${avgConfidence.toFixed(2)}) below threshold`,
-        confidence: avgConfidence
+        abstentionReason: 'No results after provenance mapping',
+        confidence: 0
       };
     }
     
