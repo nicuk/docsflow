@@ -175,8 +175,10 @@ export default function ChatInterface() {
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [hiddenSuggestions, setHiddenSuggestions] = useState<Set<string>>(new Set()) // Track hidden suggestion sections
+  const [suggestionsDisabledPermanently, setSuggestionsDisabledPermanently] = useState(false) // Track if user has permanently dismissed suggestions
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const shouldAutoScrollRef = useRef(true) // Track if we should auto-scroll on new messages
   
   // 🚀 NEW: Source viewer modal state
   const [selectedSource, setSelectedSource] = useState<any>(null)
@@ -220,6 +222,14 @@ export default function ChatInterface() {
     initializeChat()
   }, [])
 
+  // Load suggestions dismissal preference from localStorage
+  useEffect(() => {
+    const dismissed = localStorage.getItem('docsflow_suggestions_dismissed')
+    if (dismissed === 'true') {
+      setSuggestionsDisabledPermanently(true)
+    }
+  }, [])
+
   // Batch localStorage saves to prevent multiple reflows
   useEffect(() => {
     // Use requestAnimationFrame to batch DOM operations
@@ -235,6 +245,9 @@ export default function ChatInterface() {
 
   // Load conversation history when conversation changes
   useEffect(() => {
+    // Always scroll to bottom when switching conversations
+    shouldAutoScrollRef.current = true
+
     if (currentConversationId) {
       // First try to load from localStorage (instant)
       const storedMessages = storage.loadMessages(currentConversationId)
@@ -269,18 +282,38 @@ export default function ChatInterface() {
     return () => clearInterval(interval)
   }, [])
 
-  // Optimized auto-scroll to bottom when new messages arrive
+  // Smart auto-scroll: only scroll when user sends a message or is at bottom
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      // Use requestAnimationFrame to prevent forced reflow
-      requestAnimationFrame(() => {
-        const scrollContainer = scrollAreaRef.current?.querySelector("[data-radix-scroll-area-viewport]")
-        if (scrollContainer) {
-          scrollContainer.scrollTop = scrollContainer.scrollHeight
-        }
-      })
-    }
+    if (!scrollAreaRef.current || !shouldAutoScrollRef.current) return
+
+    // Use setTimeout to ensure DOM has fully rendered the new message
+    const timeoutId = setTimeout(() => {
+      const scrollContainer = scrollAreaRef.current?.querySelector("[data-radix-scroll-area-viewport]")
+      if (scrollContainer) {
+        scrollContainer.scrollTo({
+          top: scrollContainer.scrollHeight,
+          behavior: 'smooth'
+        })
+      }
+    }, 100)
+
+    return () => clearTimeout(timeoutId)
   }, [messages])
+
+  // Detect when user manually scrolls up
+  useEffect(() => {
+    const scrollContainer = scrollAreaRef.current?.querySelector("[data-radix-scroll-area-viewport]")
+    if (!scrollContainer) return
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100 // Within 100px of bottom
+      shouldAutoScrollRef.current = isNearBottom
+    }
+
+    scrollContainer.addEventListener('scroll', handleScroll)
+    return () => scrollContainer.removeEventListener('scroll', handleScroll)
+  }, [])
 
   // Load user's conversations (enhanced with localStorage fallback)
   const loadConversations = async () => {
@@ -398,6 +431,9 @@ export default function ChatInterface() {
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return
+
+    // Always auto-scroll when user sends a message
+    shouldAutoScrollRef.current = true
 
     // Create new conversation if none exists
     let conversationId = currentConversationId
@@ -812,16 +848,18 @@ Please try again in a moment. If the issue persists, you can still use the inter
                               )}
 
                               {/* Follow-up Suggestions */}
-                              {message.suggestions && message.suggestions.length > 0 && !hiddenSuggestions.has(message.id) && (
+                              {message.suggestions && message.suggestions.length > 0 && !hiddenSuggestions.has(message.id) && !suggestionsDisabledPermanently && (
                                 <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
                                   <div className="flex items-center justify-between mb-1.5">
                                     <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Ask about:</p>
                                     <button
                                       onClick={() => {
-                                        setHiddenSuggestions(prev => new Set([...prev, message.id]))
+                                        // Permanently disable suggestions
+                                        setSuggestionsDisabledPermanently(true)
+                                        localStorage.setItem('docsflow_suggestions_dismissed', 'true')
                                       }}
                                       className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                                      title="Hide suggestions"
+                                      title="Don't show suggestions again"
                                     >
                                       <X className="h-3 w-3" />
                                     </button>
