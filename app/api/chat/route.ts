@@ -226,10 +226,10 @@ export async function POST(request: NextRequest) {
     const context = ragResponse.sources?.map((source: any) => ({
       content: source.content || source.source || '',
       snippet: source.content?.substring(0, 200) || '', // First 200 chars for preview
-      document: source.metadata?.filename || source.provenance?.source || 'Unknown Document',
-      documentId: source.id || source.document_id || null, // Real UUID from chunks table
-      page: source.metadata?.page || source.provenance?.page,
-      confidence: source.rerankedScore || source.hybridScore || 0.7
+      document: source.source || source.provenance?.source || source.metadata?.filename || 'Unknown Document', // 🎯 FIX: Check source.source first (top-level field)
+      documentId: source.document_id || source.id || null, // Real UUID from chunks table
+      page: source.provenance?.page || source.metadata?.page,
+      confidence: source.confidence || source.rerankedScore || source.hybridScore || 0.7
     })) || [];
 
     if (context.length === 0) {

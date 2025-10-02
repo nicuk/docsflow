@@ -461,8 +461,10 @@ Return only a number between 0 and 1.`;
     const sources = includeProvenance ? results.map(r => ({
       content: r.content,
       source: r.provenance?.source || 'Unknown',
+      document_id: r.document_id || r.id, // 🎯 FIX: Include document ID for linking
       confidence: r.provenance?.confidence || confidence,
-      metadata: r.metadata
+      metadata: r.metadata,
+      provenance: r.provenance // 🎯 FIX: Include full provenance for frontend
     })) : [];
     
     console.log(`🎯 [RAGAS PATTERN A] FINAL RESULT: success=true, sources=${sources.length}, confidence=${confidence}`);
