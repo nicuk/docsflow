@@ -241,7 +241,7 @@ export class UnifiedRAGPipeline {
       this.tenantId,
       {
         topK: options.topK || 10,
-        confidenceThreshold: options.confidenceThreshold || 0.7,
+        confidenceThreshold: options.confidenceThreshold || 0.4,  // 🎯 FIX: Lower from 0.7 to match simple queries
         includeProvenance: options.includeProvenance !== false
       }
     );
