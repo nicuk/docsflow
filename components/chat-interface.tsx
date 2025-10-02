@@ -280,32 +280,23 @@ export default function ChatInterface() {
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    console.log('🔍 SCROLL EFFECT TRIGGERED. Message count:', messages.length)
-    console.log('🔍 scrollAreaRef.current exists:', !!scrollAreaRef.current)
-    
-    if (!scrollAreaRef.current) {
-      console.error('❌ scrollAreaRef.current is NULL!')
-      return
-    }
-    
-    console.log('🔍 scrollAreaRef element:', scrollAreaRef.current)
-    console.log('🔍 Searching for viewport...')
+    if (!scrollAreaRef.current) return
     
     const scrollContainer = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]")
-    console.log('🔍 Found viewport:', !!scrollContainer)
+    if (!scrollContainer) return
     
-    if (!scrollContainer) {
-      console.error('❌ ScrollArea viewport not found!')
-      console.log('🔍 Available children:', scrollAreaRef.current.children)
-      return
-    }
-    
-    // Use requestAnimationFrame to prevent forced reflow
-    requestAnimationFrame(() => {
-      console.log('📜 SCROLLING NOW. Current scrollTop:', scrollContainer.scrollTop, 'scrollHeight:', scrollContainer.scrollHeight)
+    // Use setTimeout to ensure DOM has fully rendered and settled
+    const scrollTimer = setTimeout(() => {
+      console.log('📜 SCROLLING NOW. scrollTop:', scrollContainer.scrollTop, 'scrollHeight:', scrollContainer.scrollHeight)
       scrollContainer.scrollTop = scrollContainer.scrollHeight
-      console.log('📜 AFTER SCROLL. New scrollTop:', scrollContainer.scrollTop)
-    })
+      
+      // Verify scroll happened
+      setTimeout(() => {
+        console.log('📜 AFTER SCROLL. New scrollTop:', scrollContainer.scrollTop)
+      }, 100)
+    }, 100)
+    
+    return () => clearTimeout(scrollTimer)
   }, [messages])
 
   // Load user's conversations (enhanced with localStorage fallback)
