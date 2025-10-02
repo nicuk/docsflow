@@ -171,13 +171,16 @@ export class UnifiedRAGPipeline {
       const agenticAnalysis = await this.agenticEnhancer.analyzeQuery(query, this.tenantId);
       console.log(`✅ [QUERY ANALYSIS] Agentic analysis completed: ${agenticAnalysis.queryPlan.strategy}`);
       
-      const isTemporalQuery = /latest|recent|last|ago|between|from.*to|changed|updated/i.test(query);
+      // 🎯 FIX: Use more precise temporal detection to avoid false matches
+      // "between" should only trigger for date ranges, not "difference between"
+      const isTemporalQuery = /\b(latest|recent|last|ago|from\s+\w+\s+to\s+\w+|changed|updated|between\s+\d)/i.test(query);
       const isComplexQuery = agenticAnalysis.queryPlan.strategy === 'multi_doc' || 
                            agenticAnalysis.queryPlan.strategy === 'comparative' || 
                            agenticAnalysis.queryPlan.strategy === 'hierarchical';
 
       return {
-        strategy: isTemporalQuery ? 'temporal' : 
+        // 🎯 FIX: Prefer agentic analysis over regex when available
+        strategy: agenticAnalysis.queryPlan.strategy === 'temporal' || (isTemporalQuery && !isComplexQuery) ? 'temporal' : 
                  isComplexQuery ? 'complex' : 'simple',
         isTemporalQuery,
         isComplexQuery,
