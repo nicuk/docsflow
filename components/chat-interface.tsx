@@ -178,7 +178,6 @@ export default function ChatInterface() {
   const [suggestionsDisabledPermanently, setSuggestionsDisabledPermanently] = useState(false) // Track if user has permanently dismissed suggestions
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const shouldAutoScrollRef = useRef(true) // Track if we should auto-scroll on new messages
   
   // 🚀 NEW: Source viewer modal state
   const [selectedSource, setSelectedSource] = useState<any>(null)
@@ -245,9 +244,6 @@ export default function ChatInterface() {
 
   // Load conversation history when conversation changes
   useEffect(() => {
-    // Always scroll to bottom when switching conversations
-    shouldAutoScrollRef.current = true
-
     if (currentConversationId) {
       // First try to load from localStorage (instant)
       const storedMessages = storage.loadMessages(currentConversationId)
@@ -282,38 +278,23 @@ export default function ChatInterface() {
     return () => clearInterval(interval)
   }, [])
 
-  // Smart auto-scroll: only scroll when user sends a message or is at bottom
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (!scrollAreaRef.current || !shouldAutoScrollRef.current) return
+    if (!scrollAreaRef.current) return
 
-    // Use setTimeout to ensure DOM has fully rendered the new message
-    const timeoutId = setTimeout(() => {
-      const scrollContainer = scrollAreaRef.current?.querySelector("[data-radix-scroll-area-viewport]")
-      if (scrollContainer) {
-        scrollContainer.scrollTo({
-          top: scrollContainer.scrollHeight,
-          behavior: 'smooth'
-        })
-      }
-    }, 100)
-
-    return () => clearTimeout(timeoutId)
+    // Use multiple requestAnimationFrame calls to ensure DOM is fully rendered
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const scrollContainer = scrollAreaRef.current?.querySelector("[data-radix-scroll-area-viewport]")
+        if (scrollContainer) {
+          scrollContainer.scrollTo({
+            top: scrollContainer.scrollHeight,
+            behavior: 'smooth'
+          })
+        }
+      })
+    })
   }, [messages])
-
-  // Detect when user manually scrolls up
-  useEffect(() => {
-    const scrollContainer = scrollAreaRef.current?.querySelector("[data-radix-scroll-area-viewport]")
-    if (!scrollContainer) return
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = scrollContainer
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100 // Within 100px of bottom
-      shouldAutoScrollRef.current = isNearBottom
-    }
-
-    scrollContainer.addEventListener('scroll', handleScroll)
-    return () => scrollContainer.removeEventListener('scroll', handleScroll)
-  }, [])
 
   // Load user's conversations (enhanced with localStorage fallback)
   const loadConversations = async () => {
@@ -431,9 +412,6 @@ export default function ChatInterface() {
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return
-
-    // Always auto-scroll when user sends a message
-    shouldAutoScrollRef.current = true
 
     // Create new conversation if none exists
     let conversationId = currentConversationId
