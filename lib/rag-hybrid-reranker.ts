@@ -131,10 +131,15 @@ Rewrite and decompose this query for optimal RAG retrieval:
 
 Original Query: "${query}"
 
+IMPORTANT CONTEXT:
+- If the query mentions "file" or "document", preserve those terms exactly
+- If asking about a specific named document/file, keep the name intact
+- Don't replace product/business names with technical terms (e.g. "Raspberry" platform ≠ "Raspberry Pi" device)
+
 Provide:
-1. Simplified rewrites (2-3 variations)
+1. Simplified rewrites (2-3 variations) - preserve document/file references
 2. Decomposed sub-queries (if complex)
-3. Expanded queries with synonyms/related terms
+3. Expanded queries with synonyms/related terms (but NOT for proper nouns/file names)
 4. Strategy classification
 
 Format as JSON:

@@ -485,7 +485,7 @@ export default function ChatInterface() {
       }
       setMessages((prev) => [...prev, timeoutMessage])
       setIsLoading(false)
-    }, 15000) // 15 second timeout
+    }, 30000) // 🎯 FIX: Increased from 15s to 30s (RAG can take 20-25s for complex queries)
 
     try {
       // Enhanced API call with conversation support
