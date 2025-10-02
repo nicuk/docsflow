@@ -223,14 +223,21 @@ export async function POST(request: NextRequest) {
 
     // Build context for LLM generation
     // 🎯 FIX: Properly extract document metadata from RAG sources
-    const context = ragResponse.sources?.map((source: any) => ({
-      content: source.content || source.source || '',
-      snippet: source.content?.substring(0, 200) || '', // First 200 chars for preview
-      document: source.source || source.provenance?.source || source.metadata?.filename || 'Unknown Document', // 🎯 FIX: Check source.source first (top-level field)
-      documentId: source.document_id || source.id || null, // Real UUID from chunks table
-      page: source.provenance?.page || source.metadata?.page,
-      confidence: source.confidence || source.rerankedScore || source.hybridScore || 0.7
-    })) || [];
+    const context = ragResponse.sources?.map((source: any) => {
+      const documentName = source.source || source.provenance?.source || source.metadata?.filename || 'Unknown Document';
+      return {
+        content: source.content || source.source || '',
+        snippet: source.content?.substring(0, 200) || '', // First 200 chars for preview
+        document: documentName, // For internal use
+        filename: documentName, // 🎯 FIX: Add for frontend compatibility
+        source: documentName,   // 🎯 FIX: Add for frontend compatibility
+        documentId: source.document_id || source.id || null, // Real UUID from chunks table
+        document_id: source.document_id || source.id || null, // 🎯 FIX: Add snake_case for frontend
+        page: source.provenance?.page || source.metadata?.page,
+        confidence: source.confidence || source.rerankedScore || source.hybridScore || 0.7,
+        metadata: source.metadata // 🎯 FIX: Pass through original metadata
+      };
+    }) || [];
 
     if (context.length === 0) {
       return NextResponse.json({
