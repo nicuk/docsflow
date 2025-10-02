@@ -115,6 +115,7 @@ export default function DocumentsPage() {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Fetch documents from API on mount
   useEffect(() => {
@@ -406,29 +407,34 @@ export default function DocumentsPage() {
 
   // Delete selected documents
   const deleteSelectedDocuments = async () => {
+    setIsDeleting(true);
+    
     try {
-      // Delete each document from backend
-      const deletePromises = selectedDocuments.map(docId => 
-        apiClient.deleteDocument(docId)
-      );
+      // Delete each document from backend with progress indication
+      const totalDocuments = selectedDocuments.length;
+      let deletedCount = 0;
       
-      await Promise.all(deletePromises);
+      for (const docId of selectedDocuments) {
+        await apiClient.deleteDocument(docId);
+        deletedCount++;
+        console.log(`✅ Deleted ${deletedCount}/${totalDocuments} documents`);
+        
+        // Update UI incrementally for better UX
+        setDocuments((prev) => prev.filter((doc) => doc.id !== docId));
+      }
       
-      console.log(`✅ Deleted ${selectedDocuments.length} documents`);
+      console.log(`✅ Successfully deleted ${totalDocuments} documents`);
       
-      // Update local state
-      setDocuments((prev) => prev.filter((doc) => !selectedDocuments.includes(doc.id)))
-      setSelectedDocuments([])
-      setIsDeleteDialogOpen(false)
+      setSelectedDocuments([]);
+      setIsDeleteDialogOpen(false);
       
       // Refresh the documents list to ensure sync
       fetchDocuments();
     } catch (error) {
       console.error('Failed to delete documents:', error);
-      // Still update UI optimistically
-      setDocuments((prev) => prev.filter((doc) => !selectedDocuments.includes(doc.id)))
-      setSelectedDocuments([])
-      setIsDeleteDialogOpen(false)
+      alert('Some documents could not be deleted. Please try again.');
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -789,9 +795,6 @@ export default function DocumentsPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setIsUploadDialogOpen(true)} className="gap-2 bg-blue-600 hover:bg-blue-700">
-            <Upload className="h-4 w-4" /> Upload
-          </Button>
           <Button 
             onClick={cleanupStuckDocuments} 
             variant="outline" 
@@ -964,34 +967,47 @@ export default function DocumentsPage() {
           </div>
         </div>
 
-        {/* Selected documents actions */}
-        {selectedDocuments.length > 0 && (
-          <div className="flex items-center justify-between bg-muted/50 p-2 rounded-md">
-            <div className="text-sm">
-              <span className="font-medium">{selectedDocuments.length}</span> document
-              {selectedDocuments.length !== 1 && "s"} selected
+        {/* Select All button and Selected documents actions */}
+        <div className="flex items-center justify-between">
+          {selectedDocuments.length > 0 ? (
+            <div className="flex items-center justify-between bg-muted/50 p-2 rounded-md w-full">
+              <div className="text-sm">
+                <span className="font-medium">{selectedDocuments.length}</span> document
+                {selectedDocuments.length !== 1 && "s"} selected
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="h-8 bg-transparent">
+                  <Download className="h-4 w-4 mr-2" /> Download
+                </Button>
+                <Button variant="outline" size="sm" className="h-8 bg-transparent">
+                  <Share2 className="h-4 w-4 mr-2" /> Share
+                </Button>
+                <Button variant="outline" size="sm" className="h-8 bg-transparent">
+                  <Tag className="h-4 w-4 mr-2" /> Tag
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-red-600 hover:text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-400 dark:hover:bg-red-950 bg-transparent"
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" /> Delete
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="h-8 bg-transparent">
-                <Download className="h-4 w-4 mr-2" /> Download
-              </Button>
-              <Button variant="outline" size="sm" className="h-8 bg-transparent">
-                <Share2 className="h-4 w-4 mr-2" /> Share
-              </Button>
-              <Button variant="outline" size="sm" className="h-8 bg-transparent">
-                <Tag className="h-4 w-4 mr-2" /> Tag
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 text-red-600 hover:text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-400 dark:hover:bg-red-950 bg-transparent"
-                onClick={() => setIsDeleteDialogOpen(true)}
+          ) : (
+            filteredDocuments.length > 0 && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8 gap-2"
+                onClick={selectAllDocuments}
               >
-                <Trash2 className="h-4 w-4 mr-2" /> Delete
+                <CheckCircle2 className="h-4 w-4" /> Select All ({filteredDocuments.length})
               </Button>
-            </div>
-          </div>
-        )}
+            )
+          )}
+        </div>
       </div>
 
       {/* Document categories */}
@@ -1384,16 +1400,47 @@ export default function DocumentsPage() {
           <DialogHeader>
             <DialogTitle>Delete {selectedDocuments.length > 1 ? "Documents" : "Document"}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete {selectedDocuments.length > 1 ? "these documents" : "this document"}? This
-              action cannot be undone.
+              {isDeleting ? (
+                <div className="space-y-2 mt-4">
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
+                    <span>Deleting documents... This may take a moment.</span>
+                  </div>
+                  <Progress value={33} className="h-2" />
+                </div>
+              ) : (
+                <>
+                  Are you sure you want to delete {selectedDocuments.length > 1 ? "these documents" : "this document"}? This
+                  action cannot be undone.
+                </>
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={deleteSelectedDocuments}>
-              Delete
+            <Button 
+              variant="destructive" 
+              onClick={deleteSelectedDocuments}
+              disabled={isDeleting}
+              className="gap-2"
+            >
+              {isDeleting ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

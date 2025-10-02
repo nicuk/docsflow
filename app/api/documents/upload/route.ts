@@ -139,9 +139,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (file.size > 50 * 1024 * 1024) { // 50MB limit
+    if (file.size > 1 * 1024 * 1024) { // 1MB limit
       return NextResponse.json(
-        { error: 'File too large. Maximum size is 50MB' },
+        { error: 'File too large. Maximum size is 1MB' },
         { status: 400 }
       );
     }
@@ -266,27 +266,12 @@ export async function POST(request: NextRequest) {
     
     documentId = document.id;
 
-    // 🎯 SURGICAL FIX: Process asynchronously with timeout protection
+    // 🎯 SURGICAL FIX: Process asynchronously (no timeout - cleanup handles stuck docs)
     // Return immediately, process in background
     console.log(`🚀 Starting background processing for document ${document.id}`);
     
-    // 🚀 FAILSAFE: Set maximum processing time (30 seconds)
-    const processingTimeout = setTimeout(async () => {
-      console.error(`⏰ TIMEOUT: Background processing exceeded 30s for document ${document.id}`);
-      try {
-        await supabase
-          .from('documents')
-          .update({ 
-            processing_status: 'error',
-            error_message: 'Processing timeout (30s limit)'
-          })
-          .eq('id', document.id);
-      } catch (err) {
-        console.error('Failed to update timeout status:', err);
-      }
-    }, 30000); // 30 second absolute timeout
-    
     // Start processing without awaiting (fire and forget)
+    // Note: Stuck documents in "processing" status are handled by the cleanup mechanism
     processDocumentContentEnhanced(
       document.id, 
       textContent, 
@@ -296,7 +281,6 @@ export async function POST(request: NextRequest) {
       supabase, 
       userAccessLevel
     ).then(async () => {
-      clearTimeout(processingTimeout); // Cancel timeout on success
       // Processing completed successfully
       await supabase
         .from('documents')
@@ -314,7 +298,6 @@ export async function POST(request: NextRequest) {
         // Continue - don't fail the upload due to tracking issues
       }
     }).catch(async (processingError) => {
-      clearTimeout(processingTimeout); // Cancel timeout on error
       console.error('❌ Background processing error:', processingError);
       console.error('❌ Error stack:', processingError instanceof Error ? processingError.stack : 'No stack trace');
       
@@ -483,13 +466,14 @@ async function processDocumentContentEnhanced(
   const chunkPromises = contextualChunks.map(async (chunk) => {
     try {
       // Generate embedding for the chunk with caching
+      // 🔧 SURGICAL FIX: Cache and embed based on raw content (not polluted contextual_content)
       const { embedding } = await embeddingCache.getEmbedding(
-        chunk.contextual_content,
+        chunk.content, // ✅ Cache key based on raw content
         'text-embedding-004',
         async () => {
           const result = await embed({
             model: aiProvider.getEmbeddingModel(),
-            value: chunk.contextual_content,
+            value: chunk.content, // ✅ Raw content, not contextual_content
           });
           return result.embedding;
         }

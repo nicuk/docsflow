@@ -23,15 +23,19 @@ export class ImageProcessor {
         }
       };
       
-      // Generate comprehensive description
-      const prompt = `Analyze this image and provide:
-1. A detailed description of what you see
-2. Any text visible in the image (OCR)
-3. Key objects, people, or elements
-4. Context and purpose of the image
-5. Any data, charts, or diagrams present
+      // Extract searchable content ONLY (no LLM descriptions!)
+      const prompt = `Extract ALL text, numbers, and data from this image. Return ONLY the actual content visible in the image.
 
-Be thorough and specific.`;
+Rules:
+- DO NOT add descriptions like "This image shows..." or "The document contains..."
+- DO NOT add interpretations or summaries
+- ONLY transcribe the exact text/data you see
+- If there's a title, include it
+- If there are bullet points, list them
+- If there are tables/charts, extract the data
+- If it's purely visual with no text, describe ONLY the key elements (e.g., "Logo: Company X", "Product: Blue Widget")
+
+Return raw content only.`;
       
       const result = await model.generateContent([prompt, imagePart]);
       const response = await result.response;
