@@ -436,9 +436,24 @@ Return only a number between 0 and 1.`;
     const hybridResults = await this.hybridSearch(query, tenantId, topK * 2);
     console.log(`📊 [RAGAS PATTERN A] Step 1 - hybridSearch returned: ${hybridResults.length} results`);
     
-    // Step 2: Cross-encoder reranking
-    const rerankedResults = await this.crossEncoderRerank(query, hybridResults, topK);
-    console.log(`📊 [RAGAS PATTERN A] Step 2 - crossEncoderRerank returned: ${rerankedResults.length} results`);
+    // 🚀 SURGICAL FIX: Conditional reranking - skip when confidence is high
+    const avgConfidence = hybridResults.length > 0 
+      ? hybridResults.reduce((sum, r) => sum + (r.hybridScore || r.keywordScore || 0), 0) / hybridResults.length
+      : 0;
+    
+    let rerankedResults: SearchResult[];
+    
+    if (avgConfidence >= 0.7 && hybridResults.length <= 5) {
+      // ⚡ HIGH CONFIDENCE: Skip expensive reranking (saves 2-3s)
+      console.log(`⚡ [PERFORMANCE] High confidence (${avgConfidence.toFixed(2)}) with ${hybridResults.length} results - SKIPPING rerank (saves 2-3s)`);
+      rerankedResults = hybridResults.slice(0, topK);
+      console.log(`📊 [RAGAS PATTERN A] Step 2 - crossEncoderRerank SKIPPED (high confidence)`);
+    } else {
+      // 🔄 LOW CONFIDENCE: Perform reranking for better quality
+      console.log(`🔄 [QUALITY] Low confidence (${avgConfidence.toFixed(2)}) or many results (${hybridResults.length}) - performing rerank`);
+      rerankedResults = await this.crossEncoderRerank(query, hybridResults, topK);
+      console.log(`📊 [RAGAS PATTERN A] Step 2 - crossEncoderRerank returned: ${rerankedResults.length} results`);
+    }
     
     // Step 3: Apply provenance and abstention logic
     const { results, shouldAbstain, abstentionReason, confidence } = 
