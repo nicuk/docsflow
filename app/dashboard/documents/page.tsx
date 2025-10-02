@@ -172,7 +172,7 @@ export default function DocumentsPage() {
       "image/png": [".png"],
     },
     maxFiles: 5, // 🚀 FIX: Reduced from 10 to 5 for better concurrent upload handling
-    maxSize: 50 * 1024 * 1024, // 50MB max for any file
+    maxSize: 1 * 1024 * 1024, // 1MB max for any file
     // 🚀 FIX: Keep dropzone active even during uploads
     disabled: false,
   })
@@ -826,11 +826,11 @@ export default function DocumentsPage() {
             or click to browse your files. We support PDF, DOC, DOCX, XLS, XLSX, CSV, JPG, PNG and more. <strong>Max 5 files at once.</strong>
           </p>
           <div className="flex flex-wrap justify-center gap-2 mb-4">
-            <Badge variant="outline">PDF (50MB)</Badge>
-            <Badge variant="outline">DOC/DOCX (50MB)</Badge>
-            <Badge variant="outline">TXT/RTF (50MB)</Badge>
-            <Badge variant="outline">XLS/XLSX/CSV (50MB)</Badge>
-            <Badge variant="outline">JPG/PNG (50MB)</Badge>
+            <Badge variant="outline">PDF (1MB)</Badge>
+            <Badge variant="outline">DOC/DOCX (1MB)</Badge>
+            <Badge variant="outline">TXT/RTF (1MB)</Badge>
+            <Badge variant="outline">XLS/XLSX/CSV (1MB)</Badge>
+            <Badge variant="outline">JPG/PNG (1MB)</Badge>
           </div>
           <Button variant="outline" className="gap-2 bg-transparent">
             <Upload className="h-4 w-4" /> Select files
@@ -1064,12 +1064,12 @@ export default function DocumentsPage() {
             <div className="space-y-4">
               {uploadingFiles.map((file) => (
                 <div key={file.id} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 truncate">
-                      {getFileIcon(getFileType(file.file.name), "h-5 w-5")}
-                      <span className="font-medium text-sm truncate">{file.file.name}</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      {getFileIcon(getFileType(file.file.name), "h-5 w-5 flex-shrink-0")}
+                      <span className="font-medium text-sm truncate" title={file.file.name}>{file.file.name}</span>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => cancelFileUpload(file.id)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => cancelFileUpload(file.id)}>
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
@@ -1092,13 +1092,13 @@ export default function DocumentsPage() {
               <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
               <p className="text-sm mb-1">Drag & drop files here or click to browse</p>
               <p className="text-xs text-muted-foreground">
-                Supports PDF, DOC, DOCX, XLS, XLSX, CSV, JPG, PNG and more (up to 50MB)
+                Supports PDF, DOC, DOCX, XLS, XLSX, CSV, JPG, PNG and more (up to 1MB)
               </p>
             </div>
           )}
 
           <DialogFooter className="flex items-center justify-between">
-            <div className="text-xs text-muted-foreground">Maximum 5 files, 50MB per file (sequential processing)</div>
+            <div className="text-xs text-muted-foreground">Maximum 5 files, 1MB per file (sequential processing)</div>
             <Button 
               type="submit" 
               onClick={() => {
