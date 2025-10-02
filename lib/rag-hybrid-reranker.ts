@@ -548,21 +548,26 @@ Return only a number between 0 and 1.`;
       }
     }
     
-    // 🎯 FIX: Search using OR logic for multiple keywords
-    // If query is "csv file", we want chunks containing "csv" OR "file"
-    console.log(`🔍 [DB QUERY] Searching for ANY of: [${keywords.join(', ')}]`);
+    // 🎯 FIX: Search using OR logic for multiple keywords in BOTH content AND filename
+    // If query is "brett qna", search content OR filename for these terms
+    console.log(`🔍 [DB QUERY] Searching content AND filenames for ANY of: [${keywords.join(', ')}]`);
     
     let queryBuilder = this.supabase
       .from('document_chunks')
       .select('id, document_id, content, metadata, tenant_id')
       .eq('tenant_id', this.tenantId);
     
-    // Build OR conditions for multiple keywords
+    // Build OR conditions for multiple keywords across content AND metadata->filename
     if (keywords.length === 1) {
-      queryBuilder = queryBuilder.ilike('content', `%${keywords[0]}%`);
+      // Single keyword: search in content OR filename
+      queryBuilder = queryBuilder.or(
+        `content.ilike.%${keywords[0]}%,metadata->>filename.ilike.%${keywords[0]}%`
+      );
     } else {
-      // For multiple keywords, use OR logic
-      const orConditions = keywords.map(k => `content.ilike.%${k}%`).join(',');
+      // Multiple keywords: search each in content OR filename
+      const orConditions = keywords.map(k => 
+        `content.ilike.%${k}%,metadata->>filename.ilike.%${k}%`
+      ).join(',');
       queryBuilder = queryBuilder.or(orConditions);
     }
     
@@ -586,32 +591,45 @@ Return only a number between 0 and 1.`;
     }
     
     return data.map((d: any) => {
-      // 🎯 FIX: Score based on how many keywords match
+      // 🎯 FIX: Score based on how many keywords match in content OR filename
       const content = d.content.toLowerCase();
+      const filename = (d.metadata?.filename || '').toLowerCase();
       
       let matchScore = 0;
       let termMatches = 0;
       
       keywords.forEach(keyword => {
+        let foundInContent = false;
+        let foundInFilename = false;
+        
+        // Check content
         if (content.includes(keyword)) {
+          foundInContent = true;
           termMatches++;
           // Bonus for exact word matches vs partial
           if (content.includes(` ${keyword} `) || content.includes(`${keyword}.`) || content.includes(`${keyword},`)) {
-            matchScore += 0.3; // Exact word match
+            matchScore += 0.3; // Exact word match in content
           } else {
-            matchScore += 0.2; // Partial match
+            matchScore += 0.2; // Partial match in content
           }
+        }
+        
+        // Check filename (even higher score if found here)
+        if (filename.includes(keyword)) {
+          foundInFilename = true;
+          if (!foundInContent) termMatches++; // Don't double-count
+          matchScore += 0.5; // 🎯 High bonus for filename match (very relevant!)
         }
       });
       
       // Calculate final confidence
       // Base: 0.7 for any match
       // +0.3 for term coverage (all keywords found)
-      // +matchScore bonus for exact matches
+      // +matchScore bonus for exact/filename matches
       const termCoverage = keywords.length > 0 ? termMatches / keywords.length : 0;
       const confidence = Math.max(0.75, 0.7 + (termCoverage * 0.3) + (matchScore * 0.1));
       
-      console.log(`🎯 [SCORING] Keywords [${keywords.join(', ')}] in chunk: ${termMatches}/${keywords.length} matched, confidence: ${confidence.toFixed(2)}`);
+      console.log(`🎯 [SCORING] Keywords [${keywords.join(', ')}] in "${filename || 'no-filename'}": ${termMatches}/${keywords.length} matched, confidence: ${confidence.toFixed(2)}`);
       
       return {
         id: d.document_id, // 🎯 Parent document UUID for linking
