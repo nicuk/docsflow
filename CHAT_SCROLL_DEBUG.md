@@ -314,3 +314,28 @@ useEffect(() => {
 ✅ Only messages area scrolls
 ✅ Typing doesn't cause input to move away
 
+## Test Result - Attempt 9
+**Status**: ❌ **FAILED - Caused worse problem**
+
+The `body { overflow: hidden }` fix locked ALL scrolling, including the messages area. User couldn't scroll up or down at all. This was worse than the original problem.
+
+**REVERTED** - Removed body scroll lock completely. Back to original state.
+
+## Conclusion
+
+After 9 attempts, the auto-scroll feature remains non-functional. The core issues identified:
+
+1. **Message scrolling**: Radix ScrollArea viewport doesn't respond to programmatic `scrollTop` changes
+2. **Body scrolling**: Locking body overflow prevents all scrolling (too aggressive)
+3. **Layout complexity**: Dashboard layout + ScrollArea component creates scroll conflicts
+
+The simple message scroll (`scrollTop = scrollHeight`) should work but doesn't. Radix ScrollArea may have internal scroll management that overrides manual changes.
+
+## Recommendations
+
+1. **Option A**: Replace Radix ScrollArea with native `<div style="overflow-y: auto">` for full control
+2. **Option B**: Use Radix ScrollArea's API methods if available (check docs)
+3. **Option C**: Accept current behavior - users can manually scroll
+
+The feature requires deeper investigation of Radix UI ScrollArea internals or a different scrolling approach entirely.
+
