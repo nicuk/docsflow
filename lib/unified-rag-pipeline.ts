@@ -11,6 +11,7 @@ import { MultimodalDocumentParser } from './rag-multimodal-parser';
 import { RAGEvaluator } from './rag-evaluation';
 import { RAGEdgeCaseHandler } from './rag-edge-case-handler';
 import { ragMonitor } from './rag-monitoring';
+import { getCachedRAGResponse, setCachedRAGResponse } from './rag-cache';
 
 export interface RAGOptions {
   topK?: number;
@@ -68,7 +69,15 @@ export class UnifiedRAGPipeline {
     const startTime = Date.now();
     
     try {
-      // Step 0: 🔧 FIX - Apply conversation memory enhancement
+      // Step 0: 🚀 PERFORMANCE - Check cache first
+      const cachedResponse = await getCachedRAGResponse(query, this.tenantId);
+      if (cachedResponse) {
+        const cacheLatency = Date.now() - startTime;
+        console.log(`⚡ [CACHE] Served from cache in ${cacheLatency}ms (saved ~12s)`);
+        return cachedResponse;
+      }
+      
+      // Step 1: 🔧 FIX - Apply conversation memory enhancement
       let enhancedQuery = query;
       if (options.conversationId) {
         try {
@@ -150,6 +159,11 @@ export class UnifiedRAGPipeline {
           ...response.metadata,
           evaluation: await this.runEvaluation(query, response)
         };
+      }
+
+      // Step 6: 🚀 PERFORMANCE - Store in cache for future requests
+      if (response.success) {
+        await setCachedRAGResponse(query, this.tenantId, response);
       }
 
       return response;
