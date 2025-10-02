@@ -278,7 +278,10 @@ export default function ChatInterface() {
     return () => clearInterval(interval)
   }, [])
 
-  // Scroll is now triggered manually in handleSendMessage, not automatically on messages change
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
 
   // Load user's conversations (enhanced with localStorage fallback)
   const loadConversations = async () => {
@@ -394,16 +397,24 @@ export default function ChatInterface() {
     setShowConversationHistory(false)
   }
 
-  // Simple scroll to bottom function
+  // Robust scroll to bottom function with multiple attempts
   const scrollToBottom = () => {
     if (!scrollAreaRef.current) return
     
     const viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement
     if (viewport) {
-      // Scroll after a short delay to let content render
+      // Immediate scroll
+      viewport.scrollTop = viewport.scrollHeight
+      
+      // Delayed scroll to catch late-rendering content
       setTimeout(() => {
         viewport.scrollTop = viewport.scrollHeight
-      }, 100)
+      }, 50)
+      
+      // Final scroll to catch sources/suggestions that render slowly
+      setTimeout(() => {
+        viewport.scrollTop = viewport.scrollHeight
+      }, 200)
     }
   }
 
@@ -963,7 +974,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
                                 // All files failed
                                 toast({
                                   title: "Upload failed ❌",
-                                  description: `Failed to upload ${failedFiles.length} file${failedFiles.length > 1 ? 's' : ''}. Please check file format and size (max 50MB).`,
+                                  description: `Failed to upload ${failedFiles.length} file${failedFiles.length > 1 ? 's' : ''}. Please check file format and size (max 1MB).`,
                                   variant: "destructive",
                                 });
                               }
