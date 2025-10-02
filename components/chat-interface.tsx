@@ -278,26 +278,22 @@ export default function ChatInterface() {
     return () => clearInterval(interval)
   }, [])
 
-  // Scroll to bottom function
-  const scrollToBottom = () => {
-    if (!scrollAreaRef.current) return
-    
-    const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]')
-    if (viewport) {
-      // Force immediate scroll to bottom
-      viewport.scrollTop = viewport.scrollHeight
-    }
-  }
-
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    // Use setTimeout to ensure DOM has updated
-    const timer = setTimeout(() => {
-      scrollToBottom()
-    }, 50)
-    
-    return () => clearTimeout(timer)
-  }, [messages.length]) // Only trigger when message count changes
+    if (scrollAreaRef.current) {
+      // Use requestAnimationFrame to prevent forced reflow
+      requestAnimationFrame(() => {
+        const scrollContainer = scrollAreaRef.current?.querySelector("[data-radix-scroll-area-viewport]")
+        if (scrollContainer) {
+          console.log('📜 Scrolling to bottom. Current scrollTop:', scrollContainer.scrollTop, 'scrollHeight:', scrollContainer.scrollHeight)
+          scrollContainer.scrollTop = scrollContainer.scrollHeight
+          console.log('📜 After scroll. New scrollTop:', scrollContainer.scrollTop)
+        } else {
+          console.error('❌ ScrollArea viewport not found!')
+        }
+      })
+    }
+  }, [messages])
 
   // Load user's conversations (enhanced with localStorage fallback)
   const loadConversations = async () => {
