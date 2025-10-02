@@ -2,8 +2,7 @@
   "crons": [
     {
       "path": "/api/queue/worker",
-      "schedule": "*/5 * * * *",
-      "description": "Process ingestion jobs every 5 minutes (8,640 invocations/month)"
+      "schedule": "*/5 * * * *"
     }
   ],
   "functions": {
