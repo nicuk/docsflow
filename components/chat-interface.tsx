@@ -779,15 +779,11 @@ Please try again in a moment. If the issue persists, you can still use the inter
                                         key={idx}
                                         className="flex items-start space-x-2 text-left w-full p-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                                         onClick={() => {
-                                          // 🎯 FIX: Only show sources with real document IDs
-                                          if (!source.documentId) {
-                                            console.warn('Source missing documentId:', source);
-                                            return;
-                                          }
+                                          // Always show modal with whatever info we have
                                           setSelectedSource({
                                             filename: source.document || 'Unknown Document',
                                             content: source.snippet || '',
-                                            document_id: source.documentId,
+                                            document_id: source.documentId || `temp-${idx}`,  // Fallback to temp ID
                                             page: source.page,
                                             confidence: source.confidence || 0.7
                                           });
