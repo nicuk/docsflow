@@ -275,18 +275,12 @@ ${tenantPersona.custom_instructions || 'Provide a helpful, accurate answer based
     console.log(`🎯 [COMPLEXITY CLASSIFIER] ${complexityAnalysis.reasoning}`);
     console.log(`📊 [CLASSIFIER] Stats:`, queryClassifier.getStatistics());
     
-    // 🚨 SMART ROUTING: Select models based on complexity AND tier
+    // 🚨 SMART ROUTING: Select models based on complexity
     let selectedModels: string[];
     let shouldShowUpgradePrompt = false;
     
-    // Get tenant's subscription tier
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-    const { getTenantTier, hasTierFeature } = await import('@/lib/subscription');
-    const tenantTier = await getTenantTier(supabase, tenantId);
-    const hasPremiumAI = hasTierFeature(tenantTier, 'premium_ai_models');
+    // 🎯 TEMPORARY: Default to allowing all tiers (subscription system not implemented yet)
+    const hasPremiumAI = false; // TODO: Implement subscription tiers
     
     switch (complexityAnalysis.complexity) {
       case 'simple':

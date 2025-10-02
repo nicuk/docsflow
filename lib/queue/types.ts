@@ -115,10 +115,11 @@ export interface WorkerConfig {
   max_retry_attempts: number;
 }
 
+// 🚀 PRO PLAN OPTIMIZED: Increased from 10→30 global, 2→5 per-tenant
 export const DEFAULT_WORKER_CONFIG: WorkerConfig = {
-  global_max_concurrent: 10,
-  per_tenant_max_concurrent: 2,
-  stale_job_timeout_minutes: 5,
+  global_max_concurrent: 30,        // 3x increase for Pro plan (was 10)
+  per_tenant_max_concurrent: 5,     // 2.5x increase for Pro plan (was 2)
+  stale_job_timeout_minutes: 10,    // 2x timeout with 60s functions (was 5)
   max_retry_attempts: 3
 };
 

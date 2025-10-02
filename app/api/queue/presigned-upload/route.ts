@@ -16,6 +16,7 @@ import { createClient } from '@supabase/supabase-js';
 import { validateAuth } from '@/lib/auth-helpers';
 import type { PresignedUploadRequest, PresignedUploadResponse } from '@/lib/queue';
 import { DEFAULT_UPLOAD_CONFIG, isAllowedFileType, isValidFileSize } from '@/lib/queue';
+import { LimitChecker, getTenantTier } from '@/lib/subscription';
 
 // =====================================================
 // CONFIGURATION
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // 5. Create Supabase client with service role (bypass RLS)
+    // 4a. Create Supabase client (needed for limit checking)
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -84,6 +85,41 @@ export async function POST(request: NextRequest) {
         }
       }
     );
+    
+    // 4b. Check subscription limits
+    const tenantTier = await getTenantTier(supabase, tenantId);
+    const limitChecker = new LimitChecker(supabase);
+    
+    // Check if tenant can upload more documents
+    const uploadCheck = await limitChecker.canUploadDocuments(tenantId, tenantTier, 1);
+    if (!uploadCheck.allowed) {
+      return NextResponse.json(
+        { 
+          error: 'Subscription limit reached',
+          limit_type: uploadCheck.limit_type,
+          current: uploadCheck.current,
+          max: uploadCheck.max,
+          message: uploadCheck.message,
+          upgrade_required: true
+        },
+        { status: 403 }
+      );
+    }
+    
+    // Check tier-specific file size limit
+    const maxFileSizeForTier = limitChecker.getMaxFileSize(tenantTier);
+    if (file_size > maxFileSizeForTier) {
+      return NextResponse.json(
+        { 
+          error: 'File size exceeds tier limit',
+          max_size: maxFileSizeForTier,
+          current_size: file_size,
+          tier: tenantTier,
+          upgrade_required: true
+        },
+        { status: 403 }
+      );
+    }
     
     // 6. Generate unique file path
     // Format: {tenant_id}/{timestamp}_{sanitized_filename}

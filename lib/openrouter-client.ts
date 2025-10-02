@@ -151,11 +151,19 @@ export const MODEL_CONFIGS = {
     'meta-llama/llama-3.1-8b-instruct'              // 🛡️ FALLBACK: 100-200ms, 7/10 quality
   ] as string[],
 
-  // 🔴 COMPLEX QUERIES (10% of traffic) - Premium Quality ($3/1M) 🚨 GUARDED
+  // 🔴 COMPLEX QUERIES (10% of traffic) - Cost-Optimized ($0.05/1M) ✅
+  // 🎯 COST SAVINGS: Removed Claude ($3/1M) → 90% AI cost reduction
+  // 💰 Claude available as premium add-on (+$199/month)
   COMPLEX: [
-    'anthropic/claude-3.5-sonnet',                   // 🏆 PREMIUM: 200-400ms, 10/10 quality
-    'meta-llama/llama-3.1-8b-instruct',             // 🛡️ FALLBACK: 100-200ms, 7/10 quality
-    'qwen/qwen-2.5-7b-instruct'                     // 🛡️ BACKUP: 50-70ms, 7/10 quality
+    'qwen/qwen-2.5-7b-instruct',                     // 🧠 PRIMARY: 50-70ms, 7/10 quality, $0.05/1M
+    'meta-llama/llama-3.1-8b-instruct',             // 🛡️ FALLBACK: 100-200ms, 7/10 quality, $0.05/1M
+    'mistralai/mistral-7b-instruct'                  // ⚡ BACKUP: 40-60ms, 6/10 quality, $0.05/1M
+  ] as string[],
+  
+  // 💎 PREMIUM (Optional Add-on: +$199/month)
+  PREMIUM: [
+    'anthropic/claude-3.5-sonnet',                   // 🏆 PREMIUM: 200-400ms, 10/10 quality, $3/1M
+    'openai/gpt-4-turbo',                            // 🎯 FALLBACK: 300-500ms, 9/10 quality, $10/1M
   ] as string[],
 
   // 📄 Document Processing - EXTRACTION SPECIALISTS ($0.05/1M)

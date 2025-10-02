@@ -2,10 +2,20 @@
   "crons": [
     {
       "path": "/api/queue/worker",
-      "schedule": "* * * * *"
+      "schedule": "*/5 * * * *",
+      "description": "Process ingestion jobs every 5 minutes (8,640 invocations/month)"
     }
   ],
   "functions": {
+    "app/api/queue/worker/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/documents/upload/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/chat/route.ts": {
+      "maxDuration": 30
+    },
     "app/api/**/*.ts": {
       "maxDuration": 30
     }

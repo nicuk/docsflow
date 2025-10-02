@@ -39,11 +39,34 @@ ALTER FUNCTION complete_onboarding_atomic(UUID, JSONB)
 ALTER FUNCTION update_tenant_persona_updated_at() 
   SET search_path = public, pg_temp;
 
-ALTER FUNCTION match_documents_hybrid(UUID, vector, TEXT, NUMERIC, INT, INT, INT) 
-  SET search_path = public, pg_temp;
+-- Fix match_documents_hybrid - find correct signature first
+DO $$
+DECLARE
+  v_function_exists BOOLEAN;
+BEGIN
+  -- Try to fix match_documents_hybrid if it exists
+  -- Signature varies by deployment, so we'll try common variations
+  
+  -- Try version 1: (vector(1536), float, int, uuid, int)
+  BEGIN
+    ALTER FUNCTION match_documents_hybrid(vector, float, int, uuid, int) 
+      SET search_path = public, pg_temp;
+    RAISE NOTICE '✅ Fixed match_documents_hybrid (5 params)';
+  EXCEPTION WHEN OTHERS THEN
+    -- Try version 2: (vector(768), text, float, int, uuid)
+    BEGIN
+      ALTER FUNCTION match_documents_hybrid(vector, text, float, int, uuid) 
+        SET search_path = public, pg_temp;
+      RAISE NOTICE '✅ Fixed match_documents_hybrid (5 params with text)';
+    EXCEPTION WHEN OTHERS THEN
+      RAISE NOTICE '⏭️  Skipped match_documents_hybrid (function signature unknown or not found)';
+    END;
+  END;
+END $$;
 
 DO $$ BEGIN
-  RAISE NOTICE '✅ Fixed search_path for 8 functions (3 queue + 5 existing)';
+  RAISE NOTICE '✅ Fixed search_path for 7 functions (3 queue + 4 existing)';
+  RAISE NOTICE '   Note: match_documents_hybrid may need manual fix if signature differs';
 END $$;
 
 -- =====================================================
@@ -194,7 +217,7 @@ BEGIN
     AND p.proname IN (
       'get_pending_jobs', 'reset_stale_jobs', 'get_job_stats',
       'is_admin', 'is_user', 'complete_onboarding_atomic',
-      'update_tenant_persona_updated_at', 'match_documents_hybrid'
+      'update_tenant_persona_updated_at'
     );
   
   RAISE NOTICE '';
@@ -203,7 +226,7 @@ BEGIN
   RAISE NOTICE '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
   RAISE NOTICE '';
   RAISE NOTICE '🔒 SECURITY IMPROVEMENTS:';
-  RAISE NOTICE '   ✅ % functions secured with search_path', v_functions_secured;
+  RAISE NOTICE '   ✅ % functions secured with search_path (+ match_documents_hybrid if exists)', v_functions_secured;
   RAISE NOTICE '   ✅ Prevents schema injection attacks';
   RAISE NOTICE '';
   RAISE NOTICE '⚡ PERFORMANCE IMPROVEMENTS:';

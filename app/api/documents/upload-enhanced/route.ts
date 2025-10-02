@@ -132,7 +132,10 @@ export async function POST(request: NextRequest) {
           content: chunk.content,
           type: chunk.type,
           position: index,
-          metadata: chunk.metadata,
+          metadata: {
+            ...chunk.metadata,
+            filename: file.name // 🎯 FIX: Include filename for search
+          },
           embedding: chunk.embedding
         }, tenantId);
       }
