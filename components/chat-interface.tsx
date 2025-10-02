@@ -399,23 +399,35 @@ export default function ChatInterface() {
 
   // Robust scroll to bottom function with multiple attempts
   const scrollToBottom = () => {
-    if (!scrollAreaRef.current) return
+    console.log('🔵 scrollToBottom called')
+    if (!scrollAreaRef.current) {
+      console.log('❌ scrollAreaRef.current is null')
+      return
+    }
     
     const viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement
-    if (viewport) {
-      // Immediate scroll
-      viewport.scrollTop = viewport.scrollHeight
-      
-      // Delayed scroll to catch late-rendering content
-      setTimeout(() => {
-        viewport.scrollTop = viewport.scrollHeight
-      }, 50)
-      
-      // Final scroll to catch sources/suggestions that render slowly
-      setTimeout(() => {
-        viewport.scrollTop = viewport.scrollHeight
-      }, 200)
+    if (!viewport) {
+      console.log('❌ viewport not found')
+      return
     }
+    
+    console.log('✅ viewport found, current scrollTop:', viewport.scrollTop, 'scrollHeight:', viewport.scrollHeight)
+    
+    // Immediate scroll
+    viewport.scrollTop = viewport.scrollHeight
+    console.log('📜 After immediate scroll, scrollTop:', viewport.scrollTop)
+    
+    // Delayed scroll to catch late-rendering content
+    setTimeout(() => {
+      viewport.scrollTop = viewport.scrollHeight
+      console.log('📜 After 50ms scroll, scrollTop:', viewport.scrollTop, 'scrollHeight:', viewport.scrollHeight)
+    }, 50)
+    
+    // Final scroll to catch sources/suggestions that render slowly
+    setTimeout(() => {
+      viewport.scrollTop = viewport.scrollHeight
+      console.log('📜 After 200ms scroll, scrollTop:', viewport.scrollTop, 'scrollHeight:', viewport.scrollHeight)
+    }, 200)
   }
 
   const handleSendMessage = async (content: string) => {
