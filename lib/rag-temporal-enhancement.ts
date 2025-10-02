@@ -238,13 +238,33 @@ Return JSON format:
     const { data: searchResults, error } = await this.supabase
       .rpc('similarity_search', {
         query_embedding: queryEmbedding,
+        tenant_filter: tenantId,
+        access_level_filter: 5,
         match_threshold: 0.7,
-        match_count: 20,
-        p_tenant_id: tenantId
+        match_count: 20
       });
     
-    if (error || !searchResults) {
-      throw new Error('Search failed');
+    if (error) {
+      console.error('🔴 [RAG Temporal] similarity_search RPC error:', {
+        error,
+        errorMessage: error.message,
+        errorDetails: error.details,
+        errorHint: error.hint,
+        errorCode: error.code,
+        tenantId,
+        params: {
+          tenant_filter: tenantId,
+          access_level_filter: 5,
+          match_threshold: 0.7,
+          match_count: 20
+        }
+      });
+      throw new Error(`Supabase RPC error: ${error.message || 'Unknown error'}`);
+    }
+    
+    if (!searchResults) {
+      console.warn('⚠️ [RAG Temporal] similarity_search returned no results', { tenantId });
+      throw new Error('Search returned no results');
     }
     
     // Extract temporal metadata for each result
