@@ -311,10 +311,17 @@ Return only a number between 0 and 1.`;
     }
     
     // Check if we have sufficient evidence
-    // 🎯 SURGICAL FIX: Include keywordScore and vectorScore in confidence check
-    const highConfidenceResults = results.filter(
-      r => (r.rerankedScore || r.hybridScore || r.keywordScore || r.vectorScore || 0) >= confidenceThreshold
-    );
+    // 🎯 SURGICAL FIX: Use MAX of all scores, not fallback chain
+    // If ANY score (reranked, hybrid, keyword, vector) is high enough, include it
+    const highConfidenceResults = results.filter(r => {
+      const maxScore = Math.max(
+        r.rerankedScore || 0,
+        r.hybridScore || 0,
+        r.keywordScore || 0,
+        r.vectorScore || 0
+      );
+      return maxScore >= confidenceThreshold;
+    });
     
     console.log(`🎯 [RAGAS PATTERN B] Confidence filtering: ${results.length} → ${highConfidenceResults.length} results (threshold=${confidenceThreshold})`);
     
