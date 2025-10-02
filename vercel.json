@@ -13,7 +13,7 @@
       "maxDuration": 60
     },
     "app/api/chat/route.ts": {
-      "maxDuration": 30
+      "maxDuration": 60
     },
     "app/api/**/*.ts": {
       "maxDuration": 30
