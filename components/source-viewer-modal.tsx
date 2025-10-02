@@ -119,7 +119,10 @@ export default function SourceViewerModal({ source, isOpen, onClose, highlightTe
               variant="ghost"
               size="sm"
               className="ml-auto"
-              onClick={() => window.open(`/api/documents/${source.document_id}/content`, '_blank')}
+              onClick={() => {
+                // 🎯 FIX: Link to document viewer page instead of API endpoint
+                window.open(`/dashboard/documents?highlight=${source.document_id}`, '_blank');
+              }}
             >
               <ExternalLink className="h-4 w-4 mr-1" />
               View Document

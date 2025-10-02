@@ -494,13 +494,15 @@ Return only a number between 0 and 1.`;
     
     // 🎯 SURGICAL FIX: Map secured function response (chunk_id, document_id, etc.)
     return data.map((d: any) => ({
-      id: d.document_id || d.id, // Use document_id from secured function
+      id: d.document_id || d.id, // Parent document UUID
+      document_id: d.document_id || d.id, // Explicit for API
       content: d.content,
-      metadata: d.metadata,
+      metadata: d.metadata || {},
       vectorScore: d.similarity || 0,
       keywordScore: 0,
       provenance: {
-        source: d.metadata?.filename || 'Unknown',
+        source: d.metadata?.filename || d.filename || 'Unknown Document',
+        page: d.metadata?.page || d.page,
         confidence: d.confidence_score || d.similarity || 0
       }
     }));
@@ -612,11 +614,16 @@ Return only a number between 0 and 1.`;
       console.log(`🎯 [SCORING] Keywords [${keywords.join(', ')}] in chunk: ${termMatches}/${keywords.length} matched, confidence: ${confidence.toFixed(2)}`);
       
       return {
-        id: d.document_id, // 🎯 SCHEMA FIX: Use document_id for chunk results
+        id: d.document_id, // 🎯 Parent document UUID for linking
+        document_id: d.document_id, // 🎯 Also include explicitly
         content: d.content,
-        metadata: d.metadata,
+        metadata: d.metadata || {},
         vectorScore: 0,
-        keywordScore: Math.min(1.0, confidence) // 🎯 FIX: Smart confidence scoring
+        keywordScore: Math.min(1.0, confidence), // 🎯 FIX: Smart confidence scoring
+        provenance: {
+          source: d.metadata?.filename || 'Unknown Document',
+          page: d.metadata?.page
+        }
       };
     });
   }

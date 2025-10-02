@@ -222,10 +222,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Build context for LLM generation
+    // 🎯 FIX: Properly extract document metadata from RAG sources
     const context = ragResponse.sources?.map((source: any) => ({
       content: source.content || source.source || '',
-      source: source.metadata?.filename || source.id || 'Document',
-      document_id: source.document_id || source.id || 'unknown'
+      snippet: source.content?.substring(0, 200) || '', // First 200 chars for preview
+      document: source.metadata?.filename || source.provenance?.source || 'Unknown Document',
+      documentId: source.id || source.document_id || null, // Real UUID from chunks table
+      page: source.metadata?.page || source.provenance?.page,
+      confidence: source.rerankedScore || source.hybridScore || 0.7
     })) || [];
 
     if (context.length === 0) {
@@ -245,7 +249,7 @@ export async function POST(request: NextRequest) {
     const tenantPersona = await getTenantPersona(tenantId);
     
     // Generate final answer using OpenRouter with fallback
-    const contextText = context.map(ctx => `Source: ${ctx.source}\nContent: ${ctx.content}`).join('\n\n');
+    const contextText = context.map(ctx => `Source: ${ctx.document}\nContent: ${ctx.content}`).join('\n\n');
     
     const messages = [
       {
@@ -271,22 +275,45 @@ ${tenantPersona.custom_instructions || 'Provide a helpful, accurate answer based
     console.log(`🎯 [COMPLEXITY CLASSIFIER] ${complexityAnalysis.reasoning}`);
     console.log(`📊 [CLASSIFIER] Stats:`, queryClassifier.getStatistics());
     
-    // 🚨 GUARDRAIL: Select models based on complexity
+    // 🚨 SMART ROUTING: Select models based on complexity AND tier
     let selectedModels: string[];
+    let shouldShowUpgradePrompt = false;
+    
+    // Get tenant's subscription tier
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    const { getTenantTier, hasTierFeature } = await import('@/lib/subscription');
+    const tenantTier = await getTenantTier(supabase, tenantId);
+    const hasPremiumAI = hasTierFeature(tenantTier, 'premium_ai_models');
+    
     switch (complexityAnalysis.complexity) {
       case 'simple':
         selectedModels = MODEL_CONFIGS.SIMPLE;
-        console.log('🟢 [ROUTING] Using SIMPLE tier (Mistral-7B, fast & cheap)');
+        console.log('🟢 [ROUTING] SIMPLE tier (Mistral-7B, fast & cheap)');
         break;
+        
       case 'medium':
         selectedModels = MODEL_CONFIGS.MEDIUM;
-        console.log('🟡 [ROUTING] Using MEDIUM tier (Llama-3.1-8B, balanced)');
+        console.log('🟡 [ROUTING] MEDIUM tier (Llama-3.1-8B, balanced)');
         break;
+        
       case 'complex':
-        selectedModels = MODEL_CONFIGS.COMPLEX;
-        console.log('🔴 [ROUTING] Using COMPLEX tier (Claude Sonnet 3.5, premium quality)');
-        console.warn(`⚠️ [COST ALERT] Complex query detected - using premium model`);
+        if (hasPremiumAI) {
+          // Use premium models (Claude) for Enterprise or Professional+Premium
+          selectedModels = MODEL_CONFIGS.PREMIUM;
+          console.log('🔴 [ROUTING] COMPLEX tier with PREMIUM AI (Claude 3.5 Sonnet)');
+          console.warn(`⚠️ [COST ALERT] Using premium model (Claude) - $0.012/query`);
+        } else {
+          // Use best cheap model + show upgrade prompt
+          selectedModels = MODEL_CONFIGS.COMPLEX;
+          shouldShowUpgradePrompt = true;
+          console.log('🟡 [ROUTING] COMPLEX tier WITHOUT premium (best cheap model: qwen-2.5-7b)');
+          console.log('💡 [UPSELL] Will show upgrade prompt for Premium AI');
+        }
         break;
+        
       default:
         selectedModels = MODEL_CONFIGS.MEDIUM;
     }
@@ -333,6 +360,11 @@ ${tenantPersona.custom_instructions || 'Provide a helpful, accurate answer based
       console.log('🚨 Used Gemini emergency fallback');
     }
 
+    // 💡 Add upgrade prompt for complex queries without premium AI
+    if (shouldShowUpgradePrompt && complexityAnalysis.complexity === 'complex') {
+      answerText += '\n\n---\n\n💡 **Tip:** This query involves complex analysis across multiple documents. For 30-40% more accurate responses on queries like this, consider upgrading to **Premium AI** (+$199/month) or our **Enterprise** tier, which includes Claude 3.5 Sonnet.';
+    }
+    
     // Calculate confidence and enhance citations
     const confidenceResult = ConfidenceScoring.calculateEnhancedConfidence(context, message, answerText);
     
