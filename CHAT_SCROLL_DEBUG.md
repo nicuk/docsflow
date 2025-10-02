@@ -113,10 +113,57 @@ useEffect(() => {
 }, [messages])
 ```
 
+## Test Result - Attempt 5
+**Status**: ❌ **FAILED - No logs appearing at all**
+
+The debug logs are NOT appearing in the console, which means:
+- The useEffect is not triggering, OR
+- The component is not mounting, OR  
+- There's a JavaScript error preventing execution
+
+### Attempt 6: Comprehensive debugging
+**Lines changed**: 281-309
+**Approach**:
+- Added extensive console.log at every step
+- Log when effect triggers and message count
+- Log if ref exists before checking
+- Log what element the ref points to
+- Log all children if viewport not found
+- This will tell us WHERE the code is failing
+
+```typescript
+useEffect(() => {
+  console.log('🔍 SCROLL EFFECT TRIGGERED. Message count:', messages.length)
+  console.log('🔍 scrollAreaRef.current exists:', !!scrollAreaRef.current)
+  
+  if (!scrollAreaRef.current) {
+    console.error('❌ scrollAreaRef.current is NULL!')
+    return
+  }
+  
+  console.log('🔍 scrollAreaRef element:', scrollAreaRef.current)
+  console.log('🔍 Searching for viewport...')
+  
+  const scrollContainer = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]")
+  console.log('🔍 Found viewport:', !!scrollContainer)
+  
+  if (!scrollContainer) {
+    console.error('❌ ScrollArea viewport not found!')
+    console.log('🔍 Available children:', scrollAreaRef.current.children)
+    return
+  }
+  
+  requestAnimationFrame(() => {
+    console.log('📜 SCROLLING NOW. Current scrollTop:', scrollContainer.scrollTop, 'scrollHeight:', scrollContainer.scrollHeight)
+    scrollContainer.scrollTop = scrollContainer.scrollHeight
+    console.log('📜 AFTER SCROLL. New scrollTop:', scrollContainer.scrollTop)
+  })
+}, [messages])
+```
+
 ## Next Steps
-1. Check browser console for debug logs when sending message
-2. Verify if viewport element is being found
-3. Check if scrollHeight is actually changing
-4. If viewport not found, inspect actual DOM structure in browser
-5. Consider if there's a timing issue with Radix mounting
+1. Deploy this version and check console
+2. Look for 🔍 SCROLL EFFECT TRIGGERED message
+3. If no logs at all → component not rendering or JS error
+4. If logs appear → follow the trail to see where it fails
 
