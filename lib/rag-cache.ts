@@ -5,12 +5,16 @@
 
 import { createHash } from 'crypto';
 
-// Check if Redis client exists (we saw Redis in logs)
+// Check if Redis client exists
 let redis: any = null;
 try {
-  redis = require('./redis-client').default || require('./redis-client').redis;
+  const redisModule = require('./redis');
+  redis = redisModule.redis || redisModule.default;
+  if (!redis) {
+    console.warn('⚠️ [RAG CACHE] Redis not configured - missing KV_REST_API_URL or KV_REST_API_TOKEN');
+  }
 } catch (error) {
-  console.warn('⚠️ [RAG CACHE] Redis not available, caching disabled');
+  console.warn('⚠️ [RAG CACHE] Redis module not found, caching disabled');
 }
 
 const CACHE_ENABLED = process.env.RAG_CACHE_ENABLED !== 'false'; // Enabled by default
