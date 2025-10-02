@@ -12,6 +12,9 @@
     "app/api/documents/upload/route.ts": {
       "maxDuration": 60
     },
+    "app/api/documents/upload-enhanced/route.ts": {
+      "maxDuration": 60
+    },
     "app/api/chat/route.ts": {
       "maxDuration": 60
     },
