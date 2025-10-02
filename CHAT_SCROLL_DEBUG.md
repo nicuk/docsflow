@@ -210,9 +210,58 @@ useEffect(() => {
 }, [messages])
 ```
 
+## Test Result - Attempt 7
+**Status**: ❌ **STILL FAILING - scrollTop remains 0**
+
+Console showed scroll is STILL being reset:
+```
+📜 SCROLLING NOW. scrollTop: 0 scrollHeight: 5926
+📜 AFTER SCROLL. New scrollTop: 0
+```
+
+**Conclusion**: Something is actively forcing scrollTop back to 0, even after 100ms delay. This suggests Radix ScrollArea has internal scroll management that overrides manual scrollTop changes.
+
+### Attempt 8: Aggressive multi-scroll approach
+**Lines changed**: 281-313
+**Approach**:
+- Try THREE different scroll methods:
+  1. Direct `scrollTop = maxScroll`
+  2. `scrollTo({ top: maxScroll, behavior: 'auto' })`
+  3. Force scrollTop again after 50ms
+- Execute scrollToBottom at 150ms AND 300ms
+- Basically try to brute-force the scroll by attempting multiple times
+
+```typescript
+useEffect(() => {
+  if (!scrollAreaRef.current) return
+  
+  const scrollContainer = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement
+  if (!scrollContainer) return
+  
+  const scrollToBottom = () => {
+    const maxScroll = scrollContainer.scrollHeight
+    
+    // Method 1: Direct scrollTop
+    scrollContainer.scrollTop = maxScroll
+    
+    // Method 2: scrollTo with behavior
+    scrollContainer.scrollTo({ top: maxScroll, behavior: 'auto' })
+    
+    // Method 3: Force again after tiny delay
+    setTimeout(() => {
+      scrollContainer.scrollTop = maxScroll
+      console.log('📜 AFTER SCROLL. New scrollTop:', scrollContainer.scrollTop)
+    }, 50)
+  }
+  
+  // Scroll multiple times at different intervals
+  setTimeout(scrollToBottom, 150)
+  setTimeout(scrollToBottom, 300)
+}, [messages])
+```
+
 ## Next Steps
-1. Test if 100ms delay allows scroll to stick
-2. If still resets to 0, try longer delay (200ms)
-3. If still fails, may need to disable Radix ScrollArea's scroll control
-4. Consider using native overflow-y instead of ScrollArea
+1. If this still fails → Radix ScrollArea is incompatible with manual scrolling
+2. **SOLUTION**: Replace ScrollArea with native div + overflow-y: auto
+3. Native scrolling gives us full control without library interference
 

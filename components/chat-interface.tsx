@@ -282,21 +282,34 @@ export default function ChatInterface() {
   useEffect(() => {
     if (!scrollAreaRef.current) return
     
-    const scrollContainer = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]")
+    const scrollContainer = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement
     if (!scrollContainer) return
     
-    // Use setTimeout to ensure DOM has fully rendered and settled
-    const scrollTimer = setTimeout(() => {
-      console.log('📜 SCROLLING NOW. scrollTop:', scrollContainer.scrollTop, 'scrollHeight:', scrollContainer.scrollHeight)
-      scrollContainer.scrollTop = scrollContainer.scrollHeight
+    // Try multiple approaches to force scroll
+    const scrollToBottom = () => {
+      const maxScroll = scrollContainer.scrollHeight
+      console.log('📜 ATTEMPTING SCROLL. scrollHeight:', maxScroll)
       
-      // Verify scroll happened
+      // Method 1: Direct scrollTop
+      scrollContainer.scrollTop = maxScroll
+      
+      // Method 2: scrollTo with behavior
+      scrollContainer.scrollTo({
+        top: maxScroll,
+        behavior: 'auto'
+      })
+      
+      // Method 3: Force again after tiny delay
       setTimeout(() => {
+        scrollContainer.scrollTop = maxScroll
         console.log('📜 AFTER SCROLL. New scrollTop:', scrollContainer.scrollTop)
-      }, 100)
-    }, 100)
+      }, 50)
+    }
     
-    return () => clearTimeout(scrollTimer)
+    // Wait for DOM to settle, then scroll multiple times
+    setTimeout(scrollToBottom, 150)
+    setTimeout(scrollToBottom, 300)
+    
   }, [messages])
 
   // Load user's conversations (enhanced with localStorage fallback)
