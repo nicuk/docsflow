@@ -278,18 +278,7 @@ export default function ChatInterface() {
     return () => clearInterval(interval)
   }, [])
 
-  // Auto-scroll messages to bottom when new messages arrive
-  useEffect(() => {
-    if (!scrollAreaRef.current) return
-    
-    const scrollContainer = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement
-    if (!scrollContainer) return
-    
-    // Simple immediate scroll to bottom
-    setTimeout(() => {
-      scrollContainer.scrollTop = scrollContainer.scrollHeight
-    }, 100)
-  }, [messages])
+  // Scroll is now triggered manually in handleSendMessage, not automatically on messages change
 
   // Load user's conversations (enhanced with localStorage fallback)
   const loadConversations = async () => {
@@ -405,8 +394,24 @@ export default function ChatInterface() {
     setShowConversationHistory(false)
   }
 
+  // Simple scroll to bottom function
+  const scrollToBottom = () => {
+    if (!scrollAreaRef.current) return
+    
+    const viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement
+    if (viewport) {
+      // Scroll after a short delay to let content render
+      setTimeout(() => {
+        viewport.scrollTop = viewport.scrollHeight
+      }, 100)
+    }
+  }
+
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return
+
+    // Scroll to bottom when user sends message
+    scrollToBottom()
 
     // Create new conversation if none exists
     let conversationId = currentConversationId
@@ -527,6 +532,9 @@ export default function ChatInterface() {
       }
 
       setMessages((prev) => [...prev, aiResponse])
+      
+      // Scroll to show the new AI response
+      scrollToBottom()
       
       // Refresh conversations list to update message count and last activity
       await loadConversations()
