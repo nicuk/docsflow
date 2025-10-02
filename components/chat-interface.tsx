@@ -983,15 +983,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
                         onKeyPress={(e) => {
                           if (e.key === "Enter" && !e.shiftKey) {
                             e.preventDefault()
-                            // Prevent browser from scrolling to keep input in view
-                            if (inputRef.current) {
-                              inputRef.current.blur()
-                            }
                             handleSendMessage(inputValue)
-                            // Re-focus after message is sent
-                            setTimeout(() => {
-                              inputRef.current?.focus()
-                            }, 100)
                           }
                         }}
                         placeholder={`Ask anything about your business documents... e.g., "${placeholderSuggestions[currentPlaceholder]}"`}
