@@ -43,7 +43,8 @@ const WORKER_CONFIG = {
 // POST /api/queue/worker
 // =====================================================
 
-export async function POST(request: NextRequest) {
+// Main worker function (shared by POST and GET)
+async function processWorkerRequest(request: NextRequest) {
   const startTime = Date.now();
   
   try {
@@ -190,6 +191,16 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Export POST and GET handlers (Vercel Cron uses GET)
+export async function POST(request: NextRequest) {
+  return processWorkerRequest(request);
+}
+
+export async function GET(request: NextRequest) {
+  console.log('🔄 [WORKER] GET request received (from Vercel Cron)');
+  return processWorkerRequest(request);
 }
 
 // =====================================================

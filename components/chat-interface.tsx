@@ -416,8 +416,14 @@ export default function ChatInterface() {
     
     const viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement
     if (viewport) {
+      console.log('🔍 DEBUG - clientHeight:', viewport.clientHeight, 'scrollHeight:', viewport.scrollHeight, 'overflow:', window.getComputedStyle(viewport).overflow)
       console.log('✅ Scrolling - scrollHeight:', viewport.scrollHeight, 'current scrollTop:', viewport.scrollTop)
+      
+      // Force scroll with multiple methods
       viewport.scrollTop = viewport.scrollHeight
+      viewport.scroll({ top: viewport.scrollHeight, behavior: 'auto' })
+      viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'auto' })
+      
       console.log('✅ After scroll - scrollTop:', viewport.scrollTop)
     } else {
       console.log('❌ viewport element not found')
