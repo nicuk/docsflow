@@ -91,35 +91,9 @@ Consider: exact match, semantic similarity, temporal relevance, entity alignment
       return query;
     }
 
-    // 🎯 FIX: Use ALL keywords for better matching, not just longest
-    // Priority order: file types > business terms > all keywords
-    
-    // 1. Prioritize file type terms (csv, pdf, excel, etc.)
-    const fileTypeTerms = words.filter(word => 
-      ['csv', 'pdf', 'json', 'xml', 'xlsx', 'xls', 'doc', 'docx', 'txt', 
-       'png', 'jpg', 'jpeg', 'image', 'spreadsheet', 'document', 'table'].includes(word)
-    );
-    
-    if (fileTypeTerms.length > 0) {
-      // Return all file type terms for comprehensive matching
-      return fileTypeTerms.join(' ');
-    }
-
-    // 2. Prioritize business terms
-    const businessTerms = words.filter(word => 
-      ['revenue', 'profit', 'income', 'sales', 'cost', 'budget', 'client', 
-       'customer', 'project', 'contract', 'report', 'analysis', 'data',
-       'performance', 'growth', 'target', 'goal', 'metric', 'kpi', 'device',
-       'manufacturer', 'type', 'status', 'encryption', 'water', 'electricity'].includes(word)
-    );
-
-    if (businessTerms.length > 0) {
-      // Return all business terms for comprehensive matching
-      return businessTerms.join(' ');
-    }
-
-    // 3. Return ALL keywords for comprehensive matching
-    // This ensures we don't miss matches by picking wrong single keyword
+    // 🎯 SURGICAL FIX: Return ALL keywords - don't filter to only file types or business terms
+    // The old logic caused "what is in test doc" → "doc" (lost "test"!)
+    // Now: "what is in test doc" → "test doc" ✅
     return words.join(' ');
   }
 
