@@ -239,8 +239,8 @@ export class HybridSearch {
         query_embedding: queryEmbedding,
         match_threshold: threshold,
         match_count: maxResults,
-        tenant_filter: tenantId, 
-        access_level_filter: accessLevel 
+        tenant_id: tenantId, // 🔧 FIX: Corrected parameter name
+        access_level: accessLevel // 🔧 FIX: Corrected parameter name
       }
     );
 

@@ -32,8 +32,8 @@ export async function performDeepSearch(
       query_embedding: queryEmbedding,
       match_threshold: 0.9,
       match_count: 5,
-      tenant_filter: tenantId,
-      access_level_filter: userAccessLevel
+      tenant_id: tenantId, // 🔧 FIX: Corrected parameter name
+      access_level: userAccessLevel // 🔧 FIX: Corrected parameter name
     }),
     
     // Pass 2: Medium precision (0.85 threshold)
@@ -41,8 +41,8 @@ export async function performDeepSearch(
       query_embedding: queryEmbedding,
       match_threshold: 0.85,
       match_count: 10,
-      tenant_filter: tenantId,
-      access_level_filter: userAccessLevel
+      tenant_id: tenantId, // 🔧 FIX: Corrected parameter name
+      access_level: userAccessLevel // 🔧 FIX: Corrected parameter name
     }),
     
     // Pass 3: Broad search (0.75 threshold) for context
@@ -50,8 +50,8 @@ export async function performDeepSearch(
       query_embedding: queryEmbedding,
       match_threshold: 0.75,
       match_count: 20,
-      tenant_filter: tenantId,
-      access_level_filter: userAccessLevel
+      tenant_id: tenantId, // 🔧 FIX: Corrected parameter name
+      access_level: userAccessLevel // 🔧 FIX: Corrected parameter name
     })
   ]);
   
