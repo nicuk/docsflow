@@ -280,7 +280,13 @@ export default function ChatInterface() {
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    scrollToBottom()
+    // A short timeout ensures that the DOM has been updated with the new message
+    // and padding before we try to scroll. This fixes the timing issue.
+    const timer = setTimeout(() => {
+      scrollToBottom()
+    }, 100) // 100ms delay is usually enough for rendering to complete.
+
+    return () => clearTimeout(timer)
   }, [messages])
 
   // Load user's conversations (enhanced with localStorage fallback)
