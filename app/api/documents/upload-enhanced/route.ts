@@ -70,20 +70,21 @@ export async function POST(request: NextRequest) {
     
     const document = await SecureDocumentService.insertDocument({
       tenant_id: tenantId,
-      name: file.name,
-      content: '', // Will be populated by worker
-      mime_type: file.type,
-      size: buffer.length,
+      filename: file.name, // ✅ This matches schema
+      // ❌ REMOVED: content: '', (column doesn't exist)
+      file_size: buffer.length, // ✅ This matches schema  
+      mime_type: file.type, // ✅ This matches schema
+      processing_status: 'pending', // ✅ This matches schema
+      processing_progress: 0, // ✅ This matches schema
+      document_category: 'general', // ✅ This matches schema
+      access_level: 'user_accessible', // ✅ This matches schema
       metadata: {
         tenant_id: tenantId,
         mime_type: file.type,
         storage_path: filePath,
         queued_at: new Date().toISOString()
-      },
-      parse_method: 'pending', // Will be determined by worker
-      has_tables: false,
-      has_images: false
-      // ❌ REMOVED: chunk_count: 0 (column doesn't exist)
+      }
+      // ❌ REMOVED: parse_method, has_tables, has_images (don't exist)
     });
     
     if (!document) {
