@@ -281,11 +281,14 @@ export default function ChatInterface() {
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    // Immediate scroll
-    scrollToBottom()
-    // Also delayed scroll to catch late-rendering content
-    const timeout = setTimeout(() => scrollToBottom(), 100)
-    return () => clearTimeout(timeout)
+    // Use requestAnimationFrame to ensure DOM has painted
+    requestAnimationFrame(() => {
+      scrollToBottom()
+      // Also delayed scroll to catch late-rendering content
+      setTimeout(() => scrollToBottom(), 100)
+      // Extra delayed scroll for complex content (sources, etc)
+      setTimeout(() => scrollToBottom(), 300)
+    })
   }, [messages])
 
   // Load user's conversations (enhanced with localStorage fallback)
@@ -908,8 +911,9 @@ Please try again in a moment. If the issue persists, you can still use the inter
                       )}
                     </div>
                   ))}
+                  {/* Sentinel element for auto-scroll - must be inside the content div */}
+                  <div ref={messagesEndRef} className="h-1" />
                 </div>
-                <div ref={messagesEndRef} />
               </ScrollArea>
 
               {/* Input Area */}
