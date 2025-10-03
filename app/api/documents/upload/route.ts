@@ -491,6 +491,7 @@ async function processDocumentContentEnhanced(
           access_level: accessLevel,
           metadata: {
             tenant_id: tenantId,
+            filename: file.name, // 🎯 FIX: Include filename for search and source attribution
             chunk_length: chunk.content.length,
             context_summary: chunk.context_summary,
             contextual_content: chunk.contextual_content, // Store for debugging
