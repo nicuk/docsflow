@@ -177,6 +177,7 @@ export default function ChatInterface() {
   const [hiddenSuggestions, setHiddenSuggestions] = useState<Set<string>>(new Set()) // Track hidden suggestion sections
   const [suggestionsDisabledPermanently, setSuggestionsDisabledPermanently] = useState(false) // Track if user has permanently dismissed suggestions
   const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null) // Ref for the end of the messages list
   const inputRef = useRef<HTMLInputElement>(null)
   
   // 🚀 NEW: Source viewer modal state
@@ -280,8 +281,11 @@ export default function ChatInterface() {
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    scrollToBottom()
+    // A short timeout can help ensure the DOM is updated before scrolling
+    setTimeout(() => scrollToBottom(), 50)
   }, [messages])
+
+  // Scroll is now triggered manually in handleSendMessage, not automatically on messages change
 
   // Load user's conversations (enhanced with localStorage fallback)
   const loadConversations = async () => {
@@ -397,37 +401,9 @@ export default function ChatInterface() {
     setShowConversationHistory(false)
   }
 
-  // Robust scroll to bottom function with multiple attempts
+  // Use scrollIntoView for a more reliable scroll
   const scrollToBottom = () => {
-    console.log('🔵 scrollToBottom called')
-    if (!scrollAreaRef.current) {
-      console.log('❌ scrollAreaRef.current is null')
-      return
-    }
-    
-    const viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement
-    if (!viewport) {
-      console.log('❌ viewport not found')
-      return
-    }
-    
-    console.log('✅ viewport found, current scrollTop:', viewport.scrollTop, 'scrollHeight:', viewport.scrollHeight)
-    
-    // Immediate scroll
-    viewport.scrollTop = viewport.scrollHeight
-    console.log('📜 After immediate scroll, scrollTop:', viewport.scrollTop)
-    
-    // Delayed scroll to catch late-rendering content
-    setTimeout(() => {
-      viewport.scrollTop = viewport.scrollHeight
-      console.log('📜 After 50ms scroll, scrollTop:', viewport.scrollTop, 'scrollHeight:', viewport.scrollHeight)
-    }, 50)
-    
-    // Final scroll to catch sources/suggestions that render slowly
-    setTimeout(() => {
-      viewport.scrollTop = viewport.scrollHeight
-      console.log('📜 After 200ms scroll, scrollTop:', viewport.scrollTop, 'scrollHeight:', viewport.scrollHeight)
-    }, 200)
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
   }
 
   const handleSendMessage = async (content: string) => {
@@ -923,6 +899,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
                     </div>
                   ))}
                 </div>
+                <div ref={messagesEndRef} />
               </ScrollArea>
 
               {/* Input Area */}
