@@ -199,8 +199,38 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  console.log('🔄 [WORKER] GET request received (from Vercel Cron)');
-  return processWorkerRequest(request);
+  // Check if this is a cron request (has auth header) or health check (no auth)
+  const authHeader = request.headers.get('Authorization');
+  
+  if (authHeader) {
+    // This is a cron/manual trigger request
+    console.log('🔄 [WORKER] GET request with auth received (from Vercel Cron)');
+    return processWorkerRequest(request);
+  } else {
+    // This is a health check request
+    console.log('🩺 [WORKER] Health check request received');
+    try {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+      
+      const { data: stats } = await supabase
+        .rpc('get_job_stats', { p_tenant_id: '00000000-0000-0000-0000-000000000000' });
+      
+      return NextResponse.json({
+        status: 'healthy',
+        worker_config: WORKER_CONFIG,
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (error) {
+      return NextResponse.json(
+        { status: 'unhealthy', error: 'Database connection failed' },
+        { status: 503 }
+      );
+    }
+  }
 }
 
 // =====================================================
@@ -460,31 +490,6 @@ async function processDocumentContent(
 }
 
 // =====================================================
-// HEALTH CHECK ENDPOINT
+// HEALTH CHECK ENDPOINT - Now handled by GET handler above
 // =====================================================
-
-export async function GET(request: NextRequest) {
-  try {
-    // Simple health check - verify database connection
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-    
-    const { data: stats } = await supabase
-      .rpc('get_job_stats', { p_tenant_id: '00000000-0000-0000-0000-000000000000' });
-    
-    return NextResponse.json({
-      status: 'healthy',
-      worker_config: WORKER_CONFIG,
-      timestamp: new Date().toISOString()
-    });
-    
-  } catch (error) {
-    return NextResponse.json(
-      { status: 'unhealthy', error: 'Database connection failed' },
-      { status: 503 }
-    );
-  }
-}
 

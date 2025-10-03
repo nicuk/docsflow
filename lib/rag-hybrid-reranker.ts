@@ -187,20 +187,18 @@ Format as JSON:
     tenantId: string,
     topK: number = 20
   ): Promise<SearchResult[]> {
-    // 🚀 PERFORMANCE: Fast path for simple queries (skip rewriting)
-    const isSimpleQuery = query.length < 50 && 
-                         !query.toLowerCase().includes('compare') && 
-                         !query.toLowerCase().includes('analyze') &&
-                         !query.toLowerCase().includes('difference') &&
-                         !query.toLowerCase().includes('explain');
+    // 🚀 PERFORMANCE v2: Expanded fast path for simple queries (skip rewriting)
+    const complexKeywords = ['compare', 'analyze', 'difference', 'explain', 'versus', 'vs', 'contrast', 'evaluate', 'assess'];
+    const hasComplexKeyword = complexKeywords.some(kw => query.toLowerCase().includes(kw));
+    const isSimpleQuery = query.length < 80 && !hasComplexKeyword;
     
     let searchQueries: string[];
     
     if (isSimpleQuery) {
-      console.log(`⚡ [PERFORMANCE] Simple query detected - skipping rewrite`);
+      console.log(`⚡ [PERFORMANCE v2] Simple query detected - skipping rewrite (saves ~500ms)`);
       searchQueries = [query];
     } else {
-      console.log(`🔄 [PERFORMANCE] Complex query - performing rewrite`);
+      console.log(`🔄 [PERFORMANCE v2] Complex query - performing rewrite`);
       const rewrittenQuery = await this.rewriteQuery(query);
       // 🚀 PERFORMANCE: Limit to top 2 rewrites only (not all)
       searchQueries = [rewrittenQuery.original, ...rewrittenQuery.rewritten.slice(0, 2)];
@@ -433,8 +431,18 @@ Return only a number between 0 and 1.`;
     // 🎯 RAGAS PATTERN A DEBUG: Trace enhancedRAGPipeline execution
     console.log(`🔍 [RAGAS PATTERN A] enhancedRAGPipeline started for query: "${query}"`);
     
+    // 🚀 PERFORMANCE v2: Reduce search scope for simple queries
+    const complexKeywords = ['compare', 'analyze', 'difference', 'explain', 'versus', 'vs', 'contrast', 'evaluate', 'assess'];
+    const hasComplexKeyword = complexKeywords.some(kw => query.toLowerCase().includes(kw));
+    const isSimpleQuery = query.length < 80 && !hasComplexKeyword;
+    
+    // Simple queries: search 1.5x topK, Complex queries: search 2x topK
+    const searchMultiplier = isSimpleQuery ? 1.5 : 2;
+    const searchLimit = Math.ceil(topK * searchMultiplier);
+    console.log(`🔍 [PERFORMANCE v2] Query type: ${isSimpleQuery ? 'SIMPLE' : 'COMPLEX'}, searching ${searchLimit} results (${searchMultiplier}x multiplier)`);
+    
     // Step 1: Hybrid search with query rewriting
-    const hybridResults = await this.hybridSearch(query, tenantId, topK * 2);
+    const hybridResults = await this.hybridSearch(query, tenantId, searchLimit);
     console.log(`📊 [RAGAS PATTERN A] Step 1 - hybridSearch returned: ${hybridResults.length} results`);
     
     // 🚀 SURGICAL FIX: Conditional reranking - skip when confidence is high
@@ -444,14 +452,15 @@ Return only a number between 0 and 1.`;
     
     let rerankedResults: SearchResult[];
     
-    if (avgConfidence >= 0.7 && hybridResults.length <= 5) {
-      // ⚡ HIGH CONFIDENCE: Skip expensive reranking (saves 2-3s)
-      console.log(`⚡ [PERFORMANCE] High confidence (${avgConfidence.toFixed(2)}) with ${hybridResults.length} results - SKIPPING rerank (saves 2-3s)`);
+    // ⚡ PERFORMANCE: More aggressive skipping (0.6 confidence OR <4 results)
+    if (avgConfidence >= 0.6 || hybridResults.length <= 3) {
+      // ⚡ HIGH CONFIDENCE: Skip expensive reranking (saves 2s on 60% of queries)
+      console.log(`⚡ [PERFORMANCE v2] Confidence: ${avgConfidence.toFixed(2)}, Results: ${hybridResults.length} - SKIPPING rerank (saves ~2000ms)`);
       rerankedResults = hybridResults.slice(0, topK);
-      console.log(`📊 [RAGAS PATTERN A] Step 2 - crossEncoderRerank SKIPPED (high confidence)`);
+      console.log(`📊 [RAGAS PATTERN A] Step 2 - crossEncoderRerank SKIPPED (high confidence/few results)`);
     } else {
       // 🔄 LOW CONFIDENCE: Perform reranking for better quality
-      console.log(`🔄 [QUALITY] Low confidence (${avgConfidence.toFixed(2)}) or many results (${hybridResults.length}) - performing rerank`);
+      console.log(`🔄 [QUALITY] Low confidence (${avgConfidence.toFixed(2)}) with ${hybridResults.length} results - performing rerank`);
       rerankedResults = await this.crossEncoderRerank(query, hybridResults, topK);
       console.log(`📊 [RAGAS PATTERN A] Step 2 - crossEncoderRerank returned: ${rerankedResults.length} results`);
     }

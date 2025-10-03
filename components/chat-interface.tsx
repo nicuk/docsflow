@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Send, Paperclip, RotateCcw, Download, FileText, MessageSquare, Sparkles, ChevronRight, Plus, History, Trash2, X } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
@@ -407,27 +406,22 @@ export default function ChatInterface() {
     setShowConversationHistory(false)
   }
 
-  // Simple scroll to bottom function
+  // Simple scroll to bottom function - now using native div
   const scrollToBottom = () => {
     if (!scrollAreaRef.current) {
       console.log('❌ scrollAreaRef is null')
       return
     }
     
-    const viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement
-    if (viewport) {
-      console.log('🔍 DEBUG - clientHeight:', viewport.clientHeight, 'scrollHeight:', viewport.scrollHeight, 'overflow:', window.getComputedStyle(viewport).overflow)
-      console.log('✅ Scrolling - scrollHeight:', viewport.scrollHeight, 'current scrollTop:', viewport.scrollTop)
-      
-      // Force scroll with multiple methods
-      viewport.scrollTop = viewport.scrollHeight
-      viewport.scroll({ top: viewport.scrollHeight, behavior: 'auto' })
-      viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'auto' })
-      
-      console.log('✅ After scroll - scrollTop:', viewport.scrollTop)
-    } else {
-      console.log('❌ viewport element not found')
-    }
+    // Direct access - no need to query for viewport since we're using native div
+    const scrollContainer = scrollAreaRef.current
+    console.log('🔍 DEBUG - clientHeight:', scrollContainer.clientHeight, 'scrollHeight:', scrollContainer.scrollHeight)
+    console.log('✅ Scrolling - scrollHeight:', scrollContainer.scrollHeight, 'current scrollTop:', scrollContainer.scrollTop)
+    
+    // Scroll to bottom
+    scrollContainer.scrollTop = scrollContainer.scrollHeight
+    
+    console.log('✅ After scroll - scrollTop:', scrollContainer.scrollTop)
   }
 
   const handleSendMessage = async (content: string) => {
@@ -770,7 +764,11 @@ Please try again in a moment. If the issue persists, you can still use the inter
 
           <div className="flex-1 flex min-h-0 w-full max-w-full overflow-hidden">
             <div className="w-full max-w-full flex flex-col min-h-0 overflow-hidden">
-              <ScrollArea ref={scrollAreaRef} className="flex-1 px-2 py-2 w-full max-w-full overflow-hidden">
+              <div 
+                ref={scrollAreaRef} 
+                className="flex-1 px-2 py-2 w-full max-w-full overflow-y-auto overflow-x-hidden"
+                style={{ scrollBehavior: 'smooth' }}
+              >
                 <div className="space-y-2 w-full max-w-full overflow-x-hidden box-border pr-2 pb-20">
                   {messages.map((message) => (
                     <div key={message.id}>
@@ -923,7 +921,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
                     </div>
                   ))}
                 </div>
-              </ScrollArea>
+              </div>
 
               {/* Input Area */}
               <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-2 shrink-0 w-full max-w-full overflow-hidden">
