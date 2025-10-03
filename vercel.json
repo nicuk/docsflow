@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/queue/worker",
-      "schedule": "*/5 * * * *"
+      "schedule": "* * * * *"
     }
   ],
   "functions": {
