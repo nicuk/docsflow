@@ -407,16 +407,17 @@ export default function ChatInterface() {
 
   // Use scrollIntoView for a more reliable scroll
   const scrollToBottom = () => {
-    // Use "auto" for instant scroll instead of "smooth"
-    messagesEndRef.current?.scrollIntoView({ behavior: "auto", block: "nearest", inline: "nearest" })
-    
-    // Also directly manipulate scroll position as backup
+    // Force scroll to absolute end
     if (scrollAreaRef.current) {
       const viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement
       if (viewport) {
-        viewport.scrollTop = viewport.scrollHeight
+        // Set scrollTop to maximum possible value to ensure we're at true bottom
+        viewport.scrollTop = viewport.scrollHeight + 1000
       }
     }
+    
+    // Also use scrollIntoView as backup
+    messagesEndRef.current?.scrollIntoView({ behavior: "auto", block: "end" })
   }
 
   const handleSendMessage = async (content: string) => {
@@ -912,7 +913,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
                     </div>
                   ))}
                   {/* Sentinel element for auto-scroll - must be inside the content div */}
-                  <div ref={messagesEndRef} className="h-1" />
+                  <div ref={messagesEndRef} className="h-8" />
                 </div>
               </ScrollArea>
 
