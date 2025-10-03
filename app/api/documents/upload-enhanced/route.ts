@@ -132,14 +132,14 @@ export async function POST(request: NextRequest) {
       file.type
     );
     
-    // Return success response immediately
+    // Return success response immediately (frontend-compatible format)
     return NextResponse.json({
       success: true,
       document: {
         id: documentId,
-        name: file.name,
-        size: buffer.length,
-        status: 'queued',
+        filename: file.name, // 🎯 FIX: Match frontend expectation (not 'name')
+        processing_status: 'queued', // 🎯 FIX: Match frontend expectation (not 'status')
+        file_size: buffer.length,
         jobId: job.id,
         message: 'Document queued for processing. This may take 30s-2min depending on file size.'
       },

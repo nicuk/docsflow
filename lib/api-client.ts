@@ -344,7 +344,7 @@ export const apiClient = {
           reject(new Error('Network error during upload'));
         });
         
-        xhr.open('POST', `${API_BASE_URL}/documents/upload`);
+        xhr.open('POST', `${API_BASE_URL}/documents/upload-enhanced`);
         
         // Set headers
         Object.entries(authHeaders).forEach(([key, value]) => {
