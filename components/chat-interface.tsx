@@ -280,13 +280,17 @@ export default function ChatInterface() {
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    // A short timeout ensures that the DOM has been updated with the new message
-    // and padding before we try to scroll. This fixes the timing issue.
-    const timer = setTimeout(() => {
-      scrollToBottom()
-    }, 100) // 100ms delay is usually enough for rendering to complete.
+    // Immediate scroll
+    scrollToBottom()
+    
+    // Also delayed scroll to catch late-rendering content
+    const timer1 = setTimeout(() => scrollToBottom(), 100)
+    const timer2 = setTimeout(() => scrollToBottom(), 300)
 
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer1)
+      clearTimeout(timer2)
+    }
   }, [messages])
 
   // Load user's conversations (enhanced with localStorage fallback)
@@ -405,11 +409,18 @@ export default function ChatInterface() {
 
   // Simple scroll to bottom function
   const scrollToBottom = () => {
-    if (!scrollAreaRef.current) return
+    if (!scrollAreaRef.current) {
+      console.log('❌ scrollAreaRef is null')
+      return
+    }
     
     const viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement
     if (viewport) {
+      console.log('✅ Scrolling - scrollHeight:', viewport.scrollHeight, 'current scrollTop:', viewport.scrollTop)
       viewport.scrollTop = viewport.scrollHeight
+      console.log('✅ After scroll - scrollTop:', viewport.scrollTop)
+    } else {
+      console.log('❌ viewport element not found')
     }
   }
 
