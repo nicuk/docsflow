@@ -281,11 +281,12 @@ export default function ChatInterface() {
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    // A short timeout can help ensure the DOM is updated before scrolling
-    setTimeout(() => scrollToBottom(), 50)
+    // Immediate scroll
+    scrollToBottom()
+    // Also delayed scroll to catch late-rendering content
+    const timeout = setTimeout(() => scrollToBottom(), 100)
+    return () => clearTimeout(timeout)
   }, [messages])
-
-  // Scroll is now triggered manually in handleSendMessage, not automatically on messages change
 
   // Load user's conversations (enhanced with localStorage fallback)
   const loadConversations = async () => {
@@ -403,7 +404,16 @@ export default function ChatInterface() {
 
   // Use scrollIntoView for a more reliable scroll
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
+    // Use "auto" for instant scroll instead of "smooth"
+    messagesEndRef.current?.scrollIntoView({ behavior: "auto", block: "nearest", inline: "nearest" })
+    
+    // Also directly manipulate scroll position as backup
+    if (scrollAreaRef.current) {
+      const viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight
+      }
+    }
   }
 
   const handleSendMessage = async (content: string) => {
