@@ -243,8 +243,8 @@ Return JSON format:
     const { data: searchResults, error } = await this.supabase
       .rpc('similarity_search', {
         query_embedding: queryEmbedding,
-        tenant_filter: tenantId,
-        access_level_filter: 5,
+        tenant_id: tenantId,        // 🔧 FIX: Corrected parameter name
+        access_level: 5,            // 🔧 FIX: Corrected parameter name
         match_threshold: 0.7,
         match_count: 20
       });

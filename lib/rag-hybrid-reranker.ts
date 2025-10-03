@@ -4,6 +4,7 @@ import { OpenRouterClient, MODEL_CONFIGS } from '@/lib/openrouter-client';
 
 interface SearchResult {
   id: string;
+  document_id?: string;  // 🔧 NEW: Added to support document linking
   content: string;
   metadata: any;
   vectorScore: number;
@@ -512,12 +513,12 @@ Return only a number between 0 and 1.`;
     
     const queryEmbedding = await this.getEmbedding(query);
     
-    // 🎯 SURGICAL FIX: Use correct parameter names for secured similarity_search function
+    // 🎯 SURGICAL FIX: Use correct parameter names matching the function signature
     const { data, error } = await this.supabase
       .rpc('similarity_search', {
         query_embedding: queryEmbedding,
-        tenant_filter: tenantId,
-        access_level_filter: 5,
+        tenant_id: tenantId,        // 🔧 FIX: Was "tenant_filter", now matches function param
+        access_level: 5,            // 🔧 FIX: Was "access_level_filter", now matches function param
         match_threshold: 0.7,
         match_count: limit
       });
@@ -529,17 +530,18 @@ Return only a number between 0 and 1.`;
     
     if (error || !data) return [];
     
-    // 🎯 SURGICAL FIX: Map secured function response (chunk_id, document_id, etc.)
+    // 🎯 FIX: Map NEW function response with proper metadata fields
     return data.map((d: any) => ({
       id: d.document_id || d.id, // Parent document UUID
       document_id: d.document_id || d.id, // Explicit for API
       content: d.content,
-      metadata: d.metadata || {},
+      metadata: d.document_metadata || d.chunk_metadata || d.metadata || {},
       vectorScore: d.similarity || 0,
       keywordScore: 0,
       provenance: {
-        source: d.metadata?.filename || d.filename || 'Unknown Document',
-        page: d.metadata?.page || d.page,
+        // 🔧 NEW: Function now returns filename directly (not in metadata)
+        source: d.filename || d.document_metadata?.filename || 'Unknown Document',
+        page: d.chunk_metadata?.page || d.metadata?.page || 1,
         confidence: d.confidence_score || d.similarity || 0
       }
     }));
@@ -722,11 +724,14 @@ Return only a number between 0 and 1.`;
         .sort((a, b) => b.keywordScore - a.keywordScore)
         .findIndex(r => r.id === result.id) + 1;
       
-      const rrfScore = (1 / (k + vectorRank)) + (1 / (k + keywordRank));
+      // 🔧 EMERGENCY FIX: 3x weight to keyword matches (compensates for polluted embeddings)
+      const vectorScore = 1 / (k + vectorRank);
+      const keywordScore = 1 / (k + keywordRank);
+      const rrfScore = vectorScore + (keywordScore * 3); // Boost keyword weight
       
       // 🎯 SURGICAL FIX: Normalize RRF score to 0-1 range
-      // RRF scores are typically very small (0.01-0.05), normalize based on max possible score
-      const maxRRFScore = 2 / (k + 1); // Best possible score (rank 1 in both)
+      // With 3x keyword boost, max score is higher
+      const maxRRFScore = (1 / (k + 1)) + (3 / (k + 1)); // Best possible with 3x boost
       const normalizedScore = Math.min(1, rrfScore / maxRRFScore);
       
       return {
