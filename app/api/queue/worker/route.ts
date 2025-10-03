@@ -436,6 +436,7 @@ async function processDocumentContent(
       processing_progress: 100,
       metadata: {
         ...parsedDocument.metadata,
+        // ✅ Store chunk count in metadata (not as column)
         chunk_count: parsedDocument.chunks.length,
         has_tables: (parsedDocument.metadata.tables?.length || 0) > 0,
         has_images: (parsedDocument.metadata.images?.length || 0) > 0

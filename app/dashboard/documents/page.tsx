@@ -330,18 +330,23 @@ export default function DocumentsPage() {
       }
       
       try {
-        // Here you would call your backend to get document status
-        // For now, we'll simulate processing completion after random time
         pollCount++
         
-        // Simulate random processing completion (replace with real API call)
-        if (Math.random() > 0.7 || pollCount > 10) {
+        // 🔧 FIX: Call real API to check document status
+        const documents = await apiClient.getDocuments();
+        const document = documents.documents?.find((d: any) => d.id === documentId);
+        
+        if (document) {
+          const newStatus = document.processing_status === 'completed' ? 'ready' : 
+                           document.processing_status === 'error' ? 'error' : 'processing';
+          
+          // Update document status from backend
           setDocuments((prev) => 
             prev.map((doc) => 
               doc.id === documentId 
                 ? { 
                     ...doc, 
-                    status: "ready",
+                    status: newStatus,
                     processingTime: pollCount * 10, // Rough estimate
                     pages: doc.type === "pdf" || doc.type === "doc" || doc.type === "docx" 
                       ? Math.floor(Math.random() * 30) + 1 : undefined,
@@ -351,9 +356,16 @@ export default function DocumentsPage() {
                 : doc
             )
           )
+          
+          // 🔧 FIX: Continue polling if still processing
+          if (newStatus === 'processing') {
+            setTimeout(poll, 10000) // Poll every 10 seconds
+          } else {
+            console.log(`✅ Document ${documentId} finished with status: ${newStatus}`);
+          }
         } else {
-          // Continue polling
-          setTimeout(poll, 10000) // Poll every 10 seconds
+          // Document not found - stop polling
+          console.error(`❌ Document ${documentId} not found in backend`);
         }
       } catch (error) {
         console.error('Status polling failed:', error)

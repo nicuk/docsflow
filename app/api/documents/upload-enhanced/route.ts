@@ -82,8 +82,8 @@ export async function POST(request: NextRequest) {
       },
       parse_method: 'pending', // Will be determined by worker
       has_tables: false,
-      has_images: false,
-      chunk_count: 0
+      has_images: false
+      // ❌ REMOVED: chunk_count: 0 (column doesn't exist)
     });
     
     if (!document) {

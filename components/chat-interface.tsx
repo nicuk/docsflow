@@ -177,7 +177,6 @@ export default function ChatInterface() {
   const [hiddenSuggestions, setHiddenSuggestions] = useState<Set<string>>(new Set()) // Track hidden suggestion sections
   const [suggestionsDisabledPermanently, setSuggestionsDisabledPermanently] = useState(false) // Track if user has permanently dismissed suggestions
   const scrollAreaRef = useRef<HTMLDivElement>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null) // Ref for the end of the messages list
   const inputRef = useRef<HTMLInputElement>(null)
   
   // 🚀 NEW: Source viewer modal state
@@ -281,14 +280,7 @@ export default function ChatInterface() {
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    // Use requestAnimationFrame to ensure DOM has painted
-    requestAnimationFrame(() => {
-      scrollToBottom()
-      // Also delayed scroll to catch late-rendering content
-      setTimeout(() => scrollToBottom(), 100)
-      // Extra delayed scroll for complex content (sources, etc)
-      setTimeout(() => scrollToBottom(), 300)
-    })
+    scrollToBottom()
   }, [messages])
 
   // Load user's conversations (enhanced with localStorage fallback)
@@ -405,19 +397,14 @@ export default function ChatInterface() {
     setShowConversationHistory(false)
   }
 
-  // Use scrollIntoView for a more reliable scroll
+  // Simple scroll to bottom function
   const scrollToBottom = () => {
-    // Force scroll to absolute end
-    if (scrollAreaRef.current) {
-      const viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement
-      if (viewport) {
-        // Set scrollTop to maximum possible value to ensure we're at true bottom
-        viewport.scrollTop = viewport.scrollHeight + 1000
-      }
-    }
+    if (!scrollAreaRef.current) return
     
-    // Also use scrollIntoView as backup
-    messagesEndRef.current?.scrollIntoView({ behavior: "auto", block: "end" })
+    const viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement
+    if (viewport) {
+      viewport.scrollTop = viewport.scrollHeight
+    }
   }
 
   const handleSendMessage = async (content: string) => {
@@ -912,8 +899,6 @@ Please try again in a moment. If the issue persists, you can still use the inter
                       )}
                     </div>
                   ))}
-                  {/* Sentinel element for auto-scroll - must be inside the content div */}
-                  <div ref={messagesEndRef} className="h-8" />
                 </div>
               </ScrollArea>
 

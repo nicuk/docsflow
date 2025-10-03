@@ -195,7 +195,20 @@ export async function POST(request: NextRequest) {
     console.log(`🎯 [RAG v8] Success: ${ragResponse.success}, Abstained: ${ragResponse.abstained}, Reason: ${ragResponse.reason}`);
     console.log(`📊 [RAG v8] Sources found: ${ragResponse.sources?.length || 0} chunks`);
     
+    // 🎯 CATEGORY BOOST: Auto-detect query intent and boost matching categories
     if (ragResponse.sources && ragResponse.sources.length > 0) {
+        const { applyCategoryLogic } = await import('@/lib/category-boost');
+        ragResponse.sources = applyCategoryLogic(ragResponse.sources, message, {
+          autoDetect: true // Auto-detect category from query
+        });
+        
+        // Re-sort after boosting
+        ragResponse.sources.sort((a, b) => {
+          const scoreA = a.hybridScore || a.vectorScore || a.keywordScore || 0;
+          const scoreB = b.hybridScore || b.vectorScore || b.keywordScore || 0;
+          return scoreB - scoreA;
+        });
+        
         console.log(`🔍 [RAG v8] First chunk preview: "${ragResponse.sources[0].content?.substring(0, 100)}..."`);
         const hasRevenue = ragResponse.sources[0].content?.toLowerCase().includes('revenue');
         console.log(`💰 [RAG v8] First chunk contains 'revenue': ${hasRevenue}`);
