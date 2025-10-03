@@ -748,7 +748,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
           <div className="flex-1 flex min-h-0 w-full max-w-full overflow-hidden">
             <div className="w-full max-w-full flex flex-col min-h-0 overflow-hidden">
               <ScrollArea ref={scrollAreaRef} className="flex-1 px-2 py-2 w-full max-w-full overflow-hidden">
-                <div className="space-y-2 w-full max-w-full overflow-x-hidden box-border pr-2">
+                <div className="space-y-2 w-full max-w-full overflow-x-hidden box-border pr-2 pb-20">
                   {messages.map((message) => (
                     <div key={message.id}>
                       {message.type === "user" && (

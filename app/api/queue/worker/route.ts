@@ -382,18 +382,19 @@ async function processDocumentContent(
   
   console.log(`📝 [JOB ${job.id}] Parsed document with ${parsedDocument.chunks.length} chunks (method: ${parseMethod})`);
   
-  // Update document record with parsed content
+  // Update document record with parsed content in metadata
   await supabase
     .from('documents')
     .update({
-      content: parsedDocument.text || '',
+      processing_status: 'processing', // Still processing chunks
+      processing_progress: 50,
       metadata: {
         ...parsedDocument.metadata,
+        // ✅ Store everything in metadata JSONB (no dedicated columns exist)
+        content: parsedDocument.text || '', // Store in metadata, not as column
         parse_method: parseMethod,
         processed_at: new Date().toISOString()
-      },
-      processing_status: 'processing', // Still processing chunks
-      processing_progress: 50
+      }
     })
     .eq('id', job.document_id);
   
