@@ -76,10 +76,17 @@ export async function retrieveChunks(input: {
       },
     }));
     
+    // Log actual scores for debugging
+    console.log(`[Retrieval] Top 5 scores:`, chunks.slice(0, 5).map(c => ({ 
+      score: c.score.toFixed(4), 
+      filename: c.metadata.filename,
+      text: c.text.substring(0, 50)
+    })));
+    
     // Filter by minimum score
     const filtered = chunks.filter(chunk => chunk.score >= RAG_CONFIG.retrieval.minScore);
     
-    console.log(`[Retrieval] Found ${chunks.length} results, ${filtered.length} above threshold`);
+    console.log(`[Retrieval] Found ${chunks.length} results, ${filtered.length} above threshold (minScore: ${RAG_CONFIG.retrieval.minScore})`);
     
     return filtered;
   } catch (error: any) {
