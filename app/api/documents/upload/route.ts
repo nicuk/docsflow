@@ -1,15 +1,10 @@
 /**
- * Enhanced Document Upload API with Multimodal Parsing
- * This is an example integration showing how to use the new multimodal parser
- * with proper feature flags and monitoring
+ * Document Upload API - Simplified Queue-Based Upload
+ * This endpoint queues documents for background processing
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { MultimodalDocumentParser } from '@/lib/rag-multimodal-parser';
-import { isFeatureEnabled } from '@/lib/feature-flags';
-// REMOVED: Old RAG monitoring (archived)
-// import { trackParseOperation, trackTenantViolation } from '@/lib/rag-monitoring';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
 
 export async function POST(request: NextRequest) {
@@ -38,14 +33,13 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // 🚀 ASYNC PROCESSING: Queue the file for background processing
     console.log(`[Documents Upload] Queuing file for background processing: ${file.name}`);
     
     // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     
-    // Create Supabase client for storage upload
+    // Create Supabase client
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -53,7 +47,7 @@ export async function POST(request: NextRequest) {
     
     // 1. Upload file to storage
     const filePath = `${tenantId}/${Date.now()}-${file.name}`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('documents')
       .upload(filePath, buffer, {
         contentType: file.type,
@@ -66,26 +60,24 @@ export async function POST(request: NextRequest) {
     
     console.log(`[Documents Upload] File uploaded to storage: ${filePath}`);
     
-    // 2. Create document record with "queued" status
+    // 2. Create document record with "pending" status
     const { SecureDocumentService } = await import('@/lib/secure-database');
     
     const document = await SecureDocumentService.insertDocument({
       tenant_id: tenantId,
-      filename: file.name, // ✅ This matches schema
-      // ❌ REMOVED: content: '', (column doesn't exist)
-      file_size: buffer.length, // ✅ This matches schema  
-      mime_type: file.type, // ✅ This matches schema
-      processing_status: 'pending', // ✅ This matches schema
-      processing_progress: 0, // ✅ This matches schema
-      document_category: 'general', // ✅ This matches schema
-      access_level: 'user_accessible', // ✅ This matches schema
+      filename: file.name,
+      file_size: buffer.length,
+      mime_type: file.type,
+      processing_status: 'pending',
+      processing_progress: 0,
+      document_category: 'general',
+      access_level: 'user_accessible',
       metadata: {
         tenant_id: tenantId,
         mime_type: file.type,
         storage_path: filePath,
         queued_at: new Date().toISOString()
       }
-      // ❌ REMOVED: parse_method, has_tables, has_images (don't exist)
     });
     
     if (!document) {
@@ -108,7 +100,6 @@ export async function POST(request: NextRequest) {
         attempts: 0,
         max_attempts: 3,
         processing_metadata: {
-          use_multimodal: isFeatureEnabled('MULTIMODAL_PARSING', tenantId),
           created_at: new Date().toISOString()
         }
       })
@@ -122,22 +113,19 @@ export async function POST(request: NextRequest) {
       throw new Error(`Failed to create ingestion job: ${jobError.message}`);
     }
     
-    console.log(`[Documents Upload] Job created: ${job.id}`);
-    
-    // Track metrics
     const duration = Date.now() - startTime;
-    console.log(`[Documents Upload] Upload completed in ${duration}ms`);
+    console.log(`[Documents Upload] Job created: ${job.id} in ${duration}ms`);
     
     // Return success response immediately (frontend-compatible format)
     return NextResponse.json({
       success: true,
       document: {
         id: documentId,
-        filename: file.name, // 🎯 FIX: Match frontend expectation (not 'name')
-        processing_status: 'queued', // 🎯 FIX: Match frontend expectation (not 'status')
+        filename: file.name,
+        processing_status: 'pending',
         file_size: buffer.length,
         jobId: job.id,
-        message: 'Document queued for processing. This may take 30s-2min depending on file size.'
+        message: 'Document queued for processing. Processing will complete in 30s-2min.'
       },
       metrics: {
         uploadTime: duration,
@@ -147,11 +135,6 @@ export async function POST(request: NextRequest) {
     
   } catch (error) {
     const duration = Date.now() - startTime;
-    
-    // Track error
-    const tenantId = request.headers.get('x-tenant-id') || 'unknown';
-    // REMOVED: Old RAG monitoring (archived)
-    // trackParseOperation(tenantId, duration, false, 'basic', 'unknown');
     console.error(`[Documents Upload] Error after ${duration}ms:`, error);
     
     return NextResponse.json(
@@ -169,9 +152,10 @@ export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
     status: 200,
     headers: {
-      'Access-Control-Allow-Origin': 'https://docsflow.app',
+      'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, x-tenant-id, x-tenant-subdomain',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Tenant-ID, X-Tenant-Subdomain',
     },
   });
 }
+
