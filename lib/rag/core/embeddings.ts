@@ -1,70 +1,26 @@
 /**
- * Embeddings Generation - Direct OpenAI API
+ * Embeddings Generation - Vercel AI Gateway
  * 
- * NOTE: OpenRouter doesn't support embeddings endpoint!
- * We use OpenAI directly for embeddings (cheap: $0.00002 per 1K tokens).
- * OpenRouter is only used for LLM completions (expensive models).
+ * Uses Vercel AI Gateway for embeddings (automatic routing, observability).
+ * OpenRouter is used only for LLM completions (doesn't support /embeddings).
+ * 
+ * Benefits:
+ * - Built-in observability in Vercel dashboard
+ * - Automatic failover across providers
+ * - Unified cost tracking
  * 
  * Atomic operation: text → vector
  */
 
+import { embed, embedMany } from 'ai';
+import { openai } from '@ai-sdk/openai';
 import { EmbeddingError } from '../utils/errors';
 import { RAG_CONFIG } from '../config';
 
-interface OpenRouterEmbeddingResponse {
-  data: Array<{
-    embedding: number[];
-    index: number;
-  }>;
-  model: string;
-  usage: {
-    prompt_tokens: number;
-    total_tokens: number;
-  };
-}
-
-/**
- * Call OpenAI embeddings API directly
- * 
- * OpenRouter doesn't support /embeddings endpoint, only /chat/completions.
- * So we call OpenAI directly for embeddings (they're cheap anyway).
- */
-async function callOpenAIEmbeddings(input: string | string[]): Promise<number[][]> {
-  // Use OpenAI directly (not OpenRouter) for embeddings
-  const openaiApiKey = process.env.OPENAI_API_KEY || RAG_CONFIG.openrouter.apiKey;
-  
-  const response = await fetch('https://api.openai.com/v1/embeddings', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${openaiApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'text-embedding-3-small', // OpenAI model name (no "openai/" prefix)
-      input: input,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('[Embeddings] OpenAI API error:', {
-      status: response.status,
-      statusText: response.statusText,
-      body: errorText.substring(0, 500),
-    });
-    throw new Error(`OpenAI API error (${response.status}): ${errorText.substring(0, 200)}`);
-  }
-
-  const data: OpenRouterEmbeddingResponse = await response.json();
-  
-  // Extract embeddings in order
-  return data.data
-    .sort((a, b) => a.index - b.index)
-    .map(item => item.embedding);
-}
-
 /**
  * Generate single embedding (for queries)
+ * 
+ * Uses Vercel AI Gateway - automatically routes through gateway when deployed.
  * 
  * @param text - Text to embed
  * @returns 1536-dimensional vector
@@ -75,16 +31,18 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   }
   
   try {
-    const results = await callOpenAIEmbeddings(text);
-    const result = results[0];
+    const { embedding } = await embed({
+      model: openai.embedding(RAG_CONFIG.embeddings.model),
+      value: text,
+    });
     
-    if (!result || result.length !== RAG_CONFIG.embeddings.dimensions) {
+    if (!embedding || embedding.length !== RAG_CONFIG.embeddings.dimensions) {
       throw new EmbeddingError(
-        `Invalid embedding dimensions: expected ${RAG_CONFIG.embeddings.dimensions}, got ${result?.length || 0}`
+        `Invalid embedding dimensions: expected ${RAG_CONFIG.embeddings.dimensions}, got ${embedding?.length || 0}`
       );
     }
     
-    return result;
+    return embedding;
   } catch (error: any) {
     console.error('[Embeddings] Error:', error);
     throw new EmbeddingError(`Failed to generate embedding: ${error.message}`, {
@@ -96,6 +54,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 /**
  * Generate batch embeddings (for document ingestion)
  * 
+ * Uses Vercel AI Gateway - automatically routes through gateway when deployed.
  * More efficient than multiple single calls.
  * 
  * @param texts - Array of texts to embed
@@ -114,15 +73,18 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
   }
   
   try {
-    const results = await callOpenAIEmbeddings(validTexts);
+    const { embeddings } = await embedMany({
+      model: openai.embedding(RAG_CONFIG.embeddings.model),
+      values: validTexts,
+    });
     
-    if (!results || results.length !== validTexts.length) {
+    if (!embeddings || embeddings.length !== validTexts.length) {
       throw new EmbeddingError(
-        `Invalid embedding count: expected ${validTexts.length}, got ${results?.length || 0}`
+        `Invalid embedding count: expected ${validTexts.length}, got ${embeddings?.length || 0}`
       );
     }
     
-    return results;
+    return embeddings;
   } catch (error: any) {
     console.error('[Embeddings] Batch error:', error);
     throw new EmbeddingError(`Failed to generate batch embeddings: ${error.message}`, {

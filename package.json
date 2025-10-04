@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.15",
+    "@ai-sdk/openai": "^2.0.42",
     "@clerk/nextjs": "^6.33.0",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^5.2.2",
