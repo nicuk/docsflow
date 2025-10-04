@@ -59,7 +59,7 @@ export async function processDocumentWithLangChain(
         docs = await loader.load();
       } else if (mimeType.includes('word') || mimeType.includes('docx') || mimeType.includes('msword')) {
         console.log(`📄 [JOB ${job.id}] Using DocxLoader for DOCX`);
-        const { DocxLoader } = await import('langchain/document_loaders/fs/docx');
+        const { DocxLoader } = await import('@langchain/community/document_loaders/fs/docx');
         const loader = new DocxLoader(tempFilePath);
         docs = await loader.load();
       } else if (mimeType.includes('image/')) {
