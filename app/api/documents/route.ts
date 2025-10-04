@@ -137,7 +137,60 @@ export async function DELETE(request: NextRequest) {
 
     console.log(`🗑️ [DELETE] Deleting document ${documentId} for tenant ${tenantId}`);
 
-    // 🎯 SURGICAL FIX: Delete chunks first (foreign key constraint)
+    // Get document details first (for file path)
+    const { data: document, error: fetchError } = await supabase
+      .from('documents')
+      .select('metadata')
+      .eq('id', documentId)
+      .eq('tenant_id', tenantId)
+      .single();
+
+    if (fetchError || !document) {
+      return NextResponse.json(
+        { error: 'Document not found or access denied' },
+        { status: 404, headers: corsHeaders }
+      );
+    }
+
+    // 1. Delete file from storage
+    const storagePath = document.metadata?.storage_path;
+    if (storagePath) {
+      const { error: storageError } = await supabase.storage
+        .from('documents')
+        .remove([storagePath]);
+      
+      if (storageError) {
+        console.error('Error deleting file from storage:', storageError);
+        // Continue anyway - file might already be deleted
+      } else {
+        console.log(`📁 [DELETE] Deleted file from storage: ${storagePath}`);
+      }
+    }
+
+    // 2. Delete vectors from Pinecone
+    try {
+      const { deleteWorkflow } = await import('@/lib/rag');
+      await deleteWorkflow({ documentId, tenantId });
+      console.log(`🗃️  [DELETE] Deleted vectors from Pinecone`);
+    } catch (pineconeError) {
+      console.error('Error deleting from Pinecone:', pineconeError);
+      // Continue anyway - vectors might not exist
+    }
+
+    // 3. Delete related ingestion jobs
+    const { error: jobsDeleteError } = await supabase
+      .from('ingestion_jobs')
+      .delete()
+      .eq('document_id', documentId);
+
+    if (jobsDeleteError) {
+      console.error('Error deleting ingestion jobs:', jobsDeleteError);
+      // Continue anyway - jobs might not exist
+    } else {
+      console.log(`📋 [DELETE] Deleted ingestion jobs for document`);
+    }
+
+    // 4. Delete chunks from database (old system)
     const { error: chunksDeleteError } = await supabase
       .from('document_chunks')
       .delete()
@@ -147,10 +200,10 @@ export async function DELETE(request: NextRequest) {
       console.error('Error deleting document chunks:', chunksDeleteError);
       // Continue anyway - chunks might not exist
     } else {
-      console.log(`🧩 [DELETE] Deleted chunks for document ${documentId}`);
+      console.log(`🧩 [DELETE] Deleted chunks from database`);
     }
 
-    // Verify document belongs to tenant and delete
+    // 5. Finally, delete document record
     const { error } = await supabase
       .from('documents')
       .delete()
@@ -165,7 +218,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    console.log(`✅ [DELETE] Successfully deleted document ${documentId}`);
+    console.log(`✅ [DELETE] Successfully deleted document ${documentId} (including file, vectors, jobs, and chunks)`);
 
     return NextResponse.json({
       message: 'Document deleted successfully',
