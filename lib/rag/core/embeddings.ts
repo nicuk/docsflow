@@ -1,14 +1,18 @@
 /**
  * Embeddings Generation - Vercel AI Gateway
  * 
- * Uses Vercel AI Gateway API key for unified access to embeddings.
+ * Uses Vercel AI SDK which automatically routes through AI Gateway when deployed.
  * OpenRouter is used only for LLM completions (doesn't support /embeddings).
+ * 
+ * How it works:
+ * - AI SDK detects AI_GATEWAY_API_KEY environment variable
+ * - Automatically routes through https://ai-gateway.vercel.sh/v1
+ * - No manual configuration needed!
  * 
  * Benefits:
  * - Built-in observability in Vercel dashboard
  * - Automatic failover across providers
  * - Unified cost tracking
- * - No need for separate OpenAI key
  * 
  * Atomic operation: text → vector
  */
@@ -18,16 +22,10 @@ import { openai } from '@ai-sdk/openai';
 import { EmbeddingError } from '../utils/errors';
 import { RAG_CONFIG } from '../config';
 
-// Configure to use AI Gateway
-const embeddingModel = openai.embedding(RAG_CONFIG.embeddings.model, {
-  apiKey: process.env.AI_GATEWAY_API_KEY || process.env.OPENAI_API_KEY,
-  baseURL: process.env.AI_GATEWAY_API_KEY ? 'https://ai-gateway.vercel.sh/v1' : undefined,
-});
-
 /**
  * Generate single embedding (for queries)
  * 
- * Uses Vercel AI Gateway - automatically routes through gateway when deployed.
+ * AI SDK automatically routes through Vercel AI Gateway when AI_GATEWAY_API_KEY is set.
  * 
  * @param text - Text to embed
  * @returns 1536-dimensional vector
@@ -39,7 +37,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   
   try {
     const { embedding } = await embed({
-      model: embeddingModel,
+      model: openai.embedding(RAG_CONFIG.embeddings.model),
       value: text,
     });
     
@@ -61,7 +59,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 /**
  * Generate batch embeddings (for document ingestion)
  * 
- * Uses Vercel AI Gateway - automatically routes through gateway when deployed.
+ * AI SDK automatically routes through Vercel AI Gateway when AI_GATEWAY_API_KEY is set.
  * More efficient than multiple single calls.
  * 
  * @param texts - Array of texts to embed
@@ -81,7 +79,7 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
   
   try {
     const { embeddings } = await embedMany({
-      model: embeddingModel,
+      model: openai.embedding(RAG_CONFIG.embeddings.model),
       values: validTexts,
     });
     
