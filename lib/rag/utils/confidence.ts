@@ -25,9 +25,10 @@ export function calculateConfidence(chunks: ScoredChunk[]): number {
   // Average the scores
   const avgScore = chunks.reduce((sum, chunk) => sum + chunk.score, 0) / chunks.length;
   
-  // Pinecone cosine similarity scores are typically 0.5-1.0
-  // Map to 0-100 scale: (score - 0.5) * 200 = percentage
-  const normalized = Math.max(0, Math.min(100, (avgScore - 0.5) * 200));
+  // Pinecone cosine similarity scores range from 0-1
+  // Map to 0-100 scale: score * 100 = percentage
+  // Scores of 0.3-0.4 are typical for semantic matches
+  const normalized = Math.max(0, Math.min(100, avgScore * 100));
   
   return Math.round(normalized);
 }
@@ -35,22 +36,22 @@ export function calculateConfidence(chunks: ScoredChunk[]): number {
 /**
  * Determine if confidence is sufficient for answering
  * 
- * Threshold: 40% (0.7 cosine similarity)
- * - Below 40%: Abstain (not confident enough)
- * - Above 40%: Answer (confident)
+ * Threshold: 30% (0.3 cosine similarity)
+ * - Below 30%: Abstain (not confident enough)
+ * - Above 30%: Answer (confident)
  */
 export function isSufficientConfidence(confidence: number): boolean {
-  return confidence >= 40;
+  return confidence >= 30;
 }
 
 /**
  * Get confidence level description
  */
 export function getConfidenceLevel(confidence: number): string {
-  if (confidence >= 80) return 'very high';
-  if (confidence >= 60) return 'high';
-  if (confidence >= 40) return 'moderate';
-  if (confidence >= 20) return 'low';
+  if (confidence >= 70) return 'very high';
+  if (confidence >= 50) return 'high';
+  if (confidence >= 30) return 'moderate';
+  if (confidence >= 15) return 'low';
   return 'very low';
 }
 
