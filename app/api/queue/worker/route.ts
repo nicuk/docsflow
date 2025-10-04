@@ -257,8 +257,9 @@ async function processJob(
     
     console.log(`📥 [JOB ${job.id}] File downloaded: ${fileData.size} bytes`);
     
-    // 2. Process document with enhanced multimodal parsing
-    await processDocumentContent(
+    // 2. Process document with LangChain (replaces custom parsing)
+    const { processDocumentWithLangChain } = await import('./langchain-processor');
+    await processDocumentWithLangChain(
       job,
       fileData,
       supabase
@@ -351,9 +352,13 @@ async function handleJobFailure(
 }
 
 // =====================================================
-// DOCUMENT PROCESSING
+// DOCUMENT PROCESSING (OLD - REPLACED BY LANGCHAIN)
 // =====================================================
 
+// ❌ OLD FUNCTION - Replaced by processDocumentWithLangChain in langchain-processor.ts
+// This function had bugs (0 chunks, manual chunking, etc.)
+// Kept for reference but not used in production
+/*
 async function processDocumentContent(
   job: IngestionJob,
   fileData: Blob,
@@ -545,6 +550,7 @@ async function processDocumentContent(
   
   console.log(`✅ [JOB ${job.id}] Successfully processed ${parsedDocument.chunks.length} chunks`);
 }
+*/
 
 // =====================================================
 // HEALTH CHECK ENDPOINT - Now handled by GET handler above
