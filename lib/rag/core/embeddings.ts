@@ -1,29 +1,56 @@
 /**
- * Embeddings Generation
+ * Embeddings Generation - Pure OpenRouter API
  * 
- * Uses OpenRouter to access OpenAI text-embedding-3-small model.
+ * Direct OpenRouter API calls (no LangChain wrapper).
+ * LangChain's OpenAIEmbeddings doesn't work properly with OpenRouter's baseURL.
+ * 
  * Atomic operation: text → vector
  */
 
-import { OpenAIEmbeddings } from '@langchain/openai';
 import { EmbeddingError } from '../utils/errors';
 import { RAG_CONFIG } from '../config';
 
-// Initialize embeddings model (lazy-loaded singleton)
-let embeddingsInstance: OpenAIEmbeddings | null = null;
+interface OpenRouterEmbeddingResponse {
+  data: Array<{
+    embedding: number[];
+    index: number;
+  }>;
+  model: string;
+  usage: {
+    prompt_tokens: number;
+    total_tokens: number;
+  };
+}
 
-function getEmbeddings(): OpenAIEmbeddings {
-  if (!embeddingsInstance) {
-    embeddingsInstance = new OpenAIEmbeddings({
-      openAIApiKey: RAG_CONFIG.openrouter.apiKey,
-      modelName: RAG_CONFIG.embeddings.model,
-      dimensions: RAG_CONFIG.embeddings.dimensions,
-      configuration: {
-        baseURL: RAG_CONFIG.openrouter.baseURL,
-      },
-    });
+/**
+ * Call OpenRouter embeddings API directly
+ */
+async function callOpenRouterEmbeddings(input: string | string[]): Promise<number[][]> {
+  const response = await fetch(`${RAG_CONFIG.openrouter.baseURL}/embeddings`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${RAG_CONFIG.openrouter.apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': process.env.VERCEL_URL || 'http://localhost:3000',
+      'X-Title': 'DocsFlow RAG',
+    },
+    body: JSON.stringify({
+      model: RAG_CONFIG.embeddings.model,
+      input: input,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`OpenRouter API error (${response.status}): ${errorText}`);
   }
-  return embeddingsInstance;
+
+  const data: OpenRouterEmbeddingResponse = await response.json();
+  
+  // Extract embeddings in order
+  return data.data
+    .sort((a, b) => a.index - b.index)
+    .map(item => item.embedding);
 }
 
 /**
@@ -38,8 +65,8 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   }
   
   try {
-    const embeddings = getEmbeddings();
-    const result = await embeddings.embedQuery(text);
+    const results = await callOpenRouterEmbeddings(text);
+    const result = results[0];
     
     if (!result || result.length !== RAG_CONFIG.embeddings.dimensions) {
       throw new EmbeddingError(
@@ -77,8 +104,7 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
   }
   
   try {
-    const embeddings = getEmbeddings();
-    const results = await embeddings.embedDocuments(validTexts);
+    const results = await callOpenRouterEmbeddings(validTexts);
     
     if (!results || results.length !== validTexts.length) {
       throw new EmbeddingError(
