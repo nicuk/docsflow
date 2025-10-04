@@ -26,11 +26,13 @@ interface IngestionJob {
   processing_metadata?: any;
 }
 
-export async function processDocumentWithLangChain(
-  job: IngestionJob,
-  fileData: Blob,
-  supabase: ReturnType<typeof createClient>
-): Promise<void> {
+// Wrap the entire function with LangSmith tracing
+export const processDocumentWithLangChain = traceable(
+  async function processDocumentWithLangChain(
+    job: IngestionJob,
+    fileData: Blob,
+    supabase: ReturnType<typeof createClient>
+  ): Promise<void> {
   console.log(`🚀 [JOB ${job.id}] Starting LangChain document processing`);
   console.log(`📄 [JOB ${job.id}] File: ${job.filename}, Type: ${job.file_type}`);
   
