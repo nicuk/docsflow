@@ -5,7 +5,8 @@ import { generateText } from 'ai';
 import { getCORSHeaders } from '@/lib/utils';
 import { getTenantPrompt, calculateTenantConfidence } from '@/lib/tenant-prompts';
 import { ConfidenceScoring } from '@/lib/confidence-scoring';
-import { RAGPipelineFactory } from '@/lib/rag-pipeline-factory';
+// 🆕 NEW: Pinecone + LangChain RAG Module
+import { queryWorkflow } from '@/lib/rag';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
 import { CitationEnhancer } from '@/lib/citation-enhancer';
 import { CircuitBreakerFactory } from '@/lib/circuit-breaker';
@@ -178,22 +179,50 @@ export async function POST(request: NextRequest) {
       }, { headers: corsHeaders });
     }
 
-    // 🚀 UNIFIED: Use RAG Pipeline for everything
-    console.log('🔧 [CHAT API v4] FORCE DEPLOYMENT: Creating RAG pipeline for tenant:', tenantId);
-    console.log('🚀 [DEPLOYMENT CHECK] Chat API v4.0 - Enhanced debugging active');
-    const ragPipeline = RAGPipelineFactory.createPipeline(tenantId);
+    // 🆕 NEW: Use Pinecone + LangChain RAG Module
+    console.log('🚀 [CHAT API v9] PINECONE MIGRATION: Querying new RAG module');
+    console.log('🔧 [CHAT API v9] Tenant:', tenantId, 'Query:', message);
     
-    const ragResponse = await ragPipeline.processQuery(message, {
-      topK: 8,
-      confidenceThreshold: 0.3,  // 🔧 TEMPORARY: Lower threshold to find documents
-      includeProvenance: true,
-      temporalScope: 'all',
-      conversationId: conversationId // 🔧 FIX: Connect conversation context
+    const ragResult = await queryWorkflow({
+      query: message,
+      tenantId: tenantId,
+      userId: tenantValidation.userId,
+      topK: 5, // Simplified: 5 chunks is optimal
     });
     
-    console.log(`🤖 [RAG v8] Unified RAG: ${ragResponse.metadata?.strategy || 'standard'} strategy, confidence: ${ragResponse.confidence}`);
-    console.log(`🎯 [RAG v8] Success: ${ragResponse.success}, Abstained: ${ragResponse.abstained}, Reason: ${ragResponse.reason}`);
-    console.log(`📊 [RAG v8] Sources found: ${ragResponse.sources?.length || 0} chunks`);
+    console.log(`🤖 [RAG v9] New RAG: success: ${ragResult.success}, confidence: ${ragResult.confidence}%`);
+    console.log(`🎯 [RAG v9] Abstained: ${ragResult.abstained || false}, Reason: ${ragResult.reason || 'N/A'}`);
+    console.log(`📊 [RAG v9] Sources found: ${ragResult.sources?.length || 0} chunks`);
+    console.log(`⚡ [RAG v9] Duration: ${ragResult.metrics.duration}ms`);
+    
+    // Transform new result to match old structure (for compatibility)
+    const ragResponse = {
+      success: ragResult.success,
+      abstained: ragResult.abstained || false,
+      reason: ragResult.reason,
+      confidence: ragResult.confidence / 100, // Convert 0-100 to 0-1 scale
+      response: ragResult.answer,
+      sources: ragResult.sources?.map(source => ({
+        content: source.content,
+        source: source.filename,
+        document_id: source.documentId,
+        provenance: {
+          source: source.filename,
+          page: source.pageNumber,
+        },
+        metadata: {
+          filename: source.filename,
+          page: source.pageNumber,
+        },
+        hybridScore: source.score,
+        confidence: source.score,
+      })) || [],
+      metadata: {
+        strategy: 'pinecone_langchain',
+        model: ragResult.metrics.model,
+        duration: ragResult.metrics.duration,
+      },
+    };
     
     // 🎯 CATEGORY BOOST: Auto-detect query intent and boost matching categories
     if (ragResponse.sources && ragResponse.sources.length > 0) {
