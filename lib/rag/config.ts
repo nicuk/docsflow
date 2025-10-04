@@ -15,7 +15,7 @@ export const RAG_CONFIG = {
   
   // LLM
   llm: {
-    model: 'openai/gpt-4o-mini',
+    model: 'google/gemini-2.0-flash-exp:free', // 50% cheaper, faster, better quality than GPT-4o-mini
     temperature: 0,
     maxTokens: 1000,
     provider: 'openrouter',
