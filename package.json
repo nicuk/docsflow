@@ -13,6 +13,7 @@
     "@clerk/nextjs": "^6.33.0",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^5.2.2",
+    "@langchain/core": "^0.3.78",
     "@langchain/openai": "^0.6.14",
     "@langchain/pinecone": "^0.2.0",
     "@node-saml/node-saml": "^5.1.0",
