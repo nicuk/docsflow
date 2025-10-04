@@ -10,8 +10,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { Document } from 'langchain/document';
-import { OpenAIEmbeddings } from '@langchain/openai';
-import { PineconeStore } from '@langchain/pinecone';
 import { Pinecone } from '@pinecone-database/pinecone';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -129,17 +127,18 @@ export async function processDocumentWithLangChain(
       })
       .eq('id', job.document_id);
     
-    // STEP 3: Generate embeddings and upsert to Pinecone (single call!)
-    console.log(`🔗 [JOB ${job.id}] Ingesting to Pinecone with OpenAI embeddings`);
+    // STEP 3: Generate embeddings with our custom OpenRouter-compatible function
+    console.log(`🔗 [JOB ${job.id}] Generating embeddings via OpenRouter`);
     
-    const embeddings = new OpenAIEmbeddings({
-      openAIApiKey: process.env.OPENROUTER_API_KEY!,
-      configuration: {
-        baseURL: 'https://openrouter.ai/api/v1',
-      },
-      modelName: 'openai/text-embedding-3-small',
-      batchSize: 100,
-    });
+    // Use our custom embeddings (OpenRouter-compatible)
+    const { generateEmbeddings } = await import('@/lib/rag/core/embeddings');
+    const texts = enhancedChunks.map(chunk => chunk.pageContent);
+    const embeddingVectors = await generateEmbeddings(texts);
+    
+    console.log(`✅ [JOB ${job.id}] Generated ${embeddingVectors.length} embeddings`);
+    
+    // STEP 4: Upsert to Pinecone
+    console.log(`💾 [JOB ${job.id}] Upserting to Pinecone`);
     
     const pinecone = new Pinecone({
       apiKey: process.env.PINECONE_API_KEY!,
@@ -147,16 +146,24 @@ export async function processDocumentWithLangChain(
     
     const pineconeIndex = pinecone.Index(process.env.PINECONE_INDEX!);
     
-    // ✅ MAGIC: Single call replaces 200+ lines of custom code
-    await PineconeStore.fromDocuments(
-      enhancedChunks,
-      embeddings,
-      {
-        pineconeIndex,
-        namespace: job.tenant_id, // Multi-tenant isolation
-        textKey: 'text',
-      }
-    );
+    // Prepare vectors with metadata
+    const vectors = enhancedChunks.map((chunk, index) => ({
+      id: `${job.document_id}_chunk_${index}`,
+      values: embeddingVectors[index],
+      metadata: {
+        text: chunk.pageContent, // Content for retrieval
+        ...chunk.metadata,
+      },
+    }));
+    
+    // Upsert in batches
+    const batchSize = 100;
+    for (let i = 0; i < vectors.length; i += batchSize) {
+      const batch = vectors.slice(i, i + batchSize);
+      await pineconeIndex.namespace(job.tenant_id).upsert(batch);
+    }
+    
+    console.log(`✅ [JOB ${job.id}] Upserted ${vectors.length} vectors to Pinecone`);
     
     console.log(`✅ [JOB ${job.id}] Pinecone ingestion complete:`);
     console.log(`   - Chunks processed: ${chunks.length}`);
