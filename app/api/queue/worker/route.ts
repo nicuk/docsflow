@@ -395,8 +395,30 @@ async function processDocumentContent(
       parseMethod = 'advanced'; // Mark as advanced for tracking
     } catch (error) {
       console.error(`[JOB ${job.id}] Multimodal parsing failed, using fallback:`, error);
-      // Fallback to basic parsing
+      // Fallback to basic parsing with chunking
       const textContent = buffer.toString('utf-8').substring(0, 100000);
+      
+      // Chunk the text
+      const chunkSize = 800;
+      const overlap = 100;
+      const textChunks = [];
+      
+      for (let i = 0; i < textContent.length; i += chunkSize - overlap) {
+        const chunk = textContent.substring(i, i + chunkSize);
+        if (chunk.trim().length > 50) {
+          textChunks.push({
+            content: chunk.trim(),
+            type: 'text',
+            metadata: {
+              chunkIndex: textChunks.length,
+              filename: job.filename,
+            }
+          });
+        }
+      }
+      
+      console.log(`[JOB ${job.id}] Fallback parser created ${textChunks.length} chunks`);
+      
       parsedDocument = {
         text: textContent,
         metadata: {
@@ -404,12 +426,34 @@ async function processDocumentContent(
           mime_type: job.file_type,
           parse_method: 'basic'
         },
-        chunks: []
+        chunks: textChunks
       };
     }
   } else {
     console.log(`[JOB ${job.id}] Using basic parser`);
     const textContent = buffer.toString('utf-8').substring(0, 100000);
+    
+    // 🆕 NEW: Chunk the text for basic parser (multimodal parser does this automatically)
+    const chunkSize = 800; // ~800 chars per chunk (roughly 200 tokens)
+    const overlap = 100; // Small overlap to preserve context
+    const textChunks = [];
+    
+    for (let i = 0; i < textContent.length; i += chunkSize - overlap) {
+      const chunk = textContent.substring(i, i + chunkSize);
+      if (chunk.trim().length > 50) { // Only add substantial chunks
+        textChunks.push({
+          content: chunk.trim(),
+          type: 'text',
+          metadata: {
+            chunkIndex: textChunks.length,
+            filename: job.filename,
+          }
+        });
+      }
+    }
+    
+    console.log(`[JOB ${job.id}] Basic parser created ${textChunks.length} chunks`);
+    
     parsedDocument = {
       text: textContent,
       metadata: {
@@ -417,7 +461,7 @@ async function processDocumentContent(
         mime_type: job.file_type,
         parse_method: 'basic'
       },
-      chunks: []
+      chunks: textChunks
     };
   }
   
