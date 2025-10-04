@@ -22,13 +22,17 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { EmbeddingError } from '../utils/errors';
 import { RAG_CONFIG } from '../config';
 
-// Configure OpenAI provider with explicit AI Gateway URL
-// CRITICAL: Must set baseURL explicitly when using createOpenAI()
-// Otherwise it calls OpenAI directly even with AI_GATEWAY_API_KEY
+// Configure OpenAI provider - fallback to direct API for local testing
+// Production uses AI Gateway (when VERCEL_OIDC_TOKEN is available)
+// Local testing uses direct OpenAI API (when OPENAI_API_KEY is set)
+const useAIGateway = !!process.env.AI_GATEWAY_API_KEY && !!process.env.VERCEL_OIDC_TOKEN;
+
 const openaiProvider = createOpenAI({
-  apiKey: process.env.AI_GATEWAY_API_KEY || process.env.OPENAI_API_KEY,
-  baseURL: 'https://ai-gateway.vercel.sh/v1',
+  apiKey: useAIGateway ? process.env.AI_GATEWAY_API_KEY : process.env.OPENAI_API_KEY,
+  baseURL: useAIGateway ? 'https://ai-gateway.vercel.sh/v1' : undefined, // undefined = direct OpenAI
 });
+
+console.log(`[Embeddings] Using ${useAIGateway ? 'Vercel AI Gateway' : 'direct OpenAI API'}`);
 
 /**
  * Generate single embedding (for queries)

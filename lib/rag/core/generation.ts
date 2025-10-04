@@ -17,15 +17,34 @@ let llmInstance: ChatOpenAI | null = null;
 
 function getLLM(): ChatOpenAI {
   if (!llmInstance) {
-    llmInstance = new ChatOpenAI({
-      openAIApiKey: RAG_CONFIG.openrouter.apiKey,
-      modelName: RAG_CONFIG.llm.model,
-      temperature: RAG_CONFIG.llm.temperature,
-      maxTokens: RAG_CONFIG.llm.maxTokens,
-      configuration: {
-        baseURL: RAG_CONFIG.openrouter.baseURL,
-      },
-    });
+    // For local testing, prefer OpenAI (simpler, no special headers needed)
+    // For production, use OpenRouter (access to multiple models)
+    const hasOpenRouter = process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_API_KEY.startsWith('sk-or-');
+    const hasOpenAI = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.startsWith('sk-');
+    
+    if (hasOpenAI) {
+      // Prefer OpenAI for local testing (easier to configure)
+      console.log('[Generation] Using direct OpenAI API (local testing mode)');
+      llmInstance = new ChatOpenAI({
+        openAIApiKey: process.env.OPENAI_API_KEY,
+        modelName: 'gpt-4o-mini',
+        temperature: RAG_CONFIG.llm.temperature,
+        maxTokens: RAG_CONFIG.llm.maxTokens,
+      });
+    } else if (hasOpenRouter) {
+      console.log('[Generation] Using OpenRouter (production mode)');
+      llmInstance = new ChatOpenAI({
+        openAIApiKey: RAG_CONFIG.openrouter.apiKey,
+        modelName: RAG_CONFIG.llm.model,
+        temperature: RAG_CONFIG.llm.temperature,
+        maxTokens: RAG_CONFIG.llm.maxTokens,
+        configuration: {
+          baseURL: RAG_CONFIG.openrouter.baseURL,
+        },
+      });
+    } else {
+      throw new Error('No LLM API key found. Set either OPENAI_API_KEY (for local testing) or OPENROUTER_API_KEY (for production)');
+    }
   }
   return llmInstance;
 }

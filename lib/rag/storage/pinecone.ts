@@ -136,12 +136,26 @@ class PineconeStorage implements VectorStorage {
   }
 }
 
-// Export singleton instance
-export const storage = new PineconeStorage();
+// Lazy-loaded singleton instance (waits for env vars to be loaded)
+let storageInstance: PineconeStorage | null = null;
+
+function getStorage(): PineconeStorage {
+  if (!storageInstance) {
+    storageInstance = new PineconeStorage();
+  }
+  return storageInstance;
+}
+
+// Export singleton instance (lazy-loaded via Proxy)
+export const storage = new Proxy({} as PineconeStorage, {
+  get(target, prop) {
+    return (getStorage() as any)[prop];
+  }
+});
 
 // Export convenience functions
-export const queryVectors = (input: QueryInput) => storage.query(input);
-export const upsertVectors = (input: UpsertInput) => storage.upsert(input);
-export const deleteVectors = (input: DeleteInput) => storage.delete(input);
-export const checkHealth = () => storage.healthCheck();
+export const queryVectors = (input: QueryInput) => getStorage().query(input);
+export const upsertVectors = (input: UpsertInput) => getStorage().upsert(input);
+export const deleteVectors = (input: DeleteInput) => getStorage().delete(input);
+export const checkHealth = () => getStorage().healthCheck();
 
