@@ -146,15 +146,33 @@ export async function processDocumentWithLangChain(
     
     const pineconeIndex = pinecone.Index(process.env.PINECONE_INDEX!);
     
-    // Prepare vectors with metadata
-    const vectors = enhancedChunks.map((chunk, index) => ({
-      id: `${job.document_id}_chunk_${index}`,
-      values: embeddingVectors[index],
-      metadata: {
-        text: chunk.pageContent, // Content for retrieval
-        ...chunk.metadata,
-      },
-    }));
+    // Prepare vectors with metadata (Pinecone only accepts simple values)
+    const vectors = enhancedChunks.map((chunk, index) => {
+      // Filter out complex objects from LangChain metadata
+      const cleanMetadata: Record<string, string | number | boolean | string[]> = {};
+      
+      for (const [key, value] of Object.entries(chunk.metadata)) {
+        // Only include simple values (string, number, boolean, string[])
+        if (
+          typeof value === 'string' ||
+          typeof value === 'number' ||
+          typeof value === 'boolean' ||
+          (Array.isArray(value) && value.every(v => typeof v === 'string'))
+        ) {
+          cleanMetadata[key] = value;
+        }
+        // Skip complex objects like 'loc' which contains line number objects
+      }
+      
+      return {
+        id: `${job.document_id}_chunk_${index}`,
+        values: embeddingVectors[index],
+        metadata: {
+          text: chunk.pageContent, // Content for retrieval
+          ...cleanMetadata, // Only simple metadata values
+        },
+      };
+    });
     
     // Upsert in batches
     const batchSize = 100;
