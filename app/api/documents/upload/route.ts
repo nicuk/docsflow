@@ -86,6 +86,13 @@ export async function POST(request: NextRequest) {
     
     const documentId = (document as any).id;
     
+    if (!documentId) {
+      console.error('[Documents Upload] Document record missing ID:', document);
+      throw new Error('Document record created but ID is missing');
+    }
+    
+    console.log(`[Documents Upload] Document record created: ${documentId}`);
+    
     // 3. Create ingestion job for background processing
     const { data: job, error: jobError } = await supabase
       .from('ingestion_jobs')
