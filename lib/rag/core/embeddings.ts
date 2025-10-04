@@ -22,10 +22,12 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { EmbeddingError } from '../utils/errors';
 import { RAG_CONFIG } from '../config';
 
-// Configure OpenAI provider with AI Gateway key
-// createOpenAI() allows custom API key configuration
+// Configure OpenAI provider with explicit AI Gateway URL
+// CRITICAL: Must set baseURL explicitly when using createOpenAI()
+// Otherwise it calls OpenAI directly even with AI_GATEWAY_API_KEY
 const openaiProvider = createOpenAI({
-  apiKey: process.env.AI_GATEWAY_API_KEY,
+  apiKey: process.env.AI_GATEWAY_API_KEY || process.env.OPENAI_API_KEY,
+  baseURL: 'https://ai-gateway.vercel.sh/v1',
 });
 
 /**
