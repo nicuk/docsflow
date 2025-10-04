@@ -18,12 +18,13 @@
  */
 
 import { embed, embedMany } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import { createOpenAI } from '@ai-sdk/openai';
 import { EmbeddingError } from '../utils/errors';
 import { RAG_CONFIG } from '../config';
 
 // Configure OpenAI provider with AI Gateway key
-const openaiProvider = openai({
+// createOpenAI() allows custom API key configuration
+const openaiProvider = createOpenAI({
   apiKey: process.env.AI_GATEWAY_API_KEY,
 });
 
