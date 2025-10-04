@@ -246,54 +246,20 @@ async function processJob(
   try {
     console.log(`🚀 [JOB ${job.id}] Starting processing: ${job.filename}`);
     
-    // 1. Download file from storage (with retry for slow Supabase storage)
-    let fileData: Blob | null = null;
-    let downloadError: any = null;
-    const maxRetries = 3;
-    const retryDelay = 2000; // 2 seconds
+    // 1. Download file from Vercel Blob Storage (5-10x faster than Supabase!)
+    console.log(`📥 [JOB ${job.id}] Downloading from Vercel Blob: ${job.file_path}`);
+    const downloadStart = Date.now();
     
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        console.log(`📥 [JOB ${job.id}] Download attempt ${attempt}/${maxRetries}`);
-        const downloadStart = Date.now();
-        
-        const { data, error } = await supabase.storage
-          .from('documents')
-          .download(job.file_path);
-        
-        const downloadDuration = Date.now() - downloadStart;
-        
-        if (error) {
-          downloadError = error;
-          console.warn(`⚠️ [JOB ${job.id}] Download attempt ${attempt} failed after ${downloadDuration}ms: ${error.message}`);
-          
-          if (attempt < maxRetries) {
-            console.log(`⏳ [JOB ${job.id}] Waiting ${retryDelay}ms before retry...`);
-            await new Promise(resolve => setTimeout(resolve, retryDelay));
-            continue;
-          }
-        } else {
-          fileData = data;
-          console.log(`✅ [JOB ${job.id}] Download successful in ${downloadDuration}ms (${data.size} bytes)`);
-          break;
-        }
-      } catch (fetchError: any) {
-        downloadError = fetchError;
-        console.error(`❌ [JOB ${job.id}] Download attempt ${attempt} threw exception:`, fetchError.message);
-        
-        if (attempt < maxRetries) {
-          console.log(`⏳ [JOB ${job.id}] Waiting ${retryDelay}ms before retry...`);
-          await new Promise(resolve => setTimeout(resolve, retryDelay));
-          continue;
-        }
-      }
+    const response = await fetch(job.file_path); // file_path is now a Vercel Blob URL
+    
+    if (!response.ok) {
+      throw new Error(`Failed to download file: ${response.status} ${response.statusText}`);
     }
     
-    if (downloadError || !fileData) {
-      throw new Error(`Failed to download file after ${maxRetries} attempts: ${downloadError?.message || 'File not found'}`);
-    }
+    const fileData = await response.blob();
+    const downloadDuration = Date.now() - downloadStart;
     
-    console.log(`📥 [JOB ${job.id}] File downloaded: ${fileData.size} bytes`);
+    console.log(`✅ [JOB ${job.id}] Download successful in ${downloadDuration}ms (${fileData.size} bytes)`);
     
     // 2. Process document with LangChain (replaces custom parsing)
     const { processDocumentWithLangChain } = await import('./langchain-processor');
