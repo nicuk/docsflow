@@ -48,14 +48,22 @@ export function validateConfig() {
     'PINECONE_API_KEY',
     'PINECONE_INDEX',
     'OPENROUTER_API_KEY', // For LLM completions only
-    'OPENAI_API_KEY', // For Vercel AI Gateway embeddings
   ];
+  
+  // Either AI Gateway key OR OpenAI key is required for embeddings
+  const hasEmbeddingAuth = process.env.AI_GATEWAY_API_KEY || process.env.OPENAI_API_KEY;
   
   const missing = required.filter(key => !process.env[key]);
   
   if (missing.length > 0) {
     throw new Error(
       `Missing required environment variables: ${missing.join(', ')}`
+    );
+  }
+  
+  if (!hasEmbeddingAuth) {
+    throw new Error(
+      'Missing embedding authentication: Either AI_GATEWAY_API_KEY or OPENAI_API_KEY is required'
     );
   }
 }

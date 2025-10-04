@@ -1,13 +1,14 @@
 /**
  * Embeddings Generation - Vercel AI Gateway
  * 
- * Uses Vercel AI Gateway for embeddings (automatic routing, observability).
+ * Uses Vercel AI Gateway API key for unified access to embeddings.
  * OpenRouter is used only for LLM completions (doesn't support /embeddings).
  * 
  * Benefits:
  * - Built-in observability in Vercel dashboard
  * - Automatic failover across providers
  * - Unified cost tracking
+ * - No need for separate OpenAI key
  * 
  * Atomic operation: text → vector
  */
@@ -16,6 +17,12 @@ import { embed, embedMany } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { EmbeddingError } from '../utils/errors';
 import { RAG_CONFIG } from '../config';
+
+// Configure to use AI Gateway
+const embeddingModel = openai.embedding(RAG_CONFIG.embeddings.model, {
+  apiKey: process.env.AI_GATEWAY_API_KEY || process.env.OPENAI_API_KEY,
+  baseURL: process.env.AI_GATEWAY_API_KEY ? 'https://ai-gateway.vercel.sh/v1' : undefined,
+});
 
 /**
  * Generate single embedding (for queries)
@@ -32,7 +39,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   
   try {
     const { embedding } = await embed({
-      model: openai.embedding(RAG_CONFIG.embeddings.model),
+      model: embeddingModel,
       value: text,
     });
     
@@ -74,7 +81,7 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
   
   try {
     const { embeddings } = await embedMany({
-      model: openai.embedding(RAG_CONFIG.embeddings.model),
+      model: embeddingModel,
       values: validTexts,
     });
     
