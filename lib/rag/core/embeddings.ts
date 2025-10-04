@@ -22,10 +22,16 @@ import { openai } from '@ai-sdk/openai';
 import { EmbeddingError } from '../utils/errors';
 import { RAG_CONFIG } from '../config';
 
+// Configure OpenAI provider with AI Gateway key
+const openaiProvider = openai({
+  apiKey: process.env.AI_GATEWAY_API_KEY,
+});
+
 /**
  * Generate single embedding (for queries)
  * 
- * AI SDK automatically routes through Vercel AI Gateway when AI_GATEWAY_API_KEY is set.
+ * Uses AI_GATEWAY_API_KEY to authenticate with Vercel AI Gateway.
+ * Gateway automatically routes to the best available provider.
  * 
  * @param text - Text to embed
  * @returns 1536-dimensional vector
@@ -37,7 +43,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   
   try {
     const { embedding } = await embed({
-      model: openai.embedding(RAG_CONFIG.embeddings.model),
+      model: openaiProvider.embedding(RAG_CONFIG.embeddings.model),
       value: text,
     });
     
@@ -79,7 +85,7 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
   
   try {
     const { embeddings } = await embedMany({
-      model: openai.embedding(RAG_CONFIG.embeddings.model),
+      model: openaiProvider.embedding(RAG_CONFIG.embeddings.model),
       values: validTexts,
     });
     
