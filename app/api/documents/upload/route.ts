@@ -32,13 +32,13 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
+
     console.log(`[Documents Upload] Queuing file for background processing: ${file.name}`);
-    
+
     // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    
+
     // Create Supabase client
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -100,12 +100,12 @@ export async function POST(request: NextRequest) {
         attempts: 0,
         max_attempts: 3,
         processing_metadata: {
-          created_at: new Date().toISOString()
+        created_at: new Date().toISOString()
         }
       })
       .select()
       .single();
-    
+
     if (jobError) {
       // Clean up if job creation fails
       await supabase.storage.from('documents').remove([filePath]);

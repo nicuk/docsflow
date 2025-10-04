@@ -244,10 +244,10 @@ Watch for these patterns in logs:
 Updated UI text to set expectations:
 
 **Before:**
-- "Maximum 5 files, 50MB per file (3 concurrent uploads)"
+- "Maximum 5 files, 1MB per file (3 concurrent uploads)"
 
 **After:**  
-- "Maximum 5 files, 50MB per file (sequential processing)"
+- "Maximum 5 files, 1MB per file (sequential processing)"
 
 This clearly communicates that files process one at a time.
 

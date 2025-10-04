@@ -66,7 +66,7 @@ PREMIUM: [  // Available as +$199/month add-on
 ```
 
 **Impact:**
-- Can process files up to 50MB (was 10MB)
+- Can process files up to 1MB (was 10MB)
 - Handle 100+ chunks per document (was 30)
 - No timeout errors
 
@@ -109,7 +109,7 @@ export const DEFAULT_WORKER_CONFIG: WorkerConfig = {
 | Tier | Price/mo | Docs Total | Docs/mo | Concurrent | File Size | Queries/mo |
 |------|----------|------------|---------|------------|-----------|------------|
 | **Starter** | $149 | 500 | 500 | **5** | 10MB | 10K |
-| **Professional** | $599 | 5,000 | 1,500 | **10** | 50MB | 40K |
+| **Professional** | $599 | 5,000 | 1,500 | **10** | 1MB | 40K |
 | **Enterprise** | $2,199 | 25,000 | 8,000 | **30** | 100MB | 150K |
 | **Custom** | Custom | Unlimited | Unlimited | **50** | 500MB | Unlimited |
 
@@ -217,7 +217,7 @@ if (!uploadCheck.allowed) {
   
 - [ ] Test with Professional tier account
   - [ ] Upload 10 files simultaneously (should work)
-  - [ ] Upload file up to 50MB (should work)
+  - [ ] Upload file up to 1MB (should work)
   - [ ] Verify 60s timeout handles large files
   
 - [ ] Test worker performance

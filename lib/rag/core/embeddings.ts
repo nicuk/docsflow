@@ -1,8 +1,9 @@
 /**
- * Embeddings Generation - Pure OpenRouter API
+ * Embeddings Generation - Direct OpenAI API
  * 
- * Direct OpenRouter API calls (no LangChain wrapper).
- * LangChain's OpenAIEmbeddings doesn't work properly with OpenRouter's baseURL.
+ * NOTE: OpenRouter doesn't support embeddings endpoint!
+ * We use OpenAI directly for embeddings (cheap: $0.00002 per 1K tokens).
+ * OpenRouter is only used for LLM completions (expensive models).
  * 
  * Atomic operation: text → vector
  */
@@ -23,26 +24,35 @@ interface OpenRouterEmbeddingResponse {
 }
 
 /**
- * Call OpenRouter embeddings API directly
+ * Call OpenAI embeddings API directly
+ * 
+ * OpenRouter doesn't support /embeddings endpoint, only /chat/completions.
+ * So we call OpenAI directly for embeddings (they're cheap anyway).
  */
-async function callOpenRouterEmbeddings(input: string | string[]): Promise<number[][]> {
-  const response = await fetch(`${RAG_CONFIG.openrouter.baseURL}/embeddings`, {
+async function callOpenAIEmbeddings(input: string | string[]): Promise<number[][]> {
+  // Use OpenAI directly (not OpenRouter) for embeddings
+  const openaiApiKey = process.env.OPENAI_API_KEY || RAG_CONFIG.openrouter.apiKey;
+  
+  const response = await fetch('https://api.openai.com/v1/embeddings', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${RAG_CONFIG.openrouter.apiKey}`,
+      'Authorization': `Bearer ${openaiApiKey}`,
       'Content-Type': 'application/json',
-      'HTTP-Referer': process.env.VERCEL_URL || 'http://localhost:3000',
-      'X-Title': 'DocsFlow RAG',
     },
     body: JSON.stringify({
-      model: RAG_CONFIG.embeddings.model,
+      model: 'text-embedding-3-small', // OpenAI model name (no "openai/" prefix)
       input: input,
     }),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`OpenRouter API error (${response.status}): ${errorText}`);
+    console.error('[Embeddings] OpenAI API error:', {
+      status: response.status,
+      statusText: response.statusText,
+      body: errorText.substring(0, 500),
+    });
+    throw new Error(`OpenAI API error (${response.status}): ${errorText.substring(0, 200)}`);
   }
 
   const data: OpenRouterEmbeddingResponse = await response.json();
@@ -65,7 +75,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   }
   
   try {
-    const results = await callOpenRouterEmbeddings(text);
+    const results = await callOpenAIEmbeddings(text);
     const result = results[0];
     
     if (!result || result.length !== RAG_CONFIG.embeddings.dimensions) {
@@ -104,7 +114,7 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
   }
   
   try {
-    const results = await callOpenRouterEmbeddings(validTexts);
+    const results = await callOpenAIEmbeddings(validTexts);
     
     if (!results || results.length !== validTexts.length) {
       throw new EmbeddingError(

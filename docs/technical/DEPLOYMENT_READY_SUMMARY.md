@@ -51,7 +51,7 @@
 ```
 
 **Impact:**
-- ✅ Process files up to 50MB (was 10MB)
+- ✅ Process files up to 1MB (was 10MB)
 - ✅ No timeout errors
 - ✅ Cron costs $0 (only 8,640 invocations/month = 0.8% of limit)
 
@@ -88,7 +88,7 @@ export const DEFAULT_WORKER_CONFIG = {
 | Tier | Concurrent Uploads | Max File Size | Docs/Month |
 |------|-------------------|---------------|------------|
 | **Starter ($149)** | **5** | 10MB | 500 |
-| **Professional ($599)** | **10** | 50MB | 1,500 |
+| **Professional ($599)** | **10** | 1MB | 1,500 |
 | **Enterprise ($2,199)** | **30** | 100MB | 8,000 |
 
 **Impact:**

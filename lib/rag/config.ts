@@ -6,11 +6,11 @@
  */
 
 export const RAG_CONFIG = {
-  // Embeddings
+  // Embeddings (Direct OpenAI API)
   embeddings: {
-    model: 'openai/text-embedding-3-small',
+    model: 'text-embedding-3-small', // OpenAI model name
     dimensions: 1536,
-    provider: 'openrouter', // Using OpenRouter to access OpenAI
+    provider: 'openai', // Direct OpenAI API (OpenRouter doesn't support /embeddings)
   },
   
   // LLM
@@ -47,7 +47,8 @@ export function validateConfig() {
   const required = [
     'PINECONE_API_KEY',
     'PINECONE_INDEX',
-    'OPENROUTER_API_KEY',
+    'OPENROUTER_API_KEY', // For LLM completions
+    'OPENAI_API_KEY', // For embeddings (OpenRouter doesn't support /embeddings)
   ];
   
   const missing = required.filter(key => !process.env[key]);

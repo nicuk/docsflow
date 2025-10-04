@@ -399,7 +399,7 @@ export default function DocumentSidebar({
         // All files failed
         toast({
           title: "Upload failed ❌",
-          description: `Failed to upload ${failedFiles.length} file${failedFiles.length > 1 ? 's' : ''}. Please check file format and size (max 50MB).`,
+          description: `Failed to upload ${failedFiles.length} file${failedFiles.length > 1 ? 's' : ''}. Please check file format and size (max 1MB).`,
           variant: "destructive",
         });
       }

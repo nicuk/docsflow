@@ -28,7 +28,7 @@ export default function UploadZone({ onFilesUploaded, disabled = false }: Upload
       "image/png": [".png"],
     },
     maxFiles: 5, // 🚀 FIX: Reduced from 10 to 5 for better concurrent upload handling
-    maxSize: 50 * 1024 * 1024, // 50MB max for any file
+    maxSize: 1 * 1024 * 1024, // 1MB max for any file
     disabled,
   })
 
@@ -55,11 +55,11 @@ export default function UploadZone({ onFilesUploaded, disabled = false }: Upload
           or click to browse your files. We support PDF, DOC, DOCX, XLS, XLSX, CSV, JPG, PNG and more. <strong>Max 5 files at once.</strong>
         </p>
         <div className="flex flex-wrap justify-center gap-2 mb-4">
-          <Badge variant="outline">PDF (50MB)</Badge>
-          <Badge variant="outline">DOC/DOCX (50MB)</Badge>
-          <Badge variant="outline">TXT/RTF (50MB)</Badge>
-          <Badge variant="outline">XLS/XLSX/CSV (50MB)</Badge>
-          <Badge variant="outline">JPG/PNG (50MB)</Badge>
+          <Badge variant="outline">PDF (1MB)</Badge>
+          <Badge variant="outline">DOC/DOCX (1MB)</Badge>
+          <Badge variant="outline">TXT/RTF (1MB)</Badge>
+          <Badge variant="outline">XLS/XLSX/CSV (1MB)</Badge>
+          <Badge variant="outline">JPG/PNG (1MB)</Badge>
         </div>
         <Button variant="outline" className="gap-2 bg-transparent" disabled={disabled}>
           <Upload className="h-4 w-4" /> Select files

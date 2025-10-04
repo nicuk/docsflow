@@ -222,10 +222,10 @@ Complex Query with Claude (anthropic/claude-3.5-sonnet @ $3/1M):
 
 ### **2. Customer Uploads Massive Documents**
 
-**Scenario:** Customer uploads 1,500 × 50MB PDFs (max file size for tier)
+**Scenario:** Customer uploads 1,500 × 1MB PDFs (max file size for tier)
 
 **Impact:**
-- Storage: 1,500 × 50MB = 75GB
+- Storage: 1,500 × 1MB = 1.5GB
 - Supabase free tier: 500MB database + 1GB storage
 - **WILL EXCEED FREE TIER** 🚨
 

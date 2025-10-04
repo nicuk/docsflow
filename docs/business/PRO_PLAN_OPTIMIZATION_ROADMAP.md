@@ -74,7 +74,7 @@ User experience: 30 seconds (consistent, fast)
 ```
 
 **Benefits:**
-- ✅ Process documents up to **50MB** (vs 10MB limit)
+- ✅ Process documents up to **1MB** (vs 10MB limit)
 - ✅ Handle **100+ chunks** per document (vs 30)
 - ✅ No timeout errors during AI chunking
 - ✅ Complex PDFs with images/tables work reliably
@@ -269,7 +269,7 @@ export const TIER_THRESHOLDS = {
   TIER_1_MAX: 10_000,      // 10KB - basic chunking (unchanged)
   TIER_2_MAX: 500_000,     // 500KB - fast AI (5x increase)
   TIER_3_MAX: 5_000_000,   // 5MB - heavy AI (5x increase)
-  TIER_4_MAX: 50_000_000,  // 50MB - streaming (5x increase)
+  TIER_4_MAX: 1_000_000,  // 1MB - streaming (5x increase)
 };
 
 export const AI_CHUNKING_TIMEOUT = {
@@ -282,7 +282,7 @@ export const AI_CHUNKING_TIMEOUT = {
 **Benefits:**
 - ✅ **5x larger files** get full AI processing
 - ✅ Better chunk quality for medium files
-- ✅ Enterprise-ready (50MB PDF support)
+- ✅ Enterprise-ready (1MB PDF support)
 - ✅ Higher accuracy RAG results
 
 **Impact:** +2 points (quality + capacity)
@@ -728,7 +728,7 @@ VERCEL_ANALYTICS_ID=xxx  # Analytics tracking
 ### **After Deployment:**
 - [ ] Upload test document (should process in 30s)
 - [ ] Upload 5 documents simultaneously (all should process)
-- [ ] Upload 50MB PDF (should not timeout)
+- [ ] Upload 1MB PDF (should not timeout)
 - [ ] Check job stats dashboard
 - [ ] Verify cron is running every 5 minutes
 - [ ] Check Vercel function logs for errors
@@ -783,7 +783,7 @@ VERCEL_ANALYTICS_ID=xxx  # Analytics tracking
 - Upload: 2 seconds ✅
 - Processing: 30 seconds ✅
 - Reliability: 98% ✅
-- File size limit: 50MB ✅
+- File size limit: 1MB ✅
 - **System Score: 10/10** 🚀
 
 **ROI: $20/month for a production-ready, enterprise-grade system.**

@@ -58,7 +58,7 @@
 - 5,000 documents (total), 1,500/month (new)
 - 40K queries/month
 - **10 concurrent uploads** 🎯
-- 50MB max file size
+- 1MB max file size
 - 5 subdomains
 - Unlimited team members
 - Priority support (24h response)

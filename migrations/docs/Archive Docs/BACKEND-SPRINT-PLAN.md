@@ -41,7 +41,7 @@
 - [ ] **Document Upload API** (3 hours)
   - `POST /api/documents/upload` - File upload
   - File validation (PDF, DOC, TXT)
-  - Size limits (50MB max)
+  - Size limits (1MB max)
   - Progress tracking
   - Error handling
 
@@ -252,7 +252,7 @@ describe('Document Upload API', () => {
   test('POST /api/documents/upload - file too large', async () => {
     const response = await request(app)
       .post('/api/documents/upload')
-      .attach('file', 'large-file.pdf') // > 50MB
+      .attach('file', 'large-file.pdf') // > 1MB
       .expect(413);
   });
 });

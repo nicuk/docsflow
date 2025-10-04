@@ -27,8 +27,8 @@ export class RAGEvaluator {
     {
       id: 'fact-1',
       query: 'What is the maximum file upload size?',
-      expectedAnswer: '50MB per file',
-      requiredFacts: ['50MB', 'file size limit', 'upload'],
+      expectedAnswer: '1MB per file',
+      requiredFacts: ['1MB', 'file size limit', 'upload'],
       category: 'factual',
       difficulty: 'easy'
     },

@@ -113,7 +113,7 @@ UPLOAD ZONE:
 - Clear visual feedback on drag hover (border color change)
 - Support message: "Drag & drop your business documents here"
 - File type icons: PDF, DOC, XLS, CSV, JPG, PNG
-- Size limit indicator: "Up to 50MB per file"
+- Size limit indicator: "Up to 1MB per file"
 
 UPLOAD FEATURES:
 - Browse files button as alternative to drag-drop

@@ -221,7 +221,7 @@ Every 1 minute:
 ### Upload Limits
 
 - **Max files per batch:** 5
-- **Max file size:** 50MB
+- **Max file size:** 1MB
 - **Concurrent uploads:** 4
 - **Allowed types:** PDF, TXT, CSV, DOC, DOCX
 

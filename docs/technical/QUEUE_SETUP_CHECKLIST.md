@@ -40,7 +40,7 @@ WHERE proname IN ('get_pending_jobs', 'reset_stale_jobs', 'get_job_stats');
    - **Bucket type:** Standard bucket (S3 compatible) ✅
    - **Public bucket:** ❌ UNCHECKED (keep private)
    - **Restrict file size:** ✅ CHECKED
-     - Max size: 52428800 bytes (50MB)
+     - Max size: 1048576 bytes (1MB)
    - **Restrict MIME types:** ✅ CHECKED (optional but recommended)
      - Add: `application/pdf`, `text/plain`, `text/csv`, `application/msword`, `application/vnd.openxmlformats-officedocument.wordprocessingml.document`
 4. Click "Create bucket"

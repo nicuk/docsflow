@@ -352,7 +352,7 @@ This CSV contains product inventory data for testing.`;
       await route.fulfill({
         status: 413,
         contentType: 'application/json',
-        body: JSON.stringify({ error: 'File too large. Maximum size is 50MB' })
+        body: JSON.stringify({ error: 'File too large. Maximum size is 1MB' })
       });
     });
     
@@ -375,7 +375,7 @@ This CSV contains product inventory data for testing.`;
     const sizeErrorIndicators = [
       page.locator('text=too large'),
       page.locator('text=file size'),
-      page.locator('text=50MB'),
+      page.locator('text=1MB'),
       page.locator('text=limit')
     ];
     

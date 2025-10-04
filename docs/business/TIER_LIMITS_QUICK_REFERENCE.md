@@ -11,7 +11,7 @@
 | **Documents (Total)** | 500 | 5,000 | 25,000 | Unlimited |
 | **Documents (Monthly)** | 500 | 1,500 | 8,000 | Unlimited |
 | **Concurrent Uploads** | **5** | **10** | **30** | **50** |
-| **Max File Size** | 10MB | 50MB | 100MB | 500MB |
+| **Max File Size** | 10MB | 1MB | 100MB | 500MB |
 | **Queries/Month** | 10K | 40K | 150K | Unlimited |
 | **Team Members** | 5 | Unlimited | Unlimited | Unlimited |
 | **Subdomains** | 1 | 5 | Unlimited | Unlimited |
@@ -126,7 +126,7 @@ This is the most visible user-facing difference between tiers.
 | **Limit Enforcement** | ✅ Complete | API routes check limits |
 | **Database Schema** | ✅ Complete | Uses existing `tenants.plan_type` |
 | **Concurrent Upload Limits** | ✅ Complete | 5/10/30 enforced |
-| **File Size Limits** | ✅ Complete | 10MB/50MB/100MB enforced |
+| **File Size Limits** | ✅ Complete | 10MB/1MB/100MB enforced |
 | **Frontend UI** | ⚠️ Pending | Need to show limits in UI |
 | **Usage Dashboard** | ⚠️ Pending | Show progress bars |
 | **Upgrade Flow** | ⚠️ Pending | Stripe integration |

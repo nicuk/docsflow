@@ -64,7 +64,7 @@ toast({
 ```typescript
 toast({
   title: "Upload failed ❌", 
-  description: "Failed to upload 2 files. Please check file format and size (max 50MB).",
+  description: "Failed to upload 2 files. Please check file format and size (max 1MB).",
   variant: "destructive", // Red error styling
 });
 ```
@@ -89,7 +89,7 @@ toast({
 
 ### Test Failed Upload
 1. Try uploading unsupported file formats
-2. Try uploading files >50MB
+2. Try uploading files >1MB
 3. Disconnect internet and try uploading
 4. Observe error toast messages
 

@@ -17,7 +17,7 @@ export type DocumentType = "pdf" | "doc" | "docx" | "txt" | "rtf" | "xls" | "xls
 export const fileTypeConfig = {
   documents: {
     types: ["pdf", "doc", "docx", "txt", "rtf"],
-    maxSize: 50 * 1024 * 1024, // 50MB
+    maxSize: 1 * 1024 * 1024, // 1MB
     icon: (className?: string) => <FileText className={className} />,
   },
   spreadsheets: {

@@ -120,7 +120,7 @@ Churn risk: HIGH
 ```
 User: "What is the maximum file size I can upload?"
 AI (qwen): "According to your plan (Professional), you can upload 
-          files up to 50MB. Need larger? Upgrade to Enterprise (100MB)."
+          files up to 1MB. Need larger? Upgrade to Enterprise (100MB)."
           
 User perception: "Wow, instant and accurate!" ✅
 Churn risk: LOW

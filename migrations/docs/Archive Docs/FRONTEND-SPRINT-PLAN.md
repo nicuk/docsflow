@@ -215,7 +215,7 @@ Create a sophisticated document upload interface for business users.
 REQUIREMENTS:
 - Large drag-and-drop zone with clear visual feedback
 - Support for multiple file types (PDF, DOC, XLS, TXT)
-- File size limit indicator (50MB max)
+- File size limit indicator (1MB max)
 - Progress bars for each uploading file
 - Batch upload support with file previews
 - Error handling for invalid files
