@@ -64,7 +64,8 @@ export async function retrieveChunks(input: {
     // Transform to our interface
     const chunks: RetrievedChunk[] = results.map(result => ({
       id: result.id,
-      content: result.metadata.content || '',
+      // Pinecone stores text in metadata.text (not metadata.content)
+      content: result.metadata.text || result.metadata.content || '',
       score: result.score,
       metadata: {
         documentId: result.metadata.documentId,
@@ -72,6 +73,7 @@ export async function retrieveChunks(input: {
         chunkIndex: result.metadata.chunkIndex || 0,
         pageNumber: result.metadata.pageNumber,
         tenantId: result.metadata.tenantId,
+        text: result.metadata.text, // Keep for reference
         ...result.metadata,
       },
     }));
