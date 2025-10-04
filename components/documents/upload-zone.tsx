@@ -24,8 +24,9 @@ export default function UploadZone({ onFilesUploaded, disabled = false }: Upload
       "application/vnd.ms-excel": [".xls"],
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
       "text/csv": [".csv"],
-      "image/jpeg": [".jpg", ".jpeg"],
-      "image/png": [".png"],
+      // 🚨 IMAGES TEMPORARILY DISABLED - OCR support coming soon
+      // "image/jpeg": [".jpg", ".jpeg"],
+      // "image/png": [".png"],
     },
     maxFiles: 5, // 🚀 FIX: Reduced from 10 to 5 for better concurrent upload handling
     maxSize: 1 * 1024 * 1024, // 1MB max for any file

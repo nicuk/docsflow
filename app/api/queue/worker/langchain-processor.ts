@@ -62,6 +62,11 @@ export async function processDocumentWithLangChain(
         const { DocxLoader } = await import('langchain/document_loaders/fs/docx');
         const loader = new DocxLoader(tempFilePath);
         docs = await loader.load();
+      } else if (mimeType.includes('image/')) {
+        // 🚨 IMAGES NOT SUPPORTED YET
+        // TODO: Add OCR support (Tesseract.js or similar)
+        console.error(`❌ [JOB ${job.id}] Images not supported yet: ${job.filename}`);
+        throw new Error(`Image processing not implemented yet. Please upload PDF, DOCX, or text files. Image OCR support coming soon.`);
       } else {
         console.log(`📝 [JOB ${job.id}] Using text extraction`);
         const textContent = buffer.toString('utf-8');

@@ -44,8 +44,30 @@ export default function PersonaEditor({ currentPersona, tenantId, onPersonaUpdat
   useEffect(() => {
     if (currentPersona) {
       setPersona(currentPersona);
+    } else {
+      // Fetch current persona from API if not provided
+      fetchCurrentPersona();
     }
   }, [currentPersona]);
+
+  const fetchCurrentPersona = async () => {
+    try {
+      const response = await fetch('/api/tenant/persona', {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.persona) {
+          setPersona(data.persona);
+          console.log('✅ Loaded current persona from API:', data.persona.role);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch current persona:', error);
+    }
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -135,6 +157,12 @@ export default function PersonaEditor({ currentPersona, tenantId, onPersonaUpdat
           setPersona({ ...result.persona, created_from: 'regenerated' });
           setSaveStatus('success');
           console.log('✅ Persona regenerated successfully');
+          
+          // Log quality score if available
+          if (result.quality) {
+            console.log(`📊 Quality Score: ${result.quality.score}/10`);
+            console.log(`💡 Suggestions:`, result.quality.suggestions);
+          }
         }
       } else {
         throw new Error('Failed to regenerate persona');
@@ -299,7 +327,7 @@ export default function PersonaEditor({ currentPersona, tenantId, onPersonaUpdat
           <Label htmlFor="prompt">Custom Prompt Template</Label>
           <Textarea
             id="prompt"
-            value={persona.prompt_template}
+            value={typeof persona.prompt_template === 'string' ? persona.prompt_template : JSON.stringify(persona.prompt_template, null, 2)}
             onChange={(e) => setPersona({ ...persona, prompt_template: e.target.value })}
             placeholder="You are an AI assistant that..."
             rows={4}

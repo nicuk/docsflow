@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCORSHeaders } from '@/lib/utils';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
 import { aiProvider } from '@/lib/ai/providers';
+import { scorePersona, improvePersona } from '@/lib/persona-scoring';
+import { generatePersonaPrompts } from '@/lib/persona-prompt-generator';
 
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
@@ -51,17 +53,55 @@ export async function POST(request: NextRequest) {
       throw new Error('Invalid persona format generated');
     }
 
+    // 🎯 OPTIMIZATION: Score the generated persona
+    const businessOverview = currentPersona?.business_context || generatedPersona.business_context || '';
+    const industry = currentPersona?.industry || generatedPersona.industry || 'general';
+    
+    const score = scorePersona(generatedPersona, businessOverview, industry);
+    console.log(`📊 Generated persona quality score: ${score.overall}/10`);
+    console.log(`💡 Suggestions:`, score.suggestions);
+    
+    // 🎯 OPTIMIZATION: If score is below 7, improve it
+    let finalPersona = generatedPersona;
+    if (score.overall < 7) {
+      console.log('🔧 Optimizing persona (score below 7)...');
+      finalPersona = improvePersona(generatedPersona, score, businessOverview, industry);
+      
+      // Re-score after improvement
+      const improvedScore = scorePersona(finalPersona, businessOverview, industry);
+      console.log(`✅ Optimized persona score: ${improvedScore.overall}/10`);
+    }
+    
+    // 🎯 GENERATE SYSTEM PROMPTS: Create optimized RAG prompts from persona
+    const { system_prompt, fallback_prompt } = generatePersonaPrompts({
+      role: finalPersona.role,
+      tone: finalPersona.tone,
+      business_context: finalPersona.business_context,
+      industry: finalPersona.industry,
+      focus_areas: finalPersona.focus_areas,
+      custom_instructions: finalPersona.custom_instructions
+    });
+
     // Merge with current persona to preserve important fields
     const mergedPersona = {
       ...currentPersona,
-      ...generatedPersona,
+      ...finalPersona,
+      system_prompt,
+      fallback_prompt,
+      quality_score: score.overall,
+      optimization_suggestions: score.suggestions,
       created_from: 'regenerated',
       regenerated_at: new Date().toISOString()
     };
 
     return NextResponse.json({
       success: true,
-      persona: mergedPersona
+      persona: mergedPersona,
+      quality: {
+        score: score.overall,
+        breakdown: score.breakdown,
+        suggestions: score.suggestions
+      }
     }, { headers: corsHeaders });
 
   } catch (error) {
