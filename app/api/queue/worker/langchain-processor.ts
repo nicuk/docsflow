@@ -237,5 +237,10 @@ export const processDocumentWithLangChain = traceable(
       }
     }
   }
-}
+  },
+  {
+    name: 'processDocumentWithLangChain',
+    run_type: 'chain',
+  }
+);
 

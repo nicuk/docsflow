@@ -3,9 +3,11 @@
  * 
  * Uses OpenRouter to access OpenAI LLM for generating answers.
  * Atomic operation: (query + context) → answer
+ * WITH LANGSMITH TRACING!
  */
 
 import { ChatOpenAI } from '@langchain/openai';
+import { traceable } from 'langsmith/traceable';
 import type { RetrievedChunk } from './retrieval';
 import { GenerationError } from '../utils/errors';
 import { RAG_CONFIG } from '../config';
@@ -36,15 +38,17 @@ export interface GenerationResult {
 
 /**
  * Generate answer from query and retrieved context
+ * WITH LANGSMITH TRACING to see what's happening!
  * 
  * @param query - User's question
  * @param context - Retrieved relevant chunks
  * @returns Generated answer with metadata
  */
-export async function generateAnswer(input: {
-  query: string;
-  context: RetrievedChunk[];
-}): Promise<GenerationResult> {
+export const generateAnswer = traceable(
+  async function generateAnswer(input: {
+    query: string;
+    context: RetrievedChunk[];
+  }): Promise<GenerationResult> {
   const { query, context } = input;
   
   if (!query || query.trim().length === 0) {
@@ -102,9 +106,14 @@ Answer:`;
   } catch (error: any) {
     console.error('[Generation] Error:', error);
     throw new GenerationError(`Failed to generate answer: ${error.message}`, {
-      query,
-      contextChunks: context.length,
+      query: input.query,
+      contextChunks: input.context.length,
     });
   }
-}
+  },
+  {
+    name: 'generateAnswer',
+    run_type: 'llm',
+  }
+);
 
