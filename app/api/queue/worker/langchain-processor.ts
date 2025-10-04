@@ -58,12 +58,10 @@ export async function processDocumentWithLangChain(
         const loader = new PDFLoader(tempFilePath);
         docs = await loader.load();
       } else if (mimeType.includes('word') || mimeType.includes('docx') || mimeType.includes('msword')) {
-        console.log(`📄 [JOB ${job.id}] Using text extraction for DOCX`);
-        const textContent = buffer.toString('utf-8');
-        docs = [new Document({ 
-          pageContent: textContent,
-          metadata: { source: job.filename, type: 'docx' }
-        })];
+        console.log(`📄 [JOB ${job.id}] Using DocxLoader for DOCX`);
+        const { DocxLoader } = await import('langchain/document_loaders/fs/docx');
+        const loader = new DocxLoader(tempFilePath);
+        docs = await loader.load();
       } else {
         console.log(`📝 [JOB ${job.id}] Using text extraction`);
         const textContent = buffer.toString('utf-8');
