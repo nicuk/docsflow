@@ -24,7 +24,7 @@ export const RAG_CONFIG = {
   // Retrieval
   retrieval: {
     topK: 5, // Number of chunks to retrieve
-    minScore: 0.7, // Minimum cosine similarity (maps to 40% confidence)
+    minScore: 0.5, // Minimum cosine similarity (industry standard for general RAG)
   },
   
   // Pinecone
