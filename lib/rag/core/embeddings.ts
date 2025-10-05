@@ -17,16 +17,24 @@
 import { EmbeddingError } from '../utils/errors';
 import { RAG_CONFIG } from '../config';
 
-// Determine which API to use
-const useAIGateway = !!process.env.AI_GATEWAY_API_KEY && !!process.env.VERCEL_OIDC_TOKEN;
-
-const EMBEDDINGS_CONFIG = {
-  apiKey: useAIGateway ? process.env.AI_GATEWAY_API_KEY! : process.env.OPENAI_API_KEY!,
-  baseURL: useAIGateway ? 'https://ai-gateway.vercel.sh/v1' : 'https://api.openai.com/v1',
-  model: RAG_CONFIG.embeddings.model,
-};
-
-console.log(`[Embeddings] Using ${useAIGateway ? 'Vercel AI Gateway' : 'direct OpenAI API'} at ${EMBEDDINGS_CONFIG.baseURL}`);
+/**
+ * Get embeddings config (lazy-loaded to ensure env vars are available)
+ */
+function getEmbeddingsConfig() {
+  const useAIGateway = !!process.env.AI_GATEWAY_API_KEY && !!process.env.VERCEL_OIDC_TOKEN;
+  
+  const config = {
+    apiKey: useAIGateway ? process.env.AI_GATEWAY_API_KEY! : process.env.OPENAI_API_KEY!,
+    baseURL: useAIGateway ? 'https://ai-gateway.vercel.sh/v1' : 'https://api.openai.com/v1',
+    model: RAG_CONFIG.embeddings.model,
+  };
+  
+  if (!config.apiKey) {
+    throw new EmbeddingError('No API key found. Set OPENAI_API_KEY (local) or AI_GATEWAY_API_KEY (production)');
+  }
+  
+  return config;
+}
 
 /**
  * Generate single embedding (for queries)
@@ -42,17 +50,19 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     throw new EmbeddingError('Cannot generate embedding for empty text');
   }
   
+  const config = getEmbeddingsConfig();
+  
   try {
-    console.log(`[Embeddings] Generating single embedding (${text.length} chars)`);
+    console.log(`[Embeddings] Generating single embedding (${text.length} chars) via ${config.baseURL}`);
     
-    const response = await fetch(`${EMBEDDINGS_CONFIG.baseURL}/embeddings`, {
+    const response = await fetch(`${config.baseURL}/embeddings`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${EMBEDDINGS_CONFIG.apiKey}`,
+        'Authorization': `Bearer ${config.apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: EMBEDDINGS_CONFIG.model,
+        model: config.model,
         input: text,
       }),
     });
@@ -101,18 +111,20 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
     throw new EmbeddingError('All texts are empty');
   }
   
+  const config = getEmbeddingsConfig();
+  
   try {
-    console.log(`[Embeddings] Generating batch embeddings for ${validTexts.length} texts`);
+    console.log(`[Embeddings] Generating batch embeddings for ${validTexts.length} texts via ${config.baseURL}`);
     const startTime = Date.now();
     
-    const response = await fetch(`${EMBEDDINGS_CONFIG.baseURL}/embeddings`, {
+    const response = await fetch(`${config.baseURL}/embeddings`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${EMBEDDINGS_CONFIG.apiKey}`,
+        'Authorization': `Bearer ${config.apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: EMBEDDINGS_CONFIG.model,
+        model: config.model,
         input: validTexts, // OpenAI API accepts array of strings for batch
       }),
     });
