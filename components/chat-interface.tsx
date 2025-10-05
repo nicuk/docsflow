@@ -533,13 +533,21 @@ export default function ChatInterface() {
         type: "ai",
         content: response.answer || response.response || "I received your message but couldn't generate a response.",
         timestamp: new Date(),
-        sources: response.sources?.map((source: any) => ({
-          document: source.filename || source.source || "Unknown Document",
-          documentId: source.document_id,  // 🎯 FIX: Pass document UUID for loading full content
-          page: source.metadata?.page || 1,
-          snippet: source.content ? source.content.substring(0, 200) + '...' : "No snippet available",
-          confidence: source.confidence
-        })) || [],
+        sources: response.sources?.map((source: any) => {
+          // 🔧 CLEAN BINARY GARBAGE: Detect and handle corrupted image data
+          const isBinaryGarbage = source.content && /[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(source.content.substring(0, 100));
+          const cleanSnippet = isBinaryGarbage 
+            ? "[Binary data - Image needs OCR processing]" 
+            : (source.content ? source.content.substring(0, 200) + '...' : "No snippet available");
+          
+          return {
+            document: source.filename || source.source || "Unknown Document",
+            documentId: source.document_id,
+            page: source.metadata?.page || 1,
+            snippet: cleanSnippet,
+            confidence: source.confidence
+          };
+        }) || [],
         confidence: response.confidence || 0.7,
         suggestions: [
           "Tell me more about this",
