@@ -171,11 +171,9 @@ export async function DELETE(request: NextRequest) {
         
         console.log(`📁 [DELETE] Attempting to delete from Vercel Blob: ${storageUrl}`);
         
-        // Vercel Blob del() can accept full URL or pathname
-        // Using full URL as per Vercel docs
-        await del(storageUrl, {
-          token: process.env.BLOB_READ_WRITE_TOKEN,
-        });
+        // Vercel Blob del() reads token from env automatically (BLOB_READ_WRITE_TOKEN)
+        // Pass URL as string or array of URLs
+        await del(storageUrl);
         
         console.log(`✅ [DELETE] Successfully deleted from Vercel Blob: ${storageUrl}`);
         
