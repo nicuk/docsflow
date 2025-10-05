@@ -192,6 +192,17 @@ Return raw content only.`;
             originalLength: visionResult.choices?.[0]?.message?.content?.length || 0,
           }
         })];
+        
+      } catch (visionError: any) {
+        clearTimeout(timeout);
+        const duration = Date.now() - visionStartTime;
+        
+        if (visionError.name === 'AbortError') {
+          console.error(`⏱️ [JOB ${job.id}] Vision API timeout after ${duration}ms`);
+          throw new Error(`Gemini Vision API timed out after 120 seconds`);
+        }
+        throw visionError;
+      }
       } else {
         console.log(`📝 [JOB ${job.id}] Using text extraction`);
         const textContent = buffer.toString('utf-8');
