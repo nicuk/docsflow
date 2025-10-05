@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { 
   Clock, 
   Upload, 
@@ -17,7 +18,8 @@ import {
   XCircle,
   AlertTriangle,
   TrendingUp,
-  Activity
+  Activity,
+  RefreshCw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -84,16 +86,25 @@ interface ProcessMetrics {
 export default function ProcessFlowTracker() {
   const [metrics, setMetrics] = useState<ProcessMetrics | null>(null);
   const [loading, setLoading] = useState(true);
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => {
     loadMetrics();
     
-    if (autoRefresh) {
-      const interval = setInterval(loadMetrics, 30000); // Refresh every 30s
-      return () => clearInterval(interval);
-    }
-  }, [autoRefresh]);
+    // Listen for upload events to trigger refresh
+    const handleUploadComplete = () => {
+      console.log('[Process Tracker] Upload detected, refreshing metrics...');
+      loadMetrics();
+    };
+    
+    window.addEventListener('documentUploaded', handleUploadComplete);
+    window.addEventListener('documentProcessed', handleUploadComplete);
+    
+    return () => {
+      window.removeEventListener('documentUploaded', handleUploadComplete);
+      window.removeEventListener('documentProcessed', handleUploadComplete);
+    };
+  }, []);
 
   const loadMetrics = async () => {
     try {
@@ -103,8 +114,10 @@ export default function ProcessFlowTracker() {
       if (response.ok) {
         const data = await response.json();
         setMetrics(data.metrics);
+        setLastUpdated(new Date());
       } else {
         // Mock data for development
+        console.warn('[Process Tracker] API failed, using mock data');
         setMetrics({
           upload: { avg: 1500, max: 3000, successRate: 98, recentJobs: 45 },
           vision_ocr: { avg: 8500, max: 58000, successRate: 92, slowJobs: 12 },
@@ -115,6 +128,7 @@ export default function ProcessFlowTracker() {
           query: { avg: 850, max: 2100, avgScore: 0.42 },
           llm: { avg: 4200, max: 9500, successRate: 96, fallbackRate: 12 },
         });
+        setLastUpdated(new Date());
       }
     } catch (error) {
       console.error('Failed to load process metrics:', error);
@@ -299,12 +313,18 @@ export default function ProcessFlowTracker() {
                 Document Processing Pipeline
               </CardTitle>
               <CardDescription>
-                Real-time performance metrics for each pipeline stage
+                Triggered automatically on document upload • Last updated: {lastUpdated?.toLocaleTimeString() || 'Never'}
               </CardDescription>
             </div>
-            <Badge variant="outline" className="cursor-pointer" onClick={() => setAutoRefresh(!autoRefresh)}>
-              {autoRefresh ? '🔄 Auto-refresh' : '⏸️ Paused'}
-            </Badge>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={loadMetrics}
+              disabled={loading}
+            >
+              <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
+              Refresh Now
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -431,9 +451,13 @@ export default function ProcessFlowTracker() {
               </div>
             </div>
           )}
+          
+          {/* Data Source Warning */}
+          <div className="mt-4 p-3 border border-yellow-200 bg-yellow-50 rounded text-sm text-yellow-800">
+            ⚠️ Currently showing sample data. Real-time metrics will be available once ingestion jobs complete.
+          </div>
         </CardContent>
       </Card>
     </div>
   );
 }
-
