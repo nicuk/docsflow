@@ -61,10 +61,32 @@ export const processDocumentWithLangChain = traceable(
         const loader = new PDFLoader(tempFilePath);
         docs = await loader.load();
       } else if (mimeType.includes('word') || mimeType.includes('docx') || mimeType.includes('msword')) {
-        console.log(`📄 [JOB ${job.id}] Using DocxLoader for DOCX`);
-        const { DocxLoader } = await import('@langchain/community/document_loaders/fs/docx');
-        const loader = new DocxLoader(tempFilePath);
-        docs = await loader.load();
+        console.log(`📄 [JOB ${job.id}] Processing DOCX with mammoth (faster + more reliable)`);
+        
+        try {
+          // Use mammoth instead of DocxLoader (faster, more reliable)
+          const mammoth = await import('mammoth');
+          const result = await mammoth.extractRawText({ path: tempFilePath });
+          
+          if (!result.value || result.value.length < 10) {
+            throw new Error('Mammoth returned empty or too-short content');
+          }
+          
+          console.log(`✅ [JOB ${job.id}] Mammoth extracted ${result.value.length} chars`);
+          
+          docs = [new Document({
+            pageContent: result.value,
+            metadata: { 
+              source: job.filename, 
+              type: 'docx',
+              parser: 'mammoth',
+            }
+          })];
+          
+        } catch (docxError: any) {
+          console.error(`❌ [JOB ${job.id}] DOCX parsing failed:`, docxError.message);
+          throw new Error(`DOCX parsing failed: ${docxError.message}. File may be corrupted or password-protected.`);
+        }
       } else if (mimeType.includes('image/')) {
         // 🖼️ IMAGE OCR - Use Gemini 2.0 Flash via OpenRouter
         console.log(`🖼️ [JOB ${job.id}] Processing image with Gemini 2.0 Flash Vision`);
@@ -159,12 +181,12 @@ Return raw content only.`;
       
       console.log(`✅ [JOB ${job.id}] Document loaded: ${docs.length} pages`);
     } catch (loadError) {
-      console.error(`❌ [JOB ${job.id}] Loading failed, using text fallback:`, loadError);
-      const textContent = buffer.toString('utf-8', 0, Math.min(buffer.length, 100000));
-      docs = [new Document({ 
-        pageContent: textContent,
-        metadata: { source: job.filename, type: 'fallback' }
-      })];
+      console.error(`❌ [JOB ${job.id}] Loading failed:`, loadError);
+      
+      // 🚨 DO NOT CREATE FALLBACK GARBAGE!
+      // Binary files (DOCX, PDF, images) will create garbage if read as UTF-8
+      // Better to fail the job and let user know the file is corrupted
+      throw new Error(`Document loading failed: ${loadError instanceof Error ? loadError.message : 'Unknown error'}. File may be corrupted or in an unsupported format.`);
     }
     
     // STEP 2: Smart chunking with RecursiveCharacterTextSplitter
