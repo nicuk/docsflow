@@ -60,6 +60,16 @@ export default function SourceViewerModal({ source, isOpen, onClose, highlightTe
       }
       
       const data = await response.json()
+      
+      // 🎯 FIX: Handle Vercel Blob storage URLs (original files)
+      if (data.storage_url && data.storage_provider === 'vercel-blob') {
+        // Document is in Vercel Blob - open original file in new tab
+        window.open(data.storage_url, '_blank')
+        setFullDocumentContent(`This document is stored as an original file. Opening in a new tab...`)
+        setDocumentLoadError('Document opened in new tab. You can download the original file from there.')
+        return
+      }
+      
       setFullDocumentContent(data.content || 'Document content not available')
       
     } catch (error) {

@@ -3,6 +3,7 @@ import { getCORSHeaders } from '@/lib/utils';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
 import { createClient } from '@/lib/supabase-server';
 import { createClient as createDirectClient } from '@supabase/supabase-js';
+import { del } from '@vercel/blob';
 
 // SECURITY FIX: Use secure database service instead of direct service role
 import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
@@ -152,18 +153,32 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // 1. Delete file from storage
-    const storagePath = document.metadata?.storage_path;
-    if (storagePath) {
+    // 1. Delete file from storage (Vercel Blob or legacy Supabase)
+    const storageUrl = document.metadata?.storage_url;
+    const storageProvider = document.metadata?.storage_provider;
+    const legacyStoragePath = document.metadata?.storage_path; // Old Supabase storage
+    
+    // 🎯 FIX: Delete from Vercel Blob if that's where it's stored
+    if (storageUrl && storageProvider === 'vercel-blob') {
+      try {
+        await del(storageUrl);
+        console.log(`📁 [DELETE] Deleted file from Vercel Blob: ${storageUrl}`);
+      } catch (storageError) {
+        console.error('Error deleting file from Vercel Blob:', storageError);
+        // Continue anyway - file might already be deleted
+      }
+    }
+    // Legacy: Delete from Supabase storage if old format
+    else if (legacyStoragePath) {
       const { error: storageError } = await supabase.storage
         .from('documents')
-        .remove([storagePath]);
+        .remove([legacyStoragePath]);
       
       if (storageError) {
-        console.error('Error deleting file from storage:', storageError);
+        console.error('Error deleting file from Supabase storage:', storageError);
         // Continue anyway - file might already be deleted
       } else {
-        console.log(`📁 [DELETE] Deleted file from storage: ${storagePath}`);
+        console.log(`📁 [DELETE] Deleted file from Supabase storage: ${legacyStoragePath}`);
       }
     }
 

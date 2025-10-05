@@ -527,6 +527,11 @@ export default function ChatInterface() {
       // Remove loading message
       setMessages((prev) => prev.filter((msg) => msg.type !== "loading"))
 
+      // 🔍 DEBUG: Log full API response
+      console.log('🔍 [CHAT-DEBUG] Full API response:', response);
+      console.log('🔍 [CHAT-DEBUG] response.answer:', response.answer);
+      console.log('🔍 [CHAT-DEBUG] response.response:', response.response);
+      
       // Add AI response with real data
       const aiResponse: Message = {
         id: `ai-${Date.now()}`,

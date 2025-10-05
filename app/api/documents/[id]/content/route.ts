@@ -43,7 +43,7 @@ export async function GET(
     // Get document metadata first to ensure it exists and user has access
     const { data: document, error: docError } = await supabase
       .from('documents')
-      .select('id, filename, file_size, mime_type, tenant_id')
+      .select('id, filename, file_size, mime_type, tenant_id, metadata')
       .eq('id', documentId)
       .eq('tenant_id', tenantId)
       .single();
@@ -53,6 +53,33 @@ export async function GET(
         { error: 'Document not found or access denied' },
         { status: 404, headers: corsHeaders }
       );
+    }
+
+    // 🎯 FIX: If document is stored in Vercel Blob, redirect to download URL
+    const storageUrl = document.metadata?.storage_url;
+    const storageProvider = document.metadata?.storage_provider;
+    
+    if (storageUrl && storageProvider === 'vercel-blob') {
+      console.log(`📄 [Document Content] Redirecting to Vercel Blob URL for ${documentId}`);
+      
+      // For downloadable file formats (PDF, DOCX, images), return the blob URL
+      // Frontend can fetch it directly or open in new tab
+      return NextResponse.json({
+        success: true,
+        document: {
+          id: document.id,
+          filename: document.filename,
+          mime_type: document.mime_type,
+          file_size: document.file_size
+        },
+        storage_url: storageUrl,
+        storage_provider: 'vercel-blob',
+        download_instructions: 'Use storage_url to download original file',
+        metadata: {
+          tenant_id: tenantId,
+          retrieved_at: new Date().toISOString()
+        }
+      }, { headers: corsHeaders });
     }
 
     // Get all chunks for this document to reconstruct full content
