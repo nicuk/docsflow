@@ -66,10 +66,73 @@ export const processDocumentWithLangChain = traceable(
         const loader = new DocxLoader(tempFilePath);
         docs = await loader.load();
       } else if (mimeType.includes('image/')) {
-        // 🚨 IMAGES NOT SUPPORTED YET
-        // TODO: Add OCR support (Tesseract.js or similar)
-        console.error(`❌ [JOB ${job.id}] Images not supported yet: ${job.filename}`);
-        throw new Error(`Image processing not implemented yet. Please upload PDF, DOCX, or text files. Image OCR support coming soon.`);
+        // 🖼️ IMAGE OCR - Use Gemini 2.0 Flash via OpenRouter
+        console.log(`🖼️ [JOB ${job.id}] Processing image with Gemini 2.0 Flash Vision`);
+        
+        const base64Image = buffer.toString('base64');
+        
+        // Use OpenRouter's Gemini 2.0 Flash for superior vision/OCR
+        const visionPrompt = `Extract ALL text, numbers, and data from this image. Return ONLY the actual content visible in the image.
+
+Rules:
+- DO NOT add descriptions like "This image shows..." or "The document contains..."
+- DO NOT add interpretations or summaries
+- ONLY transcribe the exact text/data you see
+- If there's a title, include it
+- If there are bullet points, list them
+- If there are tables/charts, extract the data
+- If it's purely visual with no text, describe ONLY the key elements
+
+Return raw content only.`;
+
+        const visionResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://docsflow.app',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.0-flash-exp:free', // Paid version available if needed
+            messages: [{
+              role: 'user',
+              content: [
+                { type: 'text', text: visionPrompt },
+                { 
+                  type: 'image_url', 
+                  image_url: { 
+                    url: `data:${job.file_type};base64,${base64Image}` 
+                  } 
+                }
+              ]
+            }],
+          }),
+        });
+        
+        if (!visionResponse.ok) {
+          const errorText = await visionResponse.text();
+          throw new Error(`Gemini Vision API failed (${visionResponse.status}): ${errorText}`);
+        }
+        
+        const visionResult = await visionResponse.json();
+        const extractedText = visionResult.choices?.[0]?.message?.content || '';
+        
+        if (!extractedText || extractedText.length < 10) {
+          throw new Error('No text extracted from image - image may be blank or corrupted');
+        }
+        
+        console.log(`✅ [JOB ${job.id}] Extracted ${extractedText.length} chars from image via Gemini 2.0 Flash`);
+        
+        // Create document from extracted text
+        docs = [new Document({
+          pageContent: extractedText,
+          metadata: { 
+            source: job.filename, 
+            type: 'image_ocr',
+            mimeType: job.file_type,
+            ocrEngine: 'gemini-2.0-flash',
+          }
+        })];
       } else {
         console.log(`📝 [JOB ${job.id}] Using text extraction`);
         const textContent = buffer.toString('utf-8');
