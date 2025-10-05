@@ -262,12 +262,28 @@ async function processJob(
     console.log(`✅ [JOB ${job.id}] Download successful in ${downloadDuration}ms (${fileData.size} bytes)`);
     
     // 2. Process document with LangChain (replaces custom parsing)
+    console.log(`📦 [JOB ${job.id}] Starting LangChain processing...`);
+    const processingStart = Date.now();
+    
     const { processDocumentWithLangChain } = await import('./langchain-processor');
-    await processDocumentWithLangChain(
-      job,
-      fileData,
-      supabase
-    );
+    
+    // 🚨 ADD TIMEOUT: Vercel functions timeout at 10s, but processing can take longer
+    // We'll handle this gracefully and retry on next cycle
+    try {
+      await processDocumentWithLangChain(
+        job,
+        fileData,
+        supabase
+      );
+      
+      const processingDuration = Date.now() - processingStart;
+      console.log(`⚡ [JOB ${job.id}] LangChain processing completed in ${processingDuration}ms`);
+      
+    } catch (processingError: any) {
+      console.error(`❌ [JOB ${job.id}] LangChain processing error:`, processingError);
+      console.error(`❌ [JOB ${job.id}] Error stack:`, processingError.stack);
+      throw processingError; // Re-throw to trigger retry logic
+    }
     
     // 4. Mark job as completed
     const { error: completeError } = await supabase
