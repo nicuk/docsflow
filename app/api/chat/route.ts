@@ -139,12 +139,13 @@ export async function POST(request: NextRequest) {
     }
 
     const startTime = Date.now();
+    
+    // 🎭 LOAD PERSONA: Load once at start (used by gibberish check and later)
+    const tenantPersona = await getTenantPersona(tenantId);
 
     // 🎯 NEW: Detect gibberish and return fallback prompt
     if (detectGibberish(message)) {
       console.log('🚨 [GIBBERISH DETECTED] Query appears unclear:', message);
-      
-      const tenantPersona = await getTenantPersona(tenantId);
       const fallbackResponse = tenantPersona.fallback_prompt || getDefaultPersona().fallback_prompt;
       
       // 🎯 METRICS: Log gibberish detection
@@ -179,6 +180,24 @@ export async function POST(request: NextRequest) {
       }, { headers: corsHeaders });
     }
 
+    // 🔍 METADATA QUERY DETECTION: Check if query is about document metadata (count, list)
+    const { isMetadataQuery, handleMetadataQuery } = await import('@/lib/metadata-query-detector');
+    
+    if (isMetadataQuery(message)) {
+      console.log('📊 [METADATA QUERY] Detected metadata query, bypassing RAG');
+      const metadataResult = await handleMetadataQuery(message, tenantId);
+      
+      // Return metadata query result directly
+      return NextResponse.json({
+        response: metadataResult.answer,
+        answer: metadataResult.answer, // Compatibility
+        sources: metadataResult.sources,
+        confidence: metadataResult.confidence,
+        metadata: metadataResult.metadata,
+        persona_used: tenantPersona.role,
+      }, { headers: corsHeaders });
+    }
+    
     // 🆕 NEW: Use Pinecone + LangChain RAG Module
     console.log('🚀 [CHAT API v9] PINECONE MIGRATION: Querying new RAG module');
     console.log('🔧 [CHAT API v9] Tenant:', tenantId, 'Query:', message);
@@ -186,7 +205,6 @@ export async function POST(request: NextRequest) {
     const ragResult = await queryWorkflow({
       query: message,
       tenantId: tenantId,
-      userId: tenantValidation.userId,
       topK: 5, // Simplified: 5 chunks is optimal
     });
     
@@ -294,10 +312,7 @@ export async function POST(request: NextRequest) {
       }, { headers: corsHeaders });
     }
 
-    // 🎯 NEW: Get tenant persona from database (includes custom prompts)
-    const tenantPersona = await getTenantPersona(tenantId);
-    
-    // Generate final answer using OpenRouter with fallback
+    // Generate final answer using OpenRouter with fallback (persona already loaded earlier)
     const contextText = context.map(ctx => `Source: ${ctx.document}\nContent: ${ctx.content}`).join('\n\n');
     
     const messages = [

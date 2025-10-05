@@ -533,26 +533,65 @@ export default function ChatInterface() {
       console.log('🔍 [CHAT-DEBUG] response.response:', response.response);
       
       // Add AI response with real data
+      
+      // 🔧 DEDUPLICATE SOURCES: Group chunks from the same document
+      let processedSources = response.sources?.map((source: any) => {
+        // 🔧 CLEAN BINARY GARBAGE: Detect and handle corrupted image data
+        const isBinaryGarbage = source.content && /[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(source.content.substring(0, 100));
+        const cleanSnippet = isBinaryGarbage 
+          ? "[Binary data - Image needs OCR processing]" 
+          : (source.content ? source.content.substring(0, 200) + '...' : "No snippet available");
+        
+        return {
+          document: source.filename || source.source || "Unknown Document",
+          documentId: source.document_id,
+          page: source.metadata?.page || 1,
+          snippet: cleanSnippet,
+          confidence: source.confidence,
+          content: source.content
+        };
+      }) || [];
+      
+      // Group by document name to avoid showing same document multiple times
+      const groupedSources = new Map<string, any>();
+      processedSources.forEach((source: any) => {
+        const key = source.document;
+        if (!groupedSources.has(key)) {
+          groupedSources.set(key, {
+            ...source,
+            chunkCount: 1,
+            maxConfidence: source.confidence,
+            pages: [source.page]
+          });
+        } else {
+          const existing = groupedSources.get(key)!;
+          existing.chunkCount++;
+          existing.maxConfidence = Math.max(existing.maxConfidence, source.confidence);
+          if (!existing.pages.includes(source.page)) {
+            existing.pages.push(source.page);
+          }
+          // Keep the snippet from the highest confidence chunk
+          if (source.confidence > existing.confidence) {
+            existing.snippet = source.snippet;
+            existing.confidence = source.confidence;
+          }
+        }
+      });
+      
+      // Convert back to array and format display
+      const deduplicatedSources = Array.from(groupedSources.values()).map((source: any) => ({
+        ...source,
+        document: source.chunkCount > 1 
+          ? `${source.document} (${source.chunkCount} sections)` 
+          : source.document
+      }));
+      
       const aiResponse: Message = {
         id: `ai-${Date.now()}`,
         type: "ai",
         content: response.answer || response.response || "I received your message but couldn't generate a response.",
         timestamp: new Date(),
-        sources: response.sources?.map((source: any) => {
-          // 🔧 CLEAN BINARY GARBAGE: Detect and handle corrupted image data
-          const isBinaryGarbage = source.content && /[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(source.content.substring(0, 100));
-          const cleanSnippet = isBinaryGarbage 
-            ? "[Binary data - Image needs OCR processing]" 
-            : (source.content ? source.content.substring(0, 200) + '...' : "No snippet available");
-          
-          return {
-            document: source.filename || source.source || "Unknown Document",
-            documentId: source.document_id,
-            page: source.metadata?.page || 1,
-            snippet: cleanSnippet,
-            confidence: source.confidence
-          };
-        }) || [],
+        sources: deduplicatedSources,
         confidence: response.confidence || 0.7,
         suggestions: [
           "Tell me more about this",

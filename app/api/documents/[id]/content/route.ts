@@ -66,32 +66,9 @@ export async function GET(
       hasStorageUrl: !!document.metadata?.storage_url
     });
 
-    // 🎯 FIX: If document is stored in Vercel Blob, redirect to download URL
+    // Store metadata for optional inclusion in response
     const storageUrl = document.metadata?.storage_url;
     const storageProvider = document.metadata?.storage_provider;
-    
-    if (storageUrl && storageProvider === 'vercel-blob') {
-      console.log(`📄 [Document Content] Redirecting to Vercel Blob URL for ${documentId}`);
-      
-      // For downloadable file formats (PDF, DOCX, images), return the blob URL
-      // Frontend can fetch it directly or open in new tab
-      return NextResponse.json({
-        success: true,
-        document: {
-          id: document.id,
-          filename: document.filename,
-          mime_type: document.mime_type,
-          file_size: document.file_size
-        },
-        storage_url: storageUrl,
-        storage_provider: 'vercel-blob',
-        download_instructions: 'Use storage_url to download original file',
-        metadata: {
-          tenant_id: tenantId,
-          retrieved_at: new Date().toISOString()
-        }
-      }, { headers: corsHeaders });
-    }
 
     // Get all chunks for this document to reconstruct full content
     const { data: chunks, error: chunksError } = await supabase
@@ -133,6 +110,11 @@ export async function GET(
       },
       content: fullContent,
       chunks_count: chunks.length,
+      // Include storage URL if available (for downloading original file)
+      ...(storageUrl && storageProvider && {
+        storage_url: storageUrl,
+        storage_provider: storageProvider
+      }),
       metadata: {
         tenant_id: tenantId,
         retrieved_at: new Date().toISOString()
