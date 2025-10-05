@@ -19,12 +19,32 @@ export const RAG_CONFIG = {
     provider: 'vercel-ai-gateway', // Uses Vercel AI Gateway (OpenRouter doesn't support /embeddings)
   },
   
-  // LLM
+  // LLM with fallback strategy
   llm: {
-    model: 'google/gemini-2.0-flash-exp:free', // 50% cheaper, faster, better quality than GPT-4o-mini
-    temperature: 0,
-    maxTokens: 1000,
-    provider: 'openrouter',
+    // Primary model (best quality)
+    primary: {
+      model: 'meta-llama/llama-3.3-70b-instruct',
+      temperature: 0,
+      maxTokens: 1000,
+      provider: 'openrouter',
+    },
+    // Backup models (in order of preference)
+    fallbacks: [
+      {
+        model: 'openai/gpt-4o-mini',
+        temperature: 0,
+        maxTokens: 1000,
+        provider: 'openrouter',
+        reason: 'Reliable fallback with good quality',
+      },
+      {
+        model: 'anthropic/claude-3-haiku',
+        temperature: 0,
+        maxTokens: 1000,
+        provider: 'openrouter',
+        reason: 'Fast emergency backup',
+      },
+    ],
   },
   
   // Retrieval

@@ -1,7 +1,10 @@
 /**
- * Answer Generation
+ * Answer Generation with 3-Tier Fallback System
  * 
- * Uses OpenRouter to access OpenAI LLM for generating answers.
+ * Primary: Llama 3.3 70B (best quality)
+ * Backup 1: GPT-4o-mini (reliable fallback)
+ * Backup 2: Claude 3 Haiku (fast emergency backup)
+ * 
  * Atomic operation: (query + context) → answer
  * WITH LANGSMITH TRACING!
  */
@@ -12,71 +15,59 @@ import type { RetrievedChunk } from './retrieval';
 import { GenerationError } from '../utils/errors';
 import { RAG_CONFIG } from '../config';
 
-// Initialize LLM (lazy-loaded singleton)
-let llmInstance: ChatOpenAI | null = null;
+/**
+ * Create LLM instance for a specific model
+ */
+function createLLM(modelName: string, temperature: number, maxTokens: number): ChatOpenAI {
+  return new ChatOpenAI({
+    openAIApiKey: process.env.OPENROUTER_API_KEY,
+    modelName,
+    temperature,
+    maxTokens,
+    configuration: {
+      baseURL: RAG_CONFIG.openrouter.baseURL,
+      apiKey: process.env.OPENROUTER_API_KEY,
+      defaultHeaders: {
+        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://docsflow.app',
+        'X-Title': 'DocsFlow AI',
+      },
+    },
+  });
+}
 
-function getLLM(): ChatOpenAI {
-  if (!llmInstance) {
-    // ALWAYS prefer OpenRouter in production (better LangSmith tracing)
-    // Only use direct OpenAI if OpenRouter is not available (local testing)
-    const hasOpenRouter = process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_API_KEY.startsWith('sk-or-');
-    const hasOpenAI = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.startsWith('sk-');
-    
-    console.log('[Generation] LLM initialization:', {
-      hasOpenRouter,
-      hasOpenAI,
-      openRouterKeyPrefix: process.env.OPENROUTER_API_KEY?.substring(0, 7),
-      openAIKeyPrefix: process.env.OPENAI_API_KEY?.substring(0, 7),
-    });
-    
-    if (hasOpenRouter) {
-      // Prefer OpenRouter for production (better tracing, multi-model access)
-      console.log('[Generation] Using OpenRouter (production mode)');
-      console.log('[Generation] Model:', RAG_CONFIG.llm.model);
-      console.log('[Generation] BaseURL:', RAG_CONFIG.openrouter.baseURL);
-      console.log('[Generation] API Key detected:', process.env.OPENROUTER_API_KEY ? 'YES' : 'NO');
-      
-      llmInstance = new ChatOpenAI({
-        openAIApiKey: process.env.OPENROUTER_API_KEY,
-        modelName: RAG_CONFIG.llm.model,
-        temperature: RAG_CONFIG.llm.temperature,
-        maxTokens: RAG_CONFIG.llm.maxTokens,
-        configuration: {
-          baseURL: RAG_CONFIG.openrouter.baseURL,
-          apiKey: process.env.OPENROUTER_API_KEY, // CRITICAL: Must also pass in configuration
-          defaultHeaders: {
-            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://docsflow.app',
-            'X-Title': 'DocsFlow AI',
-          },
-        },
-      });
-    } else if (hasOpenAI) {
-      // Fallback to direct OpenAI for local testing only
-      console.log('[Generation] Using direct OpenAI API (local testing fallback)');
-      llmInstance = new ChatOpenAI({
-        openAIApiKey: process.env.OPENAI_API_KEY,
-        modelName: 'gpt-4o-mini',
-        temperature: RAG_CONFIG.llm.temperature,
-        maxTokens: RAG_CONFIG.llm.maxTokens,
-      });
-    } else {
-      const error = 'No LLM API key found. Set OPENROUTER_API_KEY (production) or OPENAI_API_KEY (local testing)';
-      console.error('[Generation] ERROR:', error);
-      throw new Error(error);
-    }
-  }
-  return llmInstance;
+/**
+ * Try to generate answer with a specific model
+ */
+async function tryGenerateWithModel(
+  modelName: string,
+  prompt: string,
+  temperature: number,
+  maxTokens: number
+): Promise<{ answer: string; model: string; tokensUsed?: number }> {
+  const llm = createLLM(modelName, temperature, maxTokens);
+  const response = await llm.invoke(prompt);
+  
+  const answer = typeof response.content === 'string' 
+    ? response.content 
+    : JSON.stringify(response.content);
+  
+  return {
+    answer,
+    model: modelName,
+    tokensUsed: (response as any).usage?.total_tokens,
+  };
 }
 
 export interface GenerationResult {
   answer: string;
   model: string;
   tokensUsed?: number;
+  fallbackUsed?: boolean;
 }
 
 /**
  * Generate answer from query and retrieved context
- * WITH LANGSMITH TRACING to see what's happening!
+ * WITH 3-TIER FALLBACK SYSTEM + LANGSMITH TRACING
  * 
  * @param query - User's question
  * @param context - Retrieved relevant chunks
@@ -97,20 +88,19 @@ export const generateAnswer = traceable(
     throw new GenerationError('Context is required for generation');
   }
   
-  try {
-    // Build context from retrieved chunks (include metadata for stats questions)
-    const contextText = context
-      .map((chunk, i) => {
-        const source = chunk.metadata.filename || 'Unknown Document';
-        const page = chunk.metadata.pageNumber ? ` (Page ${chunk.metadata.pageNumber})` : '';
-        const stats = chunk.metadata.documentStats || '';
-        const metadata = stats ? `\n[Document Info: ${stats}]` : '';
-        return `[Source ${i + 1}: ${source}${page}]${metadata}\n${chunk.content}`;
-      })
-      .join('\n\n---\n\n');
-    
-    // Generate answer with LLM
-    const prompt = `You are a helpful assistant. Answer the user's question based ONLY on the provided context.
+  // Build context from retrieved chunks (include metadata for stats questions)
+  const contextText = context
+    .map((chunk, i) => {
+      const source = chunk.metadata.filename || 'Unknown Document';
+      const page = chunk.metadata.pageNumber ? ` (Page ${chunk.metadata.pageNumber})` : '';
+      const stats = chunk.metadata.documentStats || '';
+      const metadata = stats ? `\n[Document Info: ${stats}]` : '';
+      return `[Source ${i + 1}: ${source}${page}]${metadata}\n${chunk.content}`;
+    })
+    .join('\n\n---\n\n');
+  
+  // Generate answer with LLM
+  const prompt = `You are a helpful assistant. Answer the user's question based ONLY on the provided context.
 
 Context:
 ${contextText}
@@ -126,29 +116,53 @@ Instructions:
 Question: ${query}
 
 Answer:`;
+  
+  console.log(`[Generation] Generating answer for query: "${query}"`);
+  console.log(`[Generation] Context chunks: ${context.length}`);
+  
+  // Try primary model first
+  const primary = RAG_CONFIG.llm.primary;
+  console.log(`[Generation] 🎯 Trying PRIMARY: ${primary.model}`);
+  
+  try {
+    const result = await tryGenerateWithModel(
+      primary.model,
+      prompt,
+      primary.temperature,
+      primary.maxTokens
+    );
+    console.log(`[Generation] ✅ PRIMARY succeeded: ${primary.model} (${result.answer.length} chars)`);
+    return { ...result, fallbackUsed: false };
+  } catch (primaryError: any) {
+    console.warn(`[Generation] ⚠️ PRIMARY failed: ${primary.model} - ${primaryError.message}`);
     
-    console.log(`[Generation] Generating answer for query: "${query}"`);
-    console.log(`[Generation] Context chunks: ${context.length}`);
+    // Try fallback models in order
+    for (let i = 0; i < RAG_CONFIG.llm.fallbacks.length; i++) {
+      const fallback = RAG_CONFIG.llm.fallbacks[i];
+      console.log(`[Generation] 🔄 Trying BACKUP ${i + 1}: ${fallback.model} (${fallback.reason})`);
+      
+      try {
+        const result = await tryGenerateWithModel(
+          fallback.model,
+          prompt,
+          fallback.temperature,
+          fallback.maxTokens
+        );
+        console.log(`[Generation] ✅ BACKUP ${i + 1} succeeded: ${fallback.model} (${result.answer.length} chars)`);
+        return { ...result, fallbackUsed: true };
+      } catch (fallbackError: any) {
+        console.warn(`[Generation] ⚠️ BACKUP ${i + 1} failed: ${fallback.model} - ${fallbackError.message}`);
+        // Continue to next fallback
+      }
+    }
     
-    const llm = getLLM();
-    const response = await llm.invoke(prompt);
-    
-    const answer = typeof response.content === 'string' 
-      ? response.content 
-      : JSON.stringify(response.content);
-    
-    console.log(`[Generation] Generated answer (${answer.length} chars)`);
-    
-    return {
-      answer,
-      model: RAG_CONFIG.llm.model,
-      tokensUsed: (response as any).usage?.total_tokens,
-    };
-  } catch (error: any) {
-    console.error('[Generation] Error:', error);
-    throw new GenerationError(`Failed to generate answer: ${error.message}`, {
+    // All models failed
+    console.error('[Generation] ❌ ALL MODELS FAILED');
+    throw new GenerationError(`All models failed. Primary: ${primaryError.message}`, {
       query: input.query,
       contextChunks: input.context.length,
+      primaryModel: primary.model,
+      primaryError: primaryError.message,
     });
   }
   },
