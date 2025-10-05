@@ -27,6 +27,17 @@ interface IngestionJob {
   processing_metadata?: any;
 }
 
+// Performance tracking helper
+const timings: Record<string, number> = {};
+function startTiming(label: string) {
+  timings[`${label}_start`] = Date.now();
+}
+function endTiming(label: string): number {
+  const duration = Date.now() - (timings[`${label}_start`] || 0);
+  timings[label] = duration;
+  return duration;
+}
+
 // Wrap the entire function with LangSmith tracing
 export const processDocumentWithLangChain = traceable(
   async function processDocumentWithLangChain(
@@ -38,6 +49,7 @@ export const processDocumentWithLangChain = traceable(
   console.log(`📄 [JOB ${job.id}] File: ${job.filename}, Type: ${job.file_type}`);
   
   let tempFilePath: string | null = null;
+  const totalStartTime = Date.now();
   
   try {
     // Convert blob to buffer

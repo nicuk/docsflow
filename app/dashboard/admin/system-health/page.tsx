@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import BackendStatus from "@/components/backend-status"
 import { SecurityMonitor } from "@/components/security-monitor"
+import ProcessFlowTracker from "@/components/admin/process-flow-tracker"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Shield, Server } from "lucide-react"
+import { Shield, Server, Activity } from "lucide-react"
 
 export default function SystemHealthPage() {
   const router = useRouter()
@@ -53,6 +54,11 @@ export default function SystemHealthPage() {
           <p className="text-sm text-muted-foreground">Admin-only monitoring dashboard</p>
         </div>
       </div>
+
+      {/* Process Flow Tracker Section */}
+      <section>
+        <ProcessFlowTracker />
+      </section>
 
       {/* Backend Status Section */}
       <section>
