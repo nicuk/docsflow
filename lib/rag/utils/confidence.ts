@@ -36,12 +36,14 @@ export function calculateConfidence(chunks: ScoredChunk[]): number {
 /**
  * Determine if confidence is sufficient for answering
  * 
- * Threshold: 30% (0.3 cosine similarity)
- * - Below 30%: Abstain (not confident enough)
- * - Above 30%: Answer (confident)
+ * Threshold: 20% (0.2 cosine similarity) - aligned with retrieval minScore
+ * - Below 20%: Abstain (not confident enough)
+ * - Above 20%: Answer (confident)
+ * 
+ * Lowered from 30% to 20% to handle generic/vague queries that still have relevant content.
  */
 export function isSufficientConfidence(confidence: number): boolean {
-  return confidence >= 30;
+  return confidence >= 20;
 }
 
 /**
