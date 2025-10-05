@@ -17,21 +17,13 @@ let llmInstance: ChatOpenAI | null = null;
 
 function getLLM(): ChatOpenAI {
   if (!llmInstance) {
-    // For local testing, prefer OpenAI (simpler, no special headers needed)
-    // For production, use OpenRouter (access to multiple models)
+    // ALWAYS prefer OpenRouter in production (better LangSmith tracing)
+    // Only use direct OpenAI if OpenRouter is not available (local testing)
     const hasOpenRouter = process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_API_KEY.startsWith('sk-or-');
     const hasOpenAI = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.startsWith('sk-');
     
-    if (hasOpenAI) {
-      // Prefer OpenAI for local testing (easier to configure)
-      console.log('[Generation] Using direct OpenAI API (local testing mode)');
-      llmInstance = new ChatOpenAI({
-        openAIApiKey: process.env.OPENAI_API_KEY,
-        modelName: 'gpt-4o-mini',
-        temperature: RAG_CONFIG.llm.temperature,
-        maxTokens: RAG_CONFIG.llm.maxTokens,
-      });
-    } else if (hasOpenRouter) {
+    if (hasOpenRouter) {
+      // Prefer OpenRouter for production (better tracing, multi-model access)
       console.log('[Generation] Using OpenRouter (production mode)');
       llmInstance = new ChatOpenAI({
         openAIApiKey: RAG_CONFIG.openrouter.apiKey,
@@ -42,8 +34,17 @@ function getLLM(): ChatOpenAI {
           baseURL: RAG_CONFIG.openrouter.baseURL,
         },
       });
+    } else if (hasOpenAI) {
+      // Fallback to direct OpenAI for local testing only
+      console.log('[Generation] Using direct OpenAI API (local testing fallback)');
+      llmInstance = new ChatOpenAI({
+        openAIApiKey: process.env.OPENAI_API_KEY,
+        modelName: 'gpt-4o-mini',
+        temperature: RAG_CONFIG.llm.temperature,
+        maxTokens: RAG_CONFIG.llm.maxTokens,
+      });
     } else {
-      throw new Error('No LLM API key found. Set either OPENAI_API_KEY (for local testing) or OPENROUTER_API_KEY (for production)');
+      throw new Error('No LLM API key found. Set OPENROUTER_API_KEY (production) or OPENAI_API_KEY (local testing)');
     }
   }
   return llmInstance;
