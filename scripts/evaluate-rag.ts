@@ -5,6 +5,11 @@
  * Uses OpenRouter (not OpenAI) for LLM judge
  */
 
+// Load environment variables from .env.local
+import { config } from 'dotenv';
+import { resolve } from 'path';
+config({ path: resolve(process.cwd(), '.env.local') });
+
 import { Client } from 'langsmith';
 import { queryWorkflow } from '../lib/rag';
 

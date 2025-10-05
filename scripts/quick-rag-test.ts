@@ -4,6 +4,11 @@
  * Fast way to test if RAG is working before full evaluation
  */
 
+// Load environment variables from .env.local
+import { config } from 'dotenv';
+import { resolve } from 'path';
+config({ path: resolve(process.cwd(), '.env.local') });
+
 import { queryWorkflow } from '../lib/rag';
 
 const TESTS = [
@@ -43,18 +48,19 @@ async function main() {
         tenantId,
       });
       
-      console.log(`\nA: ${result.answer}`);
+      console.log(`\nA: ${result.answer || 'NO ANSWER (abstained)'}`);
       console.log(`Confidence: ${(result.confidence * 100).toFixed(1)}%`);
-      console.log(`Sources: ${result.sources.length > 0 ? result.sources.map(s => s.metadata.filename).join(', ') : 'NONE'}`);
-      console.log(`Chunks: ${result.sources.length}`);
+      console.log(`Sources: ${result.sources?.length > 0 ? result.sources.map(s => s.filename || s.metadata?.filename).join(', ') : 'NONE'}`);
+      console.log(`Chunks: ${result.sources?.length || 0}`);
       
       // Check if answer contains expected keywords
-      const answer = result.answer.toLowerCase();
+      const answer = (result.answer || '').toLowerCase();
       const matchedKeywords = test.expectedKeywords.filter(k => answer.includes(k.toLowerCase()));
+      const sourcesCount = result.sources?.length || 0;
       
       const isCorrect = 
-        (test.shouldFind && result.sources.length > 0 && matchedKeywords.length > 0) ||
-        (!test.shouldFind && result.sources.length === 0);
+        (test.shouldFind && sourcesCount > 0 && matchedKeywords.length > 0) ||
+        (!test.shouldFind && sourcesCount === 0);
       
       if (isCorrect) {
         console.log('\n✅ PASS');

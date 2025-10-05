@@ -11,6 +11,7 @@ import { createClient } from '@supabase/supabase-js';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { Document } from 'langchain/document';
 import { Pinecone } from '@pinecone-database/pinecone';
+import { traceable } from 'langsmith/traceable';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
