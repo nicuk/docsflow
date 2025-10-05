@@ -161,12 +161,15 @@ export async function DELETE(request: NextRequest) {
     // 🎯 FIX: Delete from Vercel Blob if that's where it's stored
     if (storageUrl && storageProvider === 'vercel-blob') {
       try {
-        await del(storageUrl);
-        console.log(`📁 [DELETE] Deleted file from Vercel Blob: ${storageUrl}`);
+        console.log(`📁 [DELETE] Attempting to delete from Vercel Blob: ${storageUrl}`);
+        const result = await del(storageUrl);
+        console.log(`✅ [DELETE] Successfully deleted from Vercel Blob:`, result);
       } catch (storageError) {
-        console.error('Error deleting file from Vercel Blob:', storageError);
+        console.error('❌ [DELETE] Error deleting file from Vercel Blob:', storageError);
         // Continue anyway - file might already be deleted
       }
+    } else {
+      console.log(`⚠️ [DELETE] Storage info - URL: ${storageUrl}, Provider: ${storageProvider}, Legacy: ${legacyStoragePath}`);
     }
     // Legacy: Delete from Supabase storage if old format
     else if (legacyStoragePath) {

@@ -127,7 +127,7 @@ Return raw content only.`;
             'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://docsflow.app',
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.0-flash-exp', // Paid version (no rate limits, still cheap)
+            model: 'google/gemini-2.0-flash-001', // Gemini 2.0 with vision support
             messages: [{
               role: 'user',
               content: [
