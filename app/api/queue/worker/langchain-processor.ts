@@ -61,12 +61,12 @@ export const processDocumentWithLangChain = traceable(
         const loader = new PDFLoader(tempFilePath);
         docs = await loader.load();
       } else if (mimeType.includes('word') || mimeType.includes('docx') || mimeType.includes('msword')) {
-        console.log(`📄 [JOB ${job.id}] Processing DOCX with mammoth (faster + more reliable)`);
+        console.log(`📄 [JOB ${job.id}] Processing DOCX with mammoth (in-memory, no disk I/O)`);
         
         try {
-          // Use mammoth instead of DocxLoader (faster, more reliable)
+          // Use mammoth with buffer (faster - no disk I/O on Vercel serverless)
           const mammoth = await import('mammoth');
-          const result = await mammoth.extractRawText({ path: tempFilePath });
+          const result = await mammoth.extractRawText({ buffer });
           
           if (!result.value || result.value.length < 10) {
             throw new Error('Mammoth returned empty or too-short content');
