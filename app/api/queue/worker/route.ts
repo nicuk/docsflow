@@ -253,7 +253,7 @@ async function processJob(
     let fileData: Blob | null = null;
     let lastError: Error | null = null;
     const maxRetries = 3;
-    const timeoutMs = 30000; // 30 second timeout per attempt
+    const timeoutMs = 60000; // 60 second timeout per attempt (Vercel Blob CDN can be slow on cache MISS)
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -289,7 +289,7 @@ async function processJob(
         
         // Don't retry on last attempt
         if (attempt < maxRetries) {
-          const backoffMs = attempt * 2000; // 2s, 4s backoff
+          const backoffMs = Math.pow(2, attempt) * 2000; // Exponential: 4s, 8s, 16s
           console.log(`⏳ [JOB ${job.id}] Retrying in ${backoffMs}ms...`);
           await new Promise(resolve => setTimeout(resolve, backoffMs));
         }

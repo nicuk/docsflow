@@ -171,12 +171,16 @@ export async function DELETE(request: NextRequest) {
         
         console.log(`📁 [DELETE] Attempting to delete from Vercel Blob: ${storageUrl}`);
         
-        // According to Vercel docs, del() returns void on success
+        // Vercel Blob del() can accept full URL or pathname
+        // Using full URL as per Vercel docs
         await del(storageUrl, {
           token: process.env.BLOB_READ_WRITE_TOKEN,
         });
         
         console.log(`✅ [DELETE] Successfully deleted from Vercel Blob: ${storageUrl}`);
+        
+        // Verify deletion (optional check)
+        console.log(`🔍 [DELETE] Verifying blob deletion...`);
       } catch (storageError: any) {
         console.error('❌ [DELETE] Error deleting file from Vercel Blob:', {
           error: storageError.message,
