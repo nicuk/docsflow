@@ -22,16 +22,30 @@ function getLLM(): ChatOpenAI {
     const hasOpenRouter = process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_API_KEY.startsWith('sk-or-');
     const hasOpenAI = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.startsWith('sk-');
     
+    console.log('[Generation] LLM initialization:', {
+      hasOpenRouter,
+      hasOpenAI,
+      openRouterKeyPrefix: process.env.OPENROUTER_API_KEY?.substring(0, 7),
+      openAIKeyPrefix: process.env.OPENAI_API_KEY?.substring(0, 7),
+    });
+    
     if (hasOpenRouter) {
       // Prefer OpenRouter for production (better tracing, multi-model access)
       console.log('[Generation] Using OpenRouter (production mode)');
+      console.log('[Generation] Model:', RAG_CONFIG.llm.model);
+      console.log('[Generation] BaseURL:', RAG_CONFIG.openrouter.baseURL);
+      
       llmInstance = new ChatOpenAI({
-        openAIApiKey: RAG_CONFIG.openrouter.apiKey,
+        openAIApiKey: process.env.OPENROUTER_API_KEY, // Use env var directly, not config
         modelName: RAG_CONFIG.llm.model,
         temperature: RAG_CONFIG.llm.temperature,
         maxTokens: RAG_CONFIG.llm.maxTokens,
         configuration: {
           baseURL: RAG_CONFIG.openrouter.baseURL,
+          defaultHeaders: {
+            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://docsflow.app',
+            'X-Title': 'DocsFlow AI',
+          },
         },
       });
     } else if (hasOpenAI) {
@@ -44,7 +58,9 @@ function getLLM(): ChatOpenAI {
         maxTokens: RAG_CONFIG.llm.maxTokens,
       });
     } else {
-      throw new Error('No LLM API key found. Set OPENROUTER_API_KEY (production) or OPENAI_API_KEY (local testing)');
+      const error = 'No LLM API key found. Set OPENROUTER_API_KEY (production) or OPENAI_API_KEY (local testing)';
+      console.error('[Generation] ERROR:', error);
+      throw new Error(error);
     }
   }
   return llmInstance;

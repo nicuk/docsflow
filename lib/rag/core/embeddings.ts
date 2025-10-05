@@ -49,8 +49,10 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   }
   
   try {
+    console.log(`[Embeddings] Generating single embedding (${text.length} chars)`);
+    
     const { embedding } = await embed({
-      model: openaiProvider.embedding(RAG_CONFIG.embeddings.model),
+      model: openaiProvider(RAG_CONFIG.embeddings.model),
       value: text,
     });
     
@@ -91,10 +93,16 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
   }
   
   try {
+    console.log(`[Embeddings] Generating batch embeddings for ${validTexts.length} texts`);
+    const startTime = Date.now();
+    
     const { embeddings } = await embedMany({
-      model: openaiProvider.embedding(RAG_CONFIG.embeddings.model),
+      model: openaiProvider(RAG_CONFIG.embeddings.model),
       values: validTexts,
     });
+    
+    const duration = Date.now() - startTime;
+    console.log(`[Embeddings] Batch complete: ${embeddings.length} embeddings in ${duration}ms`);
     
     if (!embeddings || embeddings.length !== validTexts.length) {
       throw new EmbeddingError(
