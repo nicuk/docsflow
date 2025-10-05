@@ -30,6 +30,8 @@ export async function GET(
     const tenantId = tenantValidation.tenantId!;
     const documentId = params.id;
 
+    console.log(`📄 [Document Content API] Request for document: ${documentId}, tenant: ${tenantId}`);
+
     // Initialize Supabase client
     // SECURITY FIX: Use secure database service
     const supabase = createClient(
@@ -49,11 +51,20 @@ export async function GET(
       .single();
 
     if (docError || !document) {
+      console.error(`❌ [Document Content] Document not found: ${documentId}`, docError);
       return NextResponse.json(
         { error: 'Document not found or access denied' },
         { status: 404, headers: corsHeaders }
       );
     }
+
+    console.log(`✅ [Document Content] Document found:`, {
+      id: document.id,
+      filename: document.filename,
+      hasMetadata: !!document.metadata,
+      storageProvider: document.metadata?.storage_provider,
+      hasStorageUrl: !!document.metadata?.storage_url
+    });
 
     // 🎯 FIX: If document is stored in Vercel Blob, redirect to download URL
     const storageUrl = document.metadata?.storage_url;
