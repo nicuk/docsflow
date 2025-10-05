@@ -302,11 +302,21 @@ Return raw content only.`;
       };
     });
     
-    // Upsert in batches
+    // Upsert in batches with timeout protection
     const batchSize = 100;
     for (let i = 0; i < vectors.length; i += batchSize) {
       const batch = vectors.slice(i, i + batchSize);
-      await pineconeIndex.namespace(job.tenant_id).upsert(batch);
+      
+      console.log(`📤 [JOB ${job.id}] Upserting batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(vectors.length/batchSize)} (${batch.length} vectors)`);
+      
+      // Add timeout to prevent hanging
+      const upsertPromise = pineconeIndex.namespace(job.tenant_id).upsert(batch);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Pinecone upsert timeout (30s)')), 30000)
+      );
+      
+      await Promise.race([upsertPromise, timeoutPromise]);
+      console.log(`✅ [JOB ${job.id}] Batch ${Math.floor(i/batchSize) + 1} upserted successfully`);
     }
     
     console.log(`✅ [JOB ${job.id}] Upserted ${vectors.length} vectors to Pinecone`);
