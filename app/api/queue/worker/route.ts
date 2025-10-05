@@ -85,6 +85,7 @@ async function processWorkerRequest(request: NextRequest) {
     }
     
     // 4. Atomically fetch pending jobs (with lock)
+    // Filter out jobs created in the last 60s (CDN propagation time for Vercel Blob)
     const { data: jobs, error: fetchError } = await supabase
       .rpc('get_pending_jobs', {
         p_max_jobs: WORKER_CONFIG.global_max_concurrent
@@ -253,43 +254,59 @@ async function processJob(
     let fileData: Blob | null = null;
     let lastError: Error | null = null;
     const maxRetries = 3;
-    const timeoutMs = 60000; // 60 second timeout per attempt (Vercel Blob CDN can be slow on cache MISS)
+    const timeoutMs = 10000; // 10 second timeout (21KB file should download in <1s)
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`📥 [JOB ${job.id}] Download attempt ${attempt}/${maxRetries}`);
+        console.log(`📥 [JOB ${job.id}] Download attempt ${attempt}/${maxRetries} (${timeoutMs}ms timeout)`);
         
-        // Add timeout to prevent hanging
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), timeoutMs);
+        // First, verify file accessibility with HEAD request (fast check)
+        console.log(`🔍 [JOB ${job.id}] Verifying file exists...`);
+        const headResponse = await fetch(job.file_path, {
+          method: 'HEAD',
+          signal: AbortSignal.timeout(5000) // 5s timeout for HEAD
+        });
+        
+        if (!headResponse.ok) {
+          console.error(`❌ [JOB ${job.id}] File not accessible: HTTP ${headResponse.status}`);
+          throw new Error(`File not accessible (${headResponse.status}): ${headResponse.statusText}`);
+        }
+        
+        const contentLength = headResponse.headers.get('content-length');
+        console.log(`✅ [JOB ${job.id}] File exists, size: ${contentLength} bytes`);
+        
+        // Now download the file
+        console.log(`📦 [JOB ${job.id}] Starting file download...`);
+        const downloadStartTime = Date.now();
         
         const response = await fetch(job.file_path, {
-          signal: controller.signal,
+          signal: AbortSignal.timeout(timeoutMs)
         });
-        clearTimeout(timeout);
         
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
         fileData = await response.blob();
-        const downloadDuration = Date.now() - downloadStart;
-        console.log(`✅ [JOB ${job.id}] Download successful in ${downloadDuration}ms (${fileData.size} bytes) on attempt ${attempt}`);
+        const downloadDuration = Date.now() - downloadStartTime;
+        const totalDuration = Date.now() - downloadStart;
+        console.log(`✅ [JOB ${job.id}] Download successful in ${downloadDuration}ms (${fileData.size} bytes, total: ${totalDuration}ms)`);
         break; // Success!
         
       } catch (error: any) {
         lastError = error;
         const attemptDuration = Date.now() - downloadStart;
         
-        if (error.name === 'AbortError') {
-          console.error(`⏱️ [JOB ${job.id}] Download timeout after ${timeoutMs}ms (attempt ${attempt}/${maxRetries})`);
+        if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+          console.error(`⏱️ [JOB ${job.id}] Download timeout after ${attemptDuration}ms (attempt ${attempt}/${maxRetries})`);
         } else {
           console.error(`❌ [JOB ${job.id}] Download error (attempt ${attempt}/${maxRetries}):`, error.message);
+          console.error(`❌ [JOB ${job.id}] Error details:`, error.stack);
         }
         
         // Don't retry on last attempt
         if (attempt < maxRetries) {
-          const backoffMs = Math.pow(2, attempt) * 2000; // Exponential: 4s, 8s, 16s
+          const backoffMs = Math.pow(2, attempt) * 2000; // Exponential: 4s, 8s
           console.log(`⏳ [JOB ${job.id}] Retrying in ${backoffMs}ms...`);
           await new Promise(resolve => setTimeout(resolve, backoffMs));
         }

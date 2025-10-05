@@ -55,9 +55,37 @@ export async function POST(request: NextRequest) {
     
     console.log(`[Documents Upload] File uploaded to Vercel Blob: ${blob.url}`);
     
-    // Wait 2 seconds for CDN propagation (prevent race condition with worker)
-    console.log(`[Documents Upload] Waiting 2s for CDN propagation...`);
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Verify file is accessible (with retry for CDN propagation)
+    console.log(`[Documents Upload] Verifying file accessibility...`);
+    let fileAccessible = false;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const verifyResponse = await fetch(blob.url, { 
+          method: 'HEAD',
+          signal: AbortSignal.timeout(5000) // 5s timeout
+        });
+        if (verifyResponse.ok) {
+          fileAccessible = true;
+          console.log(`[Documents Upload] ✅ File verified accessible (attempt ${attempt})`);
+          break;
+        }
+        console.log(`[Documents Upload] ⚠️ File not yet accessible: ${verifyResponse.status} (attempt ${attempt}/3)`);
+      } catch (verifyError: any) {
+        console.log(`[Documents Upload] ⚠️ Verification failed: ${verifyError.message} (attempt ${attempt}/3)`);
+      }
+      
+      if (attempt < 3) {
+        const waitTime = attempt * 2000; // 2s, 4s
+        console.log(`[Documents Upload] Waiting ${waitTime}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      }
+    }
+    
+    if (!fileAccessible) {
+      // File uploaded but not accessible - this is a critical issue
+      console.error(`[Documents Upload] ❌ File uploaded but not accessible after 3 attempts: ${blob.url}`);
+      throw new Error('File uploaded but failed accessibility verification. This may be a CDN or network issue.');
+    }
     
     // 2. Create document record with "pending" status
     const { SecureDocumentService } = await import('@/lib/secure-database');
