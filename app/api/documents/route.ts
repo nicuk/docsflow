@@ -163,12 +163,27 @@ export async function DELETE(request: NextRequest) {
     
     if (storageUrl && storageProvider === 'vercel-blob') {
       try {
+        // Verify we have the Blob token
+        if (!process.env.BLOB_READ_WRITE_TOKEN) {
+          console.error('❌ [DELETE] BLOB_READ_WRITE_TOKEN not found in environment variables');
+          throw new Error('Blob storage not configured - missing token');
+        }
+        
         console.log(`📁 [DELETE] Attempting to delete from Vercel Blob: ${storageUrl}`);
-        const result = await del(storageUrl);
-        console.log(`✅ [DELETE] Successfully deleted from Vercel Blob:`, result);
-      } catch (storageError) {
-        console.error('❌ [DELETE] Error deleting file from Vercel Blob:', storageError);
-        // Continue anyway - file might already be deleted
+        
+        // According to Vercel docs, del() returns void on success
+        await del(storageUrl, {
+          token: process.env.BLOB_READ_WRITE_TOKEN,
+        });
+        
+        console.log(`✅ [DELETE] Successfully deleted from Vercel Blob: ${storageUrl}`);
+      } catch (storageError: any) {
+        console.error('❌ [DELETE] Error deleting file from Vercel Blob:', {
+          error: storageError.message,
+          stack: storageError.stack,
+          url: storageUrl,
+        });
+        // Don't throw - continue with deletion of other resources
       }
     } else if (legacyStoragePath) {
       // Legacy: Delete from Supabase storage if old format
