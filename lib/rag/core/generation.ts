@@ -79,12 +79,14 @@ export const generateAnswer = traceable(
   }
   
   try {
-    // Build context from retrieved chunks
+    // Build context from retrieved chunks (include metadata for stats questions)
     const contextText = context
       .map((chunk, i) => {
         const source = chunk.metadata.filename || 'Unknown Document';
         const page = chunk.metadata.pageNumber ? ` (Page ${chunk.metadata.pageNumber})` : '';
-        return `[Source ${i + 1}: ${source}${page}]\n${chunk.content}`;
+        const stats = chunk.metadata.documentStats || '';
+        const metadata = stats ? `\n[Document Info: ${stats}]` : '';
+        return `[Source ${i + 1}: ${source}${page}]${metadata}\n${chunk.content}`;
       })
       .join('\n\n---\n\n');
     
@@ -96,7 +98,8 @@ ${contextText}
 
 Instructions:
 - Answer the question directly and concisely
-- ONLY use information from the context above
+- ONLY use information from the context above (including Document Info metadata)
+- For questions about document length/pages/stats, check the [Document Info] section
 - If the context doesn't contain enough information, say "I don't have enough information to answer that question"
 - Cite sources when possible (e.g., "According to [document name]...")
 - Be accurate and factual

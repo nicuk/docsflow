@@ -72,7 +72,13 @@ export const processDocumentWithLangChain = traceable(
             throw new Error('Mammoth returned empty or too-short content');
           }
           
-          console.log(`✅ [JOB ${job.id}] Mammoth extracted ${result.value.length} chars`);
+          // Calculate document statistics
+          const wordCount = result.value.split(/\s+/).filter(w => w.length > 0).length;
+          const charCount = result.value.length;
+          // Rough estimate: 250 words per page (standard formatting)
+          const estimatedPages = Math.max(1, Math.ceil(wordCount / 250));
+          
+          console.log(`✅ [JOB ${job.id}] Mammoth extracted ${charCount} chars, ${wordCount} words, ~${estimatedPages} pages`);
           
           docs = [new Document({
             pageContent: result.value,
@@ -80,6 +86,10 @@ export const processDocumentWithLangChain = traceable(
               source: job.filename, 
               type: 'docx',
               parser: 'mammoth',
+              wordCount,
+              charCount,
+              estimatedPages,
+              documentStats: `This document contains approximately ${estimatedPages} pages, ${wordCount} words, and ${charCount} characters.`,
             }
           })];
           
