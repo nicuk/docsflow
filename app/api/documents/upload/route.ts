@@ -55,6 +55,10 @@ export async function POST(request: NextRequest) {
     
     console.log(`[Documents Upload] File uploaded to Vercel Blob: ${blob.url}`);
     
+    // Wait 2 seconds for CDN propagation (prevent race condition with worker)
+    console.log(`[Documents Upload] Waiting 2s for CDN propagation...`);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
     // 2. Create document record with "pending" status
     const { SecureDocumentService } = await import('@/lib/secure-database');
     
