@@ -1,13 +1,10 @@
 /**
- * Embeddings Generation - Vercel AI Gateway
+ * Embeddings Generation - Vercel AI Gateway (OpenAI-Compatible REST API)
  * 
- * Uses Vercel AI SDK which automatically routes through AI Gateway when deployed.
- * OpenRouter is used only for LLM completions (doesn't support /embeddings).
+ * Uses Vercel AI Gateway's OpenAI-compatible REST API for embeddings.
+ * This is the correct way per Vercel docs - direct fetch() calls, not AI SDK!
  * 
- * How it works:
- * - AI SDK detects AI_GATEWAY_API_KEY environment variable
- * - Automatically routes through https://ai-gateway.vercel.sh/v1
- * - No manual configuration needed!
+ * https://vercel.com/docs/ai-gateway/openai-compat#embeddings
  * 
  * Benefits:
  * - Built-in observability in Vercel dashboard
@@ -17,28 +14,25 @@
  * Atomic operation: text → vector
  */
 
-import { embed, embedMany } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
 import { EmbeddingError } from '../utils/errors';
 import { RAG_CONFIG } from '../config';
 
-// Configure OpenAI provider - fallback to direct API for local testing
-// Production uses AI Gateway (when VERCEL_OIDC_TOKEN is available)
-// Local testing uses direct OpenAI API (when OPENAI_API_KEY is set)
+// Determine which API to use
 const useAIGateway = !!process.env.AI_GATEWAY_API_KEY && !!process.env.VERCEL_OIDC_TOKEN;
 
-const openaiProvider = createOpenAI({
-  apiKey: useAIGateway ? process.env.AI_GATEWAY_API_KEY : process.env.OPENAI_API_KEY,
-  baseURL: useAIGateway ? 'https://ai-gateway.vercel.sh/v1' : undefined, // undefined = direct OpenAI
-});
+const EMBEDDINGS_CONFIG = {
+  apiKey: useAIGateway ? process.env.AI_GATEWAY_API_KEY! : process.env.OPENAI_API_KEY!,
+  baseURL: useAIGateway ? 'https://ai-gateway.vercel.sh/v1' : 'https://api.openai.com/v1',
+  model: RAG_CONFIG.embeddings.model,
+};
 
-console.log(`[Embeddings] Using ${useAIGateway ? 'Vercel AI Gateway' : 'direct OpenAI API'}`);
+console.log(`[Embeddings] Using ${useAIGateway ? 'Vercel AI Gateway' : 'direct OpenAI API'} at ${EMBEDDINGS_CONFIG.baseURL}`);
 
 /**
  * Generate single embedding (for queries)
  * 
- * Uses AI_GATEWAY_API_KEY to authenticate with Vercel AI Gateway.
- * Gateway automatically routes to the best available provider.
+ * Uses OpenAI-compatible REST API (direct fetch call)
+ * Per Vercel docs: https://vercel.com/docs/ai-gateway/openai-compat#embeddings
  * 
  * @param text - Text to embed
  * @returns 1536-dimensional vector
@@ -51,10 +45,25 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   try {
     console.log(`[Embeddings] Generating single embedding (${text.length} chars)`);
     
-    const { embedding } = await embed({
-      model: openaiProvider(RAG_CONFIG.embeddings.model),
-      value: text,
+    const response = await fetch(`${EMBEDDINGS_CONFIG.baseURL}/embeddings`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${EMBEDDINGS_CONFIG.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: EMBEDDINGS_CONFIG.model,
+        input: text,
+      }),
     });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API error (${response.status}): ${errorText}`);
+    }
+    
+    const data = await response.json();
+    const embedding = data.data[0].embedding;
     
     if (!embedding || embedding.length !== RAG_CONFIG.embeddings.dimensions) {
       throw new EmbeddingError(
@@ -74,8 +83,8 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 /**
  * Generate batch embeddings (for document ingestion)
  * 
- * AI SDK automatically routes through Vercel AI Gateway when AI_GATEWAY_API_KEY is set.
- * More efficient than multiple single calls.
+ * Uses OpenAI-compatible REST API (direct fetch call)
+ * More efficient than multiple single calls - OpenAI API handles batching internally
  * 
  * @param texts - Array of texts to embed
  * @returns Array of 1536-dimensional vectors
@@ -96,13 +105,28 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
     console.log(`[Embeddings] Generating batch embeddings for ${validTexts.length} texts`);
     const startTime = Date.now();
     
-    const { embeddings } = await embedMany({
-      model: openaiProvider(RAG_CONFIG.embeddings.model),
-      values: validTexts,
+    const response = await fetch(`${EMBEDDINGS_CONFIG.baseURL}/embeddings`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${EMBEDDINGS_CONFIG.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: EMBEDDINGS_CONFIG.model,
+        input: validTexts, // OpenAI API accepts array of strings for batch
+      }),
     });
     
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API error (${response.status}): ${errorText}`);
+    }
+    
+    const data = await response.json();
+    const embeddings = data.data.map((item: any) => item.embedding);
+    
     const duration = Date.now() - startTime;
-    console.log(`[Embeddings] Batch complete: ${embeddings.length} embeddings in ${duration}ms`);
+    console.log(`[Embeddings] Batch complete: ${embeddings.length} embeddings in ${duration}ms (avg: ${Math.round(duration / embeddings.length)}ms per embedding)`);
     
     if (!embeddings || embeddings.length !== validTexts.length) {
       throw new EmbeddingError(
