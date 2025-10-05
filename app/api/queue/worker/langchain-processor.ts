@@ -70,6 +70,7 @@ export const processDocumentWithLangChain = traceable(
         console.log(`🖼️ [JOB ${job.id}] Processing image with Gemini 2.0 Flash Vision`);
         
         const base64Image = buffer.toString('base64');
+        console.log(`📏 [JOB ${job.id}] Image base64 size: ${base64Image.length} chars`);
         
         // Use OpenRouter's Gemini 2.0 Flash for superior vision/OCR
         const visionPrompt = `Extract ALL text, numbers, and data from this image. Return ONLY the actual content visible in the image.
@@ -85,6 +86,7 @@ Rules:
 
 Return raw content only.`;
 
+        console.log(`🌐 [JOB ${job.id}] Calling OpenRouter Gemini Vision API...`);
         const visionResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -109,12 +111,16 @@ Return raw content only.`;
           }),
         });
         
+        console.log(`📨 [JOB ${job.id}] Vision API response status: ${visionResponse.status}`);
+        
         if (!visionResponse.ok) {
           const errorText = await visionResponse.text();
+          console.error(`❌ [JOB ${job.id}] Vision API error: ${errorText}`);
           throw new Error(`Gemini Vision API failed (${visionResponse.status}): ${errorText}`);
         }
         
         const visionResult = await visionResponse.json();
+        console.log(`✅ [JOB ${job.id}] Vision API call completed`);
         let extractedText = visionResult.choices?.[0]?.message?.content || '';
         
         if (!extractedText || extractedText.length < 10) {
