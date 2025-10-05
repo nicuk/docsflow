@@ -252,19 +252,8 @@ Return raw content only.`;
       });
     });
     
-    // Update progress
-    await supabase
-      .from('documents')
-      .update({
-        processing_status: 'processing',
-        processing_progress: 50,
-        metadata: {
-          chunk_count: chunks.length,
-          parse_method: 'langchain',
-          processed_at: new Date().toISOString()
-        }
-      })
-      .eq('id', job.document_id);
+    // Skip progress update - handled by route.ts after job completes
+    console.log(`📊 [JOB ${job.id}] Chunks ready for embedding (${chunks.length} chunks)`);
     
     // STEP 3: Generate embeddings with our custom OpenRouter-compatible function
     console.log(`🔗 [JOB ${job.id}] Generating embeddings via OpenRouter`);
@@ -326,40 +315,15 @@ Return raw content only.`;
     console.log(`   - Chunks processed: ${chunks.length}`);
     console.log(`   - Namespace: ${job.tenant_id}`);
     console.log(`   - Index: ${process.env.PINECONE_INDEX}`);
-    
-    // Update to completed
-    await supabase
-      .from('documents')
-      .update({ 
-        processing_status: 'completed',
-        processing_progress: 100,
-        metadata: {
-          chunk_count: chunks.length,
-          parse_method: 'langchain',
-          processed_at: new Date().toISOString()
-        }
-      })
-      .eq('id', job.document_id);
-    
     console.log(`✅ [JOB ${job.id}] Successfully processed ${chunks.length} chunks`);
+    
+    // Note: Document status update is handled by route.ts after this function returns
     
   } catch (error) {
     console.error(`❌ [JOB ${job.id}] LangChain ingestion failed:`, error);
     
-    // Update status to error
-    await supabase
-      .from('documents')
-      .update({
-        processing_status: 'error',
-        processing_progress: 100,
-        metadata: {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          failed_at: new Date().toISOString()
-        }
-      })
-      .eq('id', job.document_id);
-    
-    throw error; // Will trigger retry logic
+    // Note: Error status update is handled by route.ts
+    throw error; // Will trigger retry logic in route.ts
   } finally {
     // Cleanup temp file
     if (tempFilePath) {
