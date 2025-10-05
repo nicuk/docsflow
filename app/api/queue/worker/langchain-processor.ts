@@ -115,15 +115,23 @@ Return raw content only.`;
         }
         
         const visionResult = await visionResponse.json();
-        const extractedText = visionResult.choices?.[0]?.message?.content || '';
+        let extractedText = visionResult.choices?.[0]?.message?.content || '';
         
         if (!extractedText || extractedText.length < 10) {
           throw new Error('No text extracted from image - image may be blank or corrupted');
         }
         
+        // 🔧 CLEAN OUTPUT FOR RAG:
+        // Remove common LLM artifacts that slip through despite prompt
+        extractedText = extractedText
+          .replace(/^(Here is the|This image|The document|I can see|Extracted text:)\s*/gi, '') // Remove intro phrases
+          .replace(/\*\*(.*?)\*\*/g, '$1') // Remove markdown bold
+          .replace(/^[*•-]\s+/gm, '') // Clean up bullet points
+          .trim();
+        
         console.log(`✅ [JOB ${job.id}] Extracted ${extractedText.length} chars from image via Gemini 2.0 Flash`);
         
-        // Create document from extracted text
+        // Create document from cleaned extracted text
         docs = [new Document({
           pageContent: extractedText,
           metadata: { 
@@ -131,6 +139,7 @@ Return raw content only.`;
             type: 'image_ocr',
             mimeType: job.file_type,
             ocrEngine: 'gemini-2.0-flash',
+            originalLength: visionResult.choices?.[0]?.message?.content?.length || 0,
           }
         })];
       } else {
