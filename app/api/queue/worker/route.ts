@@ -377,20 +377,35 @@ async function processJob(
     }
     
     // 4. Mark job as completed
-    const { error: completeError } = await supabase
-      .from('ingestion_jobs')
-      .update({
-        status: JOB_STATUS.COMPLETED,
-        completed_at: new Date().toISOString(),
-        processing_metadata: {
-          ...job.processing_metadata,
-          processing_duration_ms: Date.now() - jobStartTime
+    // Retry marking as completed (network issues can cause failures)
+    let completeSuccess = false;
+    for (let attempt = 1; attempt <= 3 && !completeSuccess; attempt++) {
+      const { error: completeError } = await supabase
+        .from('ingestion_jobs')
+        .update({
+          status: JOB_STATUS.COMPLETED,
+          completed_at: new Date().toISOString(),
+          processing_metadata: {
+            ...job.processing_metadata,
+            processing_duration_ms: Date.now() - jobStartTime
+          }
+        })
+        .eq('id', job.id);
+      
+      if (!completeError) {
+        completeSuccess = true;
+        console.log(`✅ [JOB ${job.id}] Marked as completed (attempt ${attempt}/3)`);
+      } else {
+        console.error(`⚠️ [JOB ${job.id}] Failed to mark as completed (attempt ${attempt}/3):`, {
+          message: completeError.message,
+          details: completeError.details,
+          hint: completeError.hint,
+          code: completeError.code
+        });
+        if (attempt < 3) {
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
         }
-      })
-      .eq('id', job.id);
-    
-    if (completeError) {
-      console.error(`⚠️ [JOB ${job.id}] Failed to mark as completed:`, completeError);
+      }
     }
     
     // 5. Update document status

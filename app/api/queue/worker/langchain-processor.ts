@@ -302,21 +302,43 @@ Return raw content only.`;
       };
     });
     
-    // Upsert in batches with timeout protection
+    // Upsert in batches with timeout protection (60s per batch = matches Vercel limit)
     const batchSize = 100;
+    const BATCH_TIMEOUT = 60000; // 60 seconds per batch (2x previous timeout for images)
+    const MAX_RETRIES = 2;
+    
     for (let i = 0; i < vectors.length; i += batchSize) {
       const batch = vectors.slice(i, i + batchSize);
+      const batchNum = Math.floor(i/batchSize) + 1;
+      const totalBatches = Math.ceil(vectors.length/batchSize);
       
-      console.log(`📤 [JOB ${job.id}] Upserting batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(vectors.length/batchSize)} (${batch.length} vectors)`);
+      console.log(`📤 [JOB ${job.id}] Upserting batch ${batchNum}/${totalBatches} (${batch.length} vectors)`);
       
-      // Add timeout to prevent hanging
-      const upsertPromise = pineconeIndex.namespace(job.tenant_id).upsert(batch);
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Pinecone upsert timeout (30s)')), 30000)
-      );
+      // Retry logic for individual batch failures
+      let retries = 0;
+      let batchSuccess = false;
       
-      await Promise.race([upsertPromise, timeoutPromise]);
-      console.log(`✅ [JOB ${job.id}] Batch ${Math.floor(i/batchSize) + 1} upserted successfully`);
+      while (retries <= MAX_RETRIES && !batchSuccess) {
+        try {
+          const upsertPromise = pineconeIndex.namespace(job.tenant_id).upsert(batch);
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error(`Pinecone batch ${batchNum} timeout (${BATCH_TIMEOUT/1000}s)`)), BATCH_TIMEOUT)
+          );
+          
+          await Promise.race([upsertPromise, timeoutPromise]);
+          console.log(`✅ [JOB ${job.id}] Batch ${batchNum} upserted successfully`);
+          batchSuccess = true;
+        } catch (batchError: any) {
+          retries++;
+          if (retries <= MAX_RETRIES) {
+            console.warn(`⚠️ [JOB ${job.id}] Batch ${batchNum} failed (attempt ${retries}/${MAX_RETRIES + 1}), retrying in 2s...`);
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s before retry
+          } else {
+            console.error(`❌ [JOB ${job.id}] Batch ${batchNum} failed after ${MAX_RETRIES + 1} attempts`);
+            throw new Error(`Pinecone batch ${batchNum}/${totalBatches} failed: ${batchError.message}`);
+          }
+        }
+      }
     }
     
     console.log(`✅ [JOB ${job.id}] Upserted ${vectors.length} vectors to Pinecone`);
