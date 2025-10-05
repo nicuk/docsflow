@@ -31,11 +31,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate metrics from jobs
+    const hasRealData = jobs && jobs.length > 0;
     const metrics = calculateMetrics(jobs || []);
 
     return NextResponse.json({
       success: true,
       metrics,
+      hasRealData,
+      jobCount: jobs?.length || 0,
       timestamp: new Date().toISOString(),
     });
 

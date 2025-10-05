@@ -87,6 +87,8 @@ export default function ProcessFlowTracker() {
   const [metrics, setMetrics] = useState<ProcessMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [hasRealData, setHasRealData] = useState(false);
+  const [jobCount, setJobCount] = useState(0);
 
   useEffect(() => {
     loadMetrics();
@@ -114,6 +116,8 @@ export default function ProcessFlowTracker() {
       if (response.ok) {
         const data = await response.json();
         setMetrics(data.metrics);
+        setHasRealData(data.hasRealData || false);
+        setJobCount(data.jobCount || 0);
         setLastUpdated(new Date());
       } else {
         // Mock data for development
@@ -128,10 +132,13 @@ export default function ProcessFlowTracker() {
           query: { avg: 850, max: 2100, avgScore: 0.42 },
           llm: { avg: 4200, max: 9500, successRate: 96, fallbackRate: 12 },
         });
+        setHasRealData(false);
+        setJobCount(0);
         setLastUpdated(new Date());
       }
     } catch (error) {
       console.error('Failed to load process metrics:', error);
+      setHasRealData(false);
     } finally {
       setLoading(false);
     }
@@ -452,10 +459,16 @@ export default function ProcessFlowTracker() {
             </div>
           )}
           
-          {/* Data Source Warning */}
-          <div className="mt-4 p-3 border border-yellow-200 bg-yellow-50 rounded text-sm text-yellow-800">
-            ⚠️ Currently showing sample data. Real-time metrics will be available once ingestion jobs complete.
-          </div>
+          {/* Data Source Info */}
+          {!hasRealData ? (
+            <div className="mt-4 p-3 border border-yellow-200 bg-yellow-50 rounded text-sm text-yellow-800">
+              ⚠️ Currently showing sample data. Real-time metrics will be available once documents are processed.
+            </div>
+          ) : (
+            <div className="mt-4 p-3 border border-green-200 bg-green-50 rounded text-sm text-green-800">
+              ✅ Showing real metrics from {jobCount} processing jobs (last 24h)
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
