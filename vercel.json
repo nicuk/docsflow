@@ -7,7 +7,7 @@
   ],
   "functions": {
     "app/api/queue/worker/route.ts": {
-      "maxDuration": 60
+      "maxDuration": 300
     },
     "app/api/documents/upload/route.ts": {
       "maxDuration": 60

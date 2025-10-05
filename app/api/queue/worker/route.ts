@@ -246,20 +246,62 @@ async function processJob(
   try {
     console.log(`🚀 [JOB ${job.id}] Starting processing: ${job.filename}`);
     
-    // 1. Download file from Vercel Blob Storage (5-10x faster than Supabase!)
+    // 1. Download file from Vercel Blob Storage with retry logic
     console.log(`📥 [JOB ${job.id}] Downloading from Vercel Blob: ${job.file_path}`);
     const downloadStart = Date.now();
     
-    const response = await fetch(job.file_path); // file_path is now a Vercel Blob URL
+    let fileData: Blob | null = null;
+    let lastError: Error | null = null;
+    const maxRetries = 3;
+    const timeoutMs = 30000; // 30 second timeout per attempt
     
-    if (!response.ok) {
-      throw new Error(`Failed to download file: ${response.status} ${response.statusText}`);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`📥 [JOB ${job.id}] Download attempt ${attempt}/${maxRetries}`);
+        
+        // Add timeout to prevent hanging
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
+        
+        const response = await fetch(job.file_path, {
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        fileData = await response.blob();
+        const downloadDuration = Date.now() - downloadStart;
+        console.log(`✅ [JOB ${job.id}] Download successful in ${downloadDuration}ms (${fileData.size} bytes) on attempt ${attempt}`);
+        break; // Success!
+        
+      } catch (error: any) {
+        lastError = error;
+        const attemptDuration = Date.now() - downloadStart;
+        
+        if (error.name === 'AbortError') {
+          console.error(`⏱️ [JOB ${job.id}] Download timeout after ${timeoutMs}ms (attempt ${attempt}/${maxRetries})`);
+        } else {
+          console.error(`❌ [JOB ${job.id}] Download error (attempt ${attempt}/${maxRetries}):`, error.message);
+        }
+        
+        // Don't retry on last attempt
+        if (attempt < maxRetries) {
+          const backoffMs = attempt * 2000; // 2s, 4s backoff
+          console.log(`⏳ [JOB ${job.id}] Retrying in ${backoffMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+        }
+      }
     }
     
-    const fileData = await response.blob();
-    const downloadDuration = Date.now() - downloadStart;
+    if (!fileData) {
+      throw new Error(`Failed to download file after ${maxRetries} attempts: ${lastError?.message}`);
+    }
     
-    console.log(`✅ [JOB ${job.id}] Download successful in ${downloadDuration}ms (${fileData.size} bytes)`);
+    const totalDownloadDuration = Date.now() - downloadStart;
+    console.log(`📦 [JOB ${job.id}] Total download time: ${totalDownloadDuration}ms`);
     
     // 2. Process document with LangChain (replaces custom parsing)
     console.log(`📦 [JOB ${job.id}] Starting LangChain processing...`);
@@ -273,8 +315,8 @@ async function processJob(
       await processDocumentWithLangChain(
         job,
         fileData,
-        supabase
-      );
+      supabase
+    );
       
       const processingDuration = Date.now() - processingStart;
       console.log(`⚡ [JOB ${job.id}] LangChain processing completed in ${processingDuration}ms`);
@@ -546,8 +588,8 @@ async function processDocumentContent(
         .from('documents')
         .update({ processing_progress: 100 })
         .eq('id', job.document_id);
-        
-    } catch (error) {
+    
+  } catch (error) {
       console.error(`❌ [JOB ${job.id}] Pinecone ingestion failed:`, error);
       throw error; // Will trigger retry logic
     }

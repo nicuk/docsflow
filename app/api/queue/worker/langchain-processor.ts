@@ -118,42 +118,54 @@ Rules:
 
 Return raw content only.`;
 
-        console.log(`🌐 [JOB ${job.id}] Calling OpenRouter Gemini Vision API...`);
-        const visionResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://docsflow.app',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.0-flash-001', // Gemini 2.0 with vision support
-            messages: [{
-              role: 'user',
-              content: [
-                { type: 'text', text: visionPrompt },
-                { 
-                  type: 'image_url', 
-                  image_url: { 
-                    url: `data:${job.file_type};base64,${base64Image}` 
-                  } 
-                }
-              ]
-            }],
-          }),
-        });
+        console.log(`🌐 [JOB ${job.id}] Calling OpenRouter Gemini Vision API (120s timeout)...`);
+        const visionStartTime = Date.now();
         
-        console.log(`📨 [JOB ${job.id}] Vision API response status: ${visionResponse.status}`);
+        // Add 120s timeout to prevent hanging
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 120000); // 120 seconds
         
-        if (!visionResponse.ok) {
-          const errorText = await visionResponse.text();
-          console.error(`❌ [JOB ${job.id}] Vision API error: ${errorText}`);
-          throw new Error(`Gemini Vision API failed (${visionResponse.status}): ${errorText}`);
-        }
+        try {
+          const visionResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            signal: controller.signal,
+            headers: {
+              'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://docsflow.app',
+            },
+            body: JSON.stringify({
+              model: 'google/gemini-2.0-flash-001', // Gemini 2.0 with vision support
+              messages: [{
+                role: 'user',
+                content: [
+                  { type: 'text', text: visionPrompt },
+                  { 
+                    type: 'image_url', 
+                    image_url: { 
+                      url: `data:${job.file_type};base64,${base64Image}` 
+                    } 
+                  }
+                ]
+              }],
+            }),
+          });
+          clearTimeout(timeout);
+          
+          const visionDuration = Date.now() - visionStartTime;
+          console.log(`⏱️ [JOB ${job.id}] Vision API call took ${visionDuration}ms`);
         
-        const visionResult = await visionResponse.json();
-        console.log(`✅ [JOB ${job.id}] Vision API call completed`);
-        let extractedText = visionResult.choices?.[0]?.message?.content || '';
+          console.log(`📨 [JOB ${job.id}] Vision API response status: ${visionResponse.status}`);
+          
+          if (!visionResponse.ok) {
+            const errorText = await visionResponse.text();
+            console.error(`❌ [JOB ${job.id}] Vision API error: ${errorText}`);
+            throw new Error(`Gemini Vision API failed (${visionResponse.status}): ${errorText}`);
+          }
+          
+          const visionResult = await visionResponse.json();
+          console.log(`✅ [JOB ${job.id}] Vision API call completed`);
+          let extractedText = visionResult.choices?.[0]?.message?.content || '';
         
         if (!extractedText || extractedText.length < 10) {
           throw new Error('No text extracted from image - image may be blank or corrupted');
