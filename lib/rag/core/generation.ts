@@ -34,14 +34,16 @@ function getLLM(): ChatOpenAI {
       console.log('[Generation] Using OpenRouter (production mode)');
       console.log('[Generation] Model:', RAG_CONFIG.llm.model);
       console.log('[Generation] BaseURL:', RAG_CONFIG.openrouter.baseURL);
+      console.log('[Generation] API Key detected:', process.env.OPENROUTER_API_KEY ? 'YES' : 'NO');
       
       llmInstance = new ChatOpenAI({
-        openAIApiKey: process.env.OPENROUTER_API_KEY, // Use env var directly, not config
+        openAIApiKey: process.env.OPENROUTER_API_KEY,
         modelName: RAG_CONFIG.llm.model,
         temperature: RAG_CONFIG.llm.temperature,
         maxTokens: RAG_CONFIG.llm.maxTokens,
         configuration: {
           baseURL: RAG_CONFIG.openrouter.baseURL,
+          apiKey: process.env.OPENROUTER_API_KEY, // CRITICAL: Must also pass in configuration
           defaultHeaders: {
             'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://docsflow.app',
             'X-Title': 'DocsFlow AI',
