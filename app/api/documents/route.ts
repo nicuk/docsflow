@@ -158,7 +158,9 @@ export async function DELETE(request: NextRequest) {
     const storageProvider = document.metadata?.storage_provider;
     const legacyStoragePath = document.metadata?.storage_path; // Old Supabase storage
     
-    // 🎯 FIX: Delete from Vercel Blob if that's where it's stored
+    // 🎯 Delete file from storage (Vercel Blob or legacy Supabase)
+    console.log(`📁 [DELETE] Storage info - URL: ${storageUrl}, Provider: ${storageProvider}, Legacy: ${legacyStoragePath}`);
+    
     if (storageUrl && storageProvider === 'vercel-blob') {
       try {
         console.log(`📁 [DELETE] Attempting to delete from Vercel Blob: ${storageUrl}`);
@@ -168,21 +170,20 @@ export async function DELETE(request: NextRequest) {
         console.error('❌ [DELETE] Error deleting file from Vercel Blob:', storageError);
         // Continue anyway - file might already be deleted
       }
-    } else {
-      console.log(`⚠️ [DELETE] Storage info - URL: ${storageUrl}, Provider: ${storageProvider}, Legacy: ${legacyStoragePath}`);
-    }
-    // Legacy: Delete from Supabase storage if old format
-    else if (legacyStoragePath) {
+    } else if (legacyStoragePath) {
+      // Legacy: Delete from Supabase storage if old format
       const { error: storageError } = await supabase.storage
         .from('documents')
         .remove([legacyStoragePath]);
       
       if (storageError) {
-        console.error('Error deleting file from Supabase storage:', storageError);
+        console.error('❌ [DELETE] Error deleting file from Supabase storage:', storageError);
         // Continue anyway - file might already be deleted
       } else {
-        console.log(`📁 [DELETE] Deleted file from Supabase storage: ${legacyStoragePath}`);
+        console.log(`✅ [DELETE] Deleted file from Supabase storage: ${legacyStoragePath}`);
       }
+    } else {
+      console.log(`⚠️ [DELETE] No storage path found - file may have been manually deleted`);
     }
 
     // 2. Delete vectors from Pinecone
