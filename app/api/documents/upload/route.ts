@@ -124,6 +124,9 @@ export async function POST(request: NextRequest) {
     console.log(`[Documents Upload] Document record created: ${documentId}`);
     
     // 3. Create ingestion job for background processing
+    // Store file data directly in job to avoid CDN propagation issues
+    const fileDataBase64 = buffer.toString('base64');
+    
     const { data: job, error: jobError } = await supabase
       .from('ingestion_jobs')
       .insert({
@@ -131,13 +134,16 @@ export async function POST(request: NextRequest) {
         document_id: documentId,
         filename: file.name,
         file_size: buffer.length,
-        file_path: blob.url, // Store Vercel Blob URL
+        file_path: blob.url, // Store Vercel Blob URL (for reference/backup)
         file_type: file.type,
         status: 'pending',
         attempts: 0,
         max_attempts: 3,
         processing_metadata: {
-        created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          // Store file data directly to avoid Vercel Blob CDN propagation delays
+          file_data_base64: fileDataBase64,
+          direct_processing: true, // Flag to indicate worker should use embedded data
         }
       })
       .select()
