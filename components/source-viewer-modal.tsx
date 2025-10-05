@@ -56,7 +56,9 @@ export default function SourceViewerModal({ source, isOpen, onClose, highlightTe
       })
       
       if (!response.ok) {
-        throw new Error(`Failed to load document: ${response.statusText}`)
+        const errorData = await response.json().catch(() => ({}))
+        const errorMessage = errorData.error || response.statusText
+        throw new Error(`Failed to load document: ${errorMessage}`)
       }
       
       const data = await response.json()
