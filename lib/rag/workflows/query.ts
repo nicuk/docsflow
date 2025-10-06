@@ -63,13 +63,25 @@ export async function queryWorkflow(input: QueryInput): Promise<QueryResult> {
     console.log('[Query Workflow] Step 1: Generating embedding');
     const embedding = await generateEmbedding(input.query);
     
+    // 🎯 NEW: Detect if query mentions a specific filename
+    const filenamePattern = /\b([\w\-_]+(?:\s*\(\d+\))?\.(?:png|jpg|jpeg|pdf|docx|doc|txt|xlsx|xls|pptx|ppt|csv))\b/i;
+    const filenameMatch = input.query.match(filenamePattern);
+    const detectedFilename = filenameMatch ? filenameMatch[1] : null;
+    
+    // Merge detected filename with existing filter
+    let finalFilter = input.filter || {};
+    if (detectedFilename) {
+      console.log(`🎯 [FILENAME DETECTION] Query mentions file: "${detectedFilename}" - filtering results`);
+      finalFilter = { ...finalFilter, filename: detectedFilename };
+    }
+    
     // STEP 2: Retrieve relevant chunks
     console.log('[Query Workflow] Step 2: Retrieving chunks');
     const chunks = await retrieveChunks({
       embedding,
       tenantId: input.tenantId,
       topK: input.topK,
-      filter: input.filter,
+      filter: finalFilter, // ✅ Now includes filename filter if detected
     });
     
     // STEP 3: Calculate confidence
