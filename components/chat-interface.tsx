@@ -178,6 +178,9 @@ export default function ChatInterface() {
   const [suggestionsDisabledPermanently, setSuggestionsDisabledPermanently] = useState(false) // Track if user has permanently dismissed suggestions
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  // 🎯 REMOVED: JS-based scroll tracking refs (using CSS scroll anchoring instead)
+  // const isUserAtBottomRef = useRef(true)
+  // const shouldAutoScrollRef = useRef(true)
   
   // 🚀 NEW: Source viewer modal state
   const [selectedSource, setSelectedSource] = useState<any>(null)
@@ -278,20 +281,9 @@ export default function ChatInterface() {
     return () => clearInterval(interval)
   }, [])
 
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    // Immediate scroll
-    scrollToBottom()
-    
-    // Also delayed scroll to catch late-rendering content
-    const timer1 = setTimeout(() => scrollToBottom(), 100)
-    const timer2 = setTimeout(() => scrollToBottom(), 300)
-
-    return () => {
-      clearTimeout(timer1)
-      clearTimeout(timer2)
-    }
-  }, [messages])
+  // 🎯 REMOVED: No auto-scroll on messages change
+  // CSS overflow-anchor property handles maintaining position automatically
+  // User only scrolls when they explicitly send a message (see handleSendMessage)
 
   // Load user's conversations (enhanced with localStorage fallback)
   const loadConversations = async () => {
@@ -407,28 +399,19 @@ export default function ChatInterface() {
     setShowConversationHistory(false)
   }
 
-  // Simple scroll to bottom function - now using native div
+  // 🎯 SIMPLIFIED: Only scroll when user explicitly sends a message
+  // CSS scroll-anchoring handles the rest automatically
   const scrollToBottom = () => {
-    if (!scrollAreaRef.current) {
-      console.log('❌ scrollAreaRef is null')
-      return
-    }
+    if (!scrollAreaRef.current) return
     
-    // Direct access - no need to query for viewport since we're using native div
     const scrollContainer = scrollAreaRef.current
-    console.log('🔍 DEBUG - clientHeight:', scrollContainer.clientHeight, 'scrollHeight:', scrollContainer.scrollHeight)
-    console.log('✅ Scrolling - scrollHeight:', scrollContainer.scrollHeight, 'current scrollTop:', scrollContainer.scrollTop)
-    
-    // Scroll to bottom
     scrollContainer.scrollTop = scrollContainer.scrollHeight
-    
-    console.log('✅ After scroll - scrollTop:', scrollContainer.scrollTop)
   }
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return
 
-    // Scroll to bottom when user sends message
+    // Scroll to bottom when user sends message (they want to see their message and response)
     scrollToBottom()
 
     // Create new conversation if none exists
@@ -603,8 +586,7 @@ export default function ChatInterface() {
 
       setMessages((prev) => [...prev, aiResponse])
       
-      // Scroll to show the new AI response
-      scrollToBottom()
+      // 🎯 REMOVED: No forced scroll - CSS overflow-anchor keeps us at bottom naturally
       
       // Refresh conversations list to update message count and last activity
       await loadConversations()
@@ -820,7 +802,10 @@ Please try again in a moment. If the issue persists, you can still use the inter
               <div 
                 ref={scrollAreaRef} 
                 className="flex-1 px-2 py-2 w-full max-w-full overflow-y-auto overflow-x-hidden"
-                style={{ scrollBehavior: 'smooth' }}
+                style={{ 
+                  scrollBehavior: 'smooth',
+                  overflowAnchor: 'auto' // 🎯 CSS scroll anchoring: stays at bottom naturally when new content arrives
+                }}
               >
                 <div className="space-y-2 w-full max-w-full overflow-x-hidden box-border pr-2 pb-20">
                   {messages.map((message) => (
