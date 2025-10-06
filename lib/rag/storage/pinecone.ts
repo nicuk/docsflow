@@ -42,18 +42,34 @@ class PineconeStorage implements VectorStorage {
   }
   
   /**
-   * Query vectors by similarity
+   * Query vectors by similarity (HYBRID SEARCH)
    */
   async query(input: QueryInput): Promise<QueryResult[]> {
     try {
-      console.log(`[Pinecone] Querying namespace: ${input.namespace}, topK: ${input.topK}`);
+      const searchType = input.sparseVector ? 'HYBRID' : 'DENSE';
+      console.log(`[Pinecone] ${searchType} querying namespace: ${input.namespace}, topK: ${input.topK}`);
       
-      const response = await this.index.namespace(input.namespace).query({
+      // Build query params
+      const queryParams: any = {
         vector: input.vector,
         topK: input.topK,
         filter: input.filter,
         includeMetadata: input.includeMetadata ?? true,
-      });
+      };
+      
+      // Add sparse vector for hybrid search
+      if (input.sparseVector && input.sparseVector.indices.length > 0) {
+        queryParams.sparseVector = input.sparseVector;
+        
+        // Alpha balances dense vs sparse (0.5 = equal weight)
+        if (input.alpha !== undefined) {
+          queryParams.alpha = input.alpha;
+        }
+        
+        console.log(`[Pinecone] Hybrid search enabled (sparse terms: ${input.sparseVector.indices.length}, alpha: ${input.alpha || 0.5})`);
+      }
+      
+      const response = await this.index.namespace(input.namespace).query(queryParams);
       
       const results: QueryResult[] = (response.matches || []).map(match => ({
         id: match.id,
@@ -74,11 +90,14 @@ class PineconeStorage implements VectorStorage {
   }
   
   /**
-   * Upsert vectors (insert or update)
+   * Upsert vectors (insert or update) - HYBRID SEARCH SUPPORT
    */
   async upsert(input: UpsertInput): Promise<UpsertResult> {
     try {
-      console.log(`[Pinecone] Upserting ${input.vectors.length} vectors to namespace: ${input.namespace}`);
+      const hasHybrid = input.vectors.some(v => v.sparseValues);
+      const vectorType = hasHybrid ? 'HYBRID (dense + sparse)' : 'DENSE only';
+      
+      console.log(`[Pinecone] Upserting ${input.vectors.length} ${vectorType} vectors to namespace: ${input.namespace}`);
       
       await this.index.namespace(input.namespace).upsert(input.vectors);
       

@@ -47,10 +47,11 @@ export const RAG_CONFIG = {
     ],
   },
   
-  // Retrieval
+  // Retrieval (HYBRID SEARCH)
   retrieval: {
     topK: 5, // Number of chunks to retrieve
-    minScore: 0.20, // Minimum cosine similarity (lowered to 0.20 for generic/vague queries)
+    minScore: 0.25, // Minimum hybrid score (semantic + keyword)
+    hybridAlpha: 0.5, // Balance: 0=pure semantic, 1=pure keyword, 0.5=equal weight
   },
   
   // Pinecone

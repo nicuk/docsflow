@@ -13,6 +13,7 @@
  */
 
 import { generateEmbedding } from '../core/embeddings';
+import { generateSparseVector, boostKeywords } from '../core/sparse-vectors';
 import { retrieveChunks, type RetrievedChunk } from '../core/retrieval';
 import { generateAnswer } from '../core/generation';
 import { calculateConfidence, isSufficientConfidence } from '../utils/confidence';
@@ -59,33 +60,39 @@ export async function queryWorkflow(input: QueryInput): Promise<QueryResult> {
     console.log(`[Query Workflow] Starting query: "${input.query}"`);
     console.log(`[Query Workflow] Tenant: ${input.tenantId}`);
     
-    // STEP 1: Generate query embedding
-    console.log('[Query Workflow] Step 1: Generating embedding');
+    // STEP 1: Generate dense + sparse vectors (HYBRID SEARCH)
+    console.log('[Query Workflow] Step 1: Generating hybrid vectors');
     const embedding = await generateEmbedding(input.query);
+    
+    // Generate sparse vector for keyword matching
+    let sparseVector = generateSparseVector(input.query);
     
     // 🎯 NEW: Detect if query mentions a specific filename
     const filenamePattern = /\b([\w\-_]+(?:\s*\(\d+\))?\.(?:png|jpg|jpeg|pdf|docx|doc|txt|xlsx|xls|pptx|ppt|csv))\b/i;
     const filenameMatch = input.query.match(filenamePattern);
     const detectedFilename = filenameMatch ? filenameMatch[1] : null;
     
-    // Merge detected filename with existing filter
+    // Boost filename terms in sparse vector for better matching
+    if (detectedFilename) {
+      console.log(`🎯 [FILENAME DETECTION] Query mentions file: "${detectedFilename}" - boosting keywords`);
+      sparseVector = boostKeywords(sparseVector, [detectedFilename], 3.0);
+    }
+    
+    // Merge detected filename with existing filter (fallback)
     let finalFilter = input.filter || {};
     if (detectedFilename) {
-      console.log(`🎯 [FILENAME DETECTION] Query mentions file: "${detectedFilename}" - filtering results`);
       finalFilter = { ...finalFilter, filename: detectedFilename };
     }
     
-    // STEP 2: Retrieve relevant chunks
-    console.log('[Query Workflow] Step 2: Retrieving chunks');
-    // ✅ When filename is detected, use lower threshold (0.1 instead of 0.2)
-    // because we KNOW user wants this specific file
-    const minScore = detectedFilename ? 0.1 : undefined; // undefined = use default 0.2
+    // STEP 2: Retrieve relevant chunks with HYBRID SEARCH
+    console.log('[Query Workflow] Step 2: Retrieving chunks with hybrid search');
     const chunks = await retrieveChunks({
       embedding,
+      sparseVector, // HYBRID SEARCH: keyword matching
       tenantId: input.tenantId,
       topK: input.topK,
-      filter: finalFilter, // ✅ Now includes filename filter if detected
-      minScore, // ✅ Lower threshold for filename queries
+      filter: finalFilter,
+      alpha: 0.5, // 50% semantic + 50% keyword
     });
     
     // STEP 3: Calculate confidence
@@ -97,6 +104,7 @@ export async function queryWorkflow(input: QueryInput): Promise<QueryResult> {
     console.log(`[Query Workflow] Confidence: ${confidence}% (${chunks.length} chunks)`);
     
     // STEP 4: Check if confident enough
+    // With hybrid search, we should get better results, so use standard threshold
     if (!isSufficientConfidence(confidence) || chunks.length === 0) {
       const duration = Date.now() - startTime;
       console.log(`[Query Workflow] Abstaining due to low confidence (${confidence}%)`);

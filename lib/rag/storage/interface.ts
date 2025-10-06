@@ -3,7 +3,16 @@
  * 
  * Defines the contract for vector storage implementations.
  * Allows swapping Pinecone for other vector DBs (Qdrant, Weaviate, etc.) later.
+ * 
+ * HYBRID SEARCH SUPPORT:
+ * - Dense vectors (semantic): Standard embeddings
+ * - Sparse vectors (keyword): BM25-style term weights
  */
+
+export interface SparseVector {
+  indices: number[];
+  values: number[];
+}
 
 export interface VectorMetadata {
   documentId: string;
@@ -17,16 +26,19 @@ export interface VectorMetadata {
 
 export interface Vector {
   id: string;
-  values: number[];
+  values: number[]; // Dense vector (embeddings)
+  sparseValues?: SparseVector; // Sparse vector (keywords) - HYBRID SEARCH
   metadata: VectorMetadata;
 }
 
 export interface QueryInput {
-  vector: number[];
+  vector: number[]; // Dense vector (embeddings)
+  sparseVector?: SparseVector; // Sparse vector (keywords) - HYBRID SEARCH
   namespace: string;
   topK: number;
   filter?: Record<string, any>;
   includeMetadata?: boolean;
+  alpha?: number; // Balance between dense (0) and sparse (1) - default 0.5
 }
 
 export interface QueryResult {

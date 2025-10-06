@@ -36,14 +36,17 @@ export function calculateConfidence(chunks: ScoredChunk[]): number {
 /**
  * Determine if confidence is sufficient for answering
  * 
- * Threshold: 20% (0.2 cosine similarity) - aligned with retrieval minScore
- * - Below 20%: Abstain (not confident enough)
- * - Above 20%: Answer (confident)
+ * Threshold: 30% (0.3 hybrid score)
+ * - Below 30%: Abstain (not confident enough)
+ * - Above 30%: Answer (confident)
  * 
- * Lowered from 30% to 20% to handle generic/vague queries that still have relevant content.
+ * HYBRID SEARCH: Raised from 20% to 30% because hybrid search combines:
+ * - Semantic similarity (dense vector)
+ * - Keyword matching (sparse vector)
+ * Result: Better quality matches, so we can require higher confidence
  */
 export function isSufficientConfidence(confidence: number): boolean {
-  return confidence >= 20;
+  return confidence >= 30;
 }
 
 /**

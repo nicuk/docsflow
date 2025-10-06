@@ -1,13 +1,14 @@
 /**
  * Retrieval Operations
  * 
- * Semantic search using Pinecone vector storage.
- * Atomic operation: query vector → relevant chunks
+ * HYBRID SEARCH: Combines semantic (dense) + keyword (sparse) search
+ * Atomic operation: (dense vector + sparse vector) → relevant chunks
  */
 
 import { queryVectors } from '../storage/pinecone';
 import { RetrievalError } from '../utils/errors';
 import { RAG_CONFIG } from '../config';
+import type { SparseVector } from '../storage/interface';
 
 export interface RetrievedChunk {
   id: string;
@@ -24,22 +25,26 @@ export interface RetrievedChunk {
 }
 
 /**
- * Retrieve relevant chunks using semantic search
+ * Retrieve relevant chunks using HYBRID SEARCH
  * 
- * @param embedding - Query embedding vector
+ * @param embedding - Query embedding vector (dense)
+ * @param sparseVector - Query sparse vector (keywords) - OPTIONAL for hybrid search
  * @param tenantId - Tenant ID for namespace isolation
  * @param topK - Number of results to return (default: 5)
  * @param filter - Optional metadata filter
+ * @param alpha - Balance between dense (0) and sparse (1) search - default 0.5
  * @returns Array of relevant chunks with scores
  */
 export async function retrieveChunks(input: {
   embedding: number[];
+  sparseVector?: SparseVector; // HYBRID SEARCH support
   tenantId: string;
   topK?: number;
   filter?: Record<string, any>;
   minScore?: number; // ✅ Allow custom threshold
+  alpha?: number; // Balance between dense and sparse (default 0.5)
 }): Promise<RetrievedChunk[]> {
-  const { embedding, tenantId, topK = RAG_CONFIG.retrieval.topK, filter, minScore } = input;
+  const { embedding, sparseVector, tenantId, topK = RAG_CONFIG.retrieval.topK, filter, minScore, alpha } = input;
   
   if (!embedding || embedding.length !== RAG_CONFIG.embeddings.dimensions) {
     throw new RetrievalError(
@@ -52,14 +57,17 @@ export async function retrieveChunks(input: {
   }
   
   try {
-    console.log(`[Retrieval] Searching tenant: ${tenantId}, topK: ${topK}`);
+    const searchType = sparseVector ? 'HYBRID' : 'DENSE';
+    console.log(`[Retrieval] ${searchType} searching tenant: ${tenantId}, topK: ${topK}`);
     
     const results = await queryVectors({
       vector: embedding,
+      sparseVector, // HYBRID SEARCH: Add sparse vector if provided
       namespace: tenantId, // Multi-tenant isolation ✅
       topK,
       filter,
       includeMetadata: true,
+      alpha, // Balance between dense and sparse
     });
     
     // Transform to our interface

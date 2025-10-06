@@ -272,13 +272,28 @@ Return raw content only.`;
     
     // Use our custom embeddings (OpenRouter-compatible)
     const { generateEmbeddings } = await import('@/lib/rag/core/embeddings');
+    const { generateWeightedSparseVector } = await import('@/lib/rag/core/sparse-vectors');
+    
     const texts = enhancedChunks.map(chunk => chunk.pageContent);
     const embeddingVectors = await generateEmbeddings(texts);
     
-    console.log(`✅ [JOB ${job.id}] Generated ${embeddingVectors.length} embeddings`);
+    console.log(`✅ [JOB ${job.id}] Generated ${embeddingVectors.length} dense embeddings`);
+    
+    // STEP 3.5: Generate sparse vectors for HYBRID SEARCH
+    console.log(`🔗 [JOB ${job.id}] Generating sparse vectors for hybrid search`);
+    
+    const sparseVectors = enhancedChunks.map((chunk) => {
+      // Weight filename 3x more than content for better filename matching
+      return generateWeightedSparseVector([
+        { text: chunk.metadata.filename || '', weight: 3.0 },
+        { text: chunk.pageContent, weight: 1.0 },
+      ]);
+    });
+    
+    console.log(`✅ [JOB ${job.id}] Generated ${sparseVectors.length} sparse vectors`);
     
     // STEP 4: Upsert to Pinecone
-    console.log(`💾 [JOB ${job.id}] Upserting to Pinecone`);
+    console.log(`💾 [JOB ${job.id}] Upserting to Pinecone with HYBRID vectors`);
     
     const pinecone = new Pinecone({
       apiKey: process.env.PINECONE_API_KEY!,
@@ -306,7 +321,8 @@ Return raw content only.`;
       
       return {
         id: `${job.document_id}_chunk_${index}`,
-        values: embeddingVectors[index],
+        values: embeddingVectors[index], // Dense vector (semantic)
+        sparseValues: sparseVectors[index], // Sparse vector (keyword) - HYBRID SEARCH
         metadata: {
           text: chunk.pageContent, // Content for retrieval
           ...cleanMetadata, // Only simple metadata values
