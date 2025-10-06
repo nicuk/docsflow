@@ -84,15 +84,18 @@ export async function queryWorkflow(input: QueryInput): Promise<QueryResult> {
       finalFilter = { ...finalFilter, filename: detectedFilename };
     }
     
-    // STEP 2: Retrieve relevant chunks with HYBRID SEARCH
-    console.log('[Query Workflow] Step 2: Retrieving chunks with hybrid search');
-    const chunks = await retrieveChunks({
-      embedding,
-      sparseVector, // HYBRID SEARCH: keyword matching
+    // STEP 2: Retrieve relevant chunks with HIERARCHICAL + HYBRID SEARCH (Phase 1B)
+    console.log('[Query Workflow] Step 2: Retrieving chunks with hierarchical + hybrid search');
+    
+    // Use hierarchical retrieval (2-stage: document-level → chunk-level)
+    const { hierarchicalRetrieve } = await import('../core/hierarchical-retrieval');
+    const chunks = await hierarchicalRetrieve({
+      query: input.query,
       tenantId: input.tenantId,
-      topK: input.topK,
+      topK: input.topK || 5,
+      topDocs: 10, // Search within top 10 relevant documents (from 100)
       filter: finalFilter,
-      alpha: 0.5, // 50% semantic + 50% keyword
+      minScore: detectedFilename ? 0.1 : 0.25, // Lower threshold for filename queries
     });
     
     // STEP 3: Calculate confidence

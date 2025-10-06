@@ -402,22 +402,62 @@ export class MultimodalDocumentParser {
   
   private async createChunks(text: string, tables: any[]): Promise<DocumentChunk[]> {
     const chunks: DocumentChunk[] = [];
-    const chunkSize = 1000; // Characters per chunk
-    const overlap = 100; // Overlap between chunks
     
-    // Create text chunks
-    for (let i = 0; i < text.length; i += chunkSize - overlap) {
-      const chunk = text.substring(i, i + chunkSize);
+    // ✅ PHASE 0: Semantic chunking by sentence boundaries
+    // Instead of cutting at arbitrary character positions, we chunk by sentences
+    // Target: 500-700 tokens per chunk with 50-100 token overlap
+    
+    // Split text into sentences (handle multiple punctuation marks)
+    const sentences = text.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g) || [text];
+    
+    let currentChunk = '';
+    let currentTokens = 0;
+    const maxTokens = 700;
+    const minTokens = 500;
+    const overlapTokens = 75; // ~50-100 token overlap
+    
+    for (const sentence of sentences) {
+      const sentenceTokens = this.estimateTokens(sentence);
+      
+      // If adding this sentence exceeds max AND we're above min, save chunk
+      if (currentTokens + sentenceTokens > maxTokens && currentTokens >= minTokens) {
+        // Save current chunk
+        chunks.push({
+          content: currentChunk.trim(),
+          type: 'text',
+          metadata: {
+            tokens: currentTokens,
+            sentences: currentChunk.split(/[.!?]+/).length
+          },
+          position: chunks.length
+        });
+        
+        // Start new chunk with overlap (last N tokens from previous chunk)
+        const words = currentChunk.split(/\s+/);
+        const overlapWords = words.slice(-Math.floor(overlapTokens * 0.75));
+        currentChunk = overlapWords.join(' ') + ' ' + sentence;
+        currentTokens = this.estimateTokens(currentChunk);
+      } else {
+        // Add sentence to current chunk
+        currentChunk += (currentChunk ? ' ' : '') + sentence;
+        currentTokens += sentenceTokens;
+      }
+    }
+    
+    // Add final chunk if there's content left
+    if (currentChunk.trim()) {
       chunks.push({
-        content: chunk,
+        content: currentChunk.trim(),
         type: 'text',
         metadata: {
-          start: i,
-          end: Math.min(i + chunkSize, text.length)
+          tokens: currentTokens,
+          sentences: currentChunk.split(/[.!?]+/).length
         },
         position: chunks.length
       });
     }
+    
+    console.log(`✅ [Semantic Chunking] Created ${chunks.length} chunks (avg ${Math.round(chunks.reduce((sum, c) => sum + (c.metadata.tokens || 0), 0) / chunks.length)} tokens per chunk)`);
     
     // Add table chunks
     for (const table of tables) {
@@ -426,13 +466,22 @@ export class MultimodalDocumentParser {
         type: 'table',
         metadata: {
           tableType: table.type,
-          rows: table.rows
+          rows: table.rows,
+          tokens: this.estimateTokens(table.content)
         },
         position: chunks.length
       });
     }
     
     return chunks;
+  }
+  
+  /**
+   * Estimate token count for text
+   * Rough approximation: 1 token ≈ 4 characters (English text)
+   */
+  private estimateTokens(text: string): number {
+    return Math.ceil(text.length / 4);
   }
   
   // Method to generate embeddings for chunks (to be called separately)

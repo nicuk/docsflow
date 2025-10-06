@@ -267,6 +267,41 @@ Return raw content only.`;
     // Skip progress update - handled by route.ts after job completes
     console.log(`📊 [JOB ${job.id}] Chunks ready for embedding (${chunks.length} chunks)`);
     
+    // STEP 2.5: Generate document summary for hierarchical retrieval (Phase 1A)
+    console.log(`📝 [JOB ${job.id}] Generating document summary for hierarchical retrieval...`);
+    try {
+      const { generateDocumentSummary } = await import('@/lib/rag/core/summarization');
+      
+      // Combine all chunk content to get full document text
+      const fullText = enhancedChunks.map(c => c.pageContent).join('\n\n');
+      const wordCount = fullText.split(/\s+/).length;
+      
+      const summary = await generateDocumentSummary({
+        text: fullText,
+        filename: job.filename,
+        wordCount,
+        mimeType: job.file_type,
+      });
+      
+      // Save summary to database
+      const { error: updateError } = await supabase
+        .from('documents')
+        .update({
+          summary,
+          summary_generated_at: new Date().toISOString(),
+        })
+        .eq('id', job.document_id);
+      
+      if (updateError) {
+        console.error(`⚠️ [JOB ${job.id}] Failed to save summary:`, updateError);
+      } else {
+        console.log(`✅ [JOB ${job.id}] Summary saved: "${summary.slice(0, 80)}..."`);
+      }
+    } catch (summaryError) {
+      // Non-critical error - don't fail the job
+      console.error(`⚠️ [JOB ${job.id}] Summary generation failed (non-critical):`, summaryError);
+    }
+    
     // STEP 3: Generate embeddings with our custom OpenRouter-compatible function
     console.log(`🔗 [JOB ${job.id}] Generating embeddings via OpenRouter`);
     
