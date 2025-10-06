@@ -55,21 +55,40 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   try {
     console.log(`[Embeddings] Generating single embedding (${text.length} chars) via ${config.baseURL}`);
     
-    const response = await fetch(`${config.baseURL}/embeddings`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${config.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: config.model,
-        input: text,
-      }),
-    });
+    // Add 30s timeout to prevent hanging
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`API error (${response.status}): ${errorText}`);
+    try {
+      const response = await fetch(`${config.baseURL}/embeddings`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${config.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: config.model,
+          input: text,
+        }),
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeout);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API error (${response.status}): ${errorText}`);
+      }
+    } catch (fetchError: any) {
+      clearTimeout(timeout);
+      if (fetchError.name === 'AbortError') {
+        throw new EmbeddingError('Embeddings API timeout (30s)', { text: text.substring(0, 100) });
+      }
+      console.error(`[Embeddings] Fetch error:`, fetchError);
+      throw new EmbeddingError(`Network error: ${fetchError.message}`, { 
+        baseURL: config.baseURL,
+        error: fetchError.message 
+      });
     }
     
     const data = await response.json();
