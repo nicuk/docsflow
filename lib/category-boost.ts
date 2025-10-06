@@ -4,12 +4,16 @@
  */
 
 interface SearchResult {
-  id: string;
   content: string;
-  metadata?: any;
-  vectorScore?: number;
-  keywordScore?: number;
+  source?: string;
+  document_id?: string;
+  documentId?: string;
+  filename?: string;
+  score?: number;
   hybridScore?: number;
+  confidence?: number;
+  metadata?: any;
+  provenance?: any;
 }
 
 interface BoostOptions {
@@ -66,7 +70,8 @@ export function boostByCategory(
     // 🎯 Category Match: +0.2 boost (20% score increase)
     if (options.preferredCategory && docCategory === options.preferredCategory) {
       boost += 0.2;
-      console.log(`✅ [CATEGORY BOOST] Document "${result.id}" matches category "${options.preferredCategory}" (+0.2)`);
+      const docId = result.documentId || result.document_id || result.filename || 'unknown';
+      console.log(`✅ [CATEGORY BOOST] Document "${docId}" matches category "${options.preferredCategory}" (+0.2)`);
     }
     
     // 🎯 Tag Matches: +0.05 per matching tag (max +0.15)
@@ -75,20 +80,21 @@ export function boostByCategory(
       const tagBoost = Math.min(matchingTags.length * 0.05, 0.15);
       if (matchingTags.length > 0) {
         boost += tagBoost;
-        console.log(`✅ [TAG BOOST] Document "${result.id}" matches ${matchingTags.length} tags: [${matchingTags.join(', ')}] (+${tagBoost})`);
+        const docId = result.documentId || result.document_id || result.filename || 'unknown';
+        console.log(`✅ [TAG BOOST] Document "${docId}" matches ${matchingTags.length} tags: [${matchingTags.join(', ')}] (+${tagBoost})`);
       }
     }
     
     if (boost > 0) {
       // Apply boost to whichever score exists
-      const currentScore = result.hybridScore || result.vectorScore || result.keywordScore || 0;
+      const currentScore = result.hybridScore || result.confidence || result.score || 0;
       const boostedScore = Math.min(currentScore + boost, 1.0); // Cap at 1.0
       
       return {
         ...result,
         hybridScore: boostedScore,
-        vectorScore: result.vectorScore ? result.vectorScore + boost : result.vectorScore,
-        keywordScore: result.keywordScore ? result.keywordScore + boost : result.keywordScore,
+        confidence: result.confidence ? Math.min(result.confidence + boost, 1.0) : result.confidence,
+        score: result.score ? Math.min(result.score + boost, 1.0) : result.score,
         metadata: {
           ...result.metadata,
           __boost_applied: boost,

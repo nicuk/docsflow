@@ -245,14 +245,14 @@ export async function POST(request: NextRequest) {
     // 🎯 CATEGORY BOOST: Auto-detect query intent and boost matching categories
     if (ragResponse.sources && ragResponse.sources.length > 0) {
         const { applyCategoryLogic } = await import('@/lib/category-boost');
-        ragResponse.sources = applyCategoryLogic(ragResponse.sources, message, {
+        ragResponse.sources = applyCategoryLogic(ragResponse.sources as any, message, {
           autoDetect: true // Auto-detect category from query
-        });
+        }) as any;
         
         // Re-sort after boosting
         ragResponse.sources.sort((a, b) => {
-          const scoreA = a.hybridScore || a.vectorScore || a.keywordScore || 0;
-          const scoreB = b.hybridScore || b.vectorScore || b.keywordScore || 0;
+          const scoreA = a.hybridScore || a.confidence || 0;
+          const scoreB = b.hybridScore || b.confidence || 0;
           return scoreB - scoreA;
         });
         
