@@ -72,8 +72,9 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30000);
     
+    let response;
     try {
-      const response = await fetch(`${config.baseURL}/embeddings`, {
+      response = await fetch(`${config.baseURL}/embeddings`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${config.apiKey}`,
