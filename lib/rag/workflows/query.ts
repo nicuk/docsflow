@@ -77,11 +77,15 @@ export async function queryWorkflow(input: QueryInput): Promise<QueryResult> {
     
     // STEP 2: Retrieve relevant chunks
     console.log('[Query Workflow] Step 2: Retrieving chunks');
+    // ✅ When filename is detected, use lower threshold (0.1 instead of 0.2)
+    // because we KNOW user wants this specific file
+    const minScore = detectedFilename ? 0.1 : undefined; // undefined = use default 0.2
     const chunks = await retrieveChunks({
       embedding,
       tenantId: input.tenantId,
       topK: input.topK,
       filter: finalFilter, // ✅ Now includes filename filter if detected
+      minScore, // ✅ Lower threshold for filename queries
     });
     
     // STEP 3: Calculate confidence

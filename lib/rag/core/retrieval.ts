@@ -37,8 +37,9 @@ export async function retrieveChunks(input: {
   tenantId: string;
   topK?: number;
   filter?: Record<string, any>;
+  minScore?: number; // ✅ Allow custom threshold
 }): Promise<RetrievedChunk[]> {
-  const { embedding, tenantId, topK = RAG_CONFIG.retrieval.topK, filter } = input;
+  const { embedding, tenantId, topK = RAG_CONFIG.retrieval.topK, filter, minScore } = input;
   
   if (!embedding || embedding.length !== RAG_CONFIG.embeddings.dimensions) {
     throw new RetrievalError(
@@ -85,10 +86,11 @@ export async function retrieveChunks(input: {
       text: (c.content || c.metadata.text || '').substring(0, 50)
     })));
     
-    // Filter by minimum score
-    const filtered = chunks.filter(chunk => chunk.score >= RAG_CONFIG.retrieval.minScore);
+    // Filter by minimum score (use custom threshold if provided)
+    const effectiveMinScore = minScore ?? RAG_CONFIG.retrieval.minScore;
+    const filtered = chunks.filter(chunk => chunk.score >= effectiveMinScore);
     
-    console.log(`[Retrieval] Found ${chunks.length} results, ${filtered.length} above threshold (minScore: ${RAG_CONFIG.retrieval.minScore})`);
+    console.log(`[Retrieval] Found ${chunks.length} results, ${filtered.length} above threshold (minScore: ${effectiveMinScore})`);
     
     return filtered;
   } catch (error: any) {
