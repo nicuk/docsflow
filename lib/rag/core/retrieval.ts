@@ -32,7 +32,6 @@ export interface RetrievedChunk {
  * @param tenantId - Tenant ID for namespace isolation
  * @param topK - Number of results to return (default: 5)
  * @param filter - Optional metadata filter
- * @param alpha - Balance between dense (0) and sparse (1) search - default 0.5
  * @returns Array of relevant chunks with scores
  */
 export async function retrieveChunks(input: {
@@ -42,9 +41,8 @@ export async function retrieveChunks(input: {
   topK?: number;
   filter?: Record<string, any>;
   minScore?: number; // ✅ Allow custom threshold
-  alpha?: number; // Balance between dense and sparse (default 0.5)
 }): Promise<RetrievedChunk[]> {
-  const { embedding, sparseVector, tenantId, topK = RAG_CONFIG.retrieval.topK, filter, minScore, alpha } = input;
+  const { embedding, sparseVector, tenantId, topK = RAG_CONFIG.retrieval.topK, filter, minScore } = input;
   
   if (!embedding || embedding.length !== RAG_CONFIG.embeddings.dimensions) {
     throw new RetrievalError(
@@ -67,7 +65,6 @@ export async function retrieveChunks(input: {
       topK,
       filter,
       includeMetadata: true,
-      alpha, // Balance between dense and sparse
     });
     
     // Transform to our interface

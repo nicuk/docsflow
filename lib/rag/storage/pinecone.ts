@@ -61,12 +61,7 @@ class PineconeStorage implements VectorStorage {
       if (input.sparseVector && input.sparseVector.indices.length > 0) {
         queryParams.sparseVector = input.sparseVector;
         
-        // Alpha balances dense vs sparse (0.5 = equal weight)
-        if (input.alpha !== undefined) {
-          queryParams.alpha = input.alpha;
-        }
-        
-        console.log(`[Pinecone] Hybrid search enabled (sparse terms: ${input.sparseVector.indices.length}, alpha: ${input.alpha || 0.5})`);
+        console.log(`[Pinecone] Hybrid search enabled (sparse terms: ${input.sparseVector.indices.length})`);
       }
       
       const response = await this.index.namespace(input.namespace).query(queryParams);

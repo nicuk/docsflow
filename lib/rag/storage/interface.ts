@@ -38,7 +38,6 @@ export interface QueryInput {
   topK: number;
   filter?: Record<string, any>;
   includeMetadata?: boolean;
-  alpha?: number; // Balance between dense (0) and sparse (1) - default 0.5
 }
 
 export interface QueryResult {

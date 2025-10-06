@@ -51,7 +51,6 @@ export const RAG_CONFIG = {
   retrieval: {
     topK: 5, // Number of chunks to retrieve
     minScore: 0.25, // Minimum hybrid score (semantic + keyword)
-    hybridAlpha: 0.5, // Balance: 0=pure semantic, 1=pure keyword, 0.5=equal weight
   },
   
   // Pinecone

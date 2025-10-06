@@ -130,25 +130,25 @@ export async function hierarchicalRetrieve(
       ...filter,
       document_id: { $in: documentIds }, // ✅ Only search in relevant docs
     },
-    alpha: 0.5, // 50% semantic + 50% keyword
   });
   
-  if (!results.matches || results.matches.length === 0) {
+  if (!results || results.length === 0) {
     console.warn(`⚠️ [Hierarchical Stage 2] No chunks found in top documents`);
     return [];
   }
   
-  // Map Pinecone results to RetrievedChunk format
-  const chunks: RetrievedChunk[] = results.matches
-    .map(match => ({
-      content: match.metadata?.content as string || '',
-      score: match.score || 0,
+  // Map QueryResult[] to RetrievedChunk format
+  const chunks: RetrievedChunk[] = results
+    .map(result => ({
+      id: result.id,
+      content: result.metadata?.text as string || '',
+      score: result.score || 0,
       metadata: {
-        documentId: match.metadata?.document_id as string,
-        filename: match.metadata?.filename as string,
-        page: match.metadata?.page as number,
-        chunkIndex: match.metadata?.chunk_index as number,
-        tenantId: match.metadata?.tenant_id as string,
+        documentId: result.metadata?.document_id as string,
+        filename: result.metadata?.filename as string,
+        page: result.metadata?.page as number,
+        chunkIndex: result.metadata?.chunk_index as number,
+        tenantId: result.metadata?.tenant_id as string,
       },
     }))
     .filter(chunk => chunk.content && chunk.score >= minScore); // Filter by score
