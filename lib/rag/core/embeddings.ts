@@ -136,21 +136,44 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
     console.log(`[Embeddings] Generating batch embeddings for ${validTexts.length} texts via ${config.baseURL}`);
     const startTime = Date.now();
     
-    const response = await fetch(`${config.baseURL}/embeddings`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${config.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: config.model,
-        input: validTexts, // OpenAI API accepts array of strings for batch
-      }),
-    });
+    // Add 60s timeout for batch operations (more texts = longer processing)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000);
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`API error (${response.status}): ${errorText}`);
+    let response;
+    try {
+      response = await fetch(`${config.baseURL}/embeddings`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${config.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: config.model,
+          input: validTexts, // OpenAI API accepts array of strings for batch
+        }),
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeout);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[Embeddings] Batch API error (${response.status}): ${errorText}`);
+        throw new Error(`Batch embeddings API error (${response.status}): ${errorText}`);
+      }
+    } catch (fetchError: any) {
+      clearTimeout(timeout);
+      if (fetchError.name === 'AbortError') {
+        console.error(`[Embeddings] Batch timeout after 60s`);
+        throw new EmbeddingError('Batch embeddings API timeout (60s)', { count: validTexts.length });
+      }
+      console.error(`[Embeddings] Batch fetch error:`, fetchError);
+      throw new EmbeddingError(`Network error during batch embeddings: ${fetchError.message}`, { 
+        baseURL: config.baseURL,
+        count: validTexts.length,
+        error: fetchError.message 
+      });
     }
     
     const data = await response.json();
