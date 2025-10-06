@@ -19,9 +19,18 @@ import { RAG_CONFIG } from '../config';
 
 /**
  * Get embeddings config (lazy-loaded to ensure env vars are available)
+ * 
+ * Priority:
+ * 1. Vercel AI Gateway (production - more reliable)
+ * 2. Direct OpenAI (local dev)
  */
 function getEmbeddingsConfig() {
-  const useAIGateway = !!process.env.AI_GATEWAY_API_KEY && !!process.env.VERCEL_OIDC_TOKEN;
+  // Use AI Gateway if key is available (don't require OIDC token - it's auto-injected)
+  const hasAIGatewayKey = !!process.env.AI_GATEWAY_API_KEY;
+  const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
+  
+  // Always prefer AI Gateway in production (more reliable than direct OpenAI)
+  const useAIGateway = hasAIGatewayKey;
   
   const config = {
     apiKey: useAIGateway ? process.env.AI_GATEWAY_API_KEY! : process.env.OPENAI_API_KEY!,
@@ -30,8 +39,12 @@ function getEmbeddingsConfig() {
   };
   
   if (!config.apiKey) {
-    throw new EmbeddingError('No API key found. Set OPENAI_API_KEY (local) or AI_GATEWAY_API_KEY (production)');
+    throw new EmbeddingError(
+      `No API key found. Available: AI_GATEWAY=${hasAIGatewayKey}, OPENAI=${hasOpenAIKey}`
+    );
   }
+  
+  console.log(`[Embeddings Config] Using ${useAIGateway ? 'AI Gateway' : 'Direct OpenAI'} (${config.baseURL})`);
   
   return config;
 }
