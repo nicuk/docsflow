@@ -79,9 +79,14 @@ export async function queryWorkflow(input: QueryInput): Promise<QueryResult> {
     }
     
     // Merge detected filename with existing filter (fallback)
-    let finalFilter = input.filter || {};
+    let finalFilter = input.filter;
     if (detectedFilename) {
-      finalFilter = { ...finalFilter, filename: detectedFilename };
+      finalFilter = { ...(input.filter || {}), filename: detectedFilename };
+    }
+    
+    // Convert empty filter to undefined (Pinecone rejects empty objects)
+    if (finalFilter && Object.keys(finalFilter).length === 0) {
+      finalFilter = undefined;
     }
     
     // STEP 2: Retrieve relevant chunks with HIERARCHICAL + HYBRID SEARCH (Phase 1B)
@@ -94,7 +99,7 @@ export async function queryWorkflow(input: QueryInput): Promise<QueryResult> {
       tenantId: input.tenantId,
       topK: input.topK || 5,
       topDocs: 10, // Search within top 10 relevant documents (from 100)
-      filter: finalFilter,
+      filter: finalFilter, // undefined or object with keys
       minScore: detectedFilename ? 0.1 : 0.25, // Lower threshold for filename queries
     });
     
