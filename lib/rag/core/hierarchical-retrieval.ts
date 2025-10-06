@@ -13,7 +13,7 @@
 
 import { generateEmbedding } from './embeddings';
 import { queryVectors } from '../storage/pinecone';
-import { getSupabaseAdmin } from '@/lib/supabase-server';
+import { createClient } from '@supabase/supabase-js';
 import type { RetrievedChunk } from './retrieval';
 
 export interface HierarchicalRetrievalInput {
@@ -41,7 +41,11 @@ export async function hierarchicalRetrieve(
   // ==================== STAGE 1: Document-Level Search ====================
   console.log(`📚 [Hierarchical Stage 1] Finding top ${topDocs} documents using summaries...`);
   
-  const supabase = getSupabaseAdmin();
+  // Use service role client to bypass RLS for document summaries
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
   
   // Get all documents with summaries for this tenant
   const { data: documents, error } = await supabase
