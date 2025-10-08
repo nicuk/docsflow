@@ -52,9 +52,11 @@ export const processDocumentWithLangChain = traceable(
   const totalStartTime = Date.now();
   
   try {
-    // Convert blob to buffer
+    // ⏱️ STEP 0: Convert blob to buffer
+    const step0Start = Date.now();
     const arrayBuffer = await fileData.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
+    console.log(`⏱️ [TIMING] [JOB ${job.id}] Step 0 (Blob→Buffer): ${Date.now() - step0Start}ms`);
     
     // Create temp file for LangChain loaders
     const tempDir = os.tmpdir();
@@ -62,9 +64,11 @@ export const processDocumentWithLangChain = traceable(
     fs.writeFileSync(tempFilePath, buffer);
     console.log(`📦 [JOB ${job.id}] Temp file created`);
     
-    // STEP 1: Load document with appropriate loader
+    // ⏱️ STEP 1: Load document with appropriate loader
+    const step1Start = Date.now();
     let docs: Document[];
     const mimeType = job.file_type || '';
+    console.log(`⏱️ [TIMING] [JOB ${job.id}] Starting Step 1 (Document Loading)...`);
     
     try {
       if (mimeType.includes('pdf')) {
@@ -225,8 +229,10 @@ Return raw content only.`;
       }
       
       console.log(`✅ [JOB ${job.id}] Document loaded: ${docs.length} pages`);
+      console.log(`⏱️ [TIMING] [JOB ${job.id}] Step 1 (Document Loading): ${Date.now() - step1Start}ms`);
     } catch (loadError) {
       console.error(`❌ [JOB ${job.id}] Loading failed:`, loadError);
+      console.log(`⏱️ [TIMING] [JOB ${job.id}] Step 1 (Document Loading) FAILED: ${Date.now() - step1Start}ms`);
       
       // 🚨 DO NOT CREATE FALLBACK GARBAGE!
       // Binary files (DOCX, PDF, images) will create garbage if read as UTF-8
@@ -234,7 +240,8 @@ Return raw content only.`;
       throw new Error(`Document loading failed: ${loadError instanceof Error ? loadError.message : 'Unknown error'}. File may be corrupted or in an unsupported format.`);
     }
     
-    // STEP 2: Smart chunking with RecursiveCharacterTextSplitter
+    // ⏱️ STEP 2: Smart chunking with RecursiveCharacterTextSplitter
+    const step2Start = Date.now();
     console.log(`✂️ [JOB ${job.id}] Splitting documents (smart chunking)`);
     const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: 1000,
@@ -244,6 +251,7 @@ Return raw content only.`;
     
     const chunks = await splitter.splitDocuments(docs);
     console.log(`✅ [JOB ${job.id}] Created ${chunks.length} chunks`);
+    console.log(`⏱️ [TIMING] [JOB ${job.id}] Step 2 (Chunking): ${Date.now() - step2Start}ms`);
     
     if (chunks.length === 0) {
       throw new Error('No chunks generated from document');
@@ -267,7 +275,8 @@ Return raw content only.`;
     // Skip progress update - handled by route.ts after job completes
     console.log(`📊 [JOB ${job.id}] Chunks ready for embedding (${chunks.length} chunks)`);
     
-    // STEP 2.5: Generate document summary for hierarchical retrieval (Phase 1A)
+    // ⏱️ STEP 2.5: Generate document summary for hierarchical retrieval (Phase 1A)
+    const step25Start = Date.now();
     console.log(`📝 [JOB ${job.id}] Generating document summary for hierarchical retrieval...`);
     try {
       const { generateDocumentSummary } = await import('@/lib/rag/core/summarization');
@@ -297,12 +306,15 @@ Return raw content only.`;
       } else {
         console.log(`✅ [JOB ${job.id}] Summary saved: "${summary.slice(0, 80)}..."`);
       }
+      console.log(`⏱️ [TIMING] [JOB ${job.id}] Step 2.5 (Summary Generation): ${Date.now() - step25Start}ms`);
     } catch (summaryError) {
       // Non-critical error - don't fail the job
       console.error(`⚠️ [JOB ${job.id}] Summary generation failed (non-critical):`, summaryError);
+      console.log(`⏱️ [TIMING] [JOB ${job.id}] Step 2.5 (Summary Generation) FAILED: ${Date.now() - step25Start}ms`);
     }
     
-    // STEP 3: Generate embeddings with our custom OpenRouter-compatible function
+    // ⏱️ STEP 3: Generate embeddings with our custom OpenRouter-compatible function
+    const step3Start = Date.now();
     console.log(`🔗 [JOB ${job.id}] Generating embeddings via OpenRouter`);
     
     // Use our custom embeddings (OpenRouter-compatible)
@@ -313,8 +325,10 @@ Return raw content only.`;
     const embeddingVectors = await generateEmbeddings(texts);
     
     console.log(`✅ [JOB ${job.id}] Generated ${embeddingVectors.length} dense embeddings`);
+    console.log(`⏱️ [TIMING] [JOB ${job.id}] Step 3 (Dense Embeddings): ${Date.now() - step3Start}ms`);
     
-    // STEP 3.5: Generate sparse vectors for HYBRID SEARCH
+    // ⏱️ STEP 3.5: Generate sparse vectors for HYBRID SEARCH
+    const step35Start = Date.now();
     console.log(`🔗 [JOB ${job.id}] Generating sparse vectors for hybrid search`);
     
     const sparseVectors = enhancedChunks.map((chunk) => {
@@ -326,8 +340,10 @@ Return raw content only.`;
     });
     
     console.log(`✅ [JOB ${job.id}] Generated ${sparseVectors.length} sparse vectors`);
+    console.log(`⏱️ [TIMING] [JOB ${job.id}] Step 3.5 (Sparse Vectors): ${Date.now() - step35Start}ms`);
     
-    // STEP 4: Upsert to Pinecone
+    // ⏱️ STEP 4: Upsert to Pinecone
+    const step4Start = Date.now();
     console.log(`💾 [JOB ${job.id}] Upserting to Pinecone with HYBRID vectors`);
     
     const pinecone = new Pinecone({
@@ -405,6 +421,15 @@ Return raw content only.`;
     }
     
     console.log(`✅ [JOB ${job.id}] Upserted ${vectors.length} vectors to Pinecone`);
+    console.log(`⏱️ [TIMING] [JOB ${job.id}] Step 4 (Pinecone Upsert): ${Date.now() - step4Start}ms`);
+    
+    // ⏱️ TOTAL TIMING SUMMARY
+    const totalDuration = Date.now() - totalStartTime;
+    console.log(`\n⏱️ ========== TIMING SUMMARY [JOB ${job.id}] ==========`);
+    console.log(`⏱️ Total Processing Time: ${totalDuration}ms (${(totalDuration / 1000).toFixed(1)}s)`);
+    console.log(`⏱️ File: ${job.filename} (${job.file_type})`);
+    console.log(`⏱️ Chunks: ${chunks.length}`);
+    console.log(`⏱️ ================================================\n`);
     
     console.log(`✅ [JOB ${job.id}] Pinecone ingestion complete:`);
     console.log(`   - Chunks processed: ${chunks.length}`);
