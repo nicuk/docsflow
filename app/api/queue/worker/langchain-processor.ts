@@ -61,7 +61,7 @@ export const processDocumentWithLangChain = traceable(
     
     try {
       if (mimeType.includes('pdf')) {
-        const { PDFLoader } = await import('langchain/document_loaders/fs/pdf');
+        const { PDFLoader } = await import('@langchain/community/document_loaders/fs/pdf');
         const loader = new PDFLoader(tempFilePath);
         docs = await loader.load();
       } else if (mimeType.includes('word') || mimeType.includes('docx') || mimeType.includes('msword')) {

@@ -6,10 +6,10 @@ import { verifyTenantAdmin } from '@/lib/auth/admin-verification';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  { params }: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params;
+    const { tenantId } = await params;
     
     // Validate tenant context
     const tenantValidation = await validateTenantContext(request, {
@@ -110,10 +110,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  { params }: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params;
+    const { tenantId } = await params;
     
     // Validate tenant context
     const tenantValidation = await validateTenantContext(request, {
@@ -279,10 +279,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  { params }: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params;
+    const { tenantId } = await params;
     
     // Validate tenant context
     const tenantValidation = await validateTenantContext(request, {

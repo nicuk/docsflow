@@ -73,6 +73,30 @@ export async function getTenantFromSubdomain(subdomain: string) {
   }
 }
 
+export async function validateAuth(request: NextRequest): Promise<{ tenantId: string | null; userId: string | null }> {
+  try {
+    const supabase = getSupabaseClient();
+
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader) {
+      return { tenantId: null, userId: null };
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+
+    if (error || !user) {
+      return { tenantId: null, userId: null };
+    }
+
+    const tenantId = request.headers.get('x-tenant-id') || user.user_metadata?.tenant_id || null;
+
+    return { tenantId, userId: user.id };
+  } catch {
+    return { tenantId: null, userId: null };
+  }
+}
+
 export function extractTenantFromRequest(request: NextRequest): string {
   const url = new URL(request.url);
   const subdomain = url.hostname.split('.')[0];
