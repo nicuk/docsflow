@@ -100,7 +100,7 @@ export default async function SubdomainPage({
                 </div>
               </CardHeader>
               <CardContent>
-                <Link href="https://v0-ai-saas-landing-page-lw.vercel.app/dashboard/chat" target="_blank">
+                <Link href="https://docsflow.app/dashboard/chat" target="_blank">
                   <Button className="w-full bg-blue-600 hover:bg-blue-700">
                     Start Conversation
                   </Button>
@@ -209,12 +209,12 @@ export default async function SubdomainPage({
             Ready to transform how your organization accesses information?
           </p>
           <div className="flex gap-4 justify-center">
-            <Link href="https://v0-ai-saas-landing-page-lw.vercel.app/dashboard" target="_blank">
+            <Link href="https://docsflow.app/dashboard" target="_blank">
               <Button size="lg" className="bg-blue-600 hover:bg-blue-700 px-8">
                 Launch AI Assistant
               </Button>
             </Link>
-            <Link href="https://v0-ai-saas-landing-page-lw.vercel.app" target="_blank">
+            <Link href="https://docsflow.app" target="_blank">
               <Button size="lg" variant="outline" className="px-8">
                 View Documentation
               </Button>

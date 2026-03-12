@@ -115,7 +115,7 @@ export interface WorkerConfig {
   max_retry_attempts: number;
 }
 
-// 🚀 PRO PLAN OPTIMIZED: Increased from 10→30 global, 2→5 per-tenant
+// Pro plan concurrency limits (30 global, 5 per-tenant)
 export const DEFAULT_WORKER_CONFIG: WorkerConfig = {
   global_max_concurrent: 30,        // 3x increase for Pro plan (was 10)
   per_tenant_max_concurrent: 5,     // 2.5x increase for Pro plan (was 2)

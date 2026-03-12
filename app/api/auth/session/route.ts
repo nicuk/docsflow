@@ -8,23 +8,11 @@ import { auth, currentUser } from '@clerk/nextjs/server';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Check if this is a Vercel bot request (skip logging for bots)
-    const userAgent = request.headers.get('user-agent') || '';
-    const isVercelBot = userAgent.includes('vercel-bot') || userAgent.includes('bot');
-
-    if (!isVercelBot) {
-      console.log(`🔍 [SESSION API] Request received from: ${request.headers.get('referer') || 'direct'}`);
-    }
-
-    // 🎯 CLERK: Get authentication state
+    // Get authentication state
     const { userId } = await auth();
     const user = await currentUser();
 
     if (!userId || !user) {
-      if (!isVercelBot) {
-        console.log(`❌ [SESSION API] No authenticated Clerk user`);
-      }
-      
       return NextResponse.json({
         authenticated: false,
         user: null,
@@ -59,14 +47,6 @@ export async function GET(request: NextRequest) {
       } : null,
       onboardingComplete,
     };
-
-    if (!isVercelBot) {
-      console.log(`✅ [SESSION API] Clerk user authenticated:`, {
-        email,
-        tenantId: tenantId || 'none',
-        onboardingComplete,
-      });
-    }
 
     return NextResponse.json(responseData);
 

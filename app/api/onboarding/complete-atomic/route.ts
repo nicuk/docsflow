@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     // Clean subdomain
     const cleanSubdomain = subdomain.toLowerCase().trim().replace(/[^a-z0-9-]/g, '');
     
-    // 🎯 CLERK: Get authenticated user
+    // Get authenticated user
     const { userId } = await auth();
     const user = await currentUser();
     
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     const accessLevel = isNewTenant ? 1 : (userRole === 'admin' ? 1 : 2);
     const role = accessLevel === 1 ? 'admin' : 'member';
 
-    // 🎯 CLERK-SUPABASE INTEGRATION: Map Clerk string ID to Supabase UUID
+    // Map Clerk string ID to Supabase UUID
     // Check if user already exists in Supabase (by email, since Clerk IDs aren't UUIDs)
     let supabaseUserId: string;
     
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
       isFirstUser: isNewTenant,
     });
 
-    // 🎯 SMART FALLBACK: Filter out gibberish responses before storing
+    // Filter out gibberish responses before storing
     let cleanedResponses = responses;
     let gibberishCount = 0;
     
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 🎯 CLERK: Update user metadata with tenant info AND Supabase user mapping
+    // Update user metadata with tenant info and Supabase user mapping
     const clerk = await clerkClient();
     await clerk.users.updateUserMetadata(userId, {
       publicMetadata: {

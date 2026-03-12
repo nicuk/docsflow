@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-// 🎯 RUNTIME FIX: Restore imports needed for build
+// Runtime imports needed for build
 import { google } from '@ai-sdk/google';
 import { generateText } from 'ai';
 import { getCORSHeaders } from '@/lib/utils';
 import { getTenantPrompt, calculateTenantConfidence } from '@/lib/tenant-prompts';
 import { ConfidenceScoring } from '@/lib/confidence-scoring';
-// 🆕 NEW: Pinecone + LangChain RAG Module
+// Pinecone + LangChain RAG module
 import { queryWorkflow } from '@/lib/rag';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
 import { CitationEnhancer } from '@/lib/citation-enhancer';
@@ -58,9 +58,8 @@ async function getTenantPersona(tenantId: string) {
       .from('tenant_ai_persona')
       .update({ last_used_at: new Date().toISOString() })
       .eq('tenant_id', tenantId)
-      .then(() => console.log(`✅ Persona last_used_at updated`));
+      .then(() => {});
     
-    console.log(`✅ Using custom persona for tenant ${tenantId}: ${persona.role}`);
     return persona;
     
   } catch (error) {
@@ -76,7 +75,7 @@ export async function POST(request: NextRequest) {
   try {
     // 🔒 SECURE: Validate tenant context (subdomain-based isolation)
     const tenantValidation = await validateTenantContext(request, {
-      requireAuth: true // ✅ PRODUCTION: Authentication enabled
+      requireAuth: true
     });
 
     if (!tenantValidation.isValid) {
@@ -91,10 +90,6 @@ export async function POST(request: NextRequest) {
 
     const tenantId = tenantValidation.tenantId!;
     const tenantSubdomain = tenantValidation.tenantData?.subdomain || 'unknown';
-    
-    console.log('Chat API - Subdomain:', tenantSubdomain, 'Tenant UUID:', tenantId);
-    console.log('🔍 [CHAT API v7] DEBUGGING RAG ABSTENTION: Request received for message processing');
-    console.log('🚨 [CHAT API v7] TENANT CONTEXT CHECK:', { tenantId, tenantSubdomain });
 
     // PLAN ENFORCEMENT: Check conversation limits
     try {
@@ -115,17 +110,15 @@ export async function POST(request: NextRequest) {
       // Continue with chat on error to avoid blocking users
     }
 
-    // 🎯 SURGICAL FIX: Establish authentication context for RAG database queries
-    // 🎯 CLERK MIGRATION: Authentication is handled by validateTenantContext
+    // Authentication is handled by validateTenantContext
     // No need to set Supabase session - RAG queries work with tenant_id directly
-    console.log('✅ [CHAT API] Using tenant-scoped queries (no session needed)');
 
     // Check if AI service is available
     if (!googleAI) {
       return NextResponse.json({ error: 'AI service not configured' }, { status: 500 });
     }
 
-    // 🚨 CIRCUIT BREAKER: Get AI circuit breaker
+    // Get AI circuit breaker
     const aiCircuitBreaker = CircuitBreakerFactory.getGoogleAI();
 
     // Parse request body
@@ -143,12 +136,11 @@ export async function POST(request: NextRequest) {
     // 🎭 LOAD PERSONA: Load once at start (used by gibberish check and later)
     const tenantPersona = await getTenantPersona(tenantId);
 
-    // 🎯 NEW: Detect gibberish and return fallback prompt
+    // Detect gibberish and return fallback prompt
     if (detectGibberish(message)) {
-      console.log('🚨 [GIBBERISH DETECTED] Query appears unclear:', message);
       const fallbackResponse = tenantPersona.fallback_prompt || getDefaultPersona().fallback_prompt;
       
-      // 🎯 METRICS: Log gibberish detection
+      // Log gibberish detection metrics
       logPersonaMetrics({
         tenant_id: tenantId,
         persona_role: tenantPersona.role,
@@ -180,11 +172,10 @@ export async function POST(request: NextRequest) {
       }, { headers: corsHeaders });
     }
 
-    // 🔍 METADATA QUERY DETECTION: Check if query is about document metadata (count, list)
+    // Check if query is about document metadata (count, list)
     const { isMetadataQuery, handleMetadataQuery } = await import('@/lib/metadata-query-detector');
     
     if (isMetadataQuery(message)) {
-      console.log('📊 [METADATA QUERY] Detected metadata query, bypassing RAG');
       const metadataResult = await handleMetadataQuery(message, tenantId);
       
       // Return metadata query result directly
@@ -199,19 +190,11 @@ export async function POST(request: NextRequest) {
     }
     
     // 🆕 NEW: Use Pinecone + LangChain RAG Module
-    console.log('🚀 [CHAT API v9] PINECONE MIGRATION: Querying new RAG module');
-    console.log('🔧 [CHAT API v9] Tenant:', tenantId, 'Query:', message);
-    
     const ragResult = await queryWorkflow({
       query: message,
       tenantId: tenantId,
       topK: 5, // Simplified: 5 chunks is optimal
     });
-    
-    console.log(`🤖 [RAG v9] New RAG: success: ${ragResult.success}, confidence: ${ragResult.confidence}%`);
-    console.log(`🎯 [RAG v9] Abstained: ${ragResult.abstained || false}, Reason: ${ragResult.reason || 'N/A'}`);
-    console.log(`📊 [RAG v9] Sources found: ${ragResult.sources?.length || 0} chunks`);
-    console.log(`⚡ [RAG v9] Duration: ${ragResult.metrics.duration}ms`);
     
     // Transform new result to match old structure (for compatibility)
     const ragResponse = {
@@ -242,7 +225,7 @@ export async function POST(request: NextRequest) {
       },
     };
     
-    // 🎯 CATEGORY BOOST: Auto-detect query intent and boost matching categories
+    // Auto-detect query intent and boost matching categories
     if (ragResponse.sources && ragResponse.sources.length > 0) {
         const { applyCategoryLogic } = await import('@/lib/category-boost');
         ragResponse.sources = applyCategoryLogic(ragResponse.sources as any, message, {
@@ -255,20 +238,13 @@ export async function POST(request: NextRequest) {
           const scoreB = b.hybridScore || b.confidence || 0;
           return scoreB - scoreA;
         });
-        
-        console.log(`🔍 [RAG v8] First chunk preview: "${ragResponse.sources[0].content?.substring(0, 100)}..."`);
-        const hasRevenue = ragResponse.sources[0].content?.toLowerCase().includes('revenue');
-        console.log(`💰 [RAG v8] First chunk contains 'revenue': ${hasRevenue}`);
     }
 
     // Handle RAG abstention (when confidence is too low)
     if (!ragResponse.success || ragResponse.abstained) {
-      console.log('🔄 [RAG ABSTENTION] RAG abstained due to low confidence');
-      console.log(`🔍 [RAG DEBUG] Abstention reason: ${ragResponse.reason}, confidence: ${ragResponse.confidence}`);
-
       // Original abstention response if fallback also fails
       return NextResponse.json({
-        response: ragResponse.response || 'I don\'t have enough information to answer this question confidently.', // 🎯 SURGICAL FIX: Frontend expects 'response' field
+        response: ragResponse.response || 'I don\'t have enough information to answer this question confidently.',
         sources: [],
         confidence: ragResponse.confidence || 0.3,
         confidence_level: 'low',
@@ -282,26 +258,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Build context for LLM generation
-    // 🎯 FIX: Properly extract document metadata from RAG sources
+    // Extract document metadata from RAG sources
     const context = ragResponse.sources?.map((source: any) => {
       const documentName = source.source || source.provenance?.source || source.metadata?.filename || 'Unknown Document';
       return {
         content: source.content || source.source || '',
         snippet: source.content?.substring(0, 200) || '', // First 200 chars for preview
         document: documentName, // For internal use
-        filename: documentName, // 🎯 FIX: Add for frontend compatibility
-        source: documentName,   // 🎯 FIX: Add for frontend compatibility
+        filename: documentName,
+        source: documentName,
         documentId: source.document_id || source.id || null, // Real UUID from chunks table
-        document_id: source.document_id || source.id || null, // 🎯 FIX: Add snake_case for frontend
+        document_id: source.document_id || source.id || null,
         page: source.provenance?.page || source.metadata?.page,
         confidence: source.confidence || source.rerankedScore || source.hybridScore || 0.7,
-        metadata: source.metadata // 🎯 FIX: Pass through original metadata
+        metadata: source.metadata
       };
     }) || [];
 
     if (context.length === 0) {
       return NextResponse.json({
-        response: 'I couldn\'t find any relevant information in your documents to answer this question.', // 🎯 SURGICAL FIX: Frontend expects 'response' field
+        response: 'I couldn\'t find any relevant information in your documents to answer this question.',
         sources: [],
         confidence: 0.2,
         confidence_level: 'very_low',
@@ -334,41 +310,33 @@ ${tenantPersona.custom_instructions || 'Provide a helpful, accurate answer based
     let answerText: string;
     let modelUsed: string;
     
-    // 🎯 SURGICAL: Classify query complexity before LLM selection
+    // Classify query complexity before LLM selection
     const complexityAnalysis = queryClassifier.classify(message);
-    console.log(`🎯 [COMPLEXITY CLASSIFIER] ${complexityAnalysis.reasoning}`);
-    console.log(`📊 [CLASSIFIER] Stats:`, queryClassifier.getStatistics());
     
-    // 🚨 SMART ROUTING: Select models based on complexity
+    // Select models based on complexity
     let selectedModels: string[];
     let shouldShowUpgradePrompt = false;
     
-    // 🎯 TEMPORARY: Default to allowing all tiers (subscription system not implemented yet)
+    // TODO: Default to allowing all tiers (subscription system not implemented yet)
     const hasPremiumAI = false; // TODO: Implement subscription tiers
     
     switch (complexityAnalysis.complexity) {
       case 'simple':
         selectedModels = MODEL_CONFIGS.SIMPLE;
-        console.log('🟢 [ROUTING] SIMPLE tier (Mistral-7B, fast & cheap)');
         break;
         
       case 'medium':
         selectedModels = MODEL_CONFIGS.MEDIUM;
-        console.log('🟡 [ROUTING] MEDIUM tier (Llama-3.1-8B, balanced)');
         break;
         
       case 'complex':
         if (hasPremiumAI) {
           // Use premium models (Claude) for Enterprise or Professional+Premium
           selectedModels = MODEL_CONFIGS.PREMIUM;
-          console.log('🔴 [ROUTING] COMPLEX tier with PREMIUM AI (Claude 3.5 Sonnet)');
-          console.warn(`⚠️ [COST ALERT] Using premium model (Claude) - $0.012/query`);
         } else {
           // Use best cheap model + show upgrade prompt
           selectedModels = MODEL_CONFIGS.COMPLEX;
           shouldShowUpgradePrompt = true;
-          console.log('🟡 [ROUTING] COMPLEX tier WITHOUT premium (best cheap model: qwen-2.5-7b)');
-          console.log('💡 [UPSELL] Will show upgrade prompt for Premium AI');
         }
         break;
         
@@ -383,19 +351,18 @@ ${tenantPersona.custom_instructions || 'Provide a helpful, accurate answer based
       }
       
       const llmResponse = await openRouterClient.generateWithFallback(
-        selectedModels, // 🎯 Use complexity-based model selection
+        selectedModels,
         messages,
         {
-          max_tokens: 600,  // 🎯 FIX: Increased to 600 to prevent truncated responses
+          max_tokens: 600,
           temperature: 0.1
         }
       );
       
       answerText = llmResponse.response;
       modelUsed = llmResponse.modelUsed;
-      console.log(`🤖 Chat response generated using ${modelUsed} (${llmResponse.fallbackCount} fallbacks)`);
       
-      // 🚨 COST TRACKING: Monitor model usage and costs
+      // Monitor model usage and costs
       const estimatedTokens = Math.ceil((message.length + answerText.length) / 4); // Rough estimate
       costMonitor.trackUsage(modelUsed, estimatedTokens, complexityAnalysis.complexity);
       
@@ -415,7 +382,6 @@ ${tenantPersona.custom_instructions || 'Provide a helpful, accurate answer based
       
       answerText = text;
       modelUsed = 'gemini-2.0-flash (emergency fallback)';
-      console.log('🚨 Used Gemini emergency fallback');
     }
 
     // 💡 Add upgrade prompt for complex queries without premium AI
@@ -431,7 +397,7 @@ ${tenantPersona.custom_instructions || 'Provide a helpful, accurate answer based
     
     const responseTime = Date.now() - startTime;
     
-    // 🎯 METRICS: Log persona usage and response quality (async, non-blocking)
+    // Log persona usage and response quality (async, non-blocking)
     logPersonaMetrics({
       tenant_id: tenantId,
       persona_role: tenantPersona.role,
@@ -453,7 +419,7 @@ ${tenantPersona.custom_instructions || 'Provide a helpful, accurate answer based
     
     // Return successful response
     return NextResponse.json({
-      response: citedResponse.text, // 🎯 SURGICAL FIX: Frontend expects 'response' field
+      response: citedResponse.text,
       sources: context,
       confidence: confidenceResult.score,
       confidence_level: confidenceResult.level,
@@ -465,7 +431,7 @@ ${tenantPersona.custom_instructions || 'Provide a helpful, accurate answer based
         response_time_ms: responseTime,
         source_count: context.length,
         tenant_subdomain: tenantSubdomain,
-        // 🎯 NEW: Add complexity classification metadata
+        // Complexity classification metadata
         query_complexity: complexityAnalysis.complexity,
         complexity_confidence: complexityAnalysis.confidence,
         complexity_factors: complexityAnalysis.factors,

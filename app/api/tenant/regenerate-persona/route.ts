@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       throw new Error('Invalid persona format generated');
     }
 
-    // 🎯 OPTIMIZATION: Score the generated persona
+    // Score the generated persona
     const businessOverview = currentPersona?.business_context || generatedPersona.business_context || '';
     const industry = currentPersona?.industry || generatedPersona.industry || 'general';
     
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     console.log(`📊 Generated persona quality score: ${score.overall}/10`);
     console.log(`💡 Suggestions:`, score.suggestions);
     
-    // 🎯 OPTIMIZATION: If score is below 7, improve it
+    // If score is below 7, improve it
     let finalPersona = generatedPersona;
     if (score.overall < 7) {
       console.log('🔧 Optimizing persona (score below 7)...');
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       console.log(`✅ Optimized persona score: ${improvedScore.overall}/10`);
     }
     
-    // 🎯 GENERATE SYSTEM PROMPTS: Create optimized RAG prompts from persona
+    // Generate system prompts: create optimized RAG prompts from persona
     const { system_prompt, fallback_prompt } = generatePersonaPrompts({
       role: finalPersona.role,
       tone: finalPersona.tone,

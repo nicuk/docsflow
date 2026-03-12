@@ -1,5 +1,4 @@
-// Simplified subdomains.ts for MVP - no Redis dependency
-// This will be replaced when we integrate with AI Lead Router backend
+// Subdomain resolution for multi-tenant routing
 
 export function isValidIcon(str: string) {
   if (str.length > 10) {

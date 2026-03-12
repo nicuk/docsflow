@@ -144,7 +144,7 @@ const implementationStatus = {
 
 **Architecture**:
 ```typescript
-// Repository 1: ai-lead-router-saas (Backend API Service)
+// Repository 1: docsflow-saas (Backend API Service)
 {
   purpose: "API service for multi-tenant document intelligence",
   deployment: "Vercel Functions (Serverless)",
@@ -235,7 +235,7 @@ interface AtomicSprint {
 
 **Deployment Architecture**:
 ```yaml
-# Backend Deployment (ai-lead-router-saas)
+# Backend Deployment (docsflow-saas)
 backend:
   platform: Vercel Functions
   trigger: Push to main branch
@@ -305,7 +305,7 @@ describe('API Contract Tests', () => {
 
 **Dependency Isolation**:
 ```json
-// ai-lead-router-saas/package.json
+// docsflow-saas/package.json
 {
   "dependencies": {
     "@google/generative-ai": "^0.1.0",

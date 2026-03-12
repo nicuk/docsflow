@@ -27,7 +27,7 @@ export class EnterpriseSessionManager {
    */
   static setUserSession(session: CrossSubdomainSession): void {
     try {
-      // SURGICAL FIX: Filter out empty subdomains to prevent cookie corruption
+      // Filter out empty subdomains to prevent cookie corruption
       const validTenants = session.activeTenants.filter(tenant => 
         tenant.subdomain && tenant.subdomain.length > 0 && tenant.subdomain !== ''
       );
@@ -46,10 +46,6 @@ export class EnterpriseSessionManager {
       
       // Set session cookie with proper domain for cross-subdomain access
       document.cookie = `${this.SESSION_COOKIE}=${encodeURIComponent(sessionData)}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
-      
-      console.log(`✅ [ENTERPRISE SESSION] Set cross-subdomain session for user: ${session.userEmail}`);
-      console.log(`🔍 [ENTERPRISE SESSION] Active tenants:`, validTenants.map(t => t.subdomain));
-      console.log(`🔍 [ENTERPRISE SESSION] Filtered out ${session.activeTenants.length - validTenants.length} invalid tenants`);
     } catch (error) {
       console.error(`🚨 [ENTERPRISE SESSION] Failed to set session:`, error);
     }
@@ -68,8 +64,6 @@ export class EnterpriseSessionManager {
       
       // Set tenant context cookie
       document.cookie = `${this.TENANT_CONTEXT_COOKIE}=${encodeURIComponent(tenantData)}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
-      
-      console.log(`✅ [ENTERPRISE SESSION] Set tenant context: ${subdomain} (${tenantId.substring(0, 8)}...)`);
     } catch (error) {
       console.error(`🚨 [ENTERPRISE SESSION] Failed to set tenant context:`, error);
     }
@@ -89,7 +83,6 @@ export class EnterpriseSessionManager {
       
       // Validate session structure
       if (!sessionData.userId || !sessionData.userEmail || !Array.isArray(sessionData.activeTenants)) {
-        console.warn(`⚠️ [ENTERPRISE SESSION] Invalid session structure, clearing`);
         this.clearSession();
         return null;
       }
@@ -119,7 +112,6 @@ export class EnterpriseSessionManager {
       
       // GRACEFUL SESSION VALIDATION: Return null for incomplete context instead of nuclear clear
       if (!tenantData.tenantId || !tenantData.subdomain) {
-        console.warn(`⚠️ [ENTERPRISE SESSION] Incomplete tenant context, skipping`);
         return null; // Return null instead of clearing everything
       }
       
@@ -151,7 +143,6 @@ export class EnterpriseSessionManager {
   static clearSession(): void {
     document.cookie = `${this.SESSION_COOKIE}=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
     document.cookie = `${this.TENANT_CONTEXT_COOKIE}=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-    console.log(`🔄 [ENTERPRISE SESSION] Cleared all session data`);
   }
   
   /**
@@ -159,7 +150,6 @@ export class EnterpriseSessionManager {
    */
   static clearTenantContext(): void {
     document.cookie = `${this.TENANT_CONTEXT_COOKIE}=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-    console.log(`🔄 [ENTERPRISE SESSION] Cleared tenant context`);
   }
   
   /**

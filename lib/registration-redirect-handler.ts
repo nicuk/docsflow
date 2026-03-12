@@ -1,7 +1,6 @@
 /**
- * ISOLATED REGISTRATION REDIRECT HANDLER
- * Surgical fix for registration redirect logic
- * Ensures proper redirect flow without disrupting existing code
+ * Registration redirect handler.
+ * Ensures proper redirect flow after registration.
  */
 
 interface RegistrationResult {
@@ -190,3 +189,7 @@ export class RegistrationRedirectHandler {
     }, 1500);
   }
 }
+
+
+
+

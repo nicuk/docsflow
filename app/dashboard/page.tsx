@@ -57,25 +57,25 @@ interface TenantContext {
 }
 
 export default function DashboardPage() {
-  // 🎯 CRITICAL FIX: Wait for Clerk to initialize before making API calls
+  // Wait for Clerk to initialize before making API calls
   const { isLoaded: isClerkLoaded } = useUser()
   
   const [searchQuery, setSearchQuery] = useState("")
   const [tenantContext, setTenantContext] = useState<TenantContext | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false) // Prevent multiple loads
-  // 🎯 CLERK MIGRATION: Removed isRedirecting/redirectMessage (legacy Supabase redirect logic)
+  
   const [realStats, setRealStats] = useState({
     documentsCount: 0,
     questionsCount: 0,
     hoursSaved: 0
   })
   
-  // 🚀 REACT QUERY: Automatic caching and background refetch
+  // React Query: automatic caching and background refetch
   const { data: documents = [], isLoading: isDocumentsLoading } = useDocuments(tenantContext?.tenantId)
   const { data: conversations = [], isLoading: isConversationsLoading } = useConversations(tenantContext?.tenantId)
   
-  // 🚀 MAIN DOMAIN REDIRECT CHECK: Show loading immediately
+  // Main domain redirect check: show loading immediately
   const [isMainDomain] = useState(() => {
     if (typeof window === 'undefined') return false
     return window.location.hostname === 'www.docsflow.app' || window.location.hostname === 'docsflow.app'
@@ -85,33 +85,27 @@ export default function DashboardPage() {
 
   // Load tenant context and check onboarding completion
   useEffect(() => {
-    // 🎯 CRITICAL FIX: Wait for Clerk to initialize before making any API calls
+    // Wait for Clerk to initialize before making any API calls
     if (!isClerkLoaded) {
-      console.log('⏳ [DASHBOARD] Waiting for Clerk to initialize...');
       return;
     }
     
-    // 🎯 SURGICAL FIX: Prevent useEffect from running multiple times after initial load
+    // Prevent useEffect from running multiple times after initial load
     if (hasLoadedOnce) {
-      console.log('⏭️ [DASHBOARD] Already loaded, skipping duplicate load');
       return;
     }
     
     const loadTenantContext = async () => {
       try {
-        console.log(`🔍 [DASHBOARD] Clerk initialized, starting loadTenantContext at ${new Date().toISOString()}`);
-        
-        // 🎯 CLERK MIGRATION: Removed RedirectHandler initialization (legacy Supabase logic)
+        // Clerk middleware handles all subdomain routing
         // Clerk middleware handles all subdomain routing
         
         // CRITICAL FIX: Check if on main domain and redirect before API calls
         const hostname = window.location.hostname;
-        console.log(`🔍 [DASHBOARD] Current hostname: ${hostname}`);
         
         if (hostname === 'www.docsflow.app' || hostname === 'docsflow.app') {
-          console.log('🔍 [DASHBOARD] Main domain detected, checking for tenant context...');
           
-          // 🎯 CLERK MIGRATION: Cookie redirect logic removed (Clerk handles routing)
+          
           
           // UNIFIED FIX: Use MultiTenantCookieManager for tenant detection
           const { MultiTenantCookieManager } = await import('@/lib/multi-tenant-cookie-manager');
@@ -121,17 +115,8 @@ export default function DashboardPage() {
           const userEmail = MultiTenantCookieManager.getCurrentUserEmail();
           const authToken = document.cookie.includes('access_token') || document.cookie.includes('sb-lhcopwwiqwjpzbdnjovo-auth-token');
           
-          console.log(`🔍 [DASHBOARD] Main domain auth state:`, {
-            hasTenantContexts: Object.keys(tenantContexts).length > 0,
-            currentTenant: currentTenant,
-            userEmail: userEmail,
-            totalTenants: Object.keys(tenantContexts).length,
-            authToken: authToken ? 'PRESENT' : 'MISSING'
-          });
-          
-          // 🎯 CLERK MIGRATION: Subdomain redirect handled by Clerk middleware
+          // Subdomain redirect
           if (authToken && currentTenant && currentTenant.length > 0) {
-            console.log(`🎯 [UNIFIED] Redirecting to tenant subdomain: ${currentTenant}`);
             window.location.href = `https://${currentTenant}.docsflow.app/dashboard`;
             return;
           }
@@ -140,11 +125,9 @@ export default function DashboardPage() {
           if (authToken && Object.keys(tenantContexts).length > 0) {
             const firstTenantSubdomain = Object.keys(tenantContexts)[0];
             if (firstTenantSubdomain && firstTenantSubdomain.length > 0) {
-              console.log(`🎯 [UNIFIED] Redirecting to first active tenant: ${firstTenantSubdomain}`);
               window.location.href = `https://${firstTenantSubdomain}.docsflow.app/dashboard`;
               return;
             } else {
-              console.warn(`⚠️ [ENTERPRISE] First tenant has invalid subdomain, will check API for tenant data before redirecting to login`);
               // Don't immediately redirect - let the API call below check for tenant data
               // This prevents premature redirects when tenant context cookie isn't set yet
             }
@@ -153,13 +136,11 @@ export default function DashboardPage() {
           // CRITICAL FIX: Check if user just logged in (give login page time to execute session bridge)
           const justLoggedIn = sessionStorage.getItem('just-logged-in');
           if (justLoggedIn) {
-            console.log('⏳ User just logged in, waiting for session bridge redirect...');
             sessionStorage.removeItem('just-logged-in');
             // Give login page time to execute its session bridge logic
             setTimeout(() => {
               // If still on main domain after 3 seconds, then redirect to onboarding
               if (window.location.hostname === 'docsflow.app' || window.location.hostname === 'www.docsflow.app') {
-                console.log('🔐 No tenant context on main domain, redirecting to onboarding');
                 window.location.href = '/onboarding';
               }
             }, 3000);
@@ -167,7 +148,6 @@ export default function DashboardPage() {
           }
           
           // No tenant context or not authenticated - redirect to onboarding
-          console.log('🔐 No tenant context on main domain, redirecting to onboarding');
           window.location.href = '/onboarding';
           return;
         }
@@ -186,25 +166,12 @@ export default function DashboardPage() {
 
         const userData = await response.json();
         
-        // DIAGNOSTIC LOGGING: Track tenant data to find where it's lost
-        console.log(`🔍 [DASHBOARD] Raw userData from API:`, {
-          email: userData.user?.email,
-          tenantId: userData.tenant?.id,
-          hasTenant: !!userData.tenant,
-          tenant: userData.tenant,
-          tenantSubdomain: userData.tenant?.subdomain
-        });
-        
-        // 🚨 CRITICAL FIX: If tenant data is missing from Clerk metadata, sync it from database
+        // If tenant data is missing from Clerk metadata, sync it from database
         if (!userData.tenant?.id) {
-          console.warn('⚠️ [DASHBOARD] Clerk metadata missing tenant ID - attempting auto-sync');
-          
           // We're already on a subdomain (sculptai.docsflow.app), so get tenant from subdomain
           const currentSubdomain = window.location.hostname.split('.')[0];
           
           if (currentSubdomain && currentSubdomain !== 'www' && currentSubdomain !== 'docsflow') {
-            console.log(`🔄 [DASHBOARD] Syncing metadata for subdomain: ${currentSubdomain}`);
-            
             try {
               // Call sync endpoint to update Clerk metadata from database
               const syncResponse = await fetch('/api/auth/sync-metadata', {
@@ -215,7 +182,6 @@ export default function DashboardPage() {
               });
               
               if (syncResponse.ok) {
-                console.log('✅ [DASHBOARD] Metadata synced successfully - reloading page');
                 // Reload page to get fresh metadata
                 window.location.reload();
                 return;
@@ -262,21 +228,18 @@ export default function DashboardPage() {
         );
         
         // Check for tenant subdomain redirect
-        // 🎯 CLERK MIGRATION: Tenant redirect handled by Clerk middleware
+        // Tenant redirect handled by Clerk middleware
         
         // Note: MultiTenantCookieManager doesn't need explicit user session setting
         // The tenant context includes all necessary user and tenant information
         
-        console.log(`✅ [DASHBOARD] Set unified tenant context for: ${userData.user?.email}`);
-        
-        // 🚀 OPTIMISTIC UI: Set tenant context immediately, load documents in background
+        // Set tenant context immediately, load documents in background
         setTenantContext(context);
         setIsLoading(false); // Show dashboard immediately
         setHasLoadedOnce(true); // Mark as loaded to prevent re-runs
         
-        // 🎯 REACT QUERY: Data will automatically load in background
+        // React Query data will automatically load in background
         // No manual API calls needed - React Query handles it
-        console.log('✅ [DASHBOARD] React Query will handle document loading automatically');
         
       } catch (error) {
         console.error('Failed to load tenant context:', error);
@@ -288,7 +251,7 @@ export default function DashboardPage() {
     loadTenantContext();
   }, [isClerkLoaded, hasLoadedOnce])
 
-  // 🚀 REACT QUERY: No manual data fetching needed
+  // No manual data fetching needed
   // Documents and conversations are automatically loaded via useDocuments/useConversations hooks
 
   // Industry-specific welcome messages
@@ -415,7 +378,7 @@ export default function DashboardPage() {
       { title: "Hours Saved", value: "0", icon: BarChart3 },
     ]
 
-    // 🚀 REACT QUERY: Use live data from cached queries
+    // Use live data from cached queries
     const analytics = {
       documentsUploaded: documents.length,
       totalQuestions: conversations.length,
@@ -456,7 +419,7 @@ export default function DashboardPage() {
     const fetchUserData = async () => {
       try {
         // Get user from session storage (set during login)
-        // 🎯 CLERK MIGRATION: Removed onboarding check - AuthContext handles this now
+        // AuthContext handles onboarding check
         const userData = sessionStorage.getItem('user');
         if (userData) {
           const parsedUser = JSON.parse(userData);
@@ -499,25 +462,7 @@ export default function DashboardPage() {
     }
   ]
 
-  // 🔍 DIAGNOSTIC: Log when dashboard finishes loading (run once only)
-  // 🎯 CRITICAL: This useEffect MUST be before any conditional returns to comply with Rules of Hooks
-  useEffect(() => {
-    if (!isLoading && tenantContext && hasLoadedOnce) {
-      console.log('📊 [DASHBOARD] Fully loaded:', {
-        hasLoadedOnce,
-        tenantContext,
-        isClerkLoaded,
-        documentsCount: documents?.length ?? 0,
-        conversationsCount: conversations?.length ?? 0
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasLoadedOnce]); // Only run when hasLoadedOnce changes to prevent loops
-
-  // 🎯 CLERK MIGRATION: Removed redirect overlay (was blocking all UI clicks)
-  // Clerk middleware handles subdomain routing - no need for client-side redirect logic
-
-  // 🎯 CRITICAL FIX: Show loading while Clerk initializes OR tenant context loads
+  // Show loading while Clerk initializes OR tenant context loads
   if (!isClerkLoaded || isLoading) {
     return (
       <ScrollArea className="flex-1">

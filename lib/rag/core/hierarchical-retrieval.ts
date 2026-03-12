@@ -36,10 +36,7 @@ export async function hierarchicalRetrieve(
 ): Promise<RetrievedChunk[]> {
   const { query, tenantId, topK = 5, topDocs = 10, filter, minScore = 0.25 } = input;
   
-  console.log(`🔍 [Hierarchical] Starting two-stage retrieval (topDocs=${topDocs}, topK=${topK})`);
-  
   // ==================== STAGE 1: Document-Level Search ====================
-  console.log(`📚 [Hierarchical Stage 1] Finding top ${topDocs} documents using summaries...`);
   
   // Use service role client to bypass RLS for document summaries
   const supabase = createClient(
@@ -63,11 +60,8 @@ export async function hierarchicalRetrieve(
   }
   
   if (!documents || documents.length === 0) {
-    console.warn(`⚠️ [Hierarchical Stage 1] No documents with summaries found - fallback to standard retrieval`);
     return fallbackToStandardRetrieval(input);
   }
-  
-  console.log(`📊 [Hierarchical Stage 1] Found ${documents.length} documents with summaries`);
   
   // Generate embedding for user query once
   const queryEmbedding = await generateEmbedding(query);
@@ -100,7 +94,6 @@ export async function hierarchicalRetrieve(
     .slice(0, topDocs);
   
   if (topDocuments.length === 0) {
-    console.warn(`⚠️ [Hierarchical Stage 1] No relevant documents found (all below threshold)`);
     // Fallback: Just use top N docs regardless of score
     const fallbackDocs = docScores
       .sort((a, b) => b.similarity - a.similarity)
@@ -108,11 +101,7 @@ export async function hierarchicalRetrieve(
     topDocuments.push(...fallbackDocs);
   }
   
-  console.log(`✅ [Hierarchical Stage 1] Top ${topDocuments.length} documents:`,
-    topDocuments.map(d => `  ${d.filename} (${(d.similarity * 100).toFixed(1)}%)`).join('\n'));
-  
   // ==================== STAGE 2: Chunk-Level Search ====================
-  console.log(`🔎 [Hierarchical Stage 2] Searching chunks in top ${topDocuments.length} documents...`);
   
   const documentIds = topDocuments.map(d => d.documentId);
   
@@ -123,17 +112,16 @@ export async function hierarchicalRetrieve(
   // Query Pinecone with document filter + HYBRID SEARCH
   const results = await queryVectors({
     vector: queryEmbedding,
-    sparseVector: querySparseVector, // ✅ HYBRID: keyword + semantic
+    sparseVector: querySparseVector, // hybrid: keyword + semantic
     namespace: tenantId,
     topK: topK * 3, // Get more results to filter by score
     filter: {
       ...filter,
-      document_id: { $in: documentIds }, // ✅ Only search in relevant docs
+      document_id: { $in: documentIds },
     },
   });
   
   if (!results || results.length === 0) {
-    console.warn(`⚠️ [Hierarchical Stage 2] No chunks found in top documents`);
     return [];
   }
   
@@ -153,12 +141,8 @@ export async function hierarchicalRetrieve(
     }))
     .filter(chunk => chunk.content && chunk.score >= minScore); // Filter by score
   
-  console.log(`✅ [Hierarchical Stage 2] Found ${chunks.length} relevant chunks above threshold (minScore=${minScore})`);
-  
   // Take top K chunks
   const finalChunks = chunks.slice(0, topK);
-  
-  console.log(`🎯 [Hierarchical] Complete! Returning top ${finalChunks.length} chunks`);
   
   return finalChunks;
 }
@@ -195,8 +179,6 @@ function cosineSimilarity(a: number[], b: number[]): number {
 async function fallbackToStandardRetrieval(
   input: HierarchicalRetrievalInput
 ): Promise<RetrievedChunk[]> {
-  console.warn(`⚠️ [Hierarchical] Falling back to standard retrieval`);
-  
   const { retrieveChunks } = await import('./retrieval');
   const embedding = await generateEmbedding(input.query);
   

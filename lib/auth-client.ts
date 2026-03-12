@@ -1,4 +1,4 @@
-// Frontend authentication client for AI Lead Router SaaS
+// Frontend authentication client for DocsFlow
 
 interface User {
   id: string;
@@ -29,9 +29,8 @@ class AuthClient {
     // Use custom domain now that DNS is fixed
     let baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.docsflow.app';
     
-    // 🚨 PRODUCTION SAFETY: Never allow localhost in production
+    // Never allow localhost in production
     if (baseUrl.includes('localhost') && process.env.NODE_ENV === 'production') {
-      console.warn('🚨 SECURITY: Blocking localhost URL in production auth client');
       baseUrl = 'https://api.docsflow.app';
     }
     
@@ -84,11 +83,7 @@ class AuthClient {
           }
         );
         
-        console.log('✅ [AUTH-CLIENT] Multi-tenant cookies set for:', {
-          subdomain: tenantSubdomain,
-          email: data.user.email,
-          tenantId: tenantId.substring(0, 8) + '...'
-        });
+        
       }
     }
 
@@ -136,7 +131,7 @@ class AuthClient {
         return session.access_token;
       }
     } catch (sessionError) {
-      console.warn('🔍 [AUTH-CLIENT] Session token fetch failed, falling back to localStorage:', sessionError);
+      // Fallback to localStorage
     }
     
     // Fallback to localStorage for backward compatibility (browser-only)
@@ -203,14 +198,11 @@ class AuthClient {
       
       if (response.ok) {
         const data = await response.json();
-        redirectUrl = data.redirectUrl; // Get redirect URL from backend
-        console.log('✅ Server logout successful, redirect URL:', redirectUrl);
-      } else {
-        console.warn('⚠️ Server logout failed, proceeding with client cleanup');
+        redirectUrl = data.redirectUrl;
       }
       
     } catch (error) {
-      console.warn('⚠️ Server logout error:', error);
+      // Server logout failed, proceeding with client cleanup
     }
     
     // Step 2: Clear localStorage regardless of server response
@@ -235,19 +227,13 @@ class AuthClient {
     
     // Check if user has multiple tenants before aggressive logout
     const userTenants = MultiTenantCookieManager.getUserTenantList();
-    console.log(`🔍 [LOGOUT] User has ${userTenants.length} tenant(s):`, userTenants);
     
     // Set logout timestamp for middleware grace period
     document.cookie = `logout-timestamp=${Date.now()}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=60`;
     
     if (userTenants.length > 1) {
-      // Multi-tenant user - use safe logout that preserves other tenant access
-      console.log('🏢 [LOGOUT] Multi-tenant user - preserving access to other tenants');
-      MultiTenantCookieManager.clearAuthTokensOnly(); // Preserves tenant contexts
-      // Note: MultiTenantCookieManager handles current tenant context clearing
+      MultiTenantCookieManager.clearAuthTokensOnly();
     } else {
-      // Single tenant user - full logout (legacy behavior)
-      console.log('🔒 [LOGOUT] Single tenant user - full logout');
       const cookiesToClear = [
         'access_token', 'refresh_token', 
         'tenant-id', 'tenant-subdomain', 'user_email',
@@ -265,20 +251,14 @@ class AuthClient {
     }
     
     // Step 4: Force redirect to main domain login (not subdomain)
-    // SURGICAL FIX: Use window.location.replace for more forceful redirect
+    // Use window.location.replace for more forceful redirect
     if (redirectUrl) {
-      // Backend provided a redirect URL (e.g., to escape subdomain)
-      console.log('🔄 Redirecting to backend-provided URL:', redirectUrl);
       window.location.replace(redirectUrl);
     } else if (window.location.hostname.includes('.docsflow.app') && 
         !window.location.hostname.startsWith('api.') && 
         !window.location.hostname.startsWith('www.')) {
-      // We're on a tenant subdomain, redirect to main domain
-      console.log('🔄 Redirecting from subdomain to main domain');
       window.location.replace('https://docsflow.app/login');
     } else {
-      // We're on main domain or localhost
-      console.log('🔄 Redirecting to login on same domain');
       window.location.replace('/login');
     }
   }
@@ -394,7 +374,6 @@ class AuthClient {
       // Store subdomain for restoration after OAuth callback
       if (currentSubdomain && currentSubdomain !== 'www') {
         if (typeof localStorage !== 'undefined') localStorage.setItem('oauth-subdomain', currentSubdomain);
-        console.log(`📝 Stored OAuth subdomain: ${currentSubdomain}`);
       }
       
       // Import Supabase client

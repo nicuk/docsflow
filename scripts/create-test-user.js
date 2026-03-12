@@ -18,7 +18,7 @@ async function createTestUser() {
     // Create the user in Supabase Auth
     const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
       email: 'test@example.com',
-      password: 'password123',
+      password: process.env.TEST_PASSWORD || 'test-password',
       email_confirm: true, // Skip email confirmation for test user
       user_metadata: {
         name: 'Test User',

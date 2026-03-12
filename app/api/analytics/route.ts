@@ -8,9 +8,9 @@ export async function GET(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin)
   
   try {
-    // 🔒 SECURE: Validate tenant context
+    // Validate tenant context
     const tenantValidation = await validateTenantContext(request, {
-      requireAuth: true // ✅ TESTING: Enable auth on analytics first
+      requireAuth: true
     })
 
     if (!tenantValidation.isValid) {
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     const tenantId = tenantValidation.tenantId!
     
-    // 🚀 REAL DATA: Query tenant-specific analytics from Supabase
+    // Query tenant-specific analytics from Supabase
     const supabase = getSupabaseClient()
     
     // Query tenant-specific documents count

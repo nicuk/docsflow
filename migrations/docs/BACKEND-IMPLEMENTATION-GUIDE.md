@@ -1,7 +1,7 @@
 # Backend Implementation Guide - DocFlow.app Integration COMPLETE ✅
 ## Multi-Tenant Document Intelligence with Persistent Conversations
 
-**Repository**: `ai-lead-router-saas` (production system)  
+**Repository**: `docsflow-saas` (production system)  
 **Status**: ✅ **INTEGRATION COMPLETE** - 98% Functional  
 **Commit**: `f106d7d` - DocFlow.app backend support + conversation persistence
 

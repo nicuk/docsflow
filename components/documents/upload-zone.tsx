@@ -24,11 +24,11 @@ export default function UploadZone({ onFilesUploaded, disabled = false }: Upload
       "application/vnd.ms-excel": [".xls"],
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
       "text/csv": [".csv"],
-      // ✅ IMAGES NOW SUPPORTED - Gemini 2.0 Flash OCR via OpenRouter
+      // Images supported via Gemini 2.0 Flash OCR
       "image/jpeg": [".jpg", ".jpeg"],
       "image/png": [".png"],
     },
-    maxFiles: 5, // 🚀 FIX: Reduced from 10 to 5 for better concurrent upload handling
+    maxFiles: 5,
     maxSize: 1 * 1024 * 1024, // 1MB max for any file
     disabled,
   })

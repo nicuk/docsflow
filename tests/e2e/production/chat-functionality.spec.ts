@@ -6,7 +6,7 @@ import { test, expect, Page } from '@playwright/test';
  */
 
 const PROD_TEST_EMAIL = 'test1@example.com';
-const PROD_TEST_PASSWORD = 'Testing123?';
+const PROD_TEST_PASSWORD = process.env.TEST_PASSWORD || 'test-password';
 
 // Helper to login and navigate to chat
 async function loginAndNavigateToChat(page: Page, rememberMe = false) {

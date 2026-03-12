@@ -61,7 +61,6 @@ export default function PersonaEditor({ currentPersona, tenantId, onPersonaUpdat
         const data = await response.json();
         if (data.persona) {
           setPersona(data.persona);
-          console.log('✅ Loaded current persona from API:', data.persona.role);
         }
       }
     } catch (error) {
@@ -74,7 +73,7 @@ export default function PersonaEditor({ currentPersona, tenantId, onPersonaUpdat
     setSaveStatus('idle');
     
     try {
-      // 🎯 FIX: Use correct API endpoint
+      
       const response = await fetch('/api/tenant/persona', {
         method: 'POST',
         headers: { 
@@ -94,7 +93,6 @@ export default function PersonaEditor({ currentPersona, tenantId, onPersonaUpdat
         const data = await response.json();
         setSaveStatus('success');
         onPersonaUpdated?.(persona);
-        console.log('✅ Persona updated successfully:', data);
         
         // Auto-hide success message after 3 seconds
         setTimeout(() => setSaveStatus('idle'), 3000);
@@ -138,7 +136,7 @@ export default function PersonaEditor({ currentPersona, tenantId, onPersonaUpdat
         Make it more specific and effective than the current version.
       `;
       
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ai-lead-router-saas.vercel.app/api';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://docsflow.app/api';
       const response = await fetch(`${apiUrl}/tenant/regenerate-persona`, {
         method: 'POST',
         headers: { 
@@ -156,13 +154,6 @@ export default function PersonaEditor({ currentPersona, tenantId, onPersonaUpdat
         if (result.persona) {
           setPersona({ ...result.persona, created_from: 'regenerated' });
           setSaveStatus('success');
-          console.log('✅ Persona regenerated successfully');
-          
-          // Log quality score if available
-          if (result.quality) {
-            console.log(`📊 Quality Score: ${result.quality.score}/10`);
-            console.log(`💡 Suggestions:`, result.quality.suggestions);
-          }
         }
       } else {
         throw new Error('Failed to regenerate persona');

@@ -25,7 +25,7 @@ export const defaultTestConfig: TestConfig = {
   baseUrl: process.env.BASE_URL || 'http://localhost:3000',
   testUser: {
     email: process.env.TEST_EMAIL || 'test1@example.com',
-    password: process.env.TEST_PASSWORD || 'Testing123?'
+    password: process.env.TEST_PASSWORD || 'test-password'
   },
   timeouts: {
     navigation: 10000,

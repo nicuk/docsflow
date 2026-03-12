@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
 /**
- * ISOLATED ADMIN VERIFICATION ENDPOINT
- * Surgical fix for admin verification API (was missing)
- * Referenced by admin components but didn't exist
+ * Admin verification API endpoint.
+ * Used by admin components to verify admin privileges.
  */
 
 export async function GET(request: NextRequest) {
@@ -70,3 +69,7 @@ export async function OPTIONS(request: NextRequest) {
     },
   });
 }
+
+
+
+

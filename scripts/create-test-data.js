@@ -53,7 +53,7 @@ async function createTestData() {
     console.log('2️⃣ Creating test user...');
     const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
       email: 'test@docsflow.app',
-      password: 'testpass123',
+      password: process.env.TEST_PASSWORD || 'test-password',
       email_confirm: true
     });
 

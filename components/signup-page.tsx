@@ -144,7 +144,7 @@ export default function SignupPage() {
     setErrors({})
 
     try {
-      // 🎯 CLERK SIGNUP: Create user with Clerk
+      // Create user with Clerk
       const result = await signUp.create({
         emailAddress: formData.email,
         password: formData.password,
@@ -204,7 +204,7 @@ export default function SignupPage() {
     setIsLoading(true)
     
     try {
-      // 🎯 CLERK GOOGLE OAUTH: Built-in OAuth support
+      // Clerk Google OAuth
       await signUp.authenticateWithRedirect({
         strategy: "oauth_google",
         redirectUrl: "/sso-callback",

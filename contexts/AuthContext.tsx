@@ -63,7 +63,6 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  // 🎯 CLERK MIGRATION: Use Clerk's hooks directly
   const { user: clerkUser, isLoaded } = useUser()
   const { signOut } = useClerk()
   const router = useRouter();
@@ -92,7 +91,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [signOut, router]);
 
-  // 🎯 CLERK MIGRATION: Sync Clerk user to our state
+  // Sync Clerk user to our state
   useEffect(() => {
     const syncClerkUser = () => {
       if (!isLoaded) {
@@ -155,18 +154,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
       const justCompletedOnboarding = searchParams?.get('onboarding') === 'complete'
       
-      // 🎯 SURGICAL FIX: Only redirect to onboarding from public pages, NOT from dashboard
-      // This prevents blocking navigation when Clerk metadata has async delay
+      // Only redirect to onboarding from public pages, not from the dashboard,
+      // to avoid blocking navigation when Clerk metadata has async delay.
       const publicPages = ['/login', '/signup', '/', '/verify-email']
       const isPublicPage = publicPages.some(page => pathname === page || pathname.startsWith(page + '/'))
       const isDashboard = pathname.startsWith('/dashboard')
       
       if (!onboardingDone && isPublicPage && !justCompletedOnboarding) {
-        console.log('🔄 [AUTH] Redirecting to onboarding from public page')
         router.push('/onboarding')
-      } else if (!onboardingDone && isDashboard && !justCompletedOnboarding) {
-        console.warn('⚠️ [AUTH] User on dashboard with incomplete onboarding - likely metadata delay, allowing navigation')
-        // Don't redirect - let user navigate dashboard while metadata syncs
       }
       
       // Clean up URL parameter after first load
@@ -176,13 +171,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         window.history.replaceState({}, '', url.toString())
       }
       
-      console.log('✅ [CLERK AUTH CONTEXT] User synced:', {
-        email,
-        name,
-        role,
-        authenticated: true,
-        onboardingComplete: onboardingDone,
-      })
     }
 
     syncClerkUser()

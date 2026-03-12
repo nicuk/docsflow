@@ -3,9 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { sendInvitationEmail } from '@/lib/email';
 
 /**
- * ISOLATED ADMIN INVITE USER API
- * Surgical fix for missing invite user endpoint
- * Used by admin user management interface
+ * Admin invite user API endpoint.
+ * Used by admin user management interface.
  */
 
 export async function POST(request: NextRequest) {

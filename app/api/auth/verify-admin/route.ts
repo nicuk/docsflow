@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
 /**
- * ISOLATED ADMIN VERIFICATION API
- * Surgical endpoint for admin privilege verification
- * Used by admin route protection middleware
+ * Admin privilege verification API.
+ * Used by admin route protection middleware.
  */
 
 export async function POST(request: NextRequest) {
@@ -90,3 +89,7 @@ export async function OPTIONS(request: NextRequest) {
     },
   });
 }
+
+
+
+

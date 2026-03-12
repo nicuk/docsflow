@@ -67,14 +67,13 @@ export async function queryWorkflow(input: QueryInput): Promise<QueryResult> {
     // Generate sparse vector for keyword matching
     let sparseVector = generateSparseVector(input.query);
     
-    // 🎯 NEW: Detect if query mentions a specific filename
+    // Detect if query mentions a specific filename
     const filenamePattern = /\b([\w\-_]+(?:\s*\(\d+\))?\.(?:png|jpg|jpeg|pdf|docx|doc|txt|xlsx|xls|pptx|ppt|csv))\b/i;
     const filenameMatch = input.query.match(filenamePattern);
     const detectedFilename = filenameMatch ? filenameMatch[1] : null;
     
     // Boost filename terms in sparse vector for better matching
     if (detectedFilename) {
-      console.log(`🎯 [FILENAME DETECTION] Query mentions file: "${detectedFilename}" - boosting keywords`);
       sparseVector = boostKeywords(sparseVector, [detectedFilename], 3.0);
     }
     
@@ -140,8 +139,6 @@ export async function queryWorkflow(input: QueryInput): Promise<QueryResult> {
     });
     
     const duration = Date.now() - startTime;
-    
-    console.log(`[Query Workflow] ✅ Success in ${duration}ms`);
     
     return {
       success: true,

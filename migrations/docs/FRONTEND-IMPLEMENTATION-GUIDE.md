@@ -58,7 +58,7 @@ const TenantCreationStep = ({ answers, onComplete }) => {
             onChange={(e) => setSubdomain(e.target.value)}
             placeholder="your-company"
           />
-          <span>.ai-lead-router-saas.vercel.app</span>
+          <span>.docsflow-saas.vercel.app</span>
         </div>
         
         <Button onClick={handleCreateTenant} disabled={loading}>
@@ -186,7 +186,7 @@ const intelligentFrontend = {
 const apiConfig = {
   production: "https://api.docsflow.app/api",
   staging: "https://staging-api.docsflow.app/api", 
-  development: "https://ai-lead-router-saas.vercel.app/api",
+  development: "https://docsflow-saas.vercel.app/api",
   current: process.env.NEXT_PUBLIC_API_URL
 };
 
@@ -250,7 +250,7 @@ class APIClient {
   private token: string | null = null;
 
   constructor() {
-    this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://ai-lead-router-saas.vercel.app/api';
+    this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://docsflow-saas.vercel.app/api';
   }
 
   // Generic request handler

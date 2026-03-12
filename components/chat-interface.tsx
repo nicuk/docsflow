@@ -18,7 +18,7 @@ interface Message {
   timestamp: Date
   sources?: Array<{
     document: string
-    documentId?: string  // 🎯 FIX: Add document UUID for loading full content
+    documentId?: string
     page: number
     snippet: string
     confidence?: number // 0-1 confidence score for each source
@@ -44,7 +44,7 @@ const getUserEmail = () => {
       .find(row => row.startsWith('user-email='))
       ?.split('=')[1];
     
-    // Decode URL-encoded email (Support%40bitto.tech → support@bitto.tech)
+    // Decode URL-encoded email (e.g. user%40example.com → user@example.com)
     return userEmail ? decodeURIComponent(userEmail) : 'demo';
   }
   return 'demo';
@@ -122,7 +122,7 @@ const storage = {
     return []
   },
 
-  // 🚀 SURGICAL FIX: Clean up invalid conversation IDs
+  // Clean up invalid conversation IDs
   cleanupInvalidConversations: () => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem(STORAGE_KEYS.conversations)
@@ -134,16 +134,11 @@ const storage = {
         
         // Filter out conversations with invalid IDs (not UUID and not starting with 'local-')
         const validConversations = conversations.filter(conv => {
-          const isValid = uuidRegex.test(conv.id) || conv.id.startsWith('local-')
-          if (!isValid) {
-            console.log(`🧹 Removing invalid conversation ID: ${conv.id}`)
-          }
-          return isValid
+          return uuidRegex.test(conv.id) || conv.id.startsWith('local-')
         })
         
         if (validConversations.length !== conversations.length) {
           localStorage.setItem(STORAGE_KEYS.conversations, JSON.stringify(validConversations))
-          console.log(`✅ Cleaned up ${conversations.length - validConversations.length} invalid conversations`)
         }
       } catch (error) {
         console.error('Error cleaning up conversations:', error)
@@ -151,13 +146,12 @@ const storage = {
     }
   },
 
-  // 🚀 Clear all chat data (useful for testing/debugging)
+  // Clear all chat data (useful for testing/debugging)
   clearAll: () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(STORAGE_KEYS.conversations)
       localStorage.removeItem(STORAGE_KEYS.currentConversationId)
       localStorage.removeItem(STORAGE_KEYS.messages)
-      console.log('✅ Cleared all chat localStorage data')
     }
   }
 }
@@ -178,11 +172,11 @@ export default function ChatInterface() {
   const [suggestionsDisabledPermanently, setSuggestionsDisabledPermanently] = useState(false) // Track if user has permanently dismissed suggestions
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  // 🎯 REMOVED: JS-based scroll tracking refs (using CSS scroll anchoring instead)
+  // Using CSS scroll anchoring instead of JS-based scroll tracking
   // const isUserAtBottomRef = useRef(true)
   // const shouldAutoScrollRef = useRef(true)
   
-  // 🚀 NEW: Source viewer modal state
+  // Source viewer modal state
   const [selectedSource, setSelectedSource] = useState<any>(null)
   const [isSourceModalOpen, setIsSourceModalOpen] = useState(false)
   
@@ -204,7 +198,7 @@ export default function ChatInterface() {
   useEffect(() => {
     // Batch all initialization operations
     const initializeChat = async () => {
-      // 🚀 SURGICAL FIX: Clean up invalid conversations first
+      // Clean up invalid conversations first
       storage.cleanupInvalidConversations()
       
       // Load conversations from localStorage first
@@ -281,7 +275,7 @@ export default function ChatInterface() {
     return () => clearInterval(interval)
   }, [])
 
-  // 🎯 REMOVED: No auto-scroll on messages change
+  // No auto-scroll on messages change
   // CSS overflow-anchor property handles maintaining position automatically
   // User only scrolls when they explicitly send a message (see handleSendMessage)
 
@@ -382,7 +376,7 @@ export default function ChatInterface() {
           setCurrentConversationId(response.conversation.id)
         }
       } catch (backendError) {
-        console.warn('Backend conversation creation failed, using local conversation:', backendError)
+        // Backend unavailable, continuing with local conversation
         // Continue with local conversation
       }
       
@@ -399,7 +393,7 @@ export default function ChatInterface() {
     setShowConversationHistory(false)
   }
 
-  // 🎯 SIMPLIFIED: Only scroll when user explicitly sends a message
+  // Only scroll when user explicitly sends a message
   // CSS scroll-anchoring handles the rest automatically
   const scrollToBottom = () => {
     if (!scrollAreaRef.current) return
@@ -460,18 +454,15 @@ export default function ChatInterface() {
     }
     setMessages((prev) => [...prev, loadingMessage])
 
-    // 🎯 FIX: Track if response received to prevent race condition
+    // Track if response received to prevent race condition
     let responseReceived = false;
 
-    // ✅ ADD TIMEOUT PROTECTION to prevent stuck analyzing state
+    // Timeout protection to prevent stuck analyzing state
     const timeoutId = setTimeout(() => {
-      // 🎯 FIX: Only show timeout if response not already received
+      // Only show timeout if response not already received
       if (responseReceived) {
-        console.log('Response already received, skipping timeout message')
         return;
       }
-      
-      console.warn('API call timed out, showing fallback response')
       
       // Remove loading message
       setMessages((prev) => prev.filter((msg) => msg.type !== "loading"))
@@ -491,7 +482,7 @@ export default function ChatInterface() {
       }
       setMessages((prev) => [...prev, timeoutMessage])
       setIsLoading(false)
-    }, 30000) // 🎯 FIX: Increased from 15s to 30s (RAG can take 20-25s for complex queries)
+    }, 30000) // 30s timeout (RAG can take 20-25s for complex queries)
 
     try {
       // Enhanced API call with conversation support
@@ -501,7 +492,7 @@ export default function ChatInterface() {
         conversationId: conversationId || undefined
       });
 
-      // 🎯 FIX: Mark response as received before clearing timeout
+      // Mark response as received before clearing timeout
       responseReceived = true;
       
       // Clear timeout since we got a response
@@ -510,16 +501,11 @@ export default function ChatInterface() {
       // Remove loading message
       setMessages((prev) => prev.filter((msg) => msg.type !== "loading"))
 
-      // 🔍 DEBUG: Log full API response
-      console.log('🔍 [CHAT-DEBUG] Full API response:', response);
-      console.log('🔍 [CHAT-DEBUG] response.answer:', response.answer);
-      console.log('🔍 [CHAT-DEBUG] response.response:', response.response);
-      
       // Add AI response with real data
       
-      // 🔧 DEDUPLICATE SOURCES: Group chunks from the same document
+      // Deduplicate sources: group chunks from the same document
       let processedSources = response.sources?.map((source: any) => {
-        // 🔧 CLEAN BINARY GARBAGE: Detect and handle corrupted image data
+        // Detect and handle corrupted image data
         const isBinaryGarbage = source.content && /[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(source.content.substring(0, 100));
         const cleanSnippet = isBinaryGarbage 
           ? "[Binary data - Image needs OCR processing]" 
@@ -586,7 +572,7 @@ export default function ChatInterface() {
 
       setMessages((prev) => [...prev, aiResponse])
       
-      // 🎯 REMOVED: No forced scroll - CSS overflow-anchor keeps us at bottom naturally
+      // CSS overflow-anchor keeps us at bottom naturally
       
       // Refresh conversations list to update message count and last activity
       await loadConversations()
@@ -594,7 +580,7 @@ export default function ChatInterface() {
     } catch (error) {
       console.error('Chat API Error:', error);
       
-      // 🎯 FIX: Mark response as received (error counts as response)
+      // Mark response as received (error counts as response)
       responseReceived = true;
       
       // Clear timeout
@@ -804,7 +790,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
                 className="flex-1 px-2 py-2 w-full max-w-full overflow-y-auto overflow-x-hidden"
                 style={{ 
                   scrollBehavior: 'smooth',
-                  overflowAnchor: 'auto' // 🎯 CSS scroll anchoring: stays at bottom naturally when new content arrives
+                  overflowAnchor: 'auto' // stays at bottom naturally when new content arrives
                 }}
               >
                 <div className="space-y-2 w-full max-w-full overflow-x-hidden box-border pr-2 pb-20">
@@ -991,11 +977,8 @@ Please try again in a moment. If the issue persists, you can still use the inter
                               
                               for (const file of Array.from(files)) {
                                 try {
-                                  console.log('Uploading file:', file.name);
-                                  // Use the API client to upload
                                   const { apiClient } = await import('@/lib/api-client');
                                   await apiClient.uploadDocument(file);
-                                  console.log('File uploaded successfully:', file.name);
                                   successCount++;
                                 } catch (fileError) {
                                   console.error('File upload failed:', file.name, fileError);

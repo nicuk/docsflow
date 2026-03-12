@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 🎯 CLERK: Get authenticated user
+    // Get authenticated user
     const { userId } = await auth();
     const user = await currentUser();
     
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       accessLevel: dbUser.access_level,
     });
 
-    // 🎯 CLERK: Update user metadata with correct tenant info
+    // Update user metadata with correct tenant info
     const clerk = await clerkClient();
     await clerk.users.updateUserMetadata(userId, {
       publicMetadata: {

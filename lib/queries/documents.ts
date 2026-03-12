@@ -15,14 +15,14 @@ export function useDocuments(tenantId?: string) {
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: (failureCount, error) => {
-      // SURGICAL FIX: Retry auth errors up to 3 times, with backoff
+      // Retry auth errors up to 3 times with backoff
       if (error && (error as any).name === 'AuthError' && failureCount < 3) {
-        console.log(`🔄 [DOCUMENTS] Retrying due to auth error (attempt ${failureCount + 1}/3)`);
+        
         return true;
       }
       return false;
     },
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 5000), // Exponential backoff
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 5000),
   })
 }
 
@@ -30,7 +30,6 @@ export function useConversations(tenantId?: string) {
   return useQuery({
     queryKey: ['conversations', tenantId],
     queryFn: async () => {
-      // SURGICAL FIX: Use apiClient with proper auth headers
       const { apiClient } = await import('@/lib/api-client')
       const response = await apiClient.getConversations()
       return response.conversations || []
@@ -39,9 +38,9 @@ export function useConversations(tenantId?: string) {
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     retry: (failureCount, error) => {
-      // SURGICAL FIX: Retry auth errors up to 3 times, with backoff
+      // Retry auth errors up to 3 times with backoff
       if (error && (error as any).name === 'AuthError' && failureCount < 3) {
-        console.log(`🔄 [CONVERSATIONS] Retrying due to auth error (attempt ${failureCount + 1}/3)`);
+        console.log(`[CONVERSATIONS] Retrying due to auth error (attempt ${failureCount + 1}/3)`);
         return true;
       }
       return false;

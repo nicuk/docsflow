@@ -17,21 +17,15 @@ export async function POST(request: NextRequest) {
     const tenantId = cookieStore.get('tenant-id')?.value;
     const tenantSubdomain = cookieStore.get('tenant-subdomain')?.value;
     
-    console.log('🚪 Processing logout request...');
-    console.log('Current host:', request.headers.get('host'));
-    console.log('Tenant context:', { tenantId, tenantSubdomain });
+    
     
     // Step 1: Revoke Supabase session if token exists
     if (authToken) {
       try {
         const { error } = await supabaseAdmin.auth.admin.signOut(authToken);
-        if (error) {
-          console.warn('⚠️ Supabase logout warning:', error.message);
-        } else {
-          console.log('✅ Supabase session revoked');
-        }
+        // Ignore non-critical logout errors
       } catch (error) {
-        console.warn('⚠️ Supabase logout failed:', error);
+        // Supabase logout failed - continue with cleanup
       }
     }
     
@@ -41,7 +35,6 @@ export async function POST(request: NextRequest) {
         if (tenantId) await redis?.del(`tenant:${tenantId}`);
         if (tenantSubdomain) await redis?.del(`subdomain:${tenantSubdomain}`);
         if (authToken) await redis?.del(`user:${authToken}`);
-        console.log('✅ Redis cache cleared');
       }, null);
     }
     
@@ -51,7 +44,7 @@ export async function POST(request: NextRequest) {
                          !request.headers.get('host')?.startsWith('api.') &&
                          !request.headers.get('host')?.startsWith('www.');
     
-    // SURGICAL FIX: Always redirect to main domain to escape subdomain context
+    // Redirect to main domain to escape subdomain context
     const redirectUrl = isOnSubdomain 
       ? `https://docsflow.app/login?logged_out=${Date.now()}` 
       : `https://docsflow.app/login?logged_out=${Date.now()}`;
@@ -113,12 +106,10 @@ export async function POST(request: NextRequest) {
       );
     });
     
-    console.log('✅ Logout completed successfully');
-    
     return response;
     
   } catch (error) {
-    console.error('❌ Logout error:', error);
+    console.error('Logout error:', error);
     
     // Even if logout fails, still clear cookies
     const response = NextResponse.json(

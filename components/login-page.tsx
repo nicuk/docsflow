@@ -41,11 +41,9 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
 
-  // 🎯 CLERK: Redirect if already signed in
+  // Redirect if already signed in
   useEffect(() => {
     if (userLoaded && user) {
-      console.log('✅ User already signed in, redirecting to dashboard')
-      // Clear old Supabase cookies
       clearOldSupabaseCookies()
       router.push('/dashboard')
     }
@@ -72,7 +70,7 @@ export default function LoginPage() {
       localStorage.removeItem('access_token')
     }
     
-    console.log('🧹 Cleared old Supabase cookies')
+    
   }
 
   const validateEmail = (email: string): boolean => {
@@ -114,7 +112,7 @@ export default function LoginPage() {
     setErrors({})
 
     try {
-      // 🎯 CLERK INTEGRATION: Use Clerk's signIn method
+      // Use Clerk's signIn method
       const result = await signIn.create({
         identifier: formData.email,
         password: formData.password,
@@ -126,7 +124,7 @@ export default function LoginPage() {
         
         setIsSuccess(true)
         
-        console.log('✅ Login successful with Clerk')
+        
         
         // Clear old Supabase cookies
         clearOldSupabaseCookies()
@@ -137,7 +135,7 @@ export default function LoginPage() {
         }, 1500)
       } else {
         // Handle other statuses (e.g., needs 2FA)
-        console.log('Login requires additional steps:', result.status)
+        
         setErrors({ general: "Please complete the sign-in process" })
       }
       
@@ -162,7 +160,7 @@ export default function LoginPage() {
     setIsLoading(true)
     
     try {
-      // 🎯 CRITICAL FIX: Google OAuth doesn't support wildcards
+      // Google OAuth doesn't support wildcards
       // Must redirect to main domain for OAuth, then back to tenant subdomain
       const currentHostname = typeof window !== 'undefined' ? window.location.hostname : '';
       const isSubdomain = currentHostname.includes('.docsflow.app') && 
@@ -178,7 +176,7 @@ export default function LoginPage() {
         return;
       }
       
-      // 🎯 CLERK GOOGLE OAUTH: Only works from main domain
+      // Clerk Google OAuth only works from main domain
       await signIn.authenticateWithRedirect({
         strategy: "oauth_google",
         redirectUrl: "/sso-callback",

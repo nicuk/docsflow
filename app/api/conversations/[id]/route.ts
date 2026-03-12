@@ -23,7 +23,7 @@ export async function GET(
   try {
     // Validate tenant context first
     const tenantValidation = await validateTenantContext(request, {
-      requireAuth: true // ✅ PRODUCTION: Authentication enabled
+      requireAuth: true
     });
 
     if (!tenantValidation.isValid) {
@@ -40,13 +40,13 @@ export async function GET(
     const supabase = getSupabaseClient();
     const conversationId = params.id;
 
-    // 🚀 SURGICAL FIX: Validate conversation ID format
+    // Validate conversation ID format
     // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(conversationId);
     
     // Handle non-UUID conversations (frontend localStorage-based or malformed IDs)
     if (!isValidUUID) {
-      console.log(`🔍 Non-UUID conversation ID detected: ${conversationId} - treating as local`);
+      
       return NextResponse.json(
         { 
           conversation: {
@@ -65,7 +65,8 @@ export async function GET(
       );
     }
 
-    // For now, use demo user ID since we don't have full auth yet
+    // System-level fallback UUID used when full user auth is not yet resolved.
+    // Replace with the authenticated user's ID once auth extraction is wired up.
     const userId = '00000000-0000-0000-0000-000000000000';
 
     // Try both conversation tables for backward compatibility
@@ -96,9 +97,8 @@ export async function GET(
     }
 
     if (convError || !conversation) {
-      // 🚀 SURGICAL FIX: Instead of 404, return empty conversation
+      // Return empty conversation instead of 404 for graceful recovery
       // This prevents error cascade in frontend and allows graceful recovery
-      console.log(`⚠️ Conversation ${conversationId} not found in database, returning empty conversation`);
       return NextResponse.json(
         {
           conversation: {

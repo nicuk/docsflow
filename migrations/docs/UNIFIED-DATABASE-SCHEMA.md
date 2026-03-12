@@ -1,7 +1,7 @@
 # Unified Database Schema - SME Intelligence Platform
 ## Score: 9.8/10 - Production-Ready Multi-Tenant RAG
 
-**Combines:** AI Lead Router multi-tenancy + SupabaseAuthWithSSR security + Your competitive advantages
+**Combines:** DocsFlow multi-tenancy + SupabaseAuthWithSSR security + Your competitive advantages
 
 ---
 
@@ -25,7 +25,7 @@ ALTER SYSTEM SET shared_buffers = '256MB';
 ## **TENANT MANAGEMENT (Multi-Tenant Foundation)**
 
 ```sql
--- Enhanced tenants table (from AI Lead Router + improvements)
+-- Enhanced tenants table (from DocsFlow + improvements)
 CREATE TABLE tenants (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   subdomain TEXT UNIQUE NOT NULL,

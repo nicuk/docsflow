@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
 /**
- * ISOLATED ADMIN USERS API
- * Surgical fix for missing admin users endpoint
- * Used by admin dashboard for user management
+ * Admin users API endpoint.
+ * Used by admin dashboard for user management.
  */
 
 export async function GET(request: NextRequest) {
@@ -98,3 +97,7 @@ export async function OPTIONS(request: NextRequest) {
     },
   });
 }
+
+
+
+

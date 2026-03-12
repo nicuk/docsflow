@@ -8,7 +8,7 @@ async function setupAuthenticatedSession(page: Page) {
   
   // Fill in test credentials
   await page.fill('input[type="email"]', 'test1@example.com');
-  await page.fill('input[type="password"]', 'Testing123?');
+  await page.fill('input[type="password"]', process.env.TEST_PASSWORD || 'test-password');
   
   // Check remember me for extended session
   const rememberCheckbox = page.locator('input[type="checkbox"]#remember');

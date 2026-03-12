@@ -18,7 +18,7 @@ Successfully implemented a production-ready job queue system for document proces
 ## 📁 Project Structure
 
 ```
-ai-lead-router-saas/
+docsflow-saas/
 ├── supabase/migrations/
 │   └── 20250101000000_create_ingestion_jobs.sql   # Database schema
 ├── lib/queue/

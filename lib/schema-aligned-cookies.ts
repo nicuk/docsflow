@@ -136,7 +136,7 @@ export class SchemaAlignedCookieManager {
    * COMPLETE COOKIE CLEANUP: Removes ALL auth cookie variants to prevent contamination
    */
   static clearAllAuthCookies(): void {
-    console.log(`🧹 [CLEANUP] Clearing ${ALL_AUTH_COOKIE_VARIANTS.length} auth cookie variants`);
+    
     
     const expireDate = 'Thu, 01 Jan 1970 00:00:00 GMT';
     const domains = ['.docsflow.app', 'docsflow.app', window.location.hostname];
@@ -149,7 +149,7 @@ export class SchemaAlignedCookieManager {
       });
     });
     
-    console.log(`✅ [CLEANUP] All auth cookies cleared across domains`);
+    
   }
   
   /**
@@ -161,9 +161,9 @@ export class SchemaAlignedCookieManager {
       throw new Error('Schema validation failed - refusing to set invalid cookies');
     }
     
-    // 🚨 SURGICAL FIX: Don't clear working auth cookies during active session
+    // Don't clear working auth cookies during active session
     // Only clear cookies if we're setting new ones (login/refresh scenario)
-    console.log('⚠️ [COOKIE-MANAGER] Skipping aggressive cookie clearing to prevent session disruption');
+    
     
     // PHASE 2: Set UNIFIED auth cookies (single source of truth)
     document.cookie = `${UNIFIED_AUTH_CONFIG.PRIMARY_AUTH_COOKIE}=${tokens.accessToken}; ${UNIFIED_AUTH_CONFIG.AUTH_OPTIONS}`;
@@ -175,14 +175,7 @@ export class SchemaAlignedCookieManager {
     document.cookie = `${UNIFIED_AUTH_CONFIG.TENANT_ID_COOKIE}=${context.tenantId}; ${UNIFIED_AUTH_CONFIG.TENANT_OPTIONS}`;
     document.cookie = `${UNIFIED_AUTH_CONFIG.USER_EMAIL_COOKIE}=${context.userEmail}; ${UNIFIED_AUTH_CONFIG.TENANT_OPTIONS}`;
     
-    console.log(`✅ [UNIFIED-AUTH] Set unified auth cookies:`, {
-      primaryAuthCookie: UNIFIED_AUTH_CONFIG.PRIMARY_AUTH_COOKIE,
-      tenantId: context.tenantId.substring(0, 8) + '...',
-      subdomain: context.subdomain,
-      email: context.userEmail,
-      hasTokens: !!tokens.accessToken,
-      legacyCookiesCleared: ALL_AUTH_COOKIE_VARIANTS.length
-    });
+    
   }
   
   /**
@@ -190,7 +183,7 @@ export class SchemaAlignedCookieManager {
    * @deprecated Use setUnifiedAuthCookies instead
    */
   static setSchemaAlignedCookies(context: TenantContext, tokens: AuthTokens): void {
-    console.warn('⚠️ [DEPRECATED] setSchemaAlignedCookies is deprecated. Use setUnifiedAuthCookies instead.');
+    
     this.setUnifiedAuthCookies(context, tokens);
   }
   
@@ -319,26 +312,6 @@ export class SchemaAlignedCookieManager {
    */
   static debugCookieState(serverCookies?: Record<string, string>): void {
     // Check if running server-side
-    if (typeof window === 'undefined') {
-      if (serverCookies) {
-        console.log(`🔍 [COOKIE DEBUG] Server-side cookie state:`, serverCookies);
-      } else {
-        console.log(`🔍 [COOKIE DEBUG] Server-side - no cookies provided for debugging`);
-      }
-      return;
-    }
-    
-    // Client-side debugging
-    const current = this.getSchemaAlignedCookies();
-    const allCookies = document.cookie;
-    
-    console.log(`🔍 [COOKIE DEBUG] Schema-aligned state:`, current);
-    console.log(`🔍 [COOKIE DEBUG] Raw cookies:`, allCookies);
-    console.log(`🔍 [COOKIE DEBUG] Validation:`, {
-      hasValidTenantId: current.tenantId ? /^[0-9a-f-]{36}$/i.test(current.tenantId) : false,
-      hasValidEmail: current.userEmail ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(current.userEmail) : false,
-      currentSubdomain: window.location.hostname.split('.')[0], // subdomain from URL, not cookies
-      securityNote: 'Use getSecureUserAccess() for access control, not these cookies!'
-    });
+    // Debug method - no-op in production
   }
 }

@@ -19,18 +19,9 @@ import { RAG_CONFIG } from '../config';
 
 /**
  * Get embeddings config (lazy-loaded to ensure env vars are available)
- * 
- * Priority:
- * 1. Vercel AI Gateway (production - more reliable)
- * 2. Direct OpenAI (local dev)
  */
 function getEmbeddingsConfig() {
-  // Use AI Gateway if key is available (don't require OIDC token - it's auto-injected)
-  const hasAIGatewayKey = !!process.env.AI_GATEWAY_API_KEY;
-  const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
-  
-  // Always prefer AI Gateway in production (more reliable than direct OpenAI)
-  const useAIGateway = hasAIGatewayKey;
+  const useAIGateway = !!process.env.AI_GATEWAY_API_KEY && !!process.env.VERCEL_OIDC_TOKEN;
   
   const config = {
     apiKey: useAIGateway ? process.env.AI_GATEWAY_API_KEY! : process.env.OPENAI_API_KEY!,
@@ -39,12 +30,8 @@ function getEmbeddingsConfig() {
   };
   
   if (!config.apiKey) {
-    throw new EmbeddingError(
-      `No API key found. Available: AI_GATEWAY=${hasAIGatewayKey}, OPENAI=${hasOpenAIKey}`
-    );
+    throw new EmbeddingError('No API key found. Set OPENAI_API_KEY (local) or AI_GATEWAY_API_KEY (production)');
   }
-  
-  console.log(`[Embeddings Config] Using ${useAIGateway ? 'AI Gateway' : 'Direct OpenAI'} (${config.baseURL})`);
   
   return config;
 }
@@ -68,41 +55,21 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   try {
     console.log(`[Embeddings] Generating single embedding (${text.length} chars) via ${config.baseURL}`);
     
-    // Add 30s timeout to prevent hanging
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
+    const response = await fetch(`${config.baseURL}/embeddings`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${config.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: config.model,
+        input: text,
+      }),
+    });
     
-    let response;
-    try {
-      response = await fetch(`${config.baseURL}/embeddings`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${config.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: config.model,
-          input: text,
-        }),
-        signal: controller.signal,
-      });
-      
-      clearTimeout(timeout);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`API error (${response.status}): ${errorText}`);
-      }
-    } catch (fetchError: any) {
-      clearTimeout(timeout);
-      if (fetchError.name === 'AbortError') {
-        throw new EmbeddingError('Embeddings API timeout (30s)', { text: text.substring(0, 100) });
-      }
-      console.error(`[Embeddings] Fetch error:`, fetchError);
-      throw new EmbeddingError(`Network error: ${fetchError.message}`, { 
-        baseURL: config.baseURL,
-        error: fetchError.message 
-      });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API error (${response.status}): ${errorText}`);
     }
     
     const data = await response.json();
@@ -150,44 +117,21 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
     console.log(`[Embeddings] Generating batch embeddings for ${validTexts.length} texts via ${config.baseURL}`);
     const startTime = Date.now();
     
-    // Add 60s timeout for batch operations (more texts = longer processing)
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000);
+    const response = await fetch(`${config.baseURL}/embeddings`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${config.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: config.model,
+        input: validTexts, // OpenAI API accepts array of strings for batch
+      }),
+    });
     
-    let response;
-    try {
-      response = await fetch(`${config.baseURL}/embeddings`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${config.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: config.model,
-          input: validTexts, // OpenAI API accepts array of strings for batch
-        }),
-        signal: controller.signal,
-      });
-      
-      clearTimeout(timeout);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[Embeddings] Batch API error (${response.status}): ${errorText}`);
-        throw new Error(`Batch embeddings API error (${response.status}): ${errorText}`);
-      }
-    } catch (fetchError: any) {
-      clearTimeout(timeout);
-      if (fetchError.name === 'AbortError') {
-        console.error(`[Embeddings] Batch timeout after 60s`);
-        throw new EmbeddingError('Batch embeddings API timeout (60s)', { count: validTexts.length });
-      }
-      console.error(`[Embeddings] Batch fetch error:`, fetchError);
-      throw new EmbeddingError(`Network error during batch embeddings: ${fetchError.message}`, { 
-        baseURL: config.baseURL,
-        count: validTexts.length,
-        error: fetchError.message 
-      });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API error (${response.status}): ${errorText}`);
     }
     
     const data = await response.json();

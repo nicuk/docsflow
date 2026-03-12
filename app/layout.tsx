@@ -10,7 +10,7 @@ import { AuthProvider } from "@/contexts/AuthContext"
 import { QueryProvider } from "@/components/providers/query-provider"
 import { Toaster } from "@/components/ui/toaster"
 
-// SURGICAL FIX: Removed headers() import that was forcing dynamic rendering and breaking CSS delivery
+// headers() import removed to avoid forcing dynamic rendering
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -65,7 +65,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  // SURGICAL FIX: Removed headers() usage that was forcing dynamic rendering
+  // Tenant info handled by TenantProvider (not headers() to avoid dynamic rendering)
   // Tenant info will be handled by TenantProvider instead
   const tenantId = null;
   const tenantSubdomain = null;

@@ -44,9 +44,7 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
   // Generate smart business-focused suggestions based on company name
   useEffect(() => {
     const generateSuggestions = async (company: string, industry: string) => {
-      console.log('🔍 DomainSelection generateSuggestions called with:', { company, industry });
       if (!company) {
-        console.warn('⚠️ No company name provided to generateSuggestions');
         return;
       }
       
@@ -101,14 +99,10 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
       setSuggestions(checkedSuggestions);
     };
 
-    // Generate suggestions when component mounts or companyName changes
-    console.log('🔍 DomainSelection useEffect triggered with companyName:', companyName);
     if (companyName) {
       // Get industry from onboarding data or detect from company name
       const storedIndustry = localStorage.getItem('industry') || 'technology';
       generateSuggestions(companyName, storedIndustry);
-    } else {
-      console.warn('⚠️ DomainSelection: No companyName prop received');
     }
   }, [companyName]);
 
@@ -126,13 +120,11 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
       const result = await response.json();
 
       if (!result.available && result.existingTenant) {
-        // 🎯 CLERK MIGRATION FIX: If workspace exists but has NO users, treat as new workspace
+        // If workspace exists but has NO users, treat as new workspace
         // This handles orphaned tenants from incomplete signups
         const userCount = result.existingTenant.userCount || 0;
         
         if (userCount === 0) {
-          console.log('🔄 [DOMAIN SELECTION] Workspace exists but has no users - treating as new workspace');
-          // Clear existing tenant flag and continue with new workspace flow
           setExistingTenant(null);
           setShowJoinOption(false);
           return { available: true, domain }; // Treat as available

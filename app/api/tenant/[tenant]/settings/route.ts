@@ -3,7 +3,7 @@ import { updateTenantMetadata, getSubdomainData } from '@/lib/subdomains';
 import { auditLogger, AUDIT_ACTIONS } from '@/lib/audit-logger';
 import { TenantSettings } from '@/lib/types/shared';
 
-// ✅ CANONICAL: Using frontend-compatible types
+// Using frontend-compatible types
 type TenantSettingsRequest = TenantSettings;
 
 export async function POST(

@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 // SECURITY FIX: Use secure database service instead of direct service role
 import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
 
-// SURGICAL FIX: Initialize Supabase client properly
+// Initialize Supabase client with service role
 function getSupabaseClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -78,7 +78,7 @@ export function extractTenantFromRequest(request: NextRequest): string {
   const subdomain = url.hostname.split('.')[0];
   
   // Handle various deployment scenarios
-  if (subdomain === 'localhost' || subdomain.includes('ai-lead-router-saas')) {
+  if (subdomain === 'localhost' || subdomain.includes('docsflow')) {
     // For local development, extract from path or use default
     const pathSegments = url.pathname.split('/');
     if (pathSegments[1] && pathSegments[1] !== 'api') {

@@ -67,21 +67,17 @@ export function boostByCategory(
     const docCategory = result.metadata?.category;
     const docTags = result.metadata?.tags || [];
     
-    // 🎯 Category Match: +0.2 boost (20% score increase)
+    // Category match: +0.2 boost (20% score increase)
     if (options.preferredCategory && docCategory === options.preferredCategory) {
       boost += 0.2;
-      const docId = result.documentId || result.document_id || result.filename || 'unknown';
-      console.log(`✅ [CATEGORY BOOST] Document "${docId}" matches category "${options.preferredCategory}" (+0.2)`);
     }
     
-    // 🎯 Tag Matches: +0.05 per matching tag (max +0.15)
+    // Tag matches: +0.05 per matching tag (max +0.15)
     if (options.tags?.length && docTags.length) {
       const matchingTags = options.tags.filter(tag => docTags.includes(tag));
       const tagBoost = Math.min(matchingTags.length * 0.05, 0.15);
       if (matchingTags.length > 0) {
         boost += tagBoost;
-        const docId = result.documentId || result.document_id || result.filename || 'unknown';
-        console.log(`✅ [TAG BOOST] Document "${docId}" matches ${matchingTags.length} tags: [${matchingTags.join(', ')}] (+${tagBoost})`);
       }
     }
     
@@ -136,7 +132,6 @@ export function applyCategoryLogic(
 ): SearchResult[] {
   // 1. Strict filter if user explicitly selected category
   if (options?.explicitCategory) {
-    console.log(`🔒 [CATEGORY FILTER] Filtering to category: "${options.explicitCategory}"`);
     return filterByCategory(results, options.explicitCategory);
   }
   
@@ -146,9 +141,6 @@ export function applyCategoryLogic(
   
   if (autoDetect) {
     preferredCategory = detectQueryCategory(query);
-    if (preferredCategory) {
-      console.log(`🤖 [AUTO-DETECT] Query suggests category: "${preferredCategory}"`);
-    }
   }
   
   // 3. Apply boost (not filter)

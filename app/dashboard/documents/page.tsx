@@ -93,10 +93,8 @@ interface UploadingFile {
   error?: string
 }
 
-// ✅ EXTRACTED: Helper functions moved to @/lib/document-utils
-// ✅ EXTRACTED: Constants moved to @/constants/document-sample-data
-
-// ✅ EXTRACTED: Sample data moved to @/constants/document-sample-data
+// Helper functions in @/lib/document-utils
+// Constants and sample data in @/constants/document-sample-data
 
 export default function DocumentsPage() {
   // State for documents and UI
@@ -172,15 +170,15 @@ export default function DocumentsPage() {
       "image/jpeg": [".jpg", ".jpeg"],
       "image/png": [".png"],
     },
-    maxFiles: 5, // 🚀 FIX: Reduced from 10 to 5 for better concurrent upload handling
+    maxFiles: 5,
     maxSize: 1 * 1024 * 1024, // 1MB max for any file
-    // 🚀 FIX: Keep dropzone active even during uploads
+    // Keep dropzone active even during uploads
     disabled: false,
   })
 
   // Handle file uploads - REAL API INTEGRATION with concurrent upload limiting
   const handleFilesUpload = async (files: File[]) => {
-    // 🚀 FIX: Limit to 5 files max for better UX
+    // Limit to 5 files max
     if (files.length > 5) {
       alert(`Please upload a maximum of 5 files at once. You selected ${files.length} files.`);
       return;
@@ -197,11 +195,11 @@ export default function DocumentsPage() {
     setUploadingFiles((prev) => [...prev, ...newUploadingFiles])
     setIsUploadDialogOpen(true)
 
-    // 🚀 FIX: Upload files with concurrency control (1 at a time to prevent backend overload)
+    // Upload files with concurrency control (1 at a time to prevent backend overload)
     await uploadFilesWithConcurrencyLimit(newUploadingFiles, 1)
   }
 
-  // 🚀 NEW: Upload files with concurrent limit to prevent overwhelming browser/server
+  // Upload files with concurrent limit to prevent overwhelming browser/server
   // REDUCED TO 1: Multiple concurrent uploads overwhelm backend processing (AI APIs, embeddings, DB)
   const uploadFilesWithConcurrencyLimit = async (files: UploadingFile[], limit: number) => {
     const queue = [...files];
@@ -236,7 +234,7 @@ export default function DocumentsPage() {
   // Real backend file upload with progress tracking
   const uploadFileToBackend = async (fileId: string, file: File) => {
     try {
-      // 🚀 ENHANCED: Multi-phase progress tracking
+      // Multi-phase progress tracking
       const response = await apiClient.uploadDocument(file, (progress) => {
         setUploadingFiles((prev) => 
           prev.map((f) => f.id === fileId ? { 
@@ -261,7 +259,7 @@ export default function DocumentsPage() {
         favorite: false,
       }
 
-      // 🚀 ENHANCED: Show completion phase then remove
+      // Show completion phase then remove
       setUploadingFiles((prev) => 
         prev.map((f) => f.id === fileId ? { 
           ...f, 
@@ -281,7 +279,7 @@ export default function DocumentsPage() {
       // Remove from uploading files after showing completion
       setTimeout(() => {
         setUploadingFiles((prev) => prev.filter((f) => f.id !== fileId))
-      }, 3000) // 🚀 ENHANCED: Show completion state for 3 seconds
+      }, 3000)
       
       // Poll for processing completion if status is processing
       if (newDocument.status === "processing") {
@@ -291,7 +289,7 @@ export default function DocumentsPage() {
     } catch (error) {
       console.error('Upload failed:', error)
       
-      // 🚀 ENHANCED: Show error phase with clear messaging
+      // Show error phase with clear messaging
       setUploadingFiles((prev) => 
         prev.map((f) => 
           f.id === fileId 
@@ -332,7 +330,7 @@ export default function DocumentsPage() {
       try {
         pollCount++
         
-        // 🔧 FIX: Call real API to check document status
+        // Call real API to check document status
         const documents = await apiClient.getDocuments();
         const document = documents.documents?.find((d: any) => d.id === documentId);
         
@@ -357,7 +355,7 @@ export default function DocumentsPage() {
             )
           )
           
-          // 🔧 FIX: Continue polling if still processing
+          // Continue polling if still processing
           if (newStatus === 'processing') {
             setTimeout(poll, 10000) // Poll every 10 seconds
           } else {
@@ -1130,7 +1128,7 @@ export default function DocumentsPage() {
             <Button 
               type="submit" 
               onClick={() => {
-                // 🚀 FIX: Allow closing dialog and clear completed uploads
+                // Clear completed uploads on close
                 setUploadingFiles(prev => prev.filter(f => f.progress < 100 && !f.error));
                 setIsUploadDialogOpen(false);
               }}

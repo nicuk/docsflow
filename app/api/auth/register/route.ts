@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
           },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value, options }) => {
-              // 🎯 CRITICAL FIX: Force domain for ALL Supabase cookies
+              // Force domain for all Supabase cookies (cross-subdomain)
               const enhancedOptions = {
                 ...options,
                 domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,

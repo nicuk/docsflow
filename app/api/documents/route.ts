@@ -18,20 +18,17 @@ export async function GET(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
   
   try {
-    // 🎯 CLERK MIGRATION: Use service role key to bypass RLS
+    // Use service role key to bypass RLS
     // Authentication is handled by validateTenantContext (Clerk)
     // Supabase is only used as a database, not for auth
-    console.log('🔧 [DOCUMENTS API] Creating Supabase client with service role...');
     const supabase = createDirectClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY! // Service role bypasses RLS
     );
-    console.log('✅ [DOCUMENTS API] Service role client created');
     
-    // 🔒 SECURE: Validate tenant context with proper security checks
+    // Validate tenant context with proper security checks
     const tenantValidation = await validateTenantContext(request, {
-
-      requireAuth: true // ✅ PRODUCTION: Authentication enabled
+      requireAuth: true
     });
 
     if (!tenantValidation.isValid) {
@@ -44,13 +41,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const tenantId = tenantValidation.tenantId!; // This is already the UUID
+    const tenantId = tenantValidation.tenantId!;
     const tenantSubdomain = tenantValidation.tenantData?.subdomain || 'unknown';
     console.log('Fetching documents for validated tenant:', tenantSubdomain, 'UUID:', tenantId);
     
-    // 🎯 CLERK MIGRATION: Authentication is handled by validateTenantContext
+    // Authentication is handled by validateTenantContext
     // No need to set Supabase session - we query by tenant_id directly
-    console.log('✅ [DOCUMENTS API] Using tenant-scoped queries (no session needed)');
     
     // Get documents for this tenant using the actual UUID
     const { data: documents, error } = await supabase
@@ -77,14 +73,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 🔧 PERFORMANCE: Only log count, not full document list (scales to 100+ files)
-    console.log(`📋 [DOCUMENTS API] Found ${documents?.length || 0} documents for tenant ${tenantId}`);
-    
-    // Only log details in development or when debugging
-    if (process.env.NODE_ENV === 'development' && documents && documents.length > 0) {
-      console.log('📄 [DOCUMENTS API] Sample (first 3):', documents.slice(0, 3).map(d => ({ filename: d.filename, id: d.id?.substring(0, 8) + '...' })));
-    }
-
     return NextResponse.json(
       { documents: documents || [] },
       { headers: corsHeaders }
@@ -104,9 +92,9 @@ export async function DELETE(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
   
   try {
-    // 🔒 SECURE: Validate tenant context with proper security checks
+    // Validate tenant context with proper security checks
     const tenantValidation = await validateTenantContext(request, {
-      requireAuth: true // ✅ PRODUCTION: Authentication enabled
+      requireAuth: true
     });
 
     if (!tenantValidation.isValid) {
@@ -136,8 +124,6 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    console.log(`🗑️ [DELETE] Deleting document ${documentId} for tenant ${tenantId}`);
-
     // Get document details first (for file path)
     const { data: document, error: fetchError } = await supabase
       .from('documents')
@@ -158,9 +144,6 @@ export async function DELETE(request: NextRequest) {
     const storageProvider = document.metadata?.storage_provider;
     const legacyStoragePath = document.metadata?.storage_path; // Old Supabase storage
     
-    // 🎯 Delete file from storage (Vercel Blob or legacy Supabase)
-    console.log(`📁 [DELETE] Storage info - URL: ${storageUrl}, Provider: ${storageProvider}, Legacy: ${legacyStoragePath}`);
-    
     if (storageUrl && storageProvider === 'vercel-blob') {
       try {
         // Verify we have the Blob token
@@ -169,16 +152,9 @@ export async function DELETE(request: NextRequest) {
           throw new Error('Blob storage not configured - missing token');
         }
         
-        console.log(`📁 [DELETE] Attempting to delete from Vercel Blob: ${storageUrl}`);
-        
         // Vercel Blob del() reads token from env automatically (BLOB_READ_WRITE_TOKEN)
         // Pass URL as string or array of URLs
         await del(storageUrl);
-        
-        console.log(`✅ [DELETE] Successfully deleted from Vercel Blob: ${storageUrl}`);
-        
-        // Verify deletion (optional check)
-        console.log(`🔍 [DELETE] Verifying blob deletion...`);
       } catch (storageError: any) {
         console.error('❌ [DELETE] Error deleting file from Vercel Blob:', {
           error: storageError.message,
@@ -196,18 +172,13 @@ export async function DELETE(request: NextRequest) {
       if (storageError) {
         console.error('❌ [DELETE] Error deleting file from Supabase storage:', storageError);
         // Continue anyway - file might already be deleted
-      } else {
-        console.log(`✅ [DELETE] Deleted file from Supabase storage: ${legacyStoragePath}`);
       }
-    } else {
-      console.log(`⚠️ [DELETE] No storage path found - file may have been manually deleted`);
     }
 
     // 2. Delete vectors from Pinecone
     try {
       const { deleteWorkflow } = await import('@/lib/rag');
       await deleteWorkflow({ documentId, tenantId });
-      console.log(`🗃️  [DELETE] Deleted vectors from Pinecone`);
     } catch (pineconeError) {
       console.error('Error deleting from Pinecone:', pineconeError);
       // Continue anyway - vectors might not exist
@@ -222,8 +193,6 @@ export async function DELETE(request: NextRequest) {
     if (jobsDeleteError) {
       console.error('Error deleting ingestion jobs:', jobsDeleteError);
       // Continue anyway - jobs might not exist
-    } else {
-      console.log(`📋 [DELETE] Deleted ingestion jobs for document`);
     }
 
     // 4. Delete chunks from database (old system)
@@ -235,8 +204,6 @@ export async function DELETE(request: NextRequest) {
     if (chunksDeleteError) {
       console.error('Error deleting document chunks:', chunksDeleteError);
       // Continue anyway - chunks might not exist
-    } else {
-      console.log(`🧩 [DELETE] Deleted chunks from database`);
     }
 
     // 5. Finally, delete document record
@@ -253,8 +220,6 @@ export async function DELETE(request: NextRequest) {
         { status: 500, headers: corsHeaders }
       );
     }
-
-    console.log(`✅ [DELETE] Successfully deleted document ${documentId} (including file, vectors, jobs, and chunks)`);
 
     return NextResponse.json({
       message: 'Document deleted successfully',

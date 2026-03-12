@@ -6,7 +6,7 @@ import path from 'path';
 async function setupAuthenticatedSession(page: Page) {
   await page.goto('/login');
   await page.fill('input[type="email"]', 'test1@example.com');
-  await page.fill('input[type="password"]', 'Testing123?');
+  await page.fill('input[type="password"]', process.env.TEST_PASSWORD || 'test-password');
   
   const rememberCheckbox = page.locator('input[type="checkbox"]#remember');
   if (await rememberCheckbox.isVisible()) {

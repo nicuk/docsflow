@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 /**
- * ISOLATED ADMIN ROUTE PROTECTION
- * Surgical fix for admin dashboard access control
- * Does not interfere with existing middleware logic
+ * Admin route protection.
+ * Controls access to admin dashboard routes.
  */
 
 interface AdminVerificationResult {
@@ -269,3 +268,7 @@ export function createAdminProtectionResponse(
   console.log(`✅ [ADMIN-PROTECTION] Admin access granted`);
   return response;
 }
+
+
+
+

@@ -17,8 +17,8 @@ SUPABASE_SERVICE_ROLE_KEY=your_existing_value
 # ===================================
 
 # From your Clerk dashboard (you have these!):
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_b...
-CLERK_SECRET_KEY=sk_test_iPpU0wvMCuMG495g8a...
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your-key-here
+CLERK_SECRET_KEY=sk_test_your-key-here
 
 # Feature flag - Controls which auth provider to use
 # CRITICAL: Keep this FALSE for now!

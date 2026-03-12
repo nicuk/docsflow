@@ -3,7 +3,7 @@ import { test, expect, Page, BrowserContext } from '@playwright/test';
 // Helper to clear all cookies and storage
 async function clearBrowserState(page: Page) {
   await page.context().clearCookies();
-  // 🎯 SURGICAL FIX: Only clear storage if we're on a valid page
+  // Only clear storage if we're on a valid page
   try {
     await page.evaluate(() => {
       if (typeof localStorage !== 'undefined') localStorage.clear();
@@ -66,7 +66,7 @@ test.describe('Remember Me Authentication', () => {
     
     // Fill in credentials without checking remember me
     await page.fill('input[type="email"]', 'test1@example.com');
-    await page.fill('input[type="password"]', 'Testing123?');
+    await page.fill('input[type="password"]', process.env.TEST_PASSWORD || 'test-password');
     
     // Ensure remember me is NOT checked
     const rememberCheckbox = page.locator('input[type="checkbox"]#remember');
@@ -78,7 +78,7 @@ test.describe('Remember Me Authentication', () => {
     // Submit login with retry mechanism for reliability
     await page.click('button[type="submit"]');
     
-    // 🎯 SURGICAL FIX: Wait for either success (redirect) or retry if needed
+    // Wait for either success (redirect) or retry if needed
     let loginAttempts = 0;
     const maxAttempts = 3;
     
@@ -91,7 +91,7 @@ test.describe('Remember Me Authentication', () => {
       
       if (!currentUrl.includes('/login') || !loginFormVisible) {
         console.log(`✅ Login succeeded on attempt ${loginAttempts + 1}`);
-        // 🎯 SURGICAL FIX: Expect redirect to tenant subdomain after successful login
+        // Expect redirect to tenant subdomain after successful login
         if (currentUrl.includes('localhost:3000/login') && !loginFormVisible) {
           console.log('🎯 Login succeeded, expecting redirect to tenant subdomain...');
           // Wait for redirect to tenant subdomain
@@ -107,17 +107,17 @@ test.describe('Remember Me Authentication', () => {
       }
     }
     
-    // 🎯 SURGICAL DEBUG: Log what page we're actually on
+    // Log what page we're actually on
     console.log(`🔍 After login - Current URL: ${page.url()}`);
     console.log(`🔍 After login - Page title: ${await page.title()}`);
     
-    // 🎯 SURGICAL DEBUG: Check if there are any error messages on the page
+    // Check if there are any error messages on the page
     const errorMessage = await page.locator('.error, .alert, [role="alert"]').textContent().catch(() => null);
     if (errorMessage) {
       console.log(`🚨 Error message found: ${errorMessage}`);
     }
     
-    // 🎯 SURGICAL DEBUG: Check if still on login page and why
+    // Check if still on login page and why
     if (page.url().includes('/login')) {
       console.log('🚨 Still on login page - checking for visible error indicators');
       const loginForm = await page.locator('form').isVisible();
@@ -145,7 +145,7 @@ test.describe('Remember Me Authentication', () => {
     
     // Fill in credentials
     await page.fill('input[type="email"]', 'test1@example.com');
-    await page.fill('input[type="password"]', 'Testing123?');
+    await page.fill('input[type="password"]', process.env.TEST_PASSWORD || 'test-password');
     
     // Check remember me checkbox
     const rememberCheckbox = page.locator('input[type="checkbox"]#remember');
@@ -192,7 +192,7 @@ test.describe('Remember Me Authentication', () => {
     
     // Login with remember me
     await page1.fill('input[type="email"]', 'test1@example.com');
-    await page1.fill('input[type="password"]', 'Testing123?');
+    await page1.fill('input[type="password"]', process.env.TEST_PASSWORD || 'test-password');
     
     const rememberCheckbox = page1.locator('input[type="checkbox"]#remember');
     if (await rememberCheckbox.isVisible()) {
@@ -244,7 +244,7 @@ test.describe('Remember Me Authentication', () => {
     
     // Login WITHOUT remember me
     await page1.fill('input[type="email"]', 'test1@example.com');
-    await page1.fill('input[type="password"]', 'Testing123?');
+    await page1.fill('input[type="password"]', process.env.TEST_PASSWORD || 'test-password');
     
     const rememberCheckbox = page1.locator('input[type="checkbox"]#remember');
     if (await rememberCheckbox.isVisible()) {
@@ -299,7 +299,7 @@ test.describe('Remember Me Authentication', () => {
     // Login without remember me
     await page.goto('/login');
     await page.fill('input[type="email"]', 'test1@example.com');
-    await page.fill('input[type="password"]', 'Testing123?');
+    await page.fill('input[type="password"]', process.env.TEST_PASSWORD || 'test-password');
     
     const rememberCheckbox = page.locator('input[type="checkbox"]#remember');
     if (await rememberCheckbox.isVisible()) {
@@ -369,7 +369,7 @@ test.describe('Remember Me Authentication', () => {
     // Login with first user WITH remember me
     await page.goto('/login');
     await page.fill('input[type="email"]', 'user1@example.com');
-    await page.fill('input[type="password"]', 'password123');
+    await page.fill('input[type="password"]', process.env.TEST_PASSWORD || 'test-password');
     
     const rememberCheckbox = page.locator('input[type="checkbox"]#remember');
     if (await rememberCheckbox.isVisible()) {
@@ -395,7 +395,7 @@ test.describe('Remember Me Authentication', () => {
     // Login with second user WITHOUT remember me
     await page.goto('/login');
     await page.fill('input[type="email"]', 'user2@example.com');
-    await page.fill('input[type="password"]', 'password123');
+    await page.fill('input[type="password"]', process.env.TEST_PASSWORD || 'test-password');
     
     if (await rememberCheckbox.isVisible()) {
       await rememberCheckbox.uncheck();
@@ -420,7 +420,7 @@ test.describe('Remember Me Authentication', () => {
     // Login on main domain with remember me
     await page.goto('/login');
     await page.fill('input[type="email"]', 'test1@example.com');
-    await page.fill('input[type="password"]', 'Testing123?');
+    await page.fill('input[type="password"]', process.env.TEST_PASSWORD || 'test-password');
     
     const rememberCheckbox = page.locator('input[type="checkbox"]#remember');
     if (await rememberCheckbox.isVisible()) {
@@ -460,7 +460,7 @@ test.describe('Remember Me Authentication', () => {
     // Login with remember me
     await page.goto('/login');
     await page.fill('input[type="email"]', 'test1@example.com');
-    await page.fill('input[type="password"]', 'Testing123?');
+    await page.fill('input[type="password"]', process.env.TEST_PASSWORD || 'test-password');
     
     const rememberCheckbox = page.locator('input[type="checkbox"]#remember');
     if (await rememberCheckbox.isVisible()) {
@@ -506,7 +506,7 @@ test.describe('Remember Me Authentication', () => {
     // Test 1: Login with remember me
     await page.goto('/login');
     await page.fill('input[type="email"]', 'test1@example.com');
-    await page.fill('input[type="password"]', 'Testing123?');
+    await page.fill('input[type="password"]', process.env.TEST_PASSWORD || 'test-password');
     
     const rememberCheckbox = page.locator('input[type="checkbox"]#remember');
     if (await rememberCheckbox.isVisible()) {
@@ -551,7 +551,7 @@ test.describe('Remember Me Integration Tests', () => {
     // Login with remember me
     await page.goto('/login');
     await page.fill('input[type="email"]', 'test1@example.com');
-    await page.fill('input[type="password"]', 'Testing123?');
+    await page.fill('input[type="password"]', process.env.TEST_PASSWORD || 'test-password');
     
     const rememberCheckbox = page.locator('input[type="checkbox"]#remember');
     if (await rememberCheckbox.isVisible()) {
@@ -590,7 +590,7 @@ test.describe('Remember Me Integration Tests', () => {
     // Login with remember me
     await page.goto('/login');
     await page.fill('input[type="email"]', 'test1@example.com');
-    await page.fill('input[type="password"]', 'Testing123?');
+    await page.fill('input[type="password"]', process.env.TEST_PASSWORD || 'test-password');
     
     const rememberCheckbox = page.locator('input[type="checkbox"]#remember');
     if (await rememberCheckbox.isVisible()) {

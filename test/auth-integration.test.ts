@@ -1,12 +1,12 @@
 /**
- * 🧪 AUTHENTICATION INTEGRATION TEST
+ * Authentication Integration Test
  * 
  * Tests all the critical authentication fixes we implemented:
- * 1. ✅ No random logouts during active usage
- * 2. ✅ Automatic session refresh works
- * 3. ✅ Server-side safety checks prevent crashes
- * 4. ✅ Cookie parsing handles malformed data
- * 5. ✅ Dashboard layout doesn't clear valid tokens
+ * 1. No random logouts during active usage
+ * 2. Automatic session refresh works
+ * 3. Server-side safety checks prevent crashes
+ * 4. Cookie parsing handles malformed data
+ * 5. Dashboard layout doesn't clear valid tokens
  */
 
 // Mock environment variables
@@ -42,12 +42,12 @@ if (typeof document !== 'undefined') {
   });
 }
 
-describe('🔐 Authentication Integration Tests', () => {
+describe('Authentication Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('🚨 CRITICAL FIX: Server-Side Safety', () => {
+  describe('Server-Side Safety', () => {
     test('should handle server-side execution without crashing', () => {
       // Simulate server-side environment
       const originalWindow = global.window;
@@ -70,7 +70,7 @@ describe('🔐 Authentication Integration Tests', () => {
     });
   });
 
-  describe('🔄 CRITICAL FIX: Automatic Session Refresh', () => {
+  describe('Automatic Session Refresh', () => {
     test('should implement session refresh logic', () => {
       // Test the refresh logic concept
       const now = Math.floor(Date.now() / 1000);
@@ -81,11 +81,11 @@ describe('🔐 Authentication Integration Tests', () => {
       expect(validTime > now).toBe(true);
 
       // This confirms our refresh logic timing is correct
-      console.log('✅ Session refresh timing logic verified');
+      console.log('Session refresh timing logic verified');
     });
   });
 
-  describe('🍪 CRITICAL FIX: Cookie Parsing', () => {
+  describe('Cookie Parsing', () => {
     test('should handle malformed Supabase cookies', () => {
       const malformedCookies = [
         'invalid_base64',
@@ -131,7 +131,7 @@ describe('🔐 Authentication Integration Tests', () => {
     });
   });
 
-  describe('⚡ CRITICAL FIX: No Random Logouts', () => {
+  describe('No Random Logouts', () => {
     test('should not clear tokens on temporary validation errors', () => {
       // This test simulates the dashboard layout scenario
       const userEmail = 'test@example.com';
@@ -147,8 +147,7 @@ describe('🔐 Authentication Integration Tests', () => {
       if (userEmail && currentTenant && secureAccess.tenantId) {
         // Success path
       } else {
-        console.warn('⚠️ [SECURITY] Incomplete multi-tenant cookie state - retrying user session');
-        // 🚨 SURGICAL FIX: Don't clear auth tokens - just log the issue
+        console.warn('[SECURITY] Incomplete multi-tenant cookie state - retrying user session');
       }
 
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -159,33 +158,33 @@ describe('🔐 Authentication Integration Tests', () => {
     });
   });
 
-  describe('🎯 Integration: Full Authentication Flow', () => {
+  describe('Integration: Full Authentication Flow', () => {
     test('should validate authentication flow concepts', () => {
       // Test core authentication concepts
       const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test';
       const isJWTFormat = mockToken.includes('.') && mockToken.startsWith('eyJ');
       
       expect(isJWTFormat).toBe(true);
-      console.log('✅ JWT token format validation works');
+      console.log('JWT token format validation works');
     });
   });
 });
 
-describe('🧪 Test Results Summary', () => {
+describe('Test Results Summary', () => {
   test('should confirm all critical fixes are working', () => {
     const fixes = {
-      'Server-side safety checks': '✅ Implemented',
-      'Automatic session refresh': '✅ Implemented', 
-      'Cookie parsing robustness': '✅ Implemented',
-      'No aggressive token clearing': '✅ Implemented',
-      'Session caching': '✅ Implemented',
+      'Server-side safety checks': 'Implemented',
+      'Automatic session refresh': 'Implemented', 
+      'Cookie parsing robustness': 'Implemented',
+      'No aggressive token clearing': 'Implemented',
+      'Session caching': 'Implemented',
     };
 
-    console.log('\n🎯 AUTHENTICATION FIXES STATUS:');
+    console.log('\nAUTHENTICATION FIXES STATUS:');
     Object.entries(fixes).forEach(([fix, status]) => {
-      console.log(`${status} ${fix}`);
+      console.log(`[OK] ${status} ${fix}`);
     });
 
-    expect(Object.values(fixes).every(status => status.includes('✅'))).toBe(true);
+    expect(Object.values(fixes).every(status => status.includes('Implemented'))).toBe(true);
   });
 });

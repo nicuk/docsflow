@@ -28,7 +28,7 @@ export interface HighlightedQuote {
 export class CitationEnhancer {
   /**
    * Enhance LLM response with inline citations
-   * Surgically adds [1], [2] references without changing architecture
+   * Adds [1], [2] inline references to source documents
    */
   static enhanceWithCitations(
     response: string,

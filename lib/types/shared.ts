@@ -8,7 +8,6 @@
  * - No backend type conflicts allowed
  */
 
-// ✅ CANONICAL: Extracted from working frontend
 export interface SubdomainData {
   emoji: string;
   createdAt: number;
@@ -18,21 +17,19 @@ export interface SubdomainData {
   subscriptionTier: string;
   settings: Record<string, any>;
   contactEmail?: string;
-  displayName?: string; // ✅ CANONICAL: Frontend standard
+  displayName?: string;
 }
 
-// ✅ CANONICAL: Frontend-compatible tenant settings
 export interface TenantSettings {
-  displayName?: string; // ✅ CANONICAL: Must match SubdomainData
+  displayName?: string;
   contactEmail?: string;
   aiEnabled?: boolean;
   notifications?: boolean;
   description?: string;
 }
 
-// ✅ CANONICAL: Frontend onboarding data structure
 export interface OnboardingData {
-  displayName?: string; // ✅ CANONICAL: Frontend standard
+  displayName?: string;
   subdomain?: string;
   isNewTenant?: boolean;
   userRole?: string;
@@ -43,7 +40,6 @@ export interface OnboardingData {
   information_needs?: string;
 }
 
-// ✅ CANONICAL: Frontend user data structure
 export interface UserData {
   id: string;
   email: string;
@@ -54,12 +50,11 @@ export interface UserData {
   onboarding_complete?: boolean;
 }
 
-// ✅ CANONICAL: Frontend tenant data structure
 export interface TenantData {
   id: string;
   subdomain: string;
   name: string;
-  displayName?: string; // ✅ CANONICAL: Frontend standard
+  displayName?: string;
   industry?: string;
   subscription_status?: string;
   plan_type?: string;

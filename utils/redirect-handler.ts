@@ -1,6 +1,6 @@
 /**
- * SURGICAL SOLUTION: Centralized redirect logic only
- * Does ONE thing well - handles redirects with loading states
+ * Centralized redirect logic.
+ * Handles redirects with loading states.
  */
 
 export interface RedirectOptions {

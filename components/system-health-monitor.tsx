@@ -18,7 +18,7 @@ export function SystemHealthMonitor() {
   const fetchHealthData = async () => {
     try {
       setLoading(true);
-      // ✅ Using Server Action instead of API endpoint
+      
       const data = await getCircuitBreakerHealth();
       setHealthData(data);
       setError(null);
@@ -32,7 +32,7 @@ export function SystemHealthMonitor() {
   const handleControlCircuitBreaker = async (service: string, action: 'open' | 'close' | 'reset') => {
     try {
       setControlLoading(service);
-      // ✅ Using Server Action instead of API endpoint
+      
       const result = await controlCircuitBreaker(service, action);
       
       if (result.success) {

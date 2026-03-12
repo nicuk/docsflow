@@ -53,14 +53,13 @@ async function processWorkerRequest(request: NextRequest) {
     const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
     
     if (!authHeader || authHeader !== expectedAuth) {
-      console.warn('⚠️ Unauthorized worker access attempt');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
     
-    console.log('🔄 [WORKER] Starting job processing cycle...');
+    
     
     // 2. Create Supabase client with service role
     const supabase = createClient(
@@ -80,9 +79,7 @@ async function processWorkerRequest(request: NextRequest) {
         p_timeout_minutes: WORKER_CONFIG.stale_job_timeout_minutes 
       });
     
-    if (resetCount && resetCount.length > 0 && resetCount[0].reset_count > 0) {
-      console.log(`🔄 [WORKER] Reset ${resetCount[0].reset_count} stale jobs`);
-    }
+    
     
     // 4. Atomically fetch pending jobs (with lock)
     // Filter out jobs created in the last 60s (CDN propagation time for Vercel Blob)
@@ -92,7 +89,7 @@ async function processWorkerRequest(request: NextRequest) {
       }) as { data: IngestionJob[] | null, error: any };
     
     if (fetchError) {
-      console.error('❌ [WORKER] Error fetching jobs:', fetchError);
+      console.error('[WORKER] Error fetching jobs:', fetchError);
       return NextResponse.json(
         { error: 'Failed to fetch jobs', details: fetchError.message },
         { status: 500 }
@@ -100,7 +97,6 @@ async function processWorkerRequest(request: NextRequest) {
     }
     
     if (!jobs || jobs.length === 0) {
-      console.log('✅ [WORKER] No pending jobs to process');
       return NextResponse.json({
         message: 'No jobs to process',
         processed: 0,
@@ -109,7 +105,7 @@ async function processWorkerRequest(request: NextRequest) {
       });
     }
     
-    console.log(`📋 [WORKER] Found ${jobs.length} pending jobs`);
+    
     
     // 5. Process jobs with per-tenant concurrency control
     const processedJobIds: string[] = [];
@@ -129,7 +125,6 @@ async function processWorkerRequest(request: NextRequest) {
         const totalCount = currentCount + pendingCount;
         
         if (totalCount >= WORKER_CONFIG.per_tenant_max_concurrent) {
-          console.log(`⏭️  [WORKER] Skipping job ${job.id} - tenant ${job.tenant_id} at max concurrency (${totalCount}/${WORKER_CONFIG.per_tenant_max_concurrent})`);
           continue;
         }
         
@@ -144,7 +139,7 @@ async function processWorkerRequest(request: NextRequest) {
           .eq('status', JOB_STATUS.PENDING); // Double-check still pending
         
         if (updateError) {
-          console.error(`❌ [WORKER] Failed to mark job ${job.id} as processing:`, updateError);
+          console.error(`[WORKER] Failed to mark job ${job.id} as processing:`, updateError);
           continue;
         }
         
@@ -153,15 +148,14 @@ async function processWorkerRequest(request: NextRequest) {
         
         // Process job asynchronously (fire and forget)
         processJob(job, supabase).catch(error => {
-          console.error(`❌ [WORKER] Job ${job.id} processing failed:`, error);
+          console.error(`[WORKER] Job ${job.id} processing failed:`, error);
           // Error is already handled in processJob
         });
         
         processedJobIds.push(job.id);
-        console.log(`✅ [WORKER] Started processing job ${job.id} (${job.filename})`);
         
       } catch (error) {
-        console.error(`❌ [WORKER] Error processing job ${job.id}:`, error);
+        console.error(`[WORKER] Error processing job ${job.id}:`, error);
         // Continue to next job
       }
     }
@@ -173,7 +167,6 @@ async function processWorkerRequest(request: NextRequest) {
     };
     
     const duration = Date.now() - startTime;
-    console.log(`✅ [WORKER] Cycle complete: ${result.processed} jobs started in ${duration}ms`);
     
     return NextResponse.json({
       ...result,
@@ -182,7 +175,7 @@ async function processWorkerRequest(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('❌ [WORKER] Fatal error:', error);
+    console.error('[WORKER] Fatal error:', error);
     
     return NextResponse.json(
       { 
@@ -204,12 +197,8 @@ export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('Authorization');
   
   if (authHeader) {
-    // This is a cron/manual trigger request
-    console.log('🔄 [WORKER] GET request with auth received (from Vercel Cron)');
     return processWorkerRequest(request);
   } else {
-    // This is a health check request
-    console.log('🩺 [WORKER] Health check request received');
     try {
       const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -245,7 +234,7 @@ async function processJob(
   const jobStartTime = Date.now();
   
   try {
-    console.log(`🚀 [JOB ${job.id}] Starting processing: ${job.filename}`);
+    
     
     // 1. Get file data (either from embedded data or download from Blob)
     let fileData: Blob | null = null;
@@ -253,20 +242,17 @@ async function processJob(
     // Check if file data is embedded in job metadata (avoids CDN propagation issues)
     const metadata = job.processing_metadata as any;
     if (metadata?.direct_processing && metadata?.file_data_base64) {
-      console.log(`📦 [JOB ${job.id}] Using embedded file data (bypassing Blob download)`);
       try {
         const buffer = Buffer.from(metadata.file_data_base64, 'base64');
         fileData = new Blob([buffer]);
-        console.log(`✅ [JOB ${job.id}] File data extracted from job: ${fileData.size} bytes`);
       } catch (error: any) {
-        console.error(`❌ [JOB ${job.id}] Failed to extract embedded file data:`, error.message);
+        console.error(`[JOB ${job.id}] Failed to extract embedded file data:`, error.message);
         // Fall through to download from Blob
       }
     }
     
     // If no embedded data, download from Vercel Blob Storage
     if (!fileData) {
-      console.log(`📥 [JOB ${job.id}] Downloading from Vercel Blob: ${job.file_path}`);
       const downloadStart = Date.now();
       
       let lastError: Error | null = null;
@@ -275,41 +261,26 @@ async function processJob(
       
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-          console.log(`📥 [JOB ${job.id}] Download attempt ${attempt}/${maxRetries} (${timeoutMs}ms timeout)`);
-          
-          // First, verify file accessibility with HEAD request (fast check)
-          console.log(`🔍 [JOB ${job.id}] Verifying file exists...`);
           const headResponse = await fetch(job.file_path, {
             method: 'HEAD',
             signal: AbortSignal.timeout(5000) // 5s timeout for HEAD
           });
           
           if (!headResponse.ok) {
-            console.error(`❌ [JOB ${job.id}] File not accessible: HTTP ${headResponse.status}`);
             throw new Error(`File not accessible (${headResponse.status}): ${headResponse.statusText}`);
           }
           
-          const contentLength = headResponse.headers.get('content-length');
-          console.log(`✅ [JOB ${job.id}] File exists, size: ${contentLength} bytes`);
-          
-          // Now download the file
-          console.log(`📦 [JOB ${job.id}] Starting file download with aggressive timeout...`);
           const downloadStartTime = Date.now();
           
           // Use Promise.race for more reliable timeout (AbortSignal.timeout sometimes doesn't work)
           const downloadPromise = (async () => {
-            console.log(`🌐 [JOB ${job.id}] Fetching URL...`);
             const response = await fetch(job.file_path);
             
-            console.log(`📡 [JOB ${job.id}] Response received (${response.status}), reading body...`);
             if (!response.ok) {
               throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             
-            // Use arrayBuffer instead of blob (more reliable with Vercel)
-            console.log(`📦 [JOB ${job.id}] Converting to buffer...`);
             const arrayBuffer = await response.arrayBuffer();
-            console.log(`✅ [JOB ${job.id}] Buffer conversion complete: ${arrayBuffer.byteLength} bytes`);
             return new Blob([arrayBuffer]);
           })();
           
@@ -318,27 +289,14 @@ async function processJob(
           });
           
           fileData = await Promise.race([downloadPromise, timeoutPromise]);
-          
-          const downloadDuration = Date.now() - downloadStartTime;
-          const totalDuration = Date.now() - downloadStart;
-          console.log(`✅ [JOB ${job.id}] Download successful in ${downloadDuration}ms (${fileData.size} bytes, total: ${totalDuration}ms)`);
-          break; // Success!
+          break;
           
         } catch (error: any) {
           lastError = error;
           const attemptDuration = Date.now() - downloadStart;
           
-          if (error.name === 'AbortError' || error.name === 'TimeoutError') {
-            console.error(`⏱️ [JOB ${job.id}] Download timeout after ${attemptDuration}ms (attempt ${attempt}/${maxRetries})`);
-          } else {
-            console.error(`❌ [JOB ${job.id}] Download error (attempt ${attempt}/${maxRetries}):`, error.message);
-            console.error(`❌ [JOB ${job.id}] Error details:`, error.stack);
-          }
-          
-          // Don't retry on last attempt
           if (attempt < maxRetries) {
-            const backoffMs = Math.pow(2, attempt) * 2000; // Exponential: 4s, 8s
-            console.log(`⏳ [JOB ${job.id}] Retrying in ${backoffMs}ms...`);
+            const backoffMs = Math.pow(2, attempt) * 2000;
             await new Promise(resolve => setTimeout(resolve, backoffMs));
           }
         }
@@ -348,17 +306,13 @@ async function processJob(
         throw new Error(`Failed to download file after ${maxRetries} attempts: ${lastError?.message}`);
       }
       
-      const totalDownloadDuration = Date.now() - downloadStart;
-      console.log(`📦 [JOB ${job.id}] Total download time: ${totalDownloadDuration}ms`);
     } // End of if (!fileData) - download from Blob
     
-    // 2. Process document with LangChain (replaces custom parsing)
-    console.log(`📦 [JOB ${job.id}] Starting LangChain processing...`);
     const processingStart = Date.now();
     
     const { processDocumentWithLangChain } = await import('./langchain-processor');
     
-    // 🚨 ADD TIMEOUT: Vercel functions timeout at 10s, but processing can take longer
+    // Vercel functions timeout at 10s, but processing can take longer
     // We'll handle this gracefully and retry on next cycle
     try {
       await processDocumentWithLangChain(
@@ -367,12 +321,8 @@ async function processJob(
       supabase
     );
       
-      const processingDuration = Date.now() - processingStart;
-      console.log(`⚡ [JOB ${job.id}] LangChain processing completed in ${processingDuration}ms`);
-      
     } catch (processingError: any) {
-      console.error(`❌ [JOB ${job.id}] LangChain processing error:`, processingError);
-      console.error(`❌ [JOB ${job.id}] Error stack:`, processingError.stack);
+      console.error(`[JOB ${job.id}] LangChain processing error:`, processingError);
       throw processingError; // Re-throw to trigger retry logic
     }
     
@@ -394,14 +344,7 @@ async function processJob(
       
       if (!completeError) {
         completeSuccess = true;
-        console.log(`✅ [JOB ${job.id}] Marked as completed (attempt ${attempt}/3)`);
       } else {
-        console.error(`⚠️ [JOB ${job.id}] Failed to mark as completed (attempt ${attempt}/3):`, {
-          message: completeError.message,
-          details: completeError.details,
-          hint: completeError.hint,
-          code: completeError.code
-        });
         if (attempt < 3) {
           await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
         }
@@ -416,11 +359,8 @@ async function processJob(
         .eq('id', job.document_id);
     }
     
-    const duration = Date.now() - jobStartTime;
-    console.log(`✅ [JOB ${job.id}] Completed in ${duration}ms`);
-    
   } catch (error) {
-    console.error(`❌ [JOB ${job.id}] Processing failed:`, error);
+    console.error(`[JOB ${job.id}] Processing failed:`, error);
     
     // Handle job failure with retry logic
     await handleJobFailure(job, error, supabase);
@@ -450,9 +390,6 @@ async function handleJobFailure(
   // Add retry timestamp if retrying
   if (canRetry) {
     updates.next_retry_at = calculateNextRetry(nextAttempt).toISOString();
-    console.log(`🔄 [JOB ${job.id}] Will retry (attempt ${nextAttempt}/${job.max_attempts}) at ${updates.next_retry_at}`);
-  } else {
-    console.error(`💀 [JOB ${job.id}] Permanently failed after ${job.max_attempts} attempts`);
   }
   
   // Update job status
@@ -462,7 +399,7 @@ async function handleJobFailure(
     .eq('id', job.id);
   
   if (updateError) {
-    console.error(`❌ [JOB ${job.id}] Failed to update error status:`, updateError);
+    console.error(`[JOB ${job.id}] Failed to update error status:`, updateError);
   }
   
   // Update document status if exists
@@ -490,7 +427,7 @@ async function processDocumentContent(
   fileData: Blob,
   supabase: ReturnType<typeof createClient>
 ): Promise<void> {
-  // 🚀 ENHANCED PROCESSING: Use multimodal parser for high-quality chunking
+  // Use multimodal parser for high-quality chunking
   console.log(`📝 [JOB ${job.id}] Starting enhanced document processing`);
   
   const { SecureDocumentService } = await import('@/lib/secure-database');
@@ -606,7 +543,7 @@ async function processDocumentContent(
       processing_progress: 50,
       metadata: {
         ...parsedDocument.metadata,
-        // ✅ Store everything in metadata JSONB (no dedicated columns exist)
+        // Store everything in metadata JSONB (no dedicated columns exist)
         content: parsedDocument.text || '', // Store in metadata, not as column
         parse_method: parseMethod,
         processed_at: new Date().toISOString()
@@ -666,7 +603,7 @@ async function processDocumentContent(
       processing_progress: 100,
       metadata: {
         ...parsedDocument.metadata,
-        // ✅ Store chunk count in metadata (not as column)
+        // Store chunk count in metadata (not as column)
         chunk_count: parsedDocument.chunks.length,
         has_tables: (parsedDocument.metadata.tables?.length || 0) > 0,
         has_images: (parsedDocument.metadata.images?.length || 0) > 0

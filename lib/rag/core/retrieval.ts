@@ -40,7 +40,7 @@ export async function retrieveChunks(input: {
   tenantId: string;
   topK?: number;
   filter?: Record<string, any>;
-  minScore?: number; // ✅ Allow custom threshold
+  minScore?: number;
 }): Promise<RetrievedChunk[]> {
   const { embedding, sparseVector, tenantId, topK = RAG_CONFIG.retrieval.topK, filter, minScore } = input;
   

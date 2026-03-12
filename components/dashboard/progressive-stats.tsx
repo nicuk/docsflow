@@ -27,7 +27,7 @@ export function ProgressiveStats({ tenantId }: { tenantId?: string }) {
     autoStart: true 
   })
   
-  // 🚀 PERFORMANCE FIX: Use cached React Query data instead of separate API calls
+  // Use cached React Query data instead of separate API calls
   const { data: documents = [] } = useDocuments(tenantId)
   const { data: conversations = [] } = useConversations(tenantId)
   
@@ -38,7 +38,7 @@ export function ProgressiveStats({ tenantId }: { tenantId?: string }) {
     avgResponseTime: '0ms'
   })
 
-  // 🚀 REAL DATA: Progressive loading with actual tenant data
+  // Progressive loading with actual tenant data
   useEffect(() => {
     if (isStageComplete('basic-counts')) {
       setStats(prev => ({ ...prev, totalDocuments: documents.length }))

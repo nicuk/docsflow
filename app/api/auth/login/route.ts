@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
             return cookieStore.get(name)?.value;
           },
           set(name, value, options) {
-            // SURGICAL FIX: Set domain for cross-subdomain access
+            // Set domain for cross-subdomain access
             const enhancedOptions = {
               ...options,
               domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : '.localhost',
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (authError) {
-      console.error('🔐 [LOGIN-UNIFIED] Authentication failed:', authError.message);
+      console.error('[LOGIN] Authentication failed:', authError.message);
       return NextResponse.json(
         { success: false, error: 'Invalid email or password' },
         { status: 401, headers: corsHeaders }
@@ -74,20 +74,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ✅ REAL SURGICAL FIX: Establish session context properly for SSR
-    console.log('🎯 [LOGIN] Establishing session context for RLS');
-    
-    // CRITICAL: Set the session in the supabase client for server-side RLS context
+    // Establish session context properly for SSR
+    // Set the session in the supabase client for server-side RLS context
     const { error: sessionError } = await supabase.auth.setSession({
       access_token: authData.session.access_token,
       refresh_token: authData.session.refresh_token
     });
     
     if (sessionError) {
-      console.error('🔐 [LOGIN] Failed to establish session context:', sessionError.message);
-      // Don't fail here - try with service role as fallback
-    } else {
-      console.log('✅ [LOGIN] Session context established for RLS policies');
+      console.error('[LOGIN] Failed to establish session context:', sessionError.message);
     }
 
     // Now try to fetch user profile with proper RLS context
@@ -112,7 +107,7 @@ export async function POST(request: NextRequest) {
 
     // FALLBACK: If RLS still fails, use service role as backup
     if (profileError && profileError.code === 'PGRST116') {
-      console.log('🔧 [LOGIN] RLS context failed, falling back to service role');
+      
       
       const { createClient } = await import('@supabase/supabase-js');
       const serviceSupabase = createClient(
@@ -142,14 +137,11 @@ export async function POST(request: NextRequest) {
       userProfile = result.data;
       profileError = result.error;
       
-      if (!profileError) {
-        console.log('✅ [LOGIN] Service role fallback successful');
-      }
+      
     }
 
-    // 🎯 CRITICAL FIX: Auto-create missing user record (auth.users exists but public.users missing)
+    // Auto-create missing user record (auth.users exists but public.users missing)
     if (profileError || !userProfile) {
-      console.log('🔧 [LOGIN] User profile missing from public.users, creating record');
       
       const { createClient } = await import('@supabase/supabase-js');
       const serviceSupabase = createClient(
@@ -185,7 +177,7 @@ export async function POST(request: NextRequest) {
         .single();
       
       if (createError) {
-        console.error('🔐 [LOGIN] Failed to create user profile:', createError);
+        console.error('[LOGIN] Failed to create user profile:', createError);
         return NextResponse.json(
           { success: false, error: 'Failed to create user profile' },
           { status: 500, headers: corsHeaders }
@@ -193,7 +185,6 @@ export async function POST(request: NextRequest) {
       }
       
       userProfile = newProfile;
-      console.log('✅ [LOGIN] Auto-created user profile for:', authData.user.email);
     }
 
     // Set remember me preference cookie
@@ -208,7 +199,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 🎯 CRITICAL FIX: SERVER-SIDE REDIRECT to tenant subdomain
+    // Server-side redirect to tenant subdomain
     const hostname = request.headers.get('host') || '';
     const isMainDomain = hostname === 'docsflow.app' || hostname === 'www.docsflow.app' || hostname === 'localhost:3000';
     
@@ -232,11 +223,9 @@ export async function POST(request: NextRequest) {
       cookieStore.set('tenant-subdomain', userProfile.tenants.subdomain, tenantCookieOptions);
     }
     
-    console.log('✅ [LOGIN] Authentication successful, cookies set');
-    console.log(`🎯 [LOGIN] User: ${userProfile.email}, Tenant: ${userProfile.tenants?.subdomain}`);
-    console.log(`🌐 [LOGIN] Current host: ${hostname}, Is main domain: ${isMainDomain}`);
     
-    // 🎯 CRITICAL FIX: Return redirect URL for CLIENT-SIDE redirect (avoids CORS)
+    
+    // Return redirect URL for client-side redirect (avoids CORS)
     // Server-side redirects across origins are blocked by CORS policy
     let redirectUrl = null;
     if (isMainDomain && userProfile.tenants?.subdomain) {
@@ -244,7 +233,6 @@ export async function POST(request: NextRequest) {
         ? `https://${userProfile.tenants.subdomain}.docsflow.app/dashboard`
         : `http://localhost:3000/dashboard`; // For local dev, stay on localhost
       
-      console.log(`🔄 [LOGIN] Client should redirect to: ${redirectUrl}`);
     }
     
     // For subdomain logins or local dev, return JSON (frontend handles navigation)
@@ -274,7 +262,7 @@ export async function POST(request: NextRequest) {
     return response;
 
   } catch (error: any) {
-    console.error('❌ [LOGIN-UNIFIED] Server error:', error);
+    console.error('[LOGIN] Server error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500, headers: corsHeaders }

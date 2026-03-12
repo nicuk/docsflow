@@ -33,7 +33,7 @@ export default function SourceViewerModal({ source, isOpen, onClose, highlightTe
   const [isLoadingDocument, setIsLoadingDocument] = useState(false)
   const [documentLoadError, setDocumentLoadError] = useState<string | null>(null)
 
-  // 🔧 FIX: Load full document content when switching to full view
+  // Load full document content when switching to full view
   useEffect(() => {
     if (viewMode === 'full' && !fullDocumentContent && !isLoadingDocument && source.document_id && !source.document_id.startsWith('doc-')) {
       loadFullDocument()
@@ -134,7 +134,7 @@ export default function SourceViewerModal({ source, isOpen, onClose, highlightTe
               size="sm"
               className="ml-auto"
               onClick={() => {
-                // 🎯 FIX: Link to document viewer page instead of API endpoint
+                
                 window.open(`/dashboard/documents?highlight=${source.document_id}`, '_blank');
               }}
             >

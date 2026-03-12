@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     
     console.log('Fetching conversations for validated tenant:', tenantSubdomain, 'UUID:', tenantId);
     
-    // 🎯 CLERK MIGRATION: Use service role key (RLS disabled, app-level security via Clerk)
+    // Use service role key (RLS disabled, app-level security via Clerk)
     const supabase = createDirectClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
       // Continue with creation on error to avoid blocking users
     }
     
-    // 🎯 CLERK MIGRATION: Use service role key (RLS disabled, app-level security via Clerk)
+    // Use service role key (RLS disabled, app-level security via Clerk)
     const supabaseClient = createDirectClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!

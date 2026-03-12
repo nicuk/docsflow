@@ -3,15 +3,15 @@
 
 // Enterprise tenant configuration - extracted from subdomain or headers
 
-// 🎯 CLERK MIGRATION: Removed legacy AuthService import - using Clerk tokens only
+// Using Clerk tokens only (no legacy AuthService)
 
 // Enhanced API base URL logic
 const getAPIBaseURL = () => {
-  // 🎯 SURGICAL FIX: Use current subdomain for API calls (tenant-aware)
+  // Use current subdomain for API calls (tenant-aware)
   if (typeof window !== 'undefined') {
     const currentHost = window.location.host;
     
-    // If we're on a tenant subdomain (e.g., bitto.docsflow.app), use it for API
+    // If we're on a tenant subdomain (e.g., acme.docsflow.app), use it for API
     if (currentHost.includes('.docsflow.app') && !currentHost.startsWith('www.')) {
       return `https://${currentHost}/api`;
     }
@@ -20,9 +20,8 @@ const getAPIBaseURL = () => {
   // Fallback: Use environment variable or main API
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.docsflow.app/api';
   
-  // 🚨 PRODUCTION SAFETY: Never allow localhost in production
+  // Never allow localhost in production
   if (apiUrl.includes('localhost') && process.env.NODE_ENV === 'production') {
-    console.warn('🚨 SECURITY: Blocking localhost URL in production build');
     return 'https://api.docsflow.app/api';
   }
   
@@ -44,7 +43,7 @@ export const apiClient = {
       'Accept': 'application/json',
     };
     
-    // 🎯 CLERK MIGRATION: Get Clerk token only
+    // Get Clerk token
     const authToken = await this.getAccessToken();
     const finalToken = authToken;
     
@@ -52,12 +51,6 @@ export const apiClient = {
       // Use BOTH headers - custom header survives Vercel proxy
       headers['Authorization'] = `Bearer ${finalToken}`;
       headers['X-Auth-Token'] = finalToken; // Custom header that Vercel won't strip
-      console.log('🔍 [CLERK-AUTH] Auth headers set for API request:', {
-        tokenPreview: finalToken.substring(0, 30) + '...',
-        tokenLength: finalToken.length,
-        hasValidFormat: finalToken.includes('.'),
-        tokenSource: 'clerk'
-      });
     } else {
       console.error('❌ [CLERK-AUTH] No auth token available - user may need to re-authenticate');
     }
@@ -83,28 +76,22 @@ export const apiClient = {
             if (context.tenantId && context.subdomain === subdomain) {
               headers['X-Tenant-ID'] = context.tenantId;
               headers['X-RLS-Context'] = 'tenant-scoped'; // Signal for RLS context setting
-              console.log(`🏢 [RLS-CONTEXT] Adding tenant context: ${subdomain} -> ${context.tenantId.substring(0, 8)}...`);
             }
           } catch (parseError) {
-            console.warn('🔍 [RLS-CONTEXT] Failed to parse tenant context:', parseError);
+            // Failed to parse tenant context - continue without tenant ID
           }
         }
-        
-        console.log(`🏢 Adding tenant context: ${subdomain}`);
       }
     }
     
     return headers;
   },
 
-  // 🎯 CLERK MIGRATION: Get Clerk session token for API calls
+  // Get Clerk session token for API calls
   async getAccessToken() {
     if (typeof window === 'undefined') {
-      console.log('🔍 [CLERK-TOKEN] Server-side context, no token available');
       return null;
     }
-    
-    console.log('🔍 [CLERK-TOKEN] Starting token retrieval from Clerk...');
     
     try {
       // Access the global Clerk instance (set by ClerkProvider)
@@ -116,19 +103,11 @@ export const apiClient = {
         const token = await clerk.session?.getToken();
         
         if (token) {
-          console.log('✅ [CLERK-TOKEN] Retrieved Clerk session token:', {
-            tokenPreview: token.substring(0, 30) + '...',
-            tokenLength: token.length
-          });
           return token;
-        } else {
-          console.warn('⚠️ [CLERK-TOKEN] No active Clerk session found');
         }
-      } else {
-        console.warn('⚠️ [CLERK-TOKEN] Clerk not initialized yet on window object');
       }
-    } catch (clerkError) {
-      console.warn('⚠️ [CLERK-TOKEN] Failed to retrieve Clerk token:', clerkError);
+    } catch {
+      // Clerk token retrieval failed - will try cookie fallback
     }
     
     // Fallback: Try to get token from Clerk cookies
@@ -139,7 +118,6 @@ export const apiClient = {
       if (clerkSession) {
         // Extract JWT from __session cookie
         const token = clerkSession.split('=')[1];
-        console.log('✅ [CLERK-TOKEN] Retrieved token from Clerk __session cookie');
         return token;
       }
     }
@@ -188,14 +166,6 @@ export const apiClient = {
     try {
       const headers = await this.getAuthHeaders();
       
-      // CRITICAL DEBUG: Log what headers we're sending for chat
-      console.log('🔍 [CHAT] Headers being sent:', {
-        hasAuthorization: !!headers.Authorization,
-        hasXAuthToken: !!headers['X-Auth-Token'],
-        authPreview: headers.Authorization ? headers.Authorization.substring(0, 30) + '...' : 'none',
-        allHeaders: headers
-      });
-      
       const response = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
         headers,
@@ -215,12 +185,11 @@ export const apiClient = {
     }
   },
 
-  // SURGICAL FIX: Enhanced error handling for React Query retries
+  // Enhanced error handling for React Query retries
   async handleApiResponse(response: Response, operation: string) {
     if (!response.ok) {
       if (response.status === 401) {
         // 401 = auth token missing/expired - this is temporary, should retry
-        console.log(`🔄 [${operation}] Auth required - React Query will retry`);
         const error = new Error(`Authentication required for ${operation}`);
         (error as any).name = 'AuthError';
         (error as any).retry = true;
@@ -235,13 +204,6 @@ export const apiClient = {
   async getConversations() {
     try {
       const headers = await this.getAuthHeaders();
-      
-      // CRITICAL DEBUG: Log what headers we're actually sending
-      console.log('🔍 [CONVERSATIONS] Headers being sent:', {
-        hasAuthorization: !!headers.Authorization,
-        authPreview: headers.Authorization ? headers.Authorization.substring(0, 30) + '...' : 'none',
-        allHeaders: headers
-      });
       
       const response = await fetch(`${API_BASE_URL}/conversations`, {
         method: 'GET',
@@ -310,7 +272,7 @@ export const apiClient = {
       const authHeaders = await this.getAuthHeaders();
       delete authHeaders['Content-Type']; // Let browser set this for FormData
       
-      // 🚀 ENHANCED: Real progress tracking with XMLHttpRequest
+      // Real progress tracking with XMLHttpRequest
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         

@@ -9,12 +9,12 @@ import { createClient } from '@supabase/supabase-js';
 
 // Test configuration
 const TEST_USER = {
-  email: 'support@bitto.tech',
-  password: 'Testing123'
+  email: process.env.TEST_USER_EMAIL || 'test@example.com',
+  password: process.env.TEST_USER_PASSWORD || 'test-password'
 };
 
-const BASE_URL = 'https://bitto.docsflow.app';
-const TEST_TENANT_ID = '122928f6-f34e-484b-9a69-7e1f25caf45c';
+const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000';
+const TEST_TENANT_ID = process.env.TEST_TENANT_ID || 'test-tenant-id';
 
 // Test content
 const TEST_DOCUMENT_CONTENT = `

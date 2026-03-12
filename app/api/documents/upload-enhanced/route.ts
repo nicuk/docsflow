@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // 🚀 ASYNC PROCESSING: Queue the file for background processing
+    // Queue the file for background processing
     console.log(`[Documents Upload] Queuing file for background processing: ${file.name}`);
     
     // Convert file to buffer
@@ -71,14 +71,13 @@ export async function POST(request: NextRequest) {
     
     const document = await SecureDocumentService.insertDocument({
       tenant_id: tenantId,
-      filename: file.name, // ✅ This matches schema
-      // ❌ REMOVED: content: '', (column doesn't exist)
-      file_size: buffer.length, // ✅ This matches schema  
-      mime_type: file.type, // ✅ This matches schema
-      processing_status: 'pending', // ✅ This matches schema
-      processing_progress: 0, // ✅ This matches schema
-      document_category: 'general', // ✅ This matches schema
-      access_level: 'user_accessible', // ✅ This matches schema
+      filename: file.name,
+      file_size: buffer.length,
+      mime_type: file.type,
+      processing_status: 'pending',
+      processing_progress: 0,
+      document_category: 'general',
+      access_level: 'user_accessible',
       metadata: {
         tenant_id: tenantId,
         mime_type: file.type,
@@ -133,8 +132,8 @@ export async function POST(request: NextRequest) {
       success: true,
       document: {
         id: documentId,
-        filename: file.name, // 🎯 FIX: Match frontend expectation (not 'name')
-        processing_status: 'queued', // 🎯 FIX: Match frontend expectation (not 'status')
+        filename: file.name,
+        processing_status: 'queued',
         file_size: buffer.length,
         jobId: job.id,
         message: 'Document queued for processing. This may take 30s-2min depending on file size.'

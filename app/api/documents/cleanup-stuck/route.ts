@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   try {
     // 🔒 SECURE: Validate tenant context with proper security checks
     const tenantValidation = await validateTenantContext(request, {
-      requireAuth: true // ✅ PRODUCTION: Authentication enabled
+      requireAuth: true
     });
 
     if (!tenantValidation.isValid) {
@@ -28,8 +28,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const tenantId = tenantValidation.tenantId!; // This is the tenant UUID
-    console.log('🧹 [CLEANUP] Cleaning stuck documents for tenant:', tenantId);
+    const tenantId = tenantValidation.tenantId!;
 
     // Use service role to bypass RLS
     const supabase = createClient(
@@ -37,27 +36,10 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
     
-    // 🎯 SURGICAL FIX: Reduced threshold from 10 minutes to 2 minutes
+    // 2-minute threshold (processing should complete within seconds)
     // Background processing should complete within seconds, so 2 minutes is plenty
     const twoMinutesAgo = new Date();
     twoMinutesAgo.setMinutes(twoMinutesAgo.getMinutes() - 2);
-    
-    console.log(`🔍 [CLEANUP] Looking for documents stuck in processing since before: ${twoMinutesAgo.toISOString()}`);
-    
-    // First, let's see ALL processing documents for debugging
-    const { data: allProcessing } = await supabase
-      .from('documents')
-      .select('id, filename, created_at, processing_status')
-      .eq('tenant_id', tenantId)
-      .eq('processing_status', 'processing');
-    
-    console.log(`📊 [CLEANUP] Found ${allProcessing?.length || 0} total processing documents:`, 
-      allProcessing?.map(d => ({ 
-        filename: d.filename, 
-        created: d.created_at,
-        age_minutes: ((new Date().getTime() - new Date(d.created_at).getTime()) / 60000).toFixed(1)
-      }))
-    );
     
     const { data: stuckDocuments, error: fetchError } = await supabase
       .from('documents')
@@ -75,15 +57,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (!stuckDocuments || stuckDocuments.length === 0) {
-      console.log('✅ [CLEANUP] No stuck documents found');
       return NextResponse.json({
         message: 'No stuck documents found',
         cleaned: 0
       }, { headers: corsHeaders });
     }
 
-    // 🎯 SURGICAL FIX: DELETE stuck documents instead of just marking as error
-    console.log(`🗑️ [CLEANUP] Deleting ${stuckDocuments.length} stuck documents that failed processing...`);
+    
     
     // Delete associated chunks first (foreign key constraint)
     const documentIds = stuckDocuments.map(doc => doc.id);
@@ -97,8 +77,6 @@ export async function POST(request: NextRequest) {
       if (chunksDeleteError) {
         console.error('Error deleting stuck document chunks:', chunksDeleteError);
         // Continue anyway - chunks might not exist
-      } else {
-        console.log(`🧩 [CLEANUP] Deleted chunks for ${documentIds.length} stuck documents`);
       }
 
       // Delete the documents themselves
@@ -116,8 +94,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log(`✅ [CLEANUP] Successfully cleaned up ${stuckDocuments.length} stuck documents`);
-    
     return NextResponse.json({
       message: `Successfully cleaned up ${stuckDocuments.length} stuck documents`,
       cleaned: stuckDocuments.length,

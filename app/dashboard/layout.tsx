@@ -72,7 +72,7 @@ const getUserFromCookies = () => {
   }
   
   // Fallback - try to get from session storage
-  // 🎯 CLERK MIGRATION: Removed onboarding check - AuthContext handles this now
+  // AuthContext handles onboarding check
   try {
     const userData = typeof window !== 'undefined' ? sessionStorage.getItem('user') : null;
     if (userData) {
@@ -96,7 +96,7 @@ const getUserFromCookies = () => {
   };
 };
 
-// 🎯 CLERK MIGRATION: Dynamic user session hook using Clerk
+// Dynamic user session hook using Clerk
 function useUserSession() {
   const { user: clerkUser, isLoaded } = useUser()
   
@@ -181,10 +181,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const pathname = usePathname()
   const user = useUserSession() // Dynamic user session restoration
-  const { signOut } = useClerk() // 🎯 CLERK: Get signOut function
+  const { signOut } = useClerk()
   const router = useRouter()
 
-  // 🎯 CLERK MIGRATION: Logout functionality using Clerk
+  // Logout using Clerk
   const handleLogout = async () => {
     try {
       await signOut()

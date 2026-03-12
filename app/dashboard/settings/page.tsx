@@ -264,7 +264,7 @@ export default function SettingsPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [apiKey, setApiKey] = useState("sk_live_51NZgGtKLk2DfFgQa7tYfVmBCVcfUvZ...")
+  const [apiKey, setApiKey] = useState("sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxx...")
   const [showApiKey, setShowApiKey] = useState(false)
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false)
   
@@ -1257,7 +1257,7 @@ export default function SettingsPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <div className="relative flex-1">
                         <Input
-                          value="sk_test_51NZgGtKLk2DfFgQa7tYfVmBCVcfUvZ..."
+                          value="sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx..."
                           readOnly
                           type="password"
                           className="pr-10"

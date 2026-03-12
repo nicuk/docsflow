@@ -3,7 +3,7 @@
 
 **SECURITY UPDATE**: Fixes Supabase warning `function_search_path_mutable`
 
-**Combines:** AI Lead Router multi-tenancy + SupabaseAuthWithSSR security + Your competitive advantages + Security hardening
+**Combines:** DocsFlow multi-tenancy + SupabaseAuthWithSSR security + Your competitive advantages + Security hardening
 
 ---
 
@@ -27,7 +27,7 @@ ALTER SYSTEM SET shared_buffers = '256MB';
 ## **TENANT MANAGEMENT (Multi-Tenant Foundation)**
 
 ```sql
--- Enhanced tenants table (from AI Lead Router + improvements)
+-- Enhanced tenants table (from DocsFlow + improvements)
 CREATE TABLE tenants (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   subdomain TEXT UNIQUE NOT NULL,

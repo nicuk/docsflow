@@ -45,40 +45,26 @@ export const processDocumentWithLangChain = traceable(
     fileData: Blob,
     supabase: ReturnType<typeof createClient>
   ): Promise<void> {
-  console.log(`🚀 [JOB ${job.id}] Starting LangChain document processing`);
-  console.log(`📄 [JOB ${job.id}] File: ${job.filename}, Type: ${job.file_type}`);
-  
   let tempFilePath: string | null = null;
   const totalStartTime = Date.now();
   
   try {
-    // ⏱️ STEP 0: Convert blob to buffer
-    const step0Start = Date.now();
     const arrayBuffer = await fileData.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    console.log(`⏱️ [TIMING] [JOB ${job.id}] Step 0 (Blob→Buffer): ${Date.now() - step0Start}ms`);
     
-    // Create temp file for LangChain loaders
     const tempDir = os.tmpdir();
     tempFilePath = path.join(tempDir, `upload_${job.id}_${job.filename}`);
     fs.writeFileSync(tempFilePath, buffer);
-    console.log(`📦 [JOB ${job.id}] Temp file created`);
     
-    // ⏱️ STEP 1: Load document with appropriate loader
-    const step1Start = Date.now();
     let docs: Document[];
     const mimeType = job.file_type || '';
-    console.log(`⏱️ [TIMING] [JOB ${job.id}] Starting Step 1 (Document Loading)...`);
     
     try {
       if (mimeType.includes('pdf')) {
-        console.log(`📚 [JOB ${job.id}] Using PDFLoader`);
         const { PDFLoader } = await import('langchain/document_loaders/fs/pdf');
         const loader = new PDFLoader(tempFilePath);
         docs = await loader.load();
       } else if (mimeType.includes('word') || mimeType.includes('docx') || mimeType.includes('msword')) {
-        console.log(`📄 [JOB ${job.id}] Processing DOCX with mammoth (in-memory, no disk I/O)`);
-        
         try {
           // Use mammoth with buffer (faster - no disk I/O on Vercel serverless)
           const mammoth = await import('mammoth');
@@ -94,8 +80,6 @@ export const processDocumentWithLangChain = traceable(
           // Rough estimate: 250 words per page (standard formatting)
           const estimatedPages = Math.max(1, Math.ceil(wordCount / 250));
           
-          console.log(`✅ [JOB ${job.id}] Mammoth extracted ${charCount} chars, ${wordCount} words, ~${estimatedPages} pages`);
-          
           docs = [new Document({
             pageContent: result.value,
             metadata: { 
@@ -110,15 +94,11 @@ export const processDocumentWithLangChain = traceable(
           })];
           
         } catch (docxError: any) {
-          console.error(`❌ [JOB ${job.id}] DOCX parsing failed:`, docxError.message);
+          console.error(`[JOB ${job.id}] DOCX parsing failed:`, docxError.message);
           throw new Error(`DOCX parsing failed: ${docxError.message}. File may be corrupted or password-protected.`);
         }
       } else if (mimeType.includes('image/')) {
-        // 🖼️ IMAGE OCR - Use Gemini 2.0 Flash via OpenRouter
-        console.log(`🖼️ [JOB ${job.id}] Processing image with Gemini 2.0 Flash Vision`);
-        
         const base64Image = buffer.toString('base64');
-        console.log(`📏 [JOB ${job.id}] Image base64 size: ${base64Image.length} chars`);
         
         // Use OpenRouter's Gemini 2.0 Flash for superior vision/OCR
         const visionPrompt = `Extract ALL text, numbers, and data from this image. Return ONLY the actual content visible in the image.
@@ -134,7 +114,6 @@ Rules:
 
 Return raw content only.`;
 
-        console.log(`🌐 [JOB ${job.id}] Calling OpenRouter Gemini Vision API (120s timeout)...`);
         const visionStartTime = Date.now();
         
         // Add 120s timeout to prevent hanging
@@ -168,34 +147,26 @@ Return raw content only.`;
           });
           clearTimeout(timeout);
           
-          const visionDuration = Date.now() - visionStartTime;
-          console.log(`⏱️ [JOB ${job.id}] Vision API call took ${visionDuration}ms`);
-        
-          console.log(`📨 [JOB ${job.id}] Vision API response status: ${visionResponse.status}`);
-          
           if (!visionResponse.ok) {
             const errorText = await visionResponse.text();
-            console.error(`❌ [JOB ${job.id}] Vision API error: ${errorText}`);
+            console.error(`[JOB ${job.id}] Vision API error: ${errorText}`);
             throw new Error(`Gemini Vision API failed (${visionResponse.status}): ${errorText}`);
           }
           
           const visionResult = await visionResponse.json();
-          console.log(`✅ [JOB ${job.id}] Vision API call completed`);
           let extractedText = visionResult.choices?.[0]?.message?.content || '';
         
         if (!extractedText || extractedText.length < 10) {
           throw new Error('No text extracted from image - image may be blank or corrupted');
         }
         
-        // 🔧 CLEAN OUTPUT FOR RAG:
+        // Clean output for RAG:
         // Remove common LLM artifacts that slip through despite prompt
         extractedText = extractedText
           .replace(/^(Here is the|This image|The document|I can see|Extracted text:)\s*/gi, '') // Remove intro phrases
           .replace(/\*\*(.*?)\*\*/g, '$1') // Remove markdown bold
           .replace(/^[*•-]\s+/gm, '') // Clean up bullet points
           .trim();
-        
-        console.log(`✅ [JOB ${job.id}] Extracted ${extractedText.length} chars from image via Gemini 2.0 Flash`);
         
         // Create document from cleaned extracted text
         docs = [new Document({
@@ -214,13 +185,11 @@ Return raw content only.`;
         const duration = Date.now() - visionStartTime;
         
         if (visionError.name === 'AbortError') {
-          console.error(`⏱️ [JOB ${job.id}] Vision API timeout after ${duration}ms`);
           throw new Error(`Gemini Vision API timed out after 120 seconds`);
         }
         throw visionError;
       }
       } else {
-        console.log(`📝 [JOB ${job.id}] Using text extraction`);
         const textContent = buffer.toString('utf-8');
         docs = [new Document({ 
           pageContent: textContent,
@@ -228,21 +197,15 @@ Return raw content only.`;
         })];
       }
       
-      console.log(`✅ [JOB ${job.id}] Document loaded: ${docs.length} pages`);
-      console.log(`⏱️ [TIMING] [JOB ${job.id}] Step 1 (Document Loading): ${Date.now() - step1Start}ms`);
     } catch (loadError) {
-      console.error(`❌ [JOB ${job.id}] Loading failed:`, loadError);
-      console.log(`⏱️ [TIMING] [JOB ${job.id}] Step 1 (Document Loading) FAILED: ${Date.now() - step1Start}ms`);
+      console.error(`[JOB ${job.id}] Loading failed:`, loadError);
       
-      // 🚨 DO NOT CREATE FALLBACK GARBAGE!
+      // Do not create fallback garbage!
       // Binary files (DOCX, PDF, images) will create garbage if read as UTF-8
       // Better to fail the job and let user know the file is corrupted
       throw new Error(`Document loading failed: ${loadError instanceof Error ? loadError.message : 'Unknown error'}. File may be corrupted or in an unsupported format.`);
     }
     
-    // ⏱️ STEP 2: Smart chunking with RecursiveCharacterTextSplitter
-    const step2Start = Date.now();
-    console.log(`✂️ [JOB ${job.id}] Splitting documents (smart chunking)`);
     const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: 1000,
       chunkOverlap: 200,
@@ -250,8 +213,6 @@ Return raw content only.`;
     });
     
     const chunks = await splitter.splitDocuments(docs);
-    console.log(`✅ [JOB ${job.id}] Created ${chunks.length} chunks`);
-    console.log(`⏱️ [TIMING] [JOB ${job.id}] Step 2 (Chunking): ${Date.now() - step2Start}ms`);
     
     if (chunks.length === 0) {
       throw new Error('No chunks generated from document');
@@ -272,12 +233,7 @@ Return raw content only.`;
       });
     });
     
-    // Skip progress update - handled by route.ts after job completes
-    console.log(`📊 [JOB ${job.id}] Chunks ready for embedding (${chunks.length} chunks)`);
-    
-    // ⏱️ STEP 2.5: Generate document summary for hierarchical retrieval (Phase 1A)
-    const step25Start = Date.now();
-    console.log(`📝 [JOB ${job.id}] Generating document summary for hierarchical retrieval...`);
+    // Generate document summary for hierarchical retrieval
     try {
       const { generateDocumentSummary } = await import('@/lib/rag/core/summarization');
       
@@ -302,20 +258,12 @@ Return raw content only.`;
         .eq('id', job.document_id);
       
       if (updateError) {
-        console.error(`⚠️ [JOB ${job.id}] Failed to save summary:`, updateError);
-      } else {
-        console.log(`✅ [JOB ${job.id}] Summary saved: "${summary.slice(0, 80)}..."`);
+        console.error(`[JOB ${job.id}] Failed to save summary:`, updateError);
       }
-      console.log(`⏱️ [TIMING] [JOB ${job.id}] Step 2.5 (Summary Generation): ${Date.now() - step25Start}ms`);
     } catch (summaryError) {
       // Non-critical error - don't fail the job
-      console.error(`⚠️ [JOB ${job.id}] Summary generation failed (non-critical):`, summaryError);
-      console.log(`⏱️ [TIMING] [JOB ${job.id}] Step 2.5 (Summary Generation) FAILED: ${Date.now() - step25Start}ms`);
+      console.error(`[JOB ${job.id}] Summary generation failed (non-critical):`, summaryError);
     }
-    
-    // ⏱️ STEP 3: Generate embeddings with our custom OpenRouter-compatible function
-    const step3Start = Date.now();
-    console.log(`🔗 [JOB ${job.id}] Generating embeddings via OpenRouter`);
     
     // Use our custom embeddings (OpenRouter-compatible)
     const { generateEmbeddings } = await import('@/lib/rag/core/embeddings');
@@ -324,12 +272,7 @@ Return raw content only.`;
     const texts = enhancedChunks.map(chunk => chunk.pageContent);
     const embeddingVectors = await generateEmbeddings(texts);
     
-    console.log(`✅ [JOB ${job.id}] Generated ${embeddingVectors.length} dense embeddings`);
-    console.log(`⏱️ [TIMING] [JOB ${job.id}] Step 3 (Dense Embeddings): ${Date.now() - step3Start}ms`);
-    
-    // ⏱️ STEP 3.5: Generate sparse vectors for HYBRID SEARCH
-    const step35Start = Date.now();
-    console.log(`🔗 [JOB ${job.id}] Generating sparse vectors for hybrid search`);
+    // Generate sparse vectors for HYBRID SEARCH
     
     const sparseVectors = enhancedChunks.map((chunk) => {
       // Weight filename 3x more than content for better filename matching
@@ -339,12 +282,7 @@ Return raw content only.`;
       ]);
     });
     
-    console.log(`✅ [JOB ${job.id}] Generated ${sparseVectors.length} sparse vectors`);
-    console.log(`⏱️ [TIMING] [JOB ${job.id}] Step 3.5 (Sparse Vectors): ${Date.now() - step35Start}ms`);
-    
-    // ⏱️ STEP 4: Upsert to Pinecone
-    const step4Start = Date.now();
-    console.log(`💾 [JOB ${job.id}] Upserting to Pinecone with HYBRID vectors`);
+    // Upsert to Pinecone
     
     const pinecone = new Pinecone({
       apiKey: process.env.PINECONE_API_KEY!,
@@ -391,7 +329,7 @@ Return raw content only.`;
       const batchNum = Math.floor(i/batchSize) + 1;
       const totalBatches = Math.ceil(vectors.length/batchSize);
       
-      console.log(`📤 [JOB ${job.id}] Upserting batch ${batchNum}/${totalBatches} (${batch.length} vectors)`);
+      
       
       // Retry logic for individual batch failures
       let retries = 0;
@@ -405,53 +343,30 @@ Return raw content only.`;
           );
           
           await Promise.race([upsertPromise, timeoutPromise]);
-          console.log(`✅ [JOB ${job.id}] Batch ${batchNum} upserted successfully`);
           batchSuccess = true;
         } catch (batchError: any) {
           retries++;
           if (retries <= MAX_RETRIES) {
-            console.warn(`⚠️ [JOB ${job.id}] Batch ${batchNum} failed (attempt ${retries}/${MAX_RETRIES + 1}), retrying in 2s...`);
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s before retry
+            await new Promise(resolve => setTimeout(resolve, 2000));
           } else {
-            console.error(`❌ [JOB ${job.id}] Batch ${batchNum} failed after ${MAX_RETRIES + 1} attempts`);
             throw new Error(`Pinecone batch ${batchNum}/${totalBatches} failed: ${batchError.message}`);
           }
         }
       }
     }
     
-    console.log(`✅ [JOB ${job.id}] Upserted ${vectors.length} vectors to Pinecone`);
-    console.log(`⏱️ [TIMING] [JOB ${job.id}] Step 4 (Pinecone Upsert): ${Date.now() - step4Start}ms`);
-    
-    // ⏱️ TOTAL TIMING SUMMARY
-    const totalDuration = Date.now() - totalStartTime;
-    console.log(`\n⏱️ ========== TIMING SUMMARY [JOB ${job.id}] ==========`);
-    console.log(`⏱️ Total Processing Time: ${totalDuration}ms (${(totalDuration / 1000).toFixed(1)}s)`);
-    console.log(`⏱️ File: ${job.filename} (${job.file_type})`);
-    console.log(`⏱️ Chunks: ${chunks.length}`);
-    console.log(`⏱️ ================================================\n`);
-    
-    console.log(`✅ [JOB ${job.id}] Pinecone ingestion complete:`);
-    console.log(`   - Chunks processed: ${chunks.length}`);
-    console.log(`   - Namespace: ${job.tenant_id}`);
-    console.log(`   - Index: ${process.env.PINECONE_INDEX}`);
-    console.log(`✅ [JOB ${job.id}] Successfully processed ${chunks.length} chunks`);
-    
-    // Note: Document status update is handled by route.ts after this function returns
+    // Document status update is handled by route.ts after this function returns
     
   } catch (error) {
-    console.error(`❌ [JOB ${job.id}] LangChain ingestion failed:`, error);
-    
-    // Note: Error status update is handled by route.ts
+    console.error(`[JOB ${job.id}] LangChain ingestion failed:`, error);
     throw error; // Will trigger retry logic in route.ts
   } finally {
     // Cleanup temp file
     if (tempFilePath) {
       try {
         fs.unlinkSync(tempFilePath);
-        console.log(`🗑️ [JOB ${job.id}] Temp file cleaned up`);
       } catch (cleanupError) {
-        console.warn(`⚠️ [JOB ${job.id}] Temp file cleanup failed:`, cleanupError);
+        // Non-critical: temp file cleanup failed
       }
     }
   }

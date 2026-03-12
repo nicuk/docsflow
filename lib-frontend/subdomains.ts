@@ -1,5 +1,5 @@
 // Simplified subdomains.ts for MVP - no Redis dependency
-// This will be replaced when we integrate with AI Lead Router backend
+// This will be replaced when we integrate with the DocsFlow backend
 
 export function isValidIcon(str: string) {
   if (str.length > 10) {

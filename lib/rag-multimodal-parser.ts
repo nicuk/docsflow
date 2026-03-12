@@ -101,8 +101,6 @@ class MinerUParser {
   private async processMinerU(fileBuffer: Buffer, filename: string) {
     // TODO: Integrate with actual MinerU Python service via API
     // This is a placeholder implementation that follows the pattern
-    console.log(`🧠 MinerU: Processing ${filename} for tenant ${this.tenantId}`);
-    
     // Mock advanced processing
     return {
       content: [`Advanced MinerU processing for ${filename}`],
@@ -139,7 +137,6 @@ export class MultimodalDocumentParser {
     // Initialize MinerU if enabled
     if (process.env.FF_MINERU_PARSING === 'true') {
       this.mineruParser = new MinerUParser(tenantId);
-      console.log(`🚀 MinerU parser enabled for tenant: ${tenantId}`);
     }
   }
   
@@ -149,19 +146,14 @@ export class MultimodalDocumentParser {
     try {
       // NEW: Try MinerU parser first if enabled
       if (this.mineruParser && fileName) {
-        console.log(`🧠 Attempting MinerU parsing for ${fileName}`);
         const mineruResult = await this.mineruParser.parse(file, fileName);
         
         if (mineruResult.success) {
-          console.log(`✅ MinerU parsing successful in ${mineruResult.metadata.processingTime}ms`);
           return this.convertMinerUToDocsFlow(mineruResult, mimeType);
-        } else {
-          console.log(`⚠️ MinerU parsing failed, falling back to Gemini parser`);
         }
       }
       
       // Fallback to existing Gemini-based parsing
-      console.log(`🔄 Using Gemini parser for ${fileName || 'document'}`);
       return await this.parseWithGemini(file, mimeType, fileName);
       
     } catch (error) {
@@ -403,7 +395,7 @@ export class MultimodalDocumentParser {
   private async createChunks(text: string, tables: any[]): Promise<DocumentChunk[]> {
     const chunks: DocumentChunk[] = [];
     
-    // ✅ PHASE 0: Semantic chunking by sentence boundaries
+    // Semantic chunking by sentence boundaries
     // Instead of cutting at arbitrary character positions, we chunk by sentences
     // Target: 500-700 tokens per chunk with 50-100 token overlap
     
@@ -456,8 +448,6 @@ export class MultimodalDocumentParser {
         position: chunks.length
       });
     }
-    
-    console.log(`✅ [Semantic Chunking] Created ${chunks.length} chunks (avg ${Math.round(chunks.reduce((sum, c) => sum + (c.metadata.tokens || 0), 0) / chunks.length)} tokens per chunk)`);
     
     // Add table chunks
     for (const table of tables) {

@@ -3,9 +3,8 @@
 import { useEffect } from 'react'
 
 /**
- * SURGICAL REDIRECT PAGE
- * Handles main domain to tenant subdomain redirection
- * Clean separation of concerns - only handles redirects
+ * Workspace selection / redirect page.
+ * Handles main domain to tenant subdomain redirection.
  */
 export default function SelectWorkspacePage() {
   useEffect(() => {
@@ -17,13 +16,10 @@ export default function SelectWorkspacePage() {
         const currentTenant = MultiTenantCookieManager.getCurrentTenantSubdomain()
         
         if (currentTenant && tenantContexts[currentTenant]) {
-          console.log(`🎯 [SELECT-WORKSPACE] Redirecting to: ${currentTenant}`)
           window.location.replace(`https://${currentTenant}.docsflow.app/dashboard`)
           return
         } else if (Object.keys(tenantContexts).length > 0) {
-          // Use first available tenant
           const firstTenantSubdomain = Object.keys(tenantContexts)[0]
-          console.log(`🎯 [SELECT-WORKSPACE] Redirecting to first tenant: ${firstTenantSubdomain}`)
           window.location.replace(`https://${firstTenantSubdomain}.docsflow.app/dashboard`)
           return
         }
@@ -33,17 +29,13 @@ export default function SelectWorkspacePage() {
         const sessionData = await sessionResponse.json()
         
         if (sessionData.authenticated && sessionData.onboardingComplete && sessionData.tenant?.subdomain) {
-          // User is onboarded - redirect to their tenant
-          console.log(`✅ [SELECT-WORKSPACE] User onboarded, redirecting to: ${sessionData.tenant.subdomain}`)
           window.location.replace(`https://${sessionData.tenant.subdomain}.docsflow.app/dashboard`)
         } else {
-          // No valid tenant found - redirect to onboarding
-          console.log(`🔐 [SELECT-WORKSPACE] No valid workspace, redirecting to onboarding`)
           window.location.replace('/onboarding')
         }
         
       } catch (error) {
-        console.error('🚨 [SELECT-WORKSPACE] Error:', error)
+        console.error('[SELECT-WORKSPACE] Error:', error)
         // Fallback to onboarding on any error
         window.location.replace('/onboarding')
       }

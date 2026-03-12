@@ -79,7 +79,7 @@ export default function BackendStatus() {
           })
           break
         case '/chat':
-          // SURGICAL FIX: Use apiClient with proper auth headers for chat health check
+          // Use apiClient with proper auth headers for chat health check
           const { apiClient: chatApiClient } = await import('@/lib/api-client')
           const chatData = await chatApiClient.sendMessage({ message: 'Health check test' })
           response = new Response(JSON.stringify(chatData), {
@@ -89,7 +89,6 @@ export default function BackendStatus() {
           })
           break
         case '/documents':
-          // SURGICAL FIX: Use apiClient with proper auth headers
           const { apiClient: docsApiClient } = await import('@/lib/api-client')
           const documentsData = await docsApiClient.getDocuments()
           response = new Response(JSON.stringify(documentsData), {
@@ -99,7 +98,6 @@ export default function BackendStatus() {
           })
           break
         case '/conversations':
-          // SURGICAL FIX: Use apiClient with proper auth headers
           const { apiClient } = await import('@/lib/api-client')
           const conversationsData = await apiClient.getConversations()
           response = new Response(JSON.stringify(conversationsData), {
@@ -109,7 +107,7 @@ export default function BackendStatus() {
           })
           break
         case '/documents/upload':
-          // SURGICAL FIX: Skip upload endpoint health check (requires multipart data)
+          // Skip upload endpoint health check (requires multipart data)
           response = new Response(JSON.stringify({ status: 'available', note: 'Upload endpoint requires multipart form data' }), {
             status: 200,
             statusText: 'OK',

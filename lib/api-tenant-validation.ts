@@ -62,7 +62,6 @@ export async function validateTenantContext(
     // AUTO-CORRECT: If tenant-id contains subdomain and subdomain is missing/invalid
     if (tenantId && !uuidPattern.test(tenantId)) {
       if (subdomainPattern.test(tenantId) && tenantId.length < 50) {
-        console.warn(`🔧 [AUTO-CORRECT] Moving subdomain from tenant-id to subdomain field: ${tenantId}`);
         tenantSubdomain = tenantId;  // Move to correct field
         tenantId = null;             // Clear invalid UUID field
       } else {
@@ -80,7 +79,6 @@ export async function validateTenantContext(
     // AUTO-CORRECT: If subdomain contains UUID and tenant-id is missing
     if (tenantSubdomain && uuidPattern.test(tenantSubdomain)) {
       if (!tenantId) {
-        console.warn(`🔧 [AUTO-CORRECT] Moving UUID from subdomain to tenant-id field: ${tenantSubdomain}`);
         tenantId = tenantSubdomain;  // Move to correct field
         tenantSubdomain = null;      // Clear invalid subdomain field
       } else {
@@ -97,7 +95,6 @@ export async function validateTenantContext(
     
     // CRITICAL FIX: No fallback hostname extraction to prevent "www" being treated as tenant
     if (!tenantSubdomain) {
-      console.log('🔍 No tenant subdomain in headers - main domain request');
       return {
         isValid: false,
         tenantId: null,
@@ -118,16 +115,6 @@ export async function validateTenantContext(
         statusCode: 400
       };
     }
-  
-    console.log('🔍 Tenant validation:', {
-      subdomain: tenantSubdomain,
-      tenantId,
-      requireAuth,
-      headers: {
-        'x-tenant-subdomain': request.headers.get('x-tenant-subdomain'),
-        'x-tenant-id': request.headers.get('x-tenant-id')
-      }
-    });
 
     if (!tenantSubdomain || tenantSubdomain === 'localhost' || tenantSubdomain === 'docsflow') {
       console.error('❌ Invalid tenant subdomain:', tenantSubdomain);
@@ -180,11 +167,11 @@ export async function validateTenantContext(
     if (requireAuth) {
       let authHeader = request.headers.get('authorization');
       
-      // SURGICAL FIX: Check custom header first (survives Vercel proxy)
+      // Check custom header first (survives Vercel proxy)
       const customAuthToken = request.headers.get('x-auth-token');
       if (customAuthToken && !authHeader) {
         authHeader = `Bearer ${customAuthToken}`;
-        console.log('✅ [SURGICAL] Using X-Auth-Token custom header for authentication');
+        console.log('[AUTH] Using X-Auth-Token custom header for authentication');
       }
       
       // CRITICAL FIX: Extract Authorization from Vercel proxy headers
@@ -200,30 +187,19 @@ export async function validateTenantContext(
               // Decode JWT payload to check if it's a Vercel token vs Supabase token
               try {
                 const payload = JSON.parse(atob(potentialToken.split('.')[1]));
-                console.log('🔍 [VERCEL-PROXY] Token payload analysis:', {
-                  issuer: payload.iss,
-                  audience: payload.aud,
-                  isVercelToken: payload.iss === 'serverless' || !!payload.deploymentId,
-                  isSupabaseToken: payload.iss?.includes('supabase') || !!payload.sub,
-                  hasUserId: !!payload.sub,
-                  tokenType: payload.iss === 'serverless' ? 'VERCEL_DEPLOYMENT' : 'UNKNOWN'
-                });
-                
+
                 // REJECT Vercel deployment tokens
                 if (payload.iss === 'serverless' || payload.deploymentId) {
-                  console.warn('🚨 [VERCEL-PROXY] Rejecting Vercel deployment token, not user auth token');
                   authHeader = null; // Don't use this token
                 } else {
                   authHeader = parsedHeaders.Authorization;
-                  console.log('✅ [VERCEL-PROXY] Extracted valid user Authorization from x-vercel-sc-headers');
                 }
               } catch (decodeError) {
-                console.warn('🔍 [VERCEL-PROXY] Could not decode token payload:', decodeError);
                 authHeader = parsedHeaders.Authorization; // Use it anyway if we can't decode
               }
             }
-          } catch (parseError) {
-            console.warn('🔍 [VERCEL-PROXY] Failed to parse x-vercel-sc-headers:', parseError);
+          } catch {
+            // x-vercel-sc-headers parse failed, authHeader remains unset
           }
         }
       }
@@ -231,26 +207,16 @@ export async function validateTenantContext(
       const rlsContext = request.headers.get('x-rls-context');
       let user = null;
       
-      // DEBUG: Log what auth headers we're receiving
-      console.log(`🔍 [AUTH-DEBUG] Headers received:`, {
-        hasAuthorization: !!authHeader,
-        authHeader: authHeader ? authHeader.substring(0, 20) + '...' : 'none',
-        hasRLSContext: !!rlsContext,
-        vercelProxyExtracted: !!request.headers.get('x-vercel-sc-headers'),
-        allHeaders: Object.fromEntries(request.headers.entries())
-      });
-
       // RLS CONTEXT: Set tenant context in database session if provided
       if (rlsContext === 'tenant-scoped' && tenantUUID) {
         try {
           await supabase.rpc('set_tenant_context', { tenant_id: tenantUUID });
-          console.log(`🔍 [RLS-CONTEXT] Set database session context for tenant: ${tenantUUID.substring(0, 8)}...`);
-        } catch (rlsError) {
-          console.warn('🔍 [RLS-CONTEXT] Failed to set tenant context:', rlsError);
+        } catch {
+          // RLS context set failed, continue without
         }
       }
       
-      // 🎯 CLERK MIGRATION: Use Clerk's auth() instead of Supabase JWT validation
+      // Use Clerk's auth() instead of Supabase JWT validation
       // Bearer tokens are now Clerk JWTs (RS256), not Supabase JWTs (HS256)
       // Clerk validation happens via x-user-id header set by middleware
       const clerkUserId = request.headers.get('x-user-id');
@@ -264,13 +230,7 @@ export async function validateTenantContext(
         try {
           const clerkUser = await clerk.users.getUser(clerkUserId);
           const supabaseUserId = clerkUser.publicMetadata?.supabaseUserId as string | undefined;
-          
-          console.log('✅ [CLERK-AUTH] Clerk user authenticated:', {
-            clerkUserId: clerkUserId.substring(0, 20) + '...',
-            supabaseUserId: supabaseUserId ? supabaseUserId.substring(0, 8) + '...' : 'none',
-            email: clerkUser.emailAddresses[0]?.emailAddress
-          });
-          
+
           // Create user object compatible with Supabase user queries
           // Use the mapped Supabase UUID from Clerk metadata
           user = {
@@ -316,14 +276,6 @@ export async function validateTenantContext(
                        cookies['docsflow_auth_token'] ||
                        cookies['sb-lhcopwwiqwjpzbdnjovo-auth-token'] ||
                        cookies['access_token'];
-            
-            console.log(`🔍 [COOKIE-DEBUG] Parsed cookies:`, {
-              hasCookieHeader: !!cookieHeader,
-              cookieCount: Object.keys(cookies).length,
-              hasAuthToken: !!authToken,
-              authTokenPreview: authToken ? authToken.substring(0, 20) + '...' : 'none',
-              availableCookies: Object.keys(cookies)
-            });
           }
           
           if (authToken) {
@@ -349,7 +301,6 @@ export async function validateTenantContext(
             
             if (!cookieError && cookieUser) {
               user = cookieUser;
-              console.log('✅ [VALIDATION] Multi-tenant cookie authentication successful');
             }
           }
         } catch (cookieError) {

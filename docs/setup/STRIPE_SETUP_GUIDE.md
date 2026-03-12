@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide will walk you through setting up Stripe payment integration for your AI Lead Router SaaS. The implementation includes subscription management, usage tracking, and plan enforcement.
+This guide will walk you through setting up Stripe payment integration for DocsFlow. The implementation includes subscription management, usage tracking, and plan enforcement.
 
 ## 🔧 Prerequisites
 

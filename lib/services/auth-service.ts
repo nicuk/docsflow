@@ -34,9 +34,7 @@ export class AuthService {
   static async getToken(): Promise<string | null> {
     // 🛡️ CRITICAL FIX: Server-side safety check with cookie fallback
     if (typeof window === 'undefined') {
-      console.log('🔐 [AUTH-SERVICE] Server-side execution - using cookie parsing fallback');
-      // For server-side calls, try to parse from request headers if available
-      return null; // Middleware will handle server-side auth
+      return null;
     }
 
     try {
@@ -49,25 +47,22 @@ export class AuthService {
       const { data: { session }, error } = await this.supabase.auth.getSession();
       
       if (error) {
-        console.warn('🔐 [AUTH-SERVICE] Session error:', error.message);
         this.clearTokenCache();
         return null;
       }
 
       if (!session?.access_token) {
-        console.log('🔐 [AUTH-SERVICE] No active session - attempting refresh');
         
         // 🔄 AUTO-REFRESH: Try to refresh the session
         try {
           const { data: refreshData, error: refreshError } = await this.supabase.auth.refreshSession();
           
           if (refreshError || !refreshData.session?.access_token) {
-            console.warn('🔐 [AUTH-SERVICE] Session refresh failed, user needs to re-login');
             this.clearTokenCache();
             return null;
           }
           
-          console.log('✅ [AUTH-SERVICE] Session refreshed successfully');
+          
           
           // Cache refreshed token
           this.tokenCache = refreshData.session.access_token;
@@ -76,7 +71,6 @@ export class AuthService {
           return refreshData.session.access_token;
           
         } catch (refreshError) {
-          console.error('❌ [AUTH-SERVICE] Session refresh error:', refreshError);
           this.clearTokenCache();
           return null;
         }
@@ -86,12 +80,9 @@ export class AuthService {
       this.tokenCache = session.access_token;
       this.tokenExpiry = (session.expires_at || 0) * 1000 - 60000; // 1 minute buffer
       
-      
-      console.log('✅ [AUTH-SERVICE] Token retrieved successfully');
       return session.access_token;
 
     } catch (error) {
-      console.error('❌ [AUTH-SERVICE] Token retrieval failed:', error);
       this.clearTokenCache();
       return null;
     }
@@ -135,7 +126,7 @@ export class AuthService {
       };
 
     } catch (error) {
-      console.error('❌ [AUTH-SERVICE] Get user failed:', error);
+      console.error('[AUTH-SERVICE] Get user failed:', error);
       return null;
     }
   }
@@ -152,18 +143,15 @@ export class AuthService {
       });
 
       if (error) {
-        console.error('❌ [AUTH-SERVICE] Set session failed:', error);
+        console.error('[AUTH-SERVICE] Set session failed:', error);
         return false;
       }
 
-      // Clear cache to force refresh
       this.clearTokenCache();
-      
-      console.log('✅ [AUTH-SERVICE] Session set successfully');
       return true;
 
     } catch (error) {
-      console.error('❌ [AUTH-SERVICE] Set session error:', error);
+      console.error('[AUTH-SERVICE] Set session error:', error);
       return false;
     }
   }
@@ -176,9 +164,8 @@ export class AuthService {
     try {
       await this.supabase.auth.signOut();
       this.clearTokenCache();
-      console.log('✅ [AUTH-SERVICE] Auth cleared successfully');
     } catch (error) {
-      console.error('❌ [AUTH-SERVICE] Clear auth error:', error);
+      console.error('[AUTH-SERVICE] Clear auth error:', error);
     }
   }
 
@@ -218,7 +205,7 @@ export class AuthService {
       };
 
     } catch (error) {
-      console.error('❌ [AUTH-SERVICE] Token validation error:', error);
+      console.error('[AUTH-SERVICE] Token validation error:', error);
       return {
         isValid: false,
         error: 'Token validation failed',
@@ -268,7 +255,6 @@ export class AuthService {
       return null;
 
     } catch (error) {
-      console.warn('🔐 [AUTH-SERVICE] Cookie parsing error:', error);
       return null;
     }
   }
@@ -290,7 +276,6 @@ export class AuthService {
     }
 
     this.supabase.auth.onAuthStateChange((event, session) => {
-      console.log(`🔐 [AUTH-SERVICE] Auth state change: ${event}`);
       
       if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
         this.clearTokenCache();
@@ -305,16 +290,15 @@ export class AuthService {
     });
     
 
-    // 🎯 SURGICAL FIX: Setup session timeout monitoring
+    // Setup session timeout monitoring
     this.setupSessionTimeoutMonitoring();
 
     this.isInitialized = true;
-    console.log('✅ [AUTH-SERVICE] Initialized successfully');
   }
 
 
   /**
-   * 🎯 SURGICAL FIX: Setup session timeout monitoring and warnings
+   * Setup session timeout monitoring and warnings
    */
   private static setupSessionTimeoutMonitoring(): void {
     if (typeof window === 'undefined') return;
@@ -331,14 +315,11 @@ export class AuthService {
         this.showSessionTimeoutWarning(Math.floor(timeToExpiry / 1000));
       }
 
-      // Auto-refresh if within 1 minute of expiry
       if (timeToExpiry > 0 && timeToExpiry <= oneMinute) {
-        console.log('⏰ [AUTH-SERVICE] Session near expiry, attempting refresh...');
         try {
           await this.refreshSession();
           this.timeoutWarningShown = false; // Reset warning flag
         } catch (error) {
-          console.error('❌ [AUTH-SERVICE] Auto-refresh failed:', error);
           this.handleSessionExpired();
         }
       }
@@ -363,8 +344,6 @@ export class AuthService {
         body: message,
         icon: '/favicon.ico'
       });
-    } else {
-      console.warn(`⚠️ [SESSION-TIMEOUT] ${message}`);
     }
 
   }
@@ -373,7 +352,6 @@ export class AuthService {
    * Handle session expiration
    */
   private static handleSessionExpired(): void {
-    console.log('🚨 [AUTH-SERVICE] Session expired');
     this.clearTokenCache();
     this.timeoutWarningShown = false;
 
@@ -398,10 +376,9 @@ export class AuthService {
       this.tokenCache = data.session.access_token;
       this.tokenExpiry = (data.session.expires_at || 0) * 1000 - 60000;
 
-      console.log('✅ [AUTH-SERVICE] Session refreshed successfully');
       return true;
     } catch (error) {
-      console.error('❌ [AUTH-SERVICE] Session refresh failed:', error);
+      console.error('[AUTH-SERVICE] Session refresh failed:', error);
       return false;
     }
   }
@@ -416,7 +393,6 @@ export class AuthService {
     }
     this.clearTokenCache();
     this.isInitialized = false;
-    console.log('🧹 [AUTH-SERVICE] Destroyed and cleaned up');
   }
 }
 

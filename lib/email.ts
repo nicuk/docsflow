@@ -104,7 +104,7 @@ export function createInvitationEmailTemplate(data: InvitationEmailData): EmailT
       <div class="content">
         <p>Hi there!</p>
         
-        <p><strong>${data.inviterName}</strong> has invited you to join <strong>${data.tenantName}</strong> on our AI Lead Router platform.</p>
+        <p><strong>${data.inviterName}</strong> has invited you to join <strong>${data.tenantName}</strong> on DocsFlow.</p>
         
         <div class="details">
           <h3>📋 Your Access Details</h3>
@@ -138,7 +138,7 @@ export function createInvitationEmailTemplate(data: InvitationEmailData): EmailT
         <p>If you have any questions, feel free to reply to this email or contact your team administrator.</p>
 
         <p>Welcome to the team!</p>
-        <p>The AI Lead Router Team</p>
+        <p>The DocsFlow Team</p>
       </div>
 
       <div class="footer">
@@ -151,9 +151,9 @@ export function createInvitationEmailTemplate(data: InvitationEmailData): EmailT
 
   return {
     to: data.inviteeEmail,
-    subject: `You're invited to join ${data.tenantName} - AI Lead Router`,
+    subject: `You're invited to join ${data.tenantName} on DocsFlow`,
     html,
-    from: process.env.EMAIL_FROM || 'noreply@ai-lead-router.com'
+    from: process.env.EMAIL_FROM || 'noreply@docsflow.app'
   };
 }
 
@@ -269,7 +269,7 @@ export async function sendWelcomeEmail(data: {
 
           <p>If you need any help getting started, don't hesitate to reach out to your team administrator.</p>
 
-          <p>Best regards,<br>The AI Lead Router Team</p>
+          <p>Best regards,<br>The DocsFlow Team</p>
         </div>
 
         <div class="footer">
@@ -280,7 +280,7 @@ export async function sendWelcomeEmail(data: {
     `;
 
     const response = await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'noreply@ai-lead-router.com',
+      from: process.env.EMAIL_FROM || 'noreply@docsflow.app',
       to: data.email,
       subject: `Welcome to ${data.tenantName}! 🎉`,
       html

@@ -49,17 +49,13 @@ export default function OnboardingFlow() {
     
     const checkAuthAndLoadData = async () => {
       try {
-        console.log('🔍 Checking user authentication...');
-        
-        // 🎯 CLERK MIGRATION FIX: Allow onboarding on any domain
+        // Allow onboarding on any domain
         // Don't redirect based on subdomain - let users complete onboarding wherever they are
         // Clerk middleware will handle auth protection
-        console.log('🏢 Current hostname:', typeof window !== 'undefined' ? window.location.hostname : 'server');
             // CRITICAL: Check if we were redirected here after domain selection
             const onboardingStateStr = localStorage.getItem('onboarding-state');
             if (onboardingStateStr) {
               const onboardingState = JSON.parse(onboardingStateStr);
-              console.log('📋 Restoring onboarding state after redirect:', onboardingState);
               
               // Restore the state
               setSelectedDomain(onboardingState.domain);
@@ -80,24 +76,19 @@ export default function OnboardingFlow() {
               // If joining existing, trigger the join flow
               if (onboardingState.joinExisting) {
                 // Will be triggered after auth check completes
-                console.log('Will join existing tenant after auth check:', onboardingState.domain);
               }
             }
             
             // Use server-side session check (can read HttpOnly cookies)
-            console.log('🔍 Checking authentication via server...');
             const sessionResponse = await fetch('/api/auth/session');
             const sessionData = await sessionResponse.json();
             
             if (!sessionData.authenticated || !sessionData.user) {
-              console.log('❌ No authenticated session found, redirecting to login');
               if (isMounted) {
                 window.location.href = '/login';
               }
               return;
             }
-            
-            console.log('✅ User authenticated:', sessionData.user.email);
             
             const onboardingData = {
               user: {
@@ -109,8 +100,6 @@ export default function OnboardingFlow() {
               tenantId: sessionData.tenantId,
               tenant: sessionData.tenant
             };
-            
-            console.log('📊 Onboarding data loaded:', onboardingData);
             
             if (!isMounted) return; // Component unmounted, don't update state
             
@@ -124,17 +113,14 @@ export default function OnboardingFlow() {
               // Only auto-redirect if user is already on a tenant subdomain
               // If they're on main domain (docsflow.app), respect their choice to stay
               if (currentHostname !== 'docsflow.app' && currentHostname !== 'localhost') {
-                console.log('🏢 User already has tenant, redirecting to dashboard');
                 window.location.href = `https://${onboardingData.tenant.subdomain}.docsflow.app/dashboard`;
                 return;
               } else {
-                console.log('🏠 User on main domain with existing tenant - allowing manual navigation');
                 // Don't auto-redirect, let them choose where to go
               }
             }
             
             // User needs onboarding - continue with flow
-            console.log('📝 User needs onboarding, continuing with flow');
             
       } catch (error) {
         console.error('❌ Auth check failed:', error);
@@ -200,11 +186,9 @@ export default function OnboardingFlow() {
     // This ensures all onboarding actions happen on the correct tenant subdomain
     const currentHostname = window.location.hostname;
     const currentParts = currentHostname.split('.');
-    // 🎯 CLERK MIGRATION FIX: Don't redirect to subdomain during onboarding
+    // Don't redirect to subdomain during onboarding
     // Stay on current domain (www.docsflow.app) until onboarding is complete
     // This prevents redirect loops with Clerk middleware
-    
-    console.log(`✅ Domain selected: ${domain}, staying on current domain for onboarding`);
     
     if (joinExisting) {
       // Joining existing domain - user becomes TECHNICIAN/USER
@@ -274,12 +258,8 @@ export default function OnboardingFlow() {
       const finalDomain = selectedDomain || (typeof window !== 'undefined' ? localStorage.getItem('selected-domain') : null) || 
         generateSubdomain(allResponses.business_overview || 'business');
       
-      // 🔥 CRITICAL: Complete onboarding with smart industry detection
+              // 🔥 CRITICAL: Complete onboarding with smart industry detection
       const industryAnalysis = smartIndustryDetection(allResponses);
-      console.log('Industry Detection Results:', industryAnalysis);
-      
-      // Show AI reasoning to user for transparency
-      console.log(`🤖 AI Analysis: ${industryAnalysis.reason} (${Math.round(industryAnalysis.confidence * 100)}% confidence)`);
       
 const tenantAssignment = {
         businessType: onboardingData?.displayName || allResponses.business_overview?.substring(0, 100) + "...",
@@ -348,8 +328,6 @@ const tenantAssignment = {
             subdomain: tenantSubdomainForStorage
           };
           localStorage.setItem(`tenant-${tenantSubdomainForStorage}`, JSON.stringify(tenantContext));
-          
-          console.log('✅ Session data stored successfully:', { userData, tenantContext });
         } else if (user && typeof window !== 'undefined') {
           // Fallback: Use current user data if backend doesn't return user data
           const userData = {
@@ -371,8 +349,6 @@ const tenantAssignment = {
           // Set tenant cookie with subdomain (userData.tenant_id already contains subdomain from line 387)
           document.cookie = `tenant-id=${userData.tenant_id}; path=/; max-age=${60 * 60 * 24 * 7}; secure; samesite=strict`;
           document.cookie = `onboarding-complete=true; path=/; max-age=${60 * 60 * 24 * 7}`;
-          
-          console.log('✅ Fallback session data stored:', userData);
         }
         
         setCustomPersonality({
@@ -433,7 +409,6 @@ const tenantAssignment = {
         fallbackMode: true
       };
       
-      console.log('Setting fallback personality:', fallbackPersonality);
       setCustomPersonality(fallbackPersonality);
     }
     
@@ -873,7 +848,7 @@ const tenantAssignment = {
           
           <DomainSelection
             companyName={(() => {
-              // SURGICAL FIX: Use same data source as page header for consistency
+              // Use same data source as page header for consistency
               if (typeof window !== 'undefined') {
                 // Priority 1: tenant-context (same as page header)
                 const tenantContext = localStorage.getItem('tenant-context');

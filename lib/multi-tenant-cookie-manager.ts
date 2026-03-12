@@ -29,28 +29,24 @@ export class MultiTenantCookieManager {
   private static validateTenantContext(context: TenantContext): boolean {
     // SUPABASE SSR FIX: Skip validation if context is incomplete (SSR handles this)
     if (!context || !context.tenantId || !context.userEmail || !context.subdomain) {
-      console.warn(`⚠️ [MULTI-TENANT] Incomplete context provided, allowing (Supabase SSR mode)`);
       return true; // Allow incomplete context in SSR mode
     }
     
     // Validate tenant ID is UUID format (matches tenants.id)
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(context.tenantId)) {
-      console.warn(`⚠️ [MULTI-TENANT] Invalid tenant ID format: ${context.tenantId} (SSR mode - allowing)`);
       return true; // Allow in SSR mode
     }
     
     // Validate email format (matches users.email)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(context.userEmail)) {
-      console.warn(`⚠️ [MULTI-TENANT] Invalid email format: ${context.userEmail} (SSR mode - allowing)`);
       return true; // Allow in SSR mode
     }
     
     // Validate subdomain format (matches tenants.subdomain - no special chars)
     const subdomainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/;
     if (!subdomainRegex.test(context.subdomain)) {
-      console.warn(`⚠️ [MULTI-TENANT] Invalid subdomain format: ${context.subdomain} (SSR mode - allowing)`);
       return true; // Allow in SSR mode
     }
     
@@ -71,7 +67,6 @@ export class MultiTenantCookieManager {
       const contexts = cookies['tenant-contexts'];
       return contexts ? JSON.parse(contexts) : {};
     } catch (e) {
-      console.warn('🔄 [MULTI-TENANT] Invalid tenant-contexts cookie, returning empty');
       return {};
     }
   }
@@ -119,13 +114,6 @@ export class MultiTenantCookieManager {
     
     // ALSO set Supabase-specific cookies for compatibility
     document.cookie = `sb-lhcopwwiqwjpzbdnjovo-auth-token=${tokens.accessToken}; ${tokenOptions}`;
-    
-    console.log(`✅ [MULTI-TENANT] Added tenant context:`, {
-      subdomain: context.subdomain,
-      tenantId: context.tenantId ? context.tenantId.substring(0, 8) + '...' : 'undefined',
-      totalTenants: Object.keys(existingContexts).length,
-      allSubdomains: Object.keys(existingContexts)
-    });
   }
   
   /**
@@ -142,8 +130,6 @@ export class MultiTenantCookieManager {
     // Simply update current-tenant cookie
     const cookieOptions = 'path=/; domain=.docsflow.app; secure; samesite=lax; max-age=604800';
     document.cookie = `current-tenant=${subdomain}; ${cookieOptions}`;
-    
-    console.log(`🔄 [MULTI-TENANT] Switched to tenant: ${subdomain}`);
     return true;
   }
   
@@ -169,8 +155,6 @@ export class MultiTenantCookieManager {
     const currentSubdomain = window.location.hostname.split('.')[0];
     
     if (legacyTenantId && currentSubdomain && currentSubdomain !== 'www' && currentSubdomain !== 'docsflow') {
-      console.log(`🔄 [MIGRATION] Migrating legacy tenant-id to multi-tenant structure`);
-      
       const existingContexts = this.getCurrentTenantContexts();
       if (!existingContexts[currentSubdomain]) {
         existingContexts[currentSubdomain] = legacyTenantId;
@@ -178,8 +162,6 @@ export class MultiTenantCookieManager {
         const cookieOptions = 'path=/; domain=.docsflow.app; secure; samesite=lax; max-age=604800';
         document.cookie = `tenant-contexts=${JSON.stringify(existingContexts)}; ${cookieOptions}`;
         document.cookie = `current-tenant=${currentSubdomain}; ${cookieOptions}`;
-        
-        console.log(`✅ [MIGRATION] Successfully migrated legacy cookies to multi-tenant`);
       }
     }
   }
@@ -209,8 +191,6 @@ export class MultiTenantCookieManager {
     authCookies.forEach(cookieName => {
       document.cookie = `${cookieName}=; path=/; domain=.docsflow.app; expires=${expireDate}`;
     });
-    
-    console.log(`🧹 [MULTI-TENANT] Cleared auth tokens only (preserved tenant contexts)`);
   }
   
   /**
@@ -247,13 +227,6 @@ export class MultiTenantCookieManager {
       acc[key] = value;
       return acc;
     }, {} as Record<string, string>);
-    
-    console.log(`🔍 [MULTI-TENANT DEBUG] Current state:`, {
-      tenantContexts: contexts,
-      currentTenant: cookies['current-tenant'],
-      totalTenants: Object.keys(contexts).length,
-      hasAuthToken: !!cookies['access_token'],
-      userEmail: cookies['user_email']
-    });
+    // Debug state available via return or breakpoint - no console output
   }
 }

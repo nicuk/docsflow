@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/test-results
+/playwright-report
 
 # next.js
 /.next/
@@ -43,3 +45,29 @@ next-env.d.ts
 # test files with API keys
 test-gemini-*.js
 test-*-with-key.js
+
+# backup files
+*.backup
+
+# IDE workspace files
+*.code-workspace
+
+# archive directories
+_archive*/
+
+# local diagnostic/debug files
+CRITICAL_*.md
+DIAGNOSTIC_*.md
+*_DIAGNOSIS.md
+*_FIX.md
+
+# loose SQL debug scripts
+check-*.sql
+fix-*.sql
+diagnose-*.sql
+DELETE_*.sql
+EXEC_*.sql
+SIMPLE_*.sql
+
+# env example is tracked
+!.env.example

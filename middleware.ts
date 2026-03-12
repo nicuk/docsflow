@@ -73,7 +73,7 @@ export default clerkMiddleware(async (auth, req) => {
   let tenant = null
   let tenantId = null
   
-  // 🎯 SURGICAL FIX: Skip tenant lookup for special subdomains
+  // Skip tenant lookup for special subdomains
   const specialSubdomains = ['api', 'www', 'm', 'admin', 'app', 'clerk']
   
   // Production: tenant.docsflow.app

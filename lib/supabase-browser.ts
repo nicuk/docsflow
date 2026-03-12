@@ -32,7 +32,7 @@ export function createClient() {
             // CRITICAL FIX: Set domain to .docsflow.app for cross-subdomain cookies
             const cookieOptions = {
               ...options,
-              domain: '.docsflow.app', // This allows cookies to work on bitto.docsflow.app AND api.docsflow.app
+              domain: '.docsflow.app', // Shared cookie domain across tenant subdomains
               secure: true,
               sameSite: 'lax'
             }

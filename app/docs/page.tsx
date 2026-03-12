@@ -258,8 +258,8 @@ export default function DocsPage() {
               <ul className="list-disc list-inside text-gray-600 space-y-2">
                 <li>
                   <strong>Email Support:</strong> 
-                  <a href="mailto:support@bitto.tech" className="text-blue-600 hover:text-blue-700 ml-1">
-                    support@bitto.tech
+                  <a href="mailto:support@docsflow.app" className="text-blue-600 hover:text-blue-700 ml-1">
+                    support@docsflow.app
                   </a>
                 </li>
                 <li><strong>Response Time:</strong> Within 24 hours</li>

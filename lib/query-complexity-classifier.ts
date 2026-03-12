@@ -1,7 +1,7 @@
 /**
- * 🎯 SURGICAL QUERY COMPLEXITY CLASSIFIER
+ * Query Complexity Classifier
  * 
- * Purpose: Route queries to appropriate models with STRICT guardrails
+ * Routes queries to appropriate models with strict guardrails.
  * Target: 70% simple, 20% medium, 10% complex
  * 
  * Guardrails:
@@ -47,13 +47,13 @@ export class QueryComplexityClassifier {
     percentages: { simple: 0, medium: 0, complex: 0 }
   };
 
-  // 🎯 GUARDRAIL: Maximum allowed complex queries (10%)
+  // Maximum allowed complex queries (10%)
   private readonly MAX_COMPLEX_PERCENTAGE = 0.12; // 12% with buffer
   private readonly TARGET_COMPLEX_PERCENTAGE = 0.10; // 10% target
 
   /**
-   * 🔥 STRICT complexity classification with multi-factor analysis
-   * Biased toward cheaper models - only truly complex queries get premium treatment
+   * Strict complexity classification with multi-factor analysis.
+   * Biased toward cheaper models - only truly complex queries get premium treatment.
    */
   classify(query: string): ComplexityAnalysis {
     const factors = {
@@ -70,7 +70,7 @@ export class QueryComplexityClassifier {
       factors.structureScore * 0.2 +
       factors.intentScore * 0.3;
 
-    // 🎯 STRICT THRESHOLDS - Only truly complex queries get premium
+    // Strict thresholds - only truly complex queries get premium
     let complexity: QueryComplexity;
     let confidence: number;
     
@@ -86,7 +86,7 @@ export class QueryComplexityClassifier {
       confidence = Math.min(1, 1 - totalScore);
     }
 
-    // 🚨 GUARDRAIL: Check if we're exceeding complex query limit
+    // Check if we're exceeding complex query limit
     const currentComplexPercentage = this.stats.total > 0 
       ? this.stats.complex / this.stats.total 
       : 0;
@@ -95,7 +95,7 @@ export class QueryComplexityClassifier {
     if (complexity === 'complex' && 
         currentComplexPercentage > this.MAX_COMPLEX_PERCENTAGE &&
         totalScore < 0.90) {
-      console.warn(`⚠️ [GUARDRAIL] Complex quota exceeded (${(currentComplexPercentage * 100).toFixed(1)}% > ${this.MAX_COMPLEX_PERCENTAGE * 100}%). Downgrading to medium.`);
+      
       complexity = 'medium';
     }
 
@@ -297,7 +297,7 @@ export class QueryComplexityClassifier {
       case 'medium':
         return ['meta-llama/llama-3.1-8b-instruct', 'mistralai/mistral-7b-instruct'];
       case 'complex':
-        // 🎯 PREMIUM MODEL - Only for truly complex queries
+        // Premium model - only for truly complex queries
         return ['anthropic/claude-3.5-sonnet', 'meta-llama/llama-3.1-8b-instruct'];
       default:
         return ['meta-llama/llama-3.1-8b-instruct'];
@@ -318,10 +318,9 @@ export class QueryComplexityClassifier {
       complex: (this.stats.complex / this.stats.total) * 100
     };
 
-    // 🚨 ALERT: Log warning if complex queries exceed target
+    // Log warning if complex queries exceed target
     if (this.stats.complex > 0 && 
         this.stats.percentages.complex > this.TARGET_COMPLEX_PERCENTAGE * 100) {
-      console.warn(`⚠️ [COST ALERT] Complex queries at ${this.stats.percentages.complex.toFixed(1)}% (target: ${this.TARGET_COMPLEX_PERCENTAGE * 100}%)`);
     }
 
     // Log statistics every 100 queries
@@ -341,16 +340,7 @@ export class QueryComplexityClassifier {
    * Log current distribution
    */
   private logStatistics(): void {
-    console.log(`📊 [QUERY CLASSIFIER] Stats (${this.stats.total} queries):`);
-    console.log(`   Simple:  ${this.stats.percentages.simple.toFixed(1)}% (${this.stats.simple})`);
-    console.log(`   Medium:  ${this.stats.percentages.medium.toFixed(1)}% (${this.stats.medium})`);
-    console.log(`   Complex: ${this.stats.percentages.complex.toFixed(1)}% (${this.stats.complex})`);
-    
-    if (this.stats.percentages.complex > this.MAX_COMPLEX_PERCENTAGE * 100) {
-      console.warn(`   ⚠️ OVER BUDGET: Complex queries exceeding ${this.MAX_COMPLEX_PERCENTAGE * 100}% limit!`);
-    } else {
-      console.log(`   ✅ Within budget: Complex queries < ${this.MAX_COMPLEX_PERCENTAGE * 100}%`);
-    }
+    // Statistics available via getStatistics() method
   }
 
   /**

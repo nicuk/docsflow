@@ -14,7 +14,7 @@ export async function GET(
   try {
     // Validate tenant context
     const tenantValidation = await validateTenantContext(request, {
-      requireAuth: true // ✅ PRODUCTION: Authentication enabled
+      requireAuth: true
     });
 
     if (!tenantValidation.isValid) {
@@ -29,8 +29,6 @@ export async function GET(
 
     const tenantId = tenantValidation.tenantId!;
     const documentId = params.id;
-
-    console.log(`📄 [Document Content API] Request for document: ${documentId}, tenant: ${tenantId}`);
 
     // Initialize Supabase client
     // SECURITY FIX: Use secure database service
@@ -57,14 +55,6 @@ export async function GET(
         { status: 404, headers: corsHeaders }
       );
     }
-
-    console.log(`✅ [Document Content] Document found:`, {
-      id: document.id,
-      filename: document.filename,
-      hasMetadata: !!document.metadata,
-      storageProvider: document.metadata?.storage_provider,
-      hasStorageUrl: !!document.metadata?.storage_url
-    });
 
     // Store metadata for optional inclusion in response
     const storageUrl = document.metadata?.storage_url;
@@ -97,8 +87,6 @@ export async function GET(
     const fullContent = chunks
       .map(chunk => chunk.content)
       .join('\n\n'); // Join chunks with double newlines for readability
-
-    console.log(`📄 [Document Content] ✅ Retrieved ${chunks.length} chunks for document ${documentId}`);
 
     return NextResponse.json({
       success: true,
