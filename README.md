@@ -1,7 +1,7 @@
 <div align="center">
 
 # 📄 DocsFlow
-*Multi-Tenant Document Intelligence with Advanced RAG Pipeline*
+*Multi-Tenant Document Intelligence Platform | Production RAG Pipeline | Next.js 15 + Pinecone + Supabase + Clerk"*
 
 **🚀 Advanced RAG System with Temporal & Hybrid Intelligence**
 
