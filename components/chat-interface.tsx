@@ -410,11 +410,7 @@ export default function ChatInterface() {
     return suggestions.slice(0, 4)
   }
 
-  const handleSendMessageWithDisplay = async (displayText: string, apiText: string) => {
-    return handleSendMessage(apiText, displayText)
-  }
-
-  const handleSendMessage = async (content: string, displayOverride?: string) => {
+  const handleSendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return
 
     // Scroll to bottom when user sends message (they want to see their message and response)
@@ -448,7 +444,7 @@ export default function ChatInterface() {
     const userMessage: Message = {
       id: Date.now().toString(),
       type: "user",
-      content: (displayOverride || content).trim(),
+      content: content.trim(),
       timestamp: new Date(),
     }
 
@@ -619,14 +615,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
   }
 
   const handleSuggestionClick = (suggestion: string) => {
-    const lastAiMessage = [...messages].reverse().find(m => m.type === "ai")
-    if (lastAiMessage) {
-      const topic = lastAiMessage.content.substring(0, 200)
-      const enriched = `${suggestion}\n\nContext from previous answer: ${topic}`
-      handleSendMessageWithDisplay(suggestion, enriched)
-    } else {
-      handleSendMessage(suggestion)
-    }
+    handleSendMessage(suggestion)
   }
 
   const clearCurrentConversation = () => {

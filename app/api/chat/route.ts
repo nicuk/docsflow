@@ -17,6 +17,7 @@ import { costMonitor } from '@/lib/model-cost-monitor';
 import { createClient } from '@supabase/supabase-js';
 import { detectGibberish, getDefaultPersona } from '@/lib/persona-prompt-generator';
 import { logPersonaMetrics } from '@/lib/persona-metrics';
+import { loadConversationHistory, reformulateIfNeeded, saveMessages } from '@/lib/conversation-memory';
 
 // Initialize OpenRouter client for chat (lazy-loaded)
 let openRouterClient: OpenRouterClient | null = null;
@@ -185,11 +186,17 @@ export async function POST(request: NextRequest) {
       }, { headers: corsHeaders });
     }
     
-    // 🆕 NEW: Use Pinecone + LangChain RAG Module
+    // CONVERSATION MEMORY: Load history and reformulate vague follow-ups
+    const conversationHistory = await loadConversationHistory(conversationId, tenantId);
+    const { query: effectiveQuery, wasReformulated } = await reformulateIfNeeded(
+      message,
+      conversationHistory
+    );
+
     const ragResult = await queryWorkflow({
-      query: message,
+      query: effectiveQuery,
       tenantId: tenantId,
-      topK: 5, // Simplified: 5 chunks is optimal
+      topK: 5,
     });
     
     // Transform new result to match old structure (for compatibility)
@@ -284,24 +291,33 @@ export async function POST(request: NextRequest) {
       }, { headers: corsHeaders });
     }
 
-    // Generate final answer using OpenRouter with fallback (persona already loaded earlier)
     const contextText = context.map(ctx => `Source: ${ctx.document}\nContent: ${ctx.content}`).join('\n\n');
     
-    const messages = [
+    // Build multi-turn message array: system → history → current query with context
+    const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
       {
-        role: 'system' as const,
+        role: 'system',
         content: tenantPersona.system_prompt || getDefaultPersona().system_prompt
       },
-      {
-        role: 'user' as const,
-        content: `Context from documents:
+    ];
+
+    // Inject conversation history for multi-turn coherence (capped at 6 messages)
+    for (const histMsg of conversationHistory) {
+      messages.push({
+        role: histMsg.role === 'user' ? 'user' : 'assistant',
+        content: histMsg.content.substring(0, 500), // Cap each historical message
+      });
+    }
+
+    messages.push({
+      role: 'user',
+      content: `Context from documents:
 ${contextText}
 
 User Question: ${message}
 
 ${tenantPersona.custom_instructions || 'Provide a helpful, accurate answer based ONLY on the provided context. If the context doesn\'t contain enough information, say so clearly. Include relevant details and be specific.'}`
-      }
-    ];
+    });
 
     let answerText: string;
     let modelUsed: string;
@@ -410,7 +426,9 @@ ${tenantPersona.custom_instructions || 'Provide a helpful, accurate answer based
       }
     }).catch(() => {});
     
-    // Return successful response
+    // Persist messages to database (fire-and-forget, non-blocking)
+    saveMessages(conversationId, tenantId, message, citedResponse.text);
+
     return NextResponse.json({
       response: citedResponse.text,
       sources: context,
@@ -424,11 +442,12 @@ ${tenantPersona.custom_instructions || 'Provide a helpful, accurate answer based
         response_time_ms: responseTime,
         source_count: context.length,
         tenant_subdomain: tenantSubdomain,
-        // Complexity classification metadata
         query_complexity: complexityAnalysis.complexity,
         complexity_confidence: complexityAnalysis.confidence,
         complexity_factors: complexityAnalysis.factors,
-        model_tier: complexityAnalysis.complexity === 'complex' ? 'premium' : 'standard'
+        model_tier: complexityAnalysis.complexity === 'complex' ? 'premium' : 'standard',
+        was_reformulated: wasReformulated,
+        effective_query: wasReformulated ? effectiveQuery : undefined,
       }
     }, { headers: corsHeaders });
 
