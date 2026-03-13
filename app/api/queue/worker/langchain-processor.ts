@@ -11,7 +11,6 @@ import { createClient } from '@supabase/supabase-js';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { Document } from 'langchain/document';
 import { Pinecone } from '@pinecone-database/pinecone';
-import { traceable } from 'langsmith/traceable';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -38,13 +37,11 @@ function endTiming(label: string): number {
   return duration;
 }
 
-// Wrap the entire function with LangSmith tracing
-export const processDocumentWithLangChain = traceable(
-  async function processDocumentWithLangChain(
-    job: IngestionJob,
-    fileData: Blob,
-    supabase: any
-  ): Promise<void> {
+export async function processDocumentWithLangChain(
+  job: IngestionJob,
+  fileData: Blob,
+  supabase: any
+): Promise<void> {
   let tempFilePath: string | null = null;
   const totalStartTime = Date.now();
   
@@ -378,7 +375,6 @@ Return raw content only.`;
   } catch (error) {
     throw error;
   } finally {
-    // Cleanup temp file
     if (tempFilePath) {
       try {
         fs.unlinkSync(tempFilePath);
@@ -387,10 +383,5 @@ Return raw content only.`;
       }
     }
   }
-  },
-  {
-    name: 'processDocumentWithLangChain',
-    run_type: 'chain',
-  }
-);
+}
 
