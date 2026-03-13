@@ -3,20 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Brain, Save, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
+import { INDUSTRY_PRESETS } from '@/lib/persona-prompt-generator';
 
 interface PersonaData {
-  role: string;
-  tone: string;
-  focus_areas: string[];
-  business_context: string;
-  prompt_template: string;
   industry: string;
-  created_from: string;
+  custom_instructions: string;
 }
 
 interface PersonaEditorProps {
@@ -27,25 +22,17 @@ interface PersonaEditorProps {
 
 export default function PersonaEditor({ currentPersona, tenantId, onPersonaUpdated }: PersonaEditorProps) {
   const [persona, setPersona] = useState<PersonaData>({
-    role: 'Business Intelligence Assistant',
-    tone: 'Professional and helpful',
-    focus_areas: ['document analysis', 'business insights', 'decision support'],
-    business_context: 'AI-powered business intelligence',
-    prompt_template: 'You are an AI assistant focused on providing helpful, accurate information.',
     industry: 'general',
-    created_from: 'manual_edit'
+    custom_instructions: INDUSTRY_PRESETS.general.default_instructions
   });
   
   const [isSaving, setIsSaving] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [newFocusArea, setNewFocusArea] = useState('');
 
   useEffect(() => {
     if (currentPersona) {
       setPersona(currentPersona);
     } else {
-      // Fetch current persona from API if not provided
       fetchCurrentPersona();
     }
   }, [currentPersona]);
@@ -60,12 +47,23 @@ export default function PersonaEditor({ currentPersona, tenantId, onPersonaUpdat
       if (response.ok) {
         const data = await response.json();
         if (data.persona) {
-          setPersona(data.persona);
+          setPersona({
+            industry: data.persona.industry || 'general',
+            custom_instructions: data.persona.custom_instructions || INDUSTRY_PRESETS[data.persona.industry || 'general']?.default_instructions || INDUSTRY_PRESETS.general.default_instructions
+          });
         }
       }
-    } catch (error) {
+    } catch {
       // Failed to fetch current persona
     }
+  };
+
+  const handleIndustryChange = (industry: string) => {
+    const preset = INDUSTRY_PRESETS[industry] || INDUSTRY_PRESETS.general;
+    setPersona({
+      industry,
+      custom_instructions: preset.default_instructions
+    });
   };
 
   const handleSave = async () => {
@@ -73,111 +71,30 @@ export default function PersonaEditor({ currentPersona, tenantId, onPersonaUpdat
     setSaveStatus('idle');
     
     try {
-      
       const response = await fetch('/api/tenant/persona', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include cookies for authentication
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
-          role: persona.role,
-          tone: persona.tone,
-          business_context: persona.business_context,
           industry: persona.industry,
-          focus_areas: persona.focus_areas
+          custom_instructions: persona.custom_instructions
         })
       });
 
       if (response.ok) {
-        const data = await response.json();
         setSaveStatus('success');
         onPersonaUpdated?.(persona);
-        
-        // Auto-hide success message after 3 seconds
         setTimeout(() => setSaveStatus('idle'), 3000);
       } else {
         const error = await response.json();
         throw new Error(error.error || 'Failed to update persona');
       }
-    } catch (error) {
+    } catch {
       setSaveStatus('error');
-      
-      // Auto-hide error message after 5 seconds
       setTimeout(() => setSaveStatus('idle'), 5000);
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleRegenerate = async () => {
-    setIsGenerating(true);
-    setSaveStatus('idle');
-    
-    try {
-      // Use current business context to regenerate persona
-      const prompt = `
-        Generate an enhanced AI assistant persona for this business:
-        Industry: ${persona.industry}
-        Business Context: ${persona.business_context}
-        Current Role: ${persona.role}
-        Focus Areas: ${persona.focus_areas.join(', ')}
-        
-        Return a JSON object with these fields:
-        - role: (improved professional title)
-        - tone: (communication style)
-        - focus_areas: (array of 3-5 specific areas)
-        - business_context: (enhanced context)
-        - prompt_template: (detailed AI instructions)
-        - industry: (keep same: ${persona.industry})
-        
-        Make it more specific and effective than the current version.
-      `;
-      
-      const response = await fetch('/api/tenant/regenerate-persona', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          tenantId,
-          prompt,
-          currentPersona: persona
-        })
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.persona) {
-          setPersona({ ...result.persona, created_from: 'regenerated' });
-          setSaveStatus('success');
-        }
-      } else {
-        throw new Error('Failed to regenerate persona');
-      }
-    } catch (error) {
-      setSaveStatus('error');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const addFocusArea = () => {
-    if (newFocusArea.trim() && !persona.focus_areas.includes(newFocusArea.trim())) {
-      setPersona({
-        ...persona,
-        focus_areas: [...persona.focus_areas, newFocusArea.trim()]
-      });
-      setNewFocusArea('');
-    }
-  };
-
-  const removeFocusArea = (area: string) => {
-    setPersona({
-      ...persona,
-      focus_areas: persona.focus_areas.filter(fa => fa !== area)
-    });
   };
 
   return (
@@ -187,39 +104,24 @@ export default function PersonaEditor({ currentPersona, tenantId, onPersonaUpdat
           <div>
             <CardTitle className="flex items-center gap-2">
               <Brain className="h-5 w-5 text-primary" />
-              AI Persona Editor
+              AI Configuration
             </CardTitle>
             <CardDescription>
-              Customize your organization's AI assistant personality and behavior
+              Choose your industry for smart defaults, then customize the instructions to fit your needs.
             </CardDescription>
           </div>
-          <div className="flex gap-2">
-            <Button
-              onClick={handleRegenerate}
-              disabled={isGenerating || isSaving}
-              variant="outline"
-              size="sm"
-            >
-              {isGenerating ? (
-                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
-              )}
-              Regenerate
-            </Button>
-            <Button
-              onClick={handleSave}
-              disabled={isSaving || isGenerating}
-              size="sm"
-            >
-              {isSaving ? (
-                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
-              Save Changes
-            </Button>
-          </div>
+          <Button
+            onClick={handleSave}
+            disabled={isSaving}
+            size="sm"
+          >
+            {isSaving ? (
+              <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
+            Save Changes
+          </Button>
         </div>
         
         {saveStatus !== 'idle' && (
@@ -231,102 +133,56 @@ export default function PersonaEditor({ currentPersona, tenantId, onPersonaUpdat
             ) : (
               <AlertCircle className="h-4 w-4" />
             )}
-            {saveStatus === 'success' ? 'Persona updated successfully!' : 'Failed to update persona'}
+            {saveStatus === 'success' ? 'AI configuration updated successfully!' : 'Failed to update configuration'}
           </div>
         )}
       </CardHeader>
       
       <CardContent className="space-y-6">
-        {/* Role */}
-        <div className="space-y-2">
-          <Label htmlFor="role">AI Role</Label>
-          <Input
-            id="role"
-            value={persona.role}
-            onChange={(e) => setPersona({ ...persona, role: e.target.value })}
-            placeholder="e.g., Business Intelligence Assistant"
-          />
-        </div>
-
-        {/* Tone */}
-        <div className="space-y-2">
-          <Label htmlFor="tone">Communication Tone</Label>
-          <Input
-            id="tone"
-            value={persona.tone}
-            onChange={(e) => setPersona({ ...persona, tone: e.target.value })}
-            placeholder="e.g., Professional and helpful"
-          />
-        </div>
-
-        {/* Business Context */}
-        <div className="space-y-2">
-          <Label htmlFor="context">Business Context</Label>
-          <Textarea
-            id="context"
-            value={persona.business_context}
-            onChange={(e) => setPersona({ ...persona, business_context: e.target.value })}
-            placeholder="Describe your business context..."
-            rows={3}
-          />
-        </div>
-
-        {/* Industry */}
         <div className="space-y-2">
           <Label htmlFor="industry">Industry</Label>
-          <Input
-            id="industry"
-            value={persona.industry}
-            onChange={(e) => setPersona({ ...persona, industry: e.target.value })}
-            placeholder="e.g., healthcare, manufacturing, retail"
-          />
+          <p className="text-sm text-muted-foreground">
+            Selecting an industry pre-fills smart defaults. You can customize them below.
+          </p>
+          <Select value={persona.industry} onValueChange={handleIndustryChange}>
+            <SelectTrigger id="industry">
+              <SelectValue placeholder="Select your industry" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(INDUSTRY_PRESETS).map(([key, preset]) => (
+                <SelectItem key={key} value={key}>
+                  {preset.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Focus Areas */}
         <div className="space-y-2">
-          <Label>Focus Areas</Label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {persona.focus_areas.map((area, index) => (
-              <Badge
-                key={index}
-                variant="secondary"
-                className="cursor-pointer hover:bg-red-100"
-                onClick={() => removeFocusArea(area)}
-              >
-                {area} ×
-              </Badge>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <Input
-              value={newFocusArea}
-              onChange={(e) => setNewFocusArea(e.target.value)}
-              placeholder="Add focus area..."
-              onKeyPress={(e) => e.key === 'Enter' && addFocusArea()}
-            />
-            <Button onClick={addFocusArea} size="sm" variant="outline">
-              Add
-            </Button>
-          </div>
-        </div>
-
-        {/* Prompt Template */}
-        <div className="space-y-2">
-          <Label htmlFor="prompt">Custom Prompt Template</Label>
+          <Label htmlFor="instructions">Custom Instructions</Label>
+          <p className="text-sm text-muted-foreground">
+            Tell the AI who it is, what to focus on, and how to respond. These instructions are used every time users ask questions about their documents.
+          </p>
           <Textarea
-            id="prompt"
-            value={typeof persona.prompt_template === 'string' ? persona.prompt_template : JSON.stringify(persona.prompt_template, null, 2)}
-            onChange={(e) => setPersona({ ...persona, prompt_template: e.target.value })}
-            placeholder="You are an AI assistant that..."
-            rows={4}
+            id="instructions"
+            value={persona.custom_instructions}
+            onChange={(e) => setPersona({ ...persona, custom_instructions: e.target.value })}
+            placeholder="You are a document intelligence assistant specialized in..."
+            rows={6}
+            className="font-mono text-sm"
           />
+          <p className="text-xs text-muted-foreground text-right">
+            {persona.custom_instructions?.length || 0} / 2000 characters
+          </p>
         </div>
 
-        {/* Metadata */}
-        <div className="bg-muted p-4 rounded-lg">
-          <div className="text-sm text-muted-foreground">
-            <strong>Created from:</strong> {persona.created_from}
-          </div>
+        <div className="bg-muted/50 p-4 rounded-lg text-sm text-muted-foreground">
+          <p className="font-medium mb-1">Built-in safeguards (always active):</p>
+          <ul className="list-disc list-inside space-y-1">
+            <li>Answers are based only on uploaded documents</li>
+            <li>Sources are cited for every factual claim</li>
+            <li>The AI will say when it doesn't have enough information</li>
+          </ul>
         </div>
       </CardContent>
     </Card>

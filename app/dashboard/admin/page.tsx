@@ -336,7 +336,7 @@ export default function AdminOverviewPage() {
                     <Progress value={metrics?.system.uptime} className="h-2" />
                   </div>
                   <Button asChild variant="outline" className="w-full mt-4">
-                    <Link href="/dashboard/admin/analytics">View Analytics</Link>
+                    <Link href="/dashboard/admin/system-health">View Details</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -365,15 +365,15 @@ export default function AdminOverviewPage() {
                     </Link>
                   </Button>
                   <Button asChild variant="outline" className="flex flex-col h-20">
-                    <Link href="/dashboard/admin/settings">
+                    <Link href="/dashboard/settings">
                       <Database className="h-6 w-6 mb-1" />
                       <span className="text-xs">Settings</span>
                     </Link>
                   </Button>
                   <Button asChild variant="outline" className="flex flex-col h-20">
-                    <Link href="/dashboard/admin/audit">
+                    <Link href="/dashboard/support">
                       <Activity className="h-6 w-6 mb-1" />
-                      <span className="text-xs">Audit Logs</span>
+                      <span className="text-xs">Support</span>
                     </Link>
                   </Button>
                 </div>

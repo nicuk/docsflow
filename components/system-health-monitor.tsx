@@ -61,7 +61,11 @@ export function SystemHealthMonitor() {
 
   useEffect(() => {
     fetchHealthData();
-    const interval = setInterval(fetchHealthData, 30000); // Refresh every 30 seconds
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchHealthData();
+      }
+    }, 120000);
     return () => clearInterval(interval);
   }, []);
 

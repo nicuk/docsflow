@@ -38,7 +38,7 @@ export default function SignInClerkPage() {
                 card: "shadow-lg"
               }
             }}
-            fallbackRedirectUrl="/dashboard-clerk"
+            fallbackRedirectUrl="/dashboard"
             signUpUrl="/sign-up-clerk"
           />
         </div>

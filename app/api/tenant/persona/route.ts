@@ -5,8 +5,7 @@ import { getCORSHeaders } from '@/lib/utils';
 import { 
   generatePersonaPrompts, 
   validatePersonaSettings, 
-  getDefaultPersona,
-  getIndustryDefaults
+  getDefaultPersona
 } from '@/lib/persona-prompt-generator';
 
 /**
@@ -39,7 +38,6 @@ export async function GET(request: NextRequest) {
       .eq('tenant_id', tenantValidation.tenantId)
       .single();
       
-    // If error and it's not "not found", return error
     if (error && error.code !== 'PGRST116') {
       return NextResponse.json(
         { error: 'Failed to fetch persona' },
@@ -47,13 +45,12 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Return persona or default
     return NextResponse.json({
       persona: persona || getDefaultPersona(),
       isDefault: !persona
     }, { headers: corsHeaders });
     
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: corsHeaders }
@@ -81,24 +78,9 @@ export async function POST(request: NextRequest) {
     }
     
     const body = await request.json();
-    const { 
-      role, 
-      tone, 
-      business_context, 
-      industry, 
-      focus_areas, 
-      custom_instructions,
-      confidence_threshold 
-    } = body;
+    const { industry, custom_instructions } = body;
     
-    // Validate settings
-    const validation = validatePersonaSettings({
-      role,
-      tone,
-      business_context,
-      industry,
-      focus_areas
-    });
+    const validation = validatePersonaSettings({ industry, custom_instructions });
     
     if (!validation.valid) {
       return NextResponse.json(
@@ -107,14 +89,9 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Generate prompts from settings
     const { system_prompt, fallback_prompt } = generatePersonaPrompts({
-      role,
-      tone,
-      business_context,
-      industry,
-      focus_areas,
-      custom_instructions
+      industry: industry || 'general',
+      custom_instructions: custom_instructions || ''
     });
     
     const supabase = createClient(
@@ -122,20 +99,14 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
     
-    // Upsert persona (insert or update)
     const { data, error } = await supabase
       .from('tenant_ai_persona')
       .upsert({
         tenant_id: tenantValidation.tenantId,
-        role: role?.trim(),
-        tone: tone?.trim(),
-        business_context: business_context?.trim() || null,
         industry: industry || 'general',
-        focus_areas: focus_areas || [],
-        system_prompt,
         custom_instructions: custom_instructions?.trim() || null,
+        system_prompt,
         fallback_prompt,
-        confidence_threshold: confidence_threshold || 0.3,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'tenant_id'
@@ -156,7 +127,7 @@ export async function POST(request: NextRequest) {
       message: 'AI persona updated successfully'
     }, { headers: corsHeaders });
     
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: corsHeaders }
@@ -174,4 +145,3 @@ export async function OPTIONS(request: NextRequest) {
     headers: getCORSHeaders(origin),
   });
 }
-

@@ -12,12 +12,6 @@ import {
   Shield, 
   Settings, 
   BarChart3, 
-  FileText, 
-  AlertTriangle,
-  UserCheck,
-  Database,
-  Activity,
-  Lock,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -41,7 +35,6 @@ interface AdminDashboardLayoutProps {
 }
 
 const adminNavigationItems = [
-  // Core Admin Functions
   { 
     name: 'Admin Overview', 
     href: '/dashboard/admin', 
@@ -57,15 +50,6 @@ const adminNavigationItems = [
     description: 'Manage users, roles, and access' 
   },
   { 
-    name: 'Pending Approvals', 
-    href: '/dashboard/admin/approvals', 
-    icon: UserCheck, 
-    badge: 'pending',
-    description: 'Review access requests and invitations' 
-  },
-  
-  // System Management
-  { 
     name: 'System Health', 
     href: '/dashboard/admin/system-health', 
     icon: Shield, 
@@ -73,53 +57,12 @@ const adminNavigationItems = [
     description: 'Monitor system performance' 
   },
   { 
-    name: 'Database Admin', 
-    href: '/dashboard/admin/database', 
-    icon: Database, 
-    badge: null,
-    description: 'Database monitoring and management' 
-  },
-  { 
-    name: 'Security Center', 
-    href: '/dashboard/admin/security', 
-    icon: Lock, 
-    badge: null,
-    description: 'Security settings and audit logs' 
-  },
-  
-  // Analytics & Monitoring
-  { 
-    name: 'Analytics', 
-    href: '/dashboard/admin/analytics', 
-    icon: Activity, 
-    badge: null,
-    description: 'Usage analytics and insights' 
-  },
-  { 
-    name: 'Audit Logs', 
-    href: '/dashboard/admin/audit', 
-    icon: FileText, 
-    badge: null,
-    description: 'System and user activity logs' 
-  },
-  
-  // Configuration
-  { 
-    name: 'Tenant Settings', 
-    href: '/dashboard/admin/settings', 
+    name: 'Settings', 
+    href: '/dashboard/settings', 
     icon: Settings, 
     badge: null,
-    description: 'Tenant configuration and preferences' 
+    description: 'Workspace configuration and preferences' 
   },
-  
-  // Alerts & Issues
-  { 
-    name: 'System Alerts', 
-    href: '/dashboard/admin/alerts', 
-    icon: AlertTriangle, 
-    badge: 'alerts',
-    description: 'System warnings and notifications' 
-  }
 ];
 
 export default function AdminDashboardLayout({ children, user }: AdminDashboardLayoutProps) {

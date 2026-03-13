@@ -120,12 +120,13 @@ export default clerkMiddleware(async (auth, req) => {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
+     * Match all request paths except:
+     * - _next/static, _next/image (static/image assets)
+     * - favicon.ico, static images (svg|png|jpg|jpeg|gif|webp)
+     * - /api/health (health check, no auth needed)
+     * - /api/queue/worker (cron-triggered, uses its own CRON_SECRET auth)
+     * - /api/stripe/webhooks (Stripe webhook, verified by Stripe signature)
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/health|api/queue/worker|api/stripe/webhooks|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

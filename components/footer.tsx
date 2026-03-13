@@ -46,50 +46,35 @@ export default function Footer() {
             <nav aria-label="Resources Navigation">
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="/documentation" className="text-muted-foreground hover:text-foreground">
+                  <Link href="/docs" className="text-muted-foreground hover:text-foreground">
                     Documentation
                   </Link>
                 </li>
                 <li>
-                  <Link href="/case-studies" className="text-muted-foreground hover:text-foreground">
-                    Case Studies
+                  <Link href="/pricing" className="text-muted-foreground hover:text-foreground">
+                    Pricing
                   </Link>
                 </li>
                 <li>
-                  <Link href="/blog" className="text-muted-foreground hover:text-foreground">
-                    Blog
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/support" className="text-muted-foreground hover:text-foreground">
+                  <a href="mailto:support@bitto.tech" className="text-muted-foreground hover:text-foreground">
                     Support
-                  </Link>
+                  </a>
                 </li>
               </ul>
             </nav>
           </div>
           <div className="space-y-4">
-            <h3 className="text-sm font-bold">Company</h3>
-            <nav aria-label="Company Navigation">
+            <h3 className="text-sm font-bold">Legal</h3>
+            <nav aria-label="Legal Navigation">
               <ul className="space-y-2 text-sm">
-                <li>
-                  <Link href="/about" className="text-muted-foreground hover:text-foreground">
-                    About
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/careers" className="text-muted-foreground hover:text-foreground">
-                    Careers
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/contact" className="text-muted-foreground hover:text-foreground">
-                    Contact
-                  </Link>
-                </li>
                 <li>
                   <Link href="/privacy" className="text-muted-foreground hover:text-foreground">
                     Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/terms" className="text-muted-foreground hover:text-foreground">
+                    Terms of Service
                   </Link>
                 </li>
               </ul>

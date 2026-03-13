@@ -307,14 +307,14 @@ export default function DocumentsPage() {
     }
   }
   
-  // Poll document processing status
+  // Poll document processing status with exponential backoff
   const pollDocumentStatus = async (documentId: string) => {
-    const maxPolls = 30 // Max 5 minutes (30 * 10 seconds)
+    const maxPolls = 15
     let pollCount = 0
+    let delay = 10000 // Start at 10s, then 20s, 40s, cap at 60s
     
     const poll = async () => {
       if (pollCount >= maxPolls) {
-        // Timeout - mark as error
         setDocuments((prev) => 
           prev.map((doc) => 
             doc.id === documentId 
@@ -325,37 +325,40 @@ export default function DocumentsPage() {
         return
       }
       
+      if (document.visibilityState !== 'visible') {
+        setTimeout(poll, delay)
+        return
+      }
+      
       try {
         pollCount++
         
-        // Call real API to check document status
         const documents = await apiClient.getDocuments();
-        const document = documents.documents?.find((d: any) => d.id === documentId);
+        const doc = documents.documents?.find((d: any) => d.id === documentId);
         
-        if (document) {
-          const newStatus = document.processing_status === 'completed' ? 'ready' : 
-                           document.processing_status === 'error' ? 'error' : 'processing';
+        if (doc) {
+          const newStatus = doc.processing_status === 'completed' ? 'ready' : 
+                           doc.processing_status === 'error' ? 'error' : 'processing';
           
-          // Update document status from backend
           setDocuments((prev) => 
-            prev.map((doc) => 
-              doc.id === documentId 
+            prev.map((d) => 
+              d.id === documentId 
                 ? { 
-                    ...doc, 
+                    ...d, 
                     status: newStatus,
-                    processingTime: pollCount * 10, // Rough estimate
-                    pages: doc.type === "pdf" || doc.type === "doc" || doc.type === "docx" 
+                    processingTime: pollCount * (delay / 1000),
+                    pages: d.type === "pdf" || d.type === "doc" || d.type === "docx" 
                       ? Math.floor(Math.random() * 30) + 1 : undefined,
-                    wordCount: doc.type === "pdf" || doc.type === "doc" || doc.type === "docx" || doc.type === "txt" 
+                    wordCount: d.type === "pdf" || d.type === "doc" || d.type === "docx" || d.type === "txt" 
                       ? Math.floor(Math.random() * 5000) + 500 : undefined,
                   }
-                : doc
+                : d
             )
           )
           
-          // Continue polling if still processing
           if (newStatus === 'processing') {
-            setTimeout(poll, 10000) // Poll every 10 seconds
+            delay = Math.min(delay * 2, 60000)
+            setTimeout(poll, delay)
           }
         }
       } catch (error) {
@@ -369,8 +372,7 @@ export default function DocumentsPage() {
       }
     }
     
-    // Start polling after initial delay
-    setTimeout(poll, 5000)
+    setTimeout(poll, 10000)
   }
 
   // Cancel file upload
