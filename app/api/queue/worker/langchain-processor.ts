@@ -229,6 +229,29 @@ Return raw content only.`;
       });
     });
     
+    // Persist chunks to Supabase for content preview and full-text search
+    const chunkRows = enhancedChunks.map((chunk, index) => ({
+      document_id: job.document_id,
+      tenant_id: job.tenant_id,
+      content: chunk.pageContent,
+      chunk_index: index,
+      access_level: 1,
+      token_count: Math.ceil(chunk.pageContent.length / 4),
+    }));
+
+    const CHUNK_BATCH = 50;
+    for (let i = 0; i < chunkRows.length; i += CHUNK_BATCH) {
+      const batch = chunkRows.slice(i, i + CHUNK_BATCH);
+      const { error: chunkInsertError } = await supabase
+        .from('document_chunks')
+        .insert(batch);
+
+      if (chunkInsertError) {
+        console.error(`Chunk insert batch ${Math.floor(i / CHUNK_BATCH) + 1} failed:`, chunkInsertError);
+        throw new Error(`Failed to store document chunks: ${chunkInsertError.message}`);
+      }
+    }
+
     // Generate document summary for hierarchical retrieval
     try {
       const { generateDocumentSummary } = await import('@/lib/rag/core/summarization');

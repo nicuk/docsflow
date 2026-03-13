@@ -107,34 +107,36 @@ export async function hierarchicalRetrieve(
   const { generateSparseVector } = await import('./sparse-vectors');
   const querySparseVector = generateSparseVector(query);
   
-  // Query Pinecone with document filter + HYBRID SEARCH
-  const results = await queryVectors({
-    vector: queryEmbedding,
-    sparseVector: querySparseVector, // hybrid: keyword + semantic
-    namespace: tenantId,
-    topK: topK * 3, // Get more results to filter by score
-    filter: {
-      ...filter,
-      document_id: { $in: documentIds },
-    },
-  });
+    // Query Pinecone with document filter + HYBRID SEARCH
+    // Note: langchain-processor stores metadata with camelCase keys (documentId, not document_id)
+    const results = await queryVectors({
+      vector: queryEmbedding,
+      sparseVector: querySparseVector, // hybrid: keyword + semantic
+      namespace: tenantId,
+      topK: topK * 3, // Get more results to filter by score
+      filter: {
+        ...filter,
+        documentId: { $in: documentIds },
+      },
+    });
   
   if (!results || results.length === 0) {
     return [];
   }
   
   // Map QueryResult[] to RetrievedChunk format
+  // Note: langchain-processor stores metadata with camelCase keys
   const chunks: RetrievedChunk[] = results
     .map(result => ({
       id: result.id,
       content: result.metadata?.text as string || '',
       score: result.score || 0,
       metadata: {
-        documentId: result.metadata?.document_id as string,
+        documentId: (result.metadata?.documentId || result.metadata?.document_id) as string,
         filename: result.metadata?.filename as string,
         page: result.metadata?.page as number,
-        chunkIndex: result.metadata?.chunk_index as number,
-        tenantId: result.metadata?.tenant_id as string,
+        chunkIndex: (result.metadata?.chunkIndex ?? result.metadata?.chunk_index ?? 0) as number,
+        tenantId: (result.metadata?.tenantId || result.metadata?.tenant_id) as string,
       },
     }))
     .filter(chunk => chunk.content && chunk.score >= minScore); // Filter by score
