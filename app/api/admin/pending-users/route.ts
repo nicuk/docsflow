@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { sendWelcomeEmail } from '@/lib/email';
+import { tenantUrl } from '@/lib/constants';
+import type { TenantRelation } from '@/types/database';
 
 interface PendingUsersData {
   summary: {
@@ -166,8 +168,8 @@ async function handleInvitationAction(action: string, invitationId: string, reas
     await sendWelcomeEmail({
       email: invitation.email,
       name: invitation.email.split('@')[0],
-      tenantName: (invitation.tenants as any).name,
-      dashboardUrl: `https://${(invitation.tenants as any).subdomain}.docsflow.app/dashboard`
+      tenantName: (invitation.tenants as unknown as TenantRelation).name,
+      dashboardUrl: tenantUrl((invitation.tenants as unknown as TenantRelation).subdomain)
     });
 
     return NextResponse.json({ 

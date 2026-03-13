@@ -327,7 +327,7 @@ const tenantAssignment = {
           const userData = {
             id: user.id,
             email: user.email,
-            name: (user as any).user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+            name: (user as unknown as { user_metadata?: { full_name?: string } }).user_metadata?.full_name || user.email?.split('@')[0] || 'User',
             tenant_id: tenantAssignment.subdomain,
             access_level: tenantAssignment.accessLevel,
             onboarding_complete: true
@@ -798,7 +798,7 @@ const tenantAssignment = {
     if (currentQuestion > 0) {
       setCurrentQuestion(currentQuestion - 1);
       // Restore previous response if it exists
-      const prevResponse = (responses as any)[currentQuestion - 1] || '';
+      const prevResponse = (responses as Record<number, string>)[currentQuestion - 1] || '';
       setCurrentResponse(prevResponse);
     }
   };

@@ -179,8 +179,8 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
     setCustomDomain(sanitized);
     
     // Debounce domain checking
-    clearTimeout((window as any).domainTimeout);
-    (window as any).domainTimeout = setTimeout(() => {
+    clearTimeout(window.domainTimeout);
+    window.domainTimeout = setTimeout(() => {
       checkDomainAvailability(sanitized);
     }, 500);
   };

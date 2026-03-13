@@ -1,28 +1,18 @@
-// API Client for Frontend-Backend Integration
-// Connects to: docsflow.app backend (configurable via environment)
+import { APP_DOMAIN, API_URL } from '@/lib/constants';
 
-// Enterprise tenant configuration - extracted from subdomain or headers
-
-// Using Clerk tokens only (no legacy AuthService)
-
-// Enhanced API base URL logic
 const getAPIBaseURL = () => {
-  // Use current subdomain for API calls (tenant-aware)
   if (typeof window !== 'undefined') {
     const currentHost = window.location.host;
     
-    // If we're on a tenant subdomain (e.g., acme.docsflow.app), use it for API
-    if (currentHost.includes('.docsflow.app') && !currentHost.startsWith('www.')) {
+    if (currentHost.includes(`.${APP_DOMAIN}`) && !currentHost.startsWith('www.')) {
       return `https://${currentHost}/api`;
     }
   }
   
-  // Fallback: Use environment variable or main API
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.docsflow.app/api';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || API_URL;
   
-  // Never allow localhost in production
   if (apiUrl.includes('localhost') && process.env.NODE_ENV === 'production') {
-    return 'https://api.docsflow.app/api';
+    return API_URL;
   }
   
   return apiUrl;
@@ -63,7 +53,7 @@ export const apiClient = {
           subdomain !== 'www' && 
           subdomain !== 'docsflow' && 
           subdomain !== 'localhost' &&
-          hostname.includes('.docsflow.app')) {
+          hostname.includes(`.${APP_DOMAIN}`)) {
         headers['X-Tenant-Subdomain'] = subdomain;
         
         // RLS CONTEXT: Add tenant UUID from localStorage cache for session context
@@ -94,8 +84,8 @@ export const apiClient = {
     try {
       // Access the global Clerk instance (set by ClerkProvider)
       // window.Clerk is available after ClerkProvider initializes
-      if (typeof window !== 'undefined' && (window as any).Clerk) {
-        const clerk = (window as any).Clerk;
+      if (typeof window !== 'undefined' && window.Clerk) {
+        const clerk = window.Clerk;
         
         // Get the session token from Clerk
         const token = await clerk.session?.getToken();
@@ -184,9 +174,10 @@ export const apiClient = {
     if (!response.ok) {
       if (response.status === 401) {
         // 401 = auth token missing/expired - this is temporary, should retry
-        const error = new Error(`Authentication required for ${operation}`);
-        (error as any).name = 'AuthError';
-        (error as any).retry = true;
+        const error = Object.assign(new Error(`Authentication required for ${operation}`), {
+          name: 'AuthError',
+          retry: true,
+        });
         throw error;
       }
       throw new Error(`API Error: ${response.status}`);

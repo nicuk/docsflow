@@ -46,7 +46,7 @@ function DomainCreatedContent() {
       scale: 1,
       transition: {
         duration: 0.6,
-        ease: [0.25, 0.46, 0.45, 0.94] as any,
+        ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number],
         staggerChildren: 0.2
       }
     }
@@ -57,7 +57,7 @@ function DomainCreatedContent() {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as any }
+      transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] }
     }
   };
 
@@ -66,7 +66,7 @@ function DomainCreatedContent() {
     transition: {
       duration: 2,
       repeat: Infinity,
-      ease: [0.42, 0, 0.58, 1] as any
+      ease: [0.42, 0, 0.58, 1] as [number, number, number, number]
     }
   };
 

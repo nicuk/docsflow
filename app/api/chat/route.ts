@@ -3,14 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { google } from '@ai-sdk/google';
 import { generateText } from 'ai';
 import { getCORSHeaders } from '@/lib/utils';
-import { getTenantPrompt, calculateTenantConfidence } from '@/lib/tenant-prompts';
 import { ConfidenceScoring } from '@/lib/confidence-scoring';
 // Pinecone + LangChain RAG module
 import { queryWorkflow } from '@/lib/rag';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
 import { CitationEnhancer } from '@/lib/citation-enhancer';
 import { CircuitBreakerFactory } from '@/lib/circuit-breaker';
-import { degradationManager } from '@/lib/emergency-degradation';
 import { OpenRouterClient, MODEL_CONFIGS } from '@/lib/openrouter-client';
 import { queryClassifier } from '@/lib/query-complexity-classifier';
 import { costMonitor } from '@/lib/model-cost-monitor';
@@ -62,6 +60,7 @@ async function getTenantPersona(tenantId: string) {
     return persona;
     
   } catch {
+    // Persona load failed; fall back to default to avoid blocking chat
     return getDefaultPersona();
   }
 }
@@ -197,6 +196,7 @@ export async function POST(request: NextRequest) {
       query: effectiveQuery,
       tenantId: tenantId,
       topK: 5,
+      skipGeneration: true,
     });
     
     // Transform new result to match old structure (for compatibility)
@@ -456,7 +456,8 @@ Rules:
       }
     }, { headers: corsHeaders });
 
-  } catch {
+  } catch (error) {
+    console.error('Chat route error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: corsHeaders }

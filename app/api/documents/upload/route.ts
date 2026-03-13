@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       throw new Error('Failed to create document record');
     }
     
-    const documentId = (document as any).id;
+    const documentId = (document as { id: string }).id;
     
     if (!documentId) {
       // Clean up blob on failure

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { tenantUrl } from '@/lib/constants';
+import type { TenantRelation, InviterRelation } from '@/types/database';
 
 export async function GET(
   request: NextRequest,
@@ -106,7 +108,7 @@ export async function GET(
         success: false,
         error: 'You are already a member of this organization',
                  data: {
-           redirectUrl: `https://${(invitation.tenants as any).subdomain}.docsflow.app/dashboard`
+           redirectUrl: tenantUrl((invitation.tenants as unknown as TenantRelation).subdomain)
          }
       }, { status: 409 });
     }
@@ -160,15 +162,15 @@ export async function GET(
           createdAt: invitation.created_at
         },
                  tenant: {
-           id: (invitation.tenants as any).id,
-           name: (invitation.tenants as any).name,
-           subdomain: (invitation.tenants as any).subdomain,
-           industry: (invitation.tenants as any).industry,
-           logoUrl: (invitation.tenants as any).logo_url
+           id: (invitation.tenants as unknown as TenantRelation).id,
+           name: (invitation.tenants as unknown as TenantRelation).name,
+           subdomain: (invitation.tenants as unknown as TenantRelation).subdomain,
+           industry: (invitation.tenants as unknown as TenantRelation).industry,
+           logoUrl: (invitation.tenants as unknown as TenantRelation).logo_url
          },
          inviter: invitation.invited_by ? {
-           name: (invitation.invited_by as any).name,
-           email: (invitation.invited_by as any).email
+           name: (invitation.invited_by as unknown as InviterRelation).name,
+           email: (invitation.invited_by as unknown as InviterRelation).email
          } : null,
         userLimits: {
           current: current_users,

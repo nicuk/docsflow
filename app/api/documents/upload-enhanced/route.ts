@@ -9,6 +9,7 @@ import { createClient } from '@supabase/supabase-js';
 import { MultimodalDocumentParser } from '@/lib/rag-multimodal-parser';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
+import { APP_URL } from '@/lib/constants';
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
       throw new Error('Failed to create document record');
     }
     
-    const documentId = (document as any).id;
+    const documentId = (document as { id: string }).id;
     
     // 3. Create ingestion job for background processing
     const { data: job, error: jobError } = await supabase
@@ -149,7 +150,7 @@ export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
     status: 200,
     headers: {
-      'Access-Control-Allow-Origin': 'https://docsflow.app',
+      'Access-Control-Allow-Origin': APP_URL,
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, x-tenant-id, x-tenant-subdomain',
     },

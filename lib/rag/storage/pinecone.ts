@@ -8,6 +8,7 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import type {
   VectorStorage,
+  VectorMetadata,
   QueryInput,
   QueryResult,
   UpsertInput,
@@ -64,7 +65,7 @@ class PineconeStorage implements VectorStorage {
       const results: QueryResult[] = (response.matches || []).map(match => ({
         id: match.id,
         score: match.score || 0,
-        metadata: match.metadata as any,
+        metadata: match.metadata as unknown as VectorMetadata,
       }));
       
       return results;
@@ -140,8 +141,8 @@ function getStorage(): PineconeStorage {
 
 // Export singleton instance (lazy-loaded via Proxy)
 export const storage = new Proxy({} as PineconeStorage, {
-  get(target, prop) {
-    return (getStorage() as any)[prop];
+  get(_target, prop: string | symbol) {
+    return (getStorage() as unknown as Record<string | symbol, unknown>)[prop];
   }
 });
 

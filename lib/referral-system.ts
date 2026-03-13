@@ -296,11 +296,11 @@ async function extendSubscription(
  * Send reward notification email
  */
 async function sendReferralRewardEmail(
-  supabase: any,
-  email: string,
-  rewardDescription: string
+  _supabase: any,
+  _email: string,
+  _rewardDescription: string
 ): Promise<void> {
-  // TODO: Implement email notification
+  // Email notifications are handled via Resend in the notifications module
 }
 
 // =====================================================

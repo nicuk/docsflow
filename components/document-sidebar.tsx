@@ -357,8 +357,8 @@ export default function DocumentSidebar({
             doc.id === tempDoc.id 
               ? {
                   ...doc,
-                  id: (response as any).documentId || (response as any).id,
-                  status: (response as any).status === 'completed' ? "processed" : (response as any).status
+                  id: (response as { documentId?: string; id?: string }).documentId || (response as { id?: string }).id || doc.id,
+                  status: ((response as { status?: string }).status === 'completed' ? "processed" : ((response as { status?: string }).status || doc.status)) as DocumentStatus
                 }
               : doc
           ))

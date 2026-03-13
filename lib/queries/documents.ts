@@ -16,8 +16,7 @@ export function useDocuments(tenantId?: string) {
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: (failureCount, error) => {
       // Retry auth errors up to 3 times with backoff
-      if (error && (error as any).name === 'AuthError' && failureCount < 3) {
-        
+      if (error && error instanceof Error && error.name === 'AuthError' && failureCount < 3) {
         return true;
       }
       return false;
@@ -38,8 +37,7 @@ export function useConversations(tenantId?: string) {
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     retry: (failureCount, error) => {
-      // Retry auth errors up to 3 times with backoff
-      if (error && (error as any).name === 'AuthError' && failureCount < 3) {
+      if (error && error instanceof Error && error.name === 'AuthError' && failureCount < 3) {
         return true;
       }
       return false;

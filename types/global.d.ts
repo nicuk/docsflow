@@ -16,6 +16,11 @@ declare global {
       [key: string]: string | undefined;
     }
   }
+
+  interface Window {
+    Clerk?: { session?: { getToken: () => Promise<string | null> } };
+    domainTimeout?: ReturnType<typeof setTimeout>;
+  }
 }
 
 export {};
