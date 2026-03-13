@@ -130,8 +130,11 @@ This is a genuine architectural strength:
 - **Image OCR**: Uploaded images are processed through Gemini Vision for text extraction.
 
 ### Code Quality
-- 1,188 commits showing authentic development history
+- 1,188+ commits showing authentic development history
 - Clean project structure (`app/`, `lib/`, `components/`, `hooks/`, `types/`)
+- Shared database types (`types/database.ts`) for Supabase relation queries
+- Centralized domain/URL configuration (`lib/constants.ts`) — no hardcoded URLs scattered across code
+- Lean `package.json` — zero unused dependencies, build-only deps properly in `devDependencies`
 - MIT licensed with proper README, architecture diagram, and getting-started docs
 - No exposed secrets or credentials in the repository
 
@@ -140,22 +143,30 @@ This is a genuine architectural strength:
 ## 4. Known Limitations (Be Honest About These)
 
 ### Code Quality Issues
-- **TypeScript strict mode is OFF** (`strict: false`, `noImplicitAny: false`). The codebase has ~20+ `as any` casts to work around type mismatches. This was a pragmatic decision to ship, not best practice.
-- **Double LLM call on successful queries**: The RAG pipeline's `generation.ts` generates an answer that gets discarded — the chat route generates its own answer with the tenant persona. This wastes ~3-5s of latency and API cost per query.
+- **TypeScript strict mode is OFF** (`strict: false`, `noImplicitAny: false`). A pragmatic decision to ship, not best practice. ~16 `as any` casts remain at external library boundaries (SAML, Stripe API versions, LLM SDK internals).
 - **Minimal test coverage**: Test infrastructure exists (Playwright, Jest) but actual test coverage is thin.
-- **Some dead code patterns**: A few unused imports and empty catch blocks remain.
+- **No streaming responses**: Chat responses are generated fully before being sent.
 
 ### Architecture Limitations
 - **1-minute cron latency**: Document processing is triggered by Vercel Cron (once per minute). Users wait up to 60 seconds after upload before processing starts. A webhook or edge function trigger would be faster.
-- **No streaming responses**: Chat responses are generated fully before being sent. Streaming would improve perceived latency.
 - **Vercel serverless constraints**: Worker functions have time limits. Very large documents may timeout during processing.
 
 ### What Was Recently Fixed (March 2026)
-These were production bugs found and fixed during code review:
+Production bugs found and fixed during code review:
 - Document chunks were never persisted to Supabase (only to Pinecone) — broke document content preview
 - Pinecone metadata key mismatch (camelCase vs snake_case) — broke hierarchical retrieval
 - LangSmith tracing wrapper was timing out on every call — added ~5s latency to every operation
 - Summary + embedding generation was sequential — now parallelized
+
+### Code Quality Improvements (March 2026)
+Systematic code quality pass across 32 files:
+- Removed 9 unused dependencies, moved 3 build-only deps to devDependencies
+- Created shared database types (`TenantRelation`, `InviterRelation`) replacing 28 `as any` casts
+- Fixed 20+ additional type casts with proper alternatives (Framer Motion, Window, Pinecone, error handling)
+- Eliminated redundant LLM call via `skipGeneration` option (saves 3-5s per query)
+- Centralized domain configuration in `lib/constants.ts`
+- Added error logging to previously silent catch blocks
+- Cleaned up dead LangSmith references and unused imports
 
 ---
 
@@ -178,24 +189,23 @@ These were production bugs found and fixed during code review:
 
 ---
 
-## 6. Honest Portfolio Rating: 6.5/10
+## 6. Honest Portfolio Rating: 7.5/10
 
 ### Breakdown
 | Category | Score | Notes |
 |----------|-------|-------|
 | Architecture design | 8/10 | RAG pipeline, multi-tenant isolation, LLM failover are genuinely well-designed |
-| Feature completeness | 7/10 | Upload, chat, admin, billing, persona, conversation memory all work |
-| Code quality | 5/10 | `strict: false`, `as any` casts, double LLM call, thin tests |
-| Production readiness | 6/10 | Core pipeline works end-to-end but edge cases untested |
-| Portfolio impression | 7/10 | Good README, clean structure, live demo, real architecture |
+| Feature completeness | 7.5/10 | Upload, chat, admin, billing, persona, conversation memory all work. skipGeneration eliminates wasted LLM call |
+| Code quality | 7/10 | Shared types replace most `as any` casts (63 → 16), clean deps, centralized config. `strict: false` remains |
+| Production readiness | 6.5/10 | Core pipeline works end-to-end, better error logging, but edge cases still untested |
+| Portfolio impression | 8/10 | Clean README, lean `package.json`, proper typed casts, professional commit history, live demo |
 
-### What Would Make It 8-9/10
+### What Would Make It 9/10
 1. Enable TypeScript strict mode and fix the ~750 type errors properly
-2. Eliminate the double LLM call (skip `generation.ts` for successful queries)
-3. Add streaming responses for chat
-4. Add meaningful test coverage (at least for the RAG pipeline)
-5. Replace Vercel Cron with immediate processing trigger
-6. Add RAG evaluation framework with measurable accuracy metrics
+2. Add streaming responses for chat
+3. Add meaningful test coverage (at least for the RAG pipeline)
+4. Replace Vercel Cron with immediate processing trigger
+5. Add RAG evaluation framework with measurable accuracy metrics
 
 ---
 
