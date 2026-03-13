@@ -3,7 +3,7 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { clerkClient } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
-import { detectGibberish } from '@/lib/persona-prompt-generator';
+import { detectGibberish, generatePersonaPrompts, INDUSTRY_PRESETS } from '@/lib/persona-prompt-generator';
 
 /**
  * 🎯 CLERK MIGRATION: Atomic onboarding completion
@@ -182,6 +182,27 @@ export async function POST(request: NextRequest) {
       if (responsesError) {
         // Don't fail onboarding for this
       }
+    }
+
+    // Create AI persona for new tenants with detected industry
+    if (isNewTenant) {
+      const detectedIndustry = industry || 'general';
+      const preset = INDUSTRY_PRESETS[detectedIndustry] || INDUSTRY_PRESETS.general;
+      const { system_prompt, fallback_prompt } = generatePersonaPrompts({
+        industry: detectedIndustry,
+        custom_instructions: preset.default_instructions
+      });
+
+      await supabaseAdmin
+        .from('tenant_ai_persona')
+        .upsert({
+          tenant_id: tenantId,
+          industry: detectedIndustry,
+          custom_instructions: preset.default_instructions,
+          system_prompt,
+          fallback_prompt,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'tenant_id' });
     }
 
     // Update user metadata with tenant info and Supabase user mapping

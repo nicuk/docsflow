@@ -185,7 +185,7 @@ export function UsageDashboard({ tenantId, planType }: UsageDashboardProps) {
       <div className="p-6 border-t border-gray-200 bg-gray-50">
         <div className="flex flex-col sm:flex-row gap-3">
           <a
-            href="/billing"
+            href="/dashboard/settings"
             className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium text-center transition-colors"
           >
             Manage Billing

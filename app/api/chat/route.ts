@@ -136,17 +136,16 @@ export async function POST(request: NextRequest) {
     if (detectGibberish(message)) {
       const fallbackResponse = tenantPersona.fallback_prompt || getDefaultPersona().fallback_prompt;
       
-      // Log gibberish detection metrics
       logPersonaMetrics({
         tenant_id: tenantId,
-        persona_role: tenantPersona.role,
+        persona_role: tenantPersona.industry || 'general',
         query: message,
         response: fallbackResponse,
         response_length: fallbackResponse.length,
         sources_count: 0,
         confidence_score: 0.2,
         response_time_ms: Date.now() - startTime,
-        used_custom_persona: tenantPersona.role !== 'Document Intelligence Assistant',
+        used_custom_persona: !!tenantPersona.custom_instructions,
         used_fallback: true,
         gibberish_detected: true,
         metadata: {
@@ -163,7 +162,7 @@ export async function POST(request: NextRequest) {
         metadata: {
           strategy: 'gibberish_fallback',
           detected_issue: 'unclear_query',
-          persona_role: tenantPersona.role
+          persona_industry: tenantPersona.industry || 'general'
         }
       }, { headers: corsHeaders });
     }
@@ -181,7 +180,7 @@ export async function POST(request: NextRequest) {
         sources: metadataResult.sources,
         confidence: metadataResult.confidence,
         metadata: metadataResult.metadata,
-        persona_used: tenantPersona.role,
+        persona_used: tenantPersona.industry || 'general',
       }, { headers: corsHeaders });
     }
     
@@ -411,17 +410,16 @@ Rules:
     
     const responseTime = Date.now() - startTime;
     
-    // Log persona usage and response quality (async, non-blocking)
     logPersonaMetrics({
       tenant_id: tenantId,
-      persona_role: tenantPersona.role,
+      persona_role: tenantPersona.industry || 'general',
       query: message,
       response: citedResponse.text,
       response_length: citedResponse.text.length,
       sources_count: context.length,
       confidence_score: confidenceResult.score,
       response_time_ms: responseTime,
-      used_custom_persona: tenantPersona.role !== 'Document Intelligence Assistant', // Check if not default
+      used_custom_persona: !!tenantPersona.custom_instructions,
       used_fallback: false,
       gibberish_detected: false,
       metadata: {

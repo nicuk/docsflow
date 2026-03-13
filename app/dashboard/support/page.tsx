@@ -27,7 +27,7 @@ export default function SupportPage() {
               Need direct assistance? Our support team is ready to help.
             </p>
             <a
-              href="mailto:support@docsflow.app"
+              href="mailto:support@bitto.tech"
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
               Email Support
@@ -197,7 +197,7 @@ export default function SupportPage() {
           <p className="text-gray-600 dark:text-gray-400">
             Can't find what you're looking for?{' '}
             <a
-              href="mailto:support@docsflow.app"
+              href="mailto:support@bitto.tech"
               className="text-blue-600 hover:text-blue-700 font-medium"
             >
               Contact our support team

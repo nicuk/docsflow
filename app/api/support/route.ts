@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       channels: [
         {
           type: 'email',
-          contact: 'support@docsflow.app',
+          contact: 'support@bitto.tech',
           responseTime: '24 hours'
         },
         {
