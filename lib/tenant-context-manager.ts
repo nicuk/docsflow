@@ -71,8 +71,8 @@ export class TenantContextManager {
           
           return tenantData;
         }
-      } catch (redisError) {
-        // Redis unavailable, falling back to DB
+      } catch (_) {
+        /* expected: Redis unavailable, falling back to DB */
       }
       
       // 3. Database fallback with proper caching (50-100ms - only when needed)
@@ -117,8 +117,8 @@ export class TenantContextManager {
           subdomain: data.subdomain,
           name: data.name
         }), { ex: 3600 }); // 1 hour Redis cache
-      } catch (redisError) {
-        // Failed to cache in Redis
+      } catch (_) {
+        /* non-critical: failed to cache in Redis, memory cache still valid */
       }
       
       return tenantData;
@@ -150,8 +150,8 @@ export class TenantContextManager {
             name: parsed.name
           };
         }
-      } catch (redisError) {
-        // Redis unavailable for UUID lookup
+      } catch (_) {
+        /* expected: Redis unavailable for UUID lookup, falling back to DB */
       }
 
       // Database lookup with service role
@@ -184,8 +184,8 @@ export class TenantContextManager {
           subdomain: data.subdomain,
           name: data.name
         }), { ex: 3600 });
-      } catch (redisError) {
-        // Failed to cache UUID lookup
+      } catch (_) {
+        /* non-critical: failed to cache UUID lookup in Redis */
       }
 
       return tenantData;
@@ -208,8 +208,8 @@ export class TenantContextManager {
       if (uuid) {
         await redis?.del(`tenant:uuid:${uuid}`);
       }
-    } catch (error) {
-      // Failed to clear tenant cache
+    } catch (_error) {
+      console.error('Failed to clear tenant cache:', _error);
     }
   }
 

@@ -141,11 +141,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
       });
 
     if (subscriptionError) {
-      // Failed to create subscription record
+      console.error('Failed to create subscription record:', subscriptionError);
     }
 
   } catch (error) {
-    // Error handling checkout completion
+    console.error('Checkout completion handler failed:', error);
   }
 }
 
@@ -164,10 +164,10 @@ async function handlePaymentSucceeded(invoice: any, supabase: any) {
       .eq('stripe_subscription_id', invoice.subscription);
 
     if (error) {
-      // Error updating subscription after payment
+      console.error('Failed to update subscription after payment:', error);
     }
   } catch (error) {
-    // Error handling payment succeeded
+    console.error('Payment succeeded handler failed:', error);
   }
 }
 
@@ -184,10 +184,10 @@ async function handlePaymentFailed(invoice: any, supabase: any) {
       .eq('stripe_subscription_id', invoice.subscription);
 
     if (error) {
-      // Error updating subscription after failed payment
+      console.error('Failed to update subscription after failed payment:', error);
     }
   } catch (error) {
-    // Error handling payment failed
+    console.error('Payment failed handler failed:', error);
   }
 }
 
@@ -204,10 +204,10 @@ async function handleSubscriptionUpdated(subscription: any, supabase: any) {
       .eq('stripe_subscription_id', subscription.id);
 
     if (error) {
-      // Error updating subscription
+      console.error('Failed to update subscription:', error);
     }
   } catch (error) {
-    // Error handling subscription updated
+    console.error('Subscription updated handler failed:', error);
   }
 }
 
@@ -222,10 +222,10 @@ async function handleSubscriptionCanceled(subscription: any, supabase: any) {
       .eq('stripe_subscription_id', subscription.id);
 
     if (error) {
-      // Error updating canceled subscription
+      console.error('Failed to update canceled subscription:', error);
     }
   } catch (error) {
-    // Error handling subscription canceled
+    console.error('Subscription canceled handler failed:', error);
   }
 }
 

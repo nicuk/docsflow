@@ -1,6 +1,24 @@
 {
   "name": "docsflow",
   "version": "1.0.0",
+  "description": "Multi-tenant document intelligence platform with production RAG pipeline",
+  "author": "Nic Chin <nic.chin@bitto.tech>",
+  "license": "MIT",
+  "homepage": "https://docsflow.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nicuk/docsflow.git"
+  },
+  "keywords": [
+    "rag",
+    "document-intelligence",
+    "multi-tenant",
+    "nextjs",
+    "ai",
+    "saas",
+    "vector-search",
+    "langchain"
+  ],
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",

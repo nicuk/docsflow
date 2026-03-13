@@ -8,8 +8,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { MultimodalDocumentParser } from '@/lib/rag-multimodal-parser';
 import { isFeatureEnabled } from '@/lib/feature-flags';
-// REMOVED: Old RAG monitoring (archived)
-// import { trackParseOperation, trackTenantViolation } from '@/lib/rag-monitoring';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
 
 export async function POST(request: NextRequest) {

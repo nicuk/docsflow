@@ -355,7 +355,7 @@ export async function trackUsage(
         .eq('id', existing.id);
 
       if (updateError) {
-        // Error updating usage
+        console.error('Failed to update usage tracking:', updateError);
       }
     } else {
       // Create new record
@@ -369,11 +369,11 @@ export async function trackUsage(
         });
 
       if (insertError) {
-        // Error inserting usage
+        console.error('Failed to insert usage tracking:', insertError);
       }
     }
-  } catch (error) {
-    // Error in trackUsage
+  } catch (_error) {
+    console.error('trackUsage failed:', _error);
   }
 }
 
@@ -426,7 +426,8 @@ export async function getCurrentUsage(tenantId: string): Promise<{
       storage: storageMB,
       users: users?.length || 0,
     };
-  } catch (error) {
+  } catch (_error) {
+    console.error('getCurrentUsage failed:', _error);
     return {
       documents: 0,
       conversations: 0,

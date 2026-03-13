@@ -254,7 +254,7 @@ Return raw content only.`;
         .eq('id', job.document_id);
       
       if (updateError) {
-        // Non-critical: summary save failed
+        console.error('Non-critical: summary save failed', updateError);
       }
     } catch (summaryError) {
       console.error(summaryError);
@@ -359,8 +359,8 @@ Return raw content only.`;
     if (tempFilePath) {
       try {
         fs.unlinkSync(tempFilePath);
-      } catch (cleanupError) {
-        // Non-critical: temp file cleanup failed
+      } catch (_) {
+        /* non-critical: temp file cleanup failed on serverless */
       }
     }
   }

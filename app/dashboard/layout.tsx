@@ -138,8 +138,6 @@ function useUserSession() {
         avatar: imageUrl,
         role,
       })
-      
-      // Old Supabase multi-tenant code removed */
     };
 
     getUserData();

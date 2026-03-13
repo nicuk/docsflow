@@ -46,7 +46,8 @@ export default function ReferralDashboard({ userId, userEmail, referralCode }: R
         const data = await response.json();
         setStats(data);
       }
-    } catch (error) {
+    } catch (_error) {
+      console.error('Failed to load referral stats:', _error);
     } finally {
       setLoading(false);
     }
@@ -57,8 +58,8 @@ export default function ReferralDashboard({ userId, userEmail, referralCode }: R
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      // Failed to copy
+    } catch (_) {
+      /* expected when clipboard API unavailable or user denies permission */
     }
   };
 

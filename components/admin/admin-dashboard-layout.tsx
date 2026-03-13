@@ -183,7 +183,8 @@ export default function AdminDashboardLayout({ children, user }: AdminDashboardL
       // Load alerts count (placeholder)
       setAlertsCount(0);
 
-    } catch (error) {
+    } catch (_error) {
+      console.error('Failed to load admin metrics:', _error);
     }
   };
 

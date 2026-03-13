@@ -185,12 +185,13 @@ export async function validateTenantContext(
                 } else {
                   authHeader = parsedHeaders.Authorization;
                 }
-              } catch (decodeError) {
-                authHeader = parsedHeaders.Authorization; // Use it anyway if we can't decode
+              } catch (_) {
+                /* expected when JWT decode fails; use header anyway */
+                authHeader = parsedHeaders.Authorization;
               }
             }
-          } catch {
-            // x-vercel-sc-headers parse failed, authHeader remains unset
+          } catch (_) {
+            /* expected when x-vercel-sc-headers is not valid JSON */
           }
         }
       }
@@ -202,8 +203,8 @@ export async function validateTenantContext(
       if (rlsContext === 'tenant-scoped' && tenantUUID) {
         try {
           await supabase.rpc('set_tenant_context', { tenant_id: tenantUUID });
-        } catch {
-          // RLS context set failed, continue without
+        } catch (_) {
+          /* expected: RLS context set failed, continue without tenant-scoped session */
         }
       }
       
@@ -294,8 +295,8 @@ export async function validateTenantContext(
               user = cookieUser;
             }
           }
-        } catch (cookieError) {
-          // Multi-tenant cookie authentication failed
+        } catch (_) {
+          /* expected: multi-tenant cookie auth failed, will try other auth methods */
         }
       }
       

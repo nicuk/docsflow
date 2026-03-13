@@ -6,6 +6,12 @@
 
 [Live Demo](https://docsflow.app) &middot; [Architecture Docs](docs/technical/RAG_SYSTEM_ARCHITECTURE.md) &middot; [Contact](mailto:nic.chin@bitto.tech)
 
+<br />
+
+<img src="docs/images/chat-dashboard.png" alt="DocsFlow Chat Dashboard" width="720" />
+
+*AI-powered document analysis with source-attributed responses*
+
 </div>
 
 ---
@@ -19,6 +25,16 @@ DocsFlow is a production-grade SaaS platform that lets teams upload documents an
 - Ask questions in plain English and get answers grounded in your documents
 - Click any response to see the original source with highlighted passages
 - Separate workspaces per team with row-level security — zero data leakage between tenants
+
+<details>
+<summary><strong>More Screenshots</strong></summary>
+<br />
+
+| Onboarding | Workspace Discovery |
+|:---:|:---:|
+| <img src="docs/images/onboarding.png" alt="Tenant Onboarding" width="360" /> | <img src="docs/images/workspace.png" alt="Workspace Discovery" width="360" /> |
+
+</details>
 
 ---
 
@@ -126,7 +142,7 @@ docsflow/
 
 ```bash
 # Clone and install
-git clone https://github.com/nicholasgchin/docsflow.git
+git clone https://github.com/nicuk/docsflow.git
 cd docsflow
 npm install
 
@@ -159,7 +175,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## License
 
-This is a showcase repository demonstrating production RAG architecture and full-stack engineering. Source code is available for review purposes.
+MIT — see [LICENSE](LICENSE) for details.
 
 ---
 

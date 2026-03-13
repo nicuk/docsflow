@@ -1,8 +1,6 @@
 "use client"
 
 import * as React from "react"
-// Chart component temporarily disabled - fix recharts imports
-// import { AreaChart, BarChart, LineChart } from "recharts"
 
 import { cn } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
@@ -56,14 +54,6 @@ const ChartContainer = React.forwardRef<
   )
 })
 ChartContainer.displayName = "ChartContainer"
-
-// Enterprise Chart Components (temporarily disabled until chart library integration)
-// const Chart = {
-//   Area: AreaChart,
-//   Bar: BarChart,
-//   Line: LineChart,
-//   Donut: DonutChart,
-// }
 
 // Tooltip component (Tremor handles this internally)
 const ChartTooltip = ({ children }: { children?: React.ReactNode }) => {
@@ -128,5 +118,4 @@ export {
   ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
-  // Chart, // Temporarily disabled until chart library integration complete
 }

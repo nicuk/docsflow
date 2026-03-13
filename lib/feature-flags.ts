@@ -51,13 +51,5 @@ export async function checkEnterpriseAccess(
     return { enabled: true };
   }
 
-  // const subscription = await getSubscription(tenantId);
-  // if (!subscription.allowsEnterprise) {
-  //   return {
-  //     enabled: false,
-  //     reason: 'Upgrade to Professional plan to access enterprise features'
-  //   };
-  // }
-
   return { enabled: true };
 }

@@ -93,8 +93,8 @@ export class EmergencyDegradationManager {
     this.notificationCallbacks.forEach(callback => {
       try {
         callback(level, this.config.reason);
-      } catch {
-        // Notification callback failed
+      } catch (_) {
+        /* expected: individual callback may throw; others still run */
       }
     });
 
@@ -442,8 +442,8 @@ export class EmergencyDegradationManager {
             recoveredServices.push(service);
             break;
         }
-      } catch (error) {
-        // Service still failing
+      } catch (_) {
+        /* expected: service health check failed, marks as not recovered */
       }
     }
 

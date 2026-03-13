@@ -87,8 +87,8 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
             const data = await response.json();
             suggestion.available = !data.exists;
           }
-        } catch (error) {
-          // Assume available on error to not block user
+        } catch (_) {
+          /* assume available on error to not block user flow */
           suggestion.available = true;
         }
         return suggestion;
@@ -167,7 +167,8 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
         ));
       }
 
-    } catch (error) {
+    } catch (_error) {
+      console.error('Domain availability check failed:', _error);
     } finally {
       setIsChecking(false);
     }

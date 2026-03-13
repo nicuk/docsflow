@@ -172,10 +172,7 @@ export default function ChatInterface() {
   const [suggestionsDisabledPermanently, setSuggestionsDisabledPermanently] = useState(false) // Track if user has permanently dismissed suggestions
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  // Using CSS scroll anchoring instead of JS-based scroll tracking
-  // const isUserAtBottomRef = useRef(true)
-  // const shouldAutoScrollRef = useRef(true)
-  
+
   // Source viewer modal state
   const [selectedSource, setSelectedSource] = useState<any>(null)
   const [isSourceModalOpen, setIsSourceModalOpen] = useState(false)

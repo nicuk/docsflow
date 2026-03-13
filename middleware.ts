@@ -97,8 +97,8 @@ export default clerkMiddleware(async (auth, req) => {
       if (tenantInfo) {
         tenantId = tenantInfo.uuid
       }
-    } catch (error) {
-      // Failed to resolve tenant
+    } catch (_error) {
+      console.error('Failed to resolve tenant from subdomain:', _error);
     }
   }
 
