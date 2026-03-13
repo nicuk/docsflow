@@ -10,7 +10,6 @@
  */
 
 import { ChatOpenAI } from '@langchain/openai';
-import { traceable } from 'langsmith/traceable';
 import type { RetrievedChunk } from './retrieval';
 import { GenerationError } from '../utils/errors';
 import { RAG_CONFIG } from '../config';
@@ -73,11 +72,10 @@ export interface GenerationResult {
  * @param context - Retrieved relevant chunks
  * @returns Generated answer with metadata
  */
-export const generateAnswer = traceable(
-  async function generateAnswer(input: {
-    query: string;
-    context: RetrievedChunk[];
-  }): Promise<GenerationResult> {
+export async function generateAnswer(input: {
+  query: string;
+  context: RetrievedChunk[];
+}): Promise<GenerationResult> {
   const { query, context } = input;
   
   if (!query || query.trim().length === 0) {
@@ -155,10 +153,5 @@ Answer:`;
       primaryError: primaryError.message,
     });
   }
-  },
-  {
-    name: 'generateAnswer',
-    run_type: 'llm',
-  }
-);
+}
 
