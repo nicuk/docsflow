@@ -226,31 +226,26 @@ Return raw content only.`;
       });
     });
     
-    // Persist chunks to Supabase for content preview (non-critical: Pinecone is the primary store)
-    try {
-      const chunkRows = enhancedChunks.map((chunk, index) => ({
-        document_id: job.document_id,
-        tenant_id: job.tenant_id,
-        content: chunk.pageContent,
-        chunk_index: index,
-        access_level: 1,
-        token_count: Math.ceil(chunk.pageContent.length / 4),
-      }));
+    // Persist chunks to Supabase for content preview and full-text search
+    const chunkRows = enhancedChunks.map((chunk, index) => ({
+      document_id: job.document_id,
+      tenant_id: job.tenant_id,
+      content: chunk.pageContent,
+      chunk_index: index,
+      access_level: 1,
+    }));
 
-      const CHUNK_BATCH = 50;
-      for (let i = 0; i < chunkRows.length; i += CHUNK_BATCH) {
-        const batch = chunkRows.slice(i, i + CHUNK_BATCH);
-        const { error: chunkInsertError } = await supabase
-          .from('document_chunks')
-          .insert(batch);
+    const CHUNK_BATCH = 50;
+    for (let i = 0; i < chunkRows.length; i += CHUNK_BATCH) {
+      const batch = chunkRows.slice(i, i + CHUNK_BATCH);
+      const { error: chunkInsertError } = await supabase
+        .from('document_chunks')
+        .insert(batch);
 
-        if (chunkInsertError) {
-          console.error('Non-critical: document_chunks insert failed:', chunkInsertError.message);
-          break;
-        }
+      if (chunkInsertError) {
+        console.error('document_chunks insert failed:', chunkInsertError.message);
+        throw new Error(`Failed to store document chunks: ${chunkInsertError.message}`);
       }
-    } catch (chunkErr) {
-      console.error('Non-critical: document_chunks persistence failed:', chunkErr);
     }
 
     // Generate document summary for hierarchical retrieval
