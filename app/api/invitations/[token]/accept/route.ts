@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { sendWelcomeEmail } from '@/lib/email';
+import { tenantUrl } from '@/lib/constants';
+import type { TenantRelation } from '@/types/database';
 
 export async function POST(
   request: NextRequest,
@@ -110,7 +112,7 @@ export async function POST(
         data: {
           user: existingUser,
           tenant: invitation.tenants,
-          redirectUrl: `https://${(invitation.tenants as any).subdomain}.docsflow.app/dashboard`
+          redirectUrl: tenantUrl((invitation.tenants as unknown as TenantRelation).subdomain)
         }
       });
     }
@@ -172,11 +174,11 @@ export async function POST(
     }
 
     // Send welcome email
-    const dashboardUrl = `https://${(invitation.tenants as any).subdomain}.docsflow.app/dashboard`;
+    const dashboardUrl = tenantUrl((invitation.tenants as unknown as TenantRelation).subdomain);
     const emailResult = await sendWelcomeEmail({
       email: newUser.email,
       name: newUser.name,
-      tenantName: (invitation.tenants as any).name,
+      tenantName: (invitation.tenants as unknown as TenantRelation).name,
       dashboardUrl
     });
 
@@ -213,9 +215,9 @@ export async function POST(
           accessLevel: newUser.access_level
         },
         tenant: {
-          id: (invitation.tenants as any).id,
-          name: (invitation.tenants as any).name,
-          subdomain: (invitation.tenants as any).subdomain
+          id: (invitation.tenants as unknown as TenantRelation).id,
+          name: (invitation.tenants as unknown as TenantRelation).name,
+          subdomain: (invitation.tenants as unknown as TenantRelation).subdomain
         },
         redirectUrl: dashboardUrl,
         welcomeEmailSent: emailResult.success,

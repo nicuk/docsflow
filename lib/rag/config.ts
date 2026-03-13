@@ -6,12 +6,6 @@
  */
 
 export const RAG_CONFIG = {
-  // LangSmith Tracing (for debugging - you have this!)
-  langsmith: {
-    enabled: !!process.env.LANGCHAIN_TRACING_V2,
-    projectName: process.env.LANGCHAIN_PROJECT || 'docsflow',
-  },
-  
   // Embeddings (Vercel AI Gateway)
   embeddings: {
     model: 'text-embedding-3-small', // OpenAI model name

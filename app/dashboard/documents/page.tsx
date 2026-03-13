@@ -246,15 +246,15 @@ export default function DocumentsPage() {
       });
       
       // Create document from backend response
-      const responseData = response as any; // Type assertion for now
+      const responseData = response as { document?: { id?: string; filename?: string; processing_status?: string; document_category?: string }; jobId?: string };
       const newDocument: Document = {
         id: responseData.document?.id || `doc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         name: responseData.document?.filename || file.name,
         type: getFileType(file.name),
         size: file.size,
         uploadDate: new Date(),
-        status: responseData.document?.processing_status || "processing",
-        category: responseData.document?.document_category || "uncategorized",
+        status: (responseData.document?.processing_status || "processing") as DocumentStatus,
+        category: (responseData.document?.document_category || "uncategorized") as DocumentCategory,
         tags: [],
         favorite: false,
       }

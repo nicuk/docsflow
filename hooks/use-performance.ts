@@ -70,7 +70,7 @@ export function usePerformanceMonitoring() {
     // Monitor memory usage
     const memoryInterval = setInterval(() => {
       if ('memory' in performance) {
-        const memory = (performance as any).memory
+        const memory = (performance as unknown as { memory: { usedJSHeapSize: number } }).memory
         metricsRef.current.memoryUsage = memory.usedJSHeapSize / 1024 / 1024 // MB
       }
     }, 5000)

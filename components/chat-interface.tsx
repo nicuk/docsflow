@@ -252,13 +252,13 @@ export default function ChatInterface() {
       setMessages([{
         id: "welcome",
         type: "ai",
-        content: "Hello! I'm your business docsflow.app assistant. Upload your documents and ask me anything about them. I can analyze contracts, financial reports, invoices, and more.",
+        content: "Hello! I'm your document intelligence assistant. Upload your documents and ask me anything about them. I can analyze contracts, financial reports, invoices, and more.",
         timestamp: new Date(),
         confidence: 0.95,
         suggestions: [
           "Upload a document to get started",
           "What can you analyze?",
-          "How does docsflow.app work?",
+          "How does DocsFlow work?",
         ],
       }])
     }
@@ -375,6 +375,7 @@ export default function ChatInterface() {
       }
       
     } catch {
+      // Conversation creation failed; local state still works
     } finally {
       setIsCreatingConversation(false)
     }
@@ -625,13 +626,13 @@ Please try again in a moment. If the issue persists, you can still use the inter
         id: "welcome",
         type: "ai",
         content:
-          "Hello! I'm your business docsflow.app assistant. Upload your documents and ask me anything about them.",
+          "Hello! I'm your document intelligence assistant. Upload your documents and ask me anything about them.",
         timestamp: new Date(),
         confidence: 0.95,
         suggestions: [
           "Upload a document to get started",
           "What can you analyze?",
-          "How does docsflow.app work?",
+          "How does DocsFlow work?",
         ],
       },
     ])

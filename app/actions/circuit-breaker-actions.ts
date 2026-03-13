@@ -176,7 +176,7 @@ function getActiveIssues(metrics: any, degradationStatus: any): string[] {
   const issues: string[] = []
 
   for (const [service, metric] of Object.entries(metrics)) {
-    const m = metric as any
+    const m = metric as { state?: string }
     if (m.state === 'open') {
       issues.push(`${service} circuit breaker is OPEN`)
     } else if (m.state === 'half_open') {

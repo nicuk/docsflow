@@ -15,6 +15,7 @@
 
 import { createClient } from '@/lib/supabase-browser';
 import type { Session, User } from '@supabase/supabase-js';
+import type { TenantRelation } from '@/types/database';
 
 export interface AuthUser {
   id: string;
@@ -214,10 +215,10 @@ export class UnifiedAuth {
         role: userProfile.role,
         access_level: userProfile.access_level,
         tenant: userProfile.tenants ? {
-          id: (userProfile.tenants as any).id,
-          subdomain: (userProfile.tenants as any).subdomain,
-          name: (userProfile.tenants as any).name,
-          industry: (userProfile.tenants as any).industry
+          id: (userProfile.tenants as unknown as TenantRelation).id,
+          subdomain: (userProfile.tenants as unknown as TenantRelation).subdomain,
+          name: (userProfile.tenants as unknown as TenantRelation).name,
+          industry: (userProfile.tenants as unknown as TenantRelation).industry
         } : undefined
       };
     } catch (error) {

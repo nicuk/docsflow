@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
+import type { TenantRelation } from '@/types/database';
 
 // Component that uses useSearchParams - must be wrapped in Suspense
 function AuthCallbackHandler() {
@@ -107,7 +108,7 @@ function AuthCallbackHandler() {
         localStorage.setItem('user-session', JSON.stringify(userSession));
         
         // SIMPLIFIED FIX: Always redirect existing users to their tenant subdomain
-        const tenantSubdomain = (existingUser.tenants as any)?.subdomain;
+        const tenantSubdomain = (existingUser.tenants as unknown as TenantRelation)?.subdomain;
         
         setStatus('success');
         setMessage('Welcome back! Redirecting to your dashboard...');

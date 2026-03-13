@@ -25,6 +25,7 @@ export interface QueryInput {
   userId?: string;
   topK?: number;
   filter?: Record<string, any>;
+  skipGeneration?: boolean;
 }
 
 export interface QueryResult {
@@ -121,7 +122,28 @@ export async function queryWorkflow(input: QueryInput): Promise<QueryResult> {
       };
     }
     
-    // STEP 5: Generate answer
+    // STEP 5: Generate answer (skippable when caller handles its own LLM call)
+    if (input.skipGeneration) {
+      const duration = Date.now() - startTime;
+      return {
+        success: true,
+        answer: undefined,
+        sources: chunks.map(chunk => ({
+          documentId: chunk.metadata.documentId,
+          filename: chunk.metadata.filename,
+          content: chunk.content,
+          score: chunk.score,
+          pageNumber: chunk.metadata.pageNumber,
+        })),
+        confidence,
+        metrics: {
+          duration,
+          chunksRetrieved: chunks.length,
+          model: 'skipped',
+        },
+      };
+    }
+
     const generation = await generateAnswer({
       query: input.query,
       context: chunks,

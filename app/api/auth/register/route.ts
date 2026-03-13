@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { getCORSHeaders } from '@/lib/utils';
 import { createCORSResponse } from '@/lib/cookie-utils';
+import type { TenantRelation } from '@/types/database';
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin');
@@ -154,16 +155,16 @@ export async function POST(request: NextRequest) {
         onboardingComplete: !!userProfile?.tenant_id,
         tenantId: userProfile?.tenant_id,
         tenant: userProfile?.tenant_id ? {
-          subdomain: (userProfile.tenants as any)?.subdomain,
-          name: (userProfile.tenants as any)?.name,
-          industry: (userProfile.tenants as any)?.industry
+          subdomain: (userProfile.tenants as unknown as TenantRelation)?.subdomain,
+          name: (userProfile.tenants as unknown as TenantRelation)?.name,
+          industry: (userProfile.tenants as unknown as TenantRelation)?.industry
         } : null,
         message: 'Registration successful! Redirecting to onboarding.',
         nextStep: 'onboarding'
       }, {
         userEmail: authData.user?.email || email,
         userName: companyName,
-        tenantId: userProfile?.tenant_id ? (userProfile.tenants as any)?.subdomain : undefined,
+        tenantId: userProfile?.tenant_id ? (userProfile.tenants as unknown as TenantRelation)?.subdomain : undefined,
         onboardingComplete: !!userProfile?.tenant_id
       });
 

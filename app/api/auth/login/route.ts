@@ -10,6 +10,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { getCORSHeaders } from '@/lib/utils';
+import { tenantUrl, COOKIE_DOMAIN } from '@/lib/constants';
+import type { TenantRelation } from '@/types/database';
 
 export async function POST(request: NextRequest) {
   const origin = request.headers.get('origin');
@@ -39,7 +41,7 @@ export async function POST(request: NextRequest) {
             // Set domain for cross-subdomain access
             const enhancedOptions = {
               ...options,
-              domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : '.localhost',
+              domain: process.env.NODE_ENV === 'production' ? COOKIE_DOMAIN : '.localhost',
               path: '/',
               sameSite: 'lax' as const,
               secure: process.env.NODE_ENV === 'production'
@@ -192,7 +194,7 @@ export async function POST(request: NextRequest) {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         path: '/',
-        domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
+        domain: process.env.NODE_ENV === 'production' ? COOKIE_DOMAIN : undefined,
         maxAge: 60 * 60 * 24 * 30 // 30 days
       });
     }
@@ -203,7 +205,7 @@ export async function POST(request: NextRequest) {
     
     // Set additional tenant cookies for cross-subdomain access
     const tenantCookieOptions = {
-      domain: process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined,
+      domain: process.env.NODE_ENV === 'production' ? COOKIE_DOMAIN : undefined,
       path: '/',
       sameSite: 'lax' as const,
       secure: process.env.NODE_ENV === 'production',
@@ -211,7 +213,7 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 7 // 7 days
     };
     
-    const tenant = (userProfile.tenants as any) as { id: string; subdomain: string; name: string; industry: string } | null;
+    const tenant = userProfile.tenants as unknown as TenantRelation | null;
 
     if (userProfile.tenant_id) {
       cookieStore.set('tenant-id', userProfile.tenant_id, tenantCookieOptions);
@@ -226,7 +228,7 @@ export async function POST(request: NextRequest) {
     let redirectUrl = null;
     if (isMainDomain && tenant?.subdomain) {
       redirectUrl = process.env.NODE_ENV === 'production'
-        ? `https://${tenant.subdomain}.docsflow.app/dashboard`
+        ? tenantUrl(tenant.subdomain)
         : `http://localhost:3000/dashboard`;
     }
     

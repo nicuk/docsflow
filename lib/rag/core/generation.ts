@@ -6,7 +6,6 @@
  * Backup 2: Claude 3 Haiku (fast emergency backup)
  * 
  * Atomic operation: (query + context) → answer
- * WITH LANGSMITH TRACING!
  */
 
 import { ChatOpenAI } from '@langchain/openai';
@@ -65,12 +64,7 @@ export interface GenerationResult {
 }
 
 /**
- * Generate answer from query and retrieved context
- * WITH 3-TIER FALLBACK SYSTEM + LANGSMITH TRACING
- * 
- * @param query - User's question
- * @param context - Retrieved relevant chunks
- * @returns Generated answer with metadata
+ * Generate answer from query and retrieved context using 3-tier fallback.
  */
 export async function generateAnswer(input: {
   query: string;
@@ -140,8 +134,8 @@ Answer:`;
           fallback.maxTokens
         );
         return { ...result, fallbackUsed: true };
-      } catch (fallbackError: any) {
-        // Continue to next fallback
+      } catch {
+        // Model failed; try next fallback in chain
       }
     }
     

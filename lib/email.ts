@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { APP_DOMAIN } from '@/lib/constants';
 
 // Initialize Resend client (fallback for development)
 const resend = process.env.RESEND_API_KEY 
@@ -153,7 +154,7 @@ export function createInvitationEmailTemplate(data: InvitationEmailData): EmailT
     to: data.inviteeEmail,
     subject: `You're invited to join ${data.tenantName} on DocsFlow`,
     html,
-    from: process.env.EMAIL_FROM || 'noreply@docsflow.app'
+    from: process.env.EMAIL_FROM || `noreply@${APP_DOMAIN}`
   };
 }
 
@@ -262,7 +263,7 @@ export async function sendWelcomeEmail(data: {
     `;
 
     const response = await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'noreply@docsflow.app',
+      from: process.env.EMAIL_FROM || `noreply@${APP_DOMAIN}`,
       to: data.email,
       subject: `Welcome to ${data.tenantName}! 🎉`,
       html
