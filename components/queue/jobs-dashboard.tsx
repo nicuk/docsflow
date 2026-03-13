@@ -88,8 +88,11 @@ export function JobsDashboard() {
   useEffect(() => {
     fetchJobs();
     
-    // Auto-refresh every 10 seconds
-    const interval = setInterval(fetchJobs, 10000);
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchJobs();
+      }
+    }, 60000);
     return () => clearInterval(interval);
   }, []);
 

@@ -166,8 +166,11 @@ export function UserAccessManager() {
 
   useEffect(() => {
     fetchPendingUsers();
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchPendingUsers, 30000);
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchPendingUsers();
+      }
+    }, 120000);
     return () => clearInterval(interval);
   }, []);
 
