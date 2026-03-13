@@ -103,7 +103,7 @@ export default function SourceViewerModal({ source, isOpen, onClose, highlightTe
             )}
             {source.confidence && (
               <Badge variant="outline">
-                {Math.round(source.confidence * 100)}% relevance
+                {Math.min(100, Math.max(0, Math.round((source.confidence ?? 0) * 100)))}% relevance
               </Badge>
             )}
           </DialogTitle>

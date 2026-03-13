@@ -218,8 +218,8 @@ export async function POST(request: NextRequest) {
           filename: source.filename,
           page: source.pageNumber,
         },
-        hybridScore: source.score,
-        confidence: source.score,
+        hybridScore: Math.min(source.score, 1),
+        confidence: Math.min(source.score, 1),
       })) || [],
       metadata: {
         strategy: 'pinecone_langchain',

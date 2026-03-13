@@ -64,23 +64,19 @@ export async function queryWorkflow(input: QueryInput): Promise<QueryResult> {
     // Generate sparse vector for keyword matching
     let sparseVector = generateSparseVector(input.query);
     
-    // Detect if query mentions a specific filename
+    // Detect if query mentions a specific filename and boost it in sparse search.
+    // Only used as a soft boost — NOT as a hard Pinecone filter, because the regex
+    // may only capture a partial filename (e.g. "Copy.docx" from "TEST - Copy.docx").
     const filenamePattern = /\b([\w\-_]+(?:\s*\(\d+\))?\.(?:png|jpg|jpeg|pdf|docx|doc|txt|xlsx|xls|pptx|ppt|csv))\b/i;
     const filenameMatch = input.query.match(filenamePattern);
     const detectedFilename = filenameMatch ? filenameMatch[1] : null;
     
-    // Boost filename terms in sparse vector for better matching
     if (detectedFilename) {
       sparseVector = boostKeywords(sparseVector, [detectedFilename], 3.0);
     }
     
-    // Merge detected filename with existing filter (fallback)
+    // Pass through caller-supplied filters only (no filename hard-filter)
     let finalFilter = input.filter;
-    if (detectedFilename) {
-      finalFilter = { ...(input.filter || {}), filename: detectedFilename };
-    }
-    
-    // Convert empty filter to undefined (Pinecone rejects empty objects)
     if (finalFilter && Object.keys(finalFilter).length === 0) {
       finalFilter = undefined;
     }

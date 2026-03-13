@@ -6,8 +6,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { MultimodalDocumentParser } from '@/lib/rag-multimodal-parser';
-import { isFeatureEnabled } from '@/lib/feature-flags';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
 import { APP_URL } from '@/lib/constants';
 

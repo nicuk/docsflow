@@ -121,9 +121,9 @@ export default function AdminOverviewPage() {
           lastBackup: new Date().toISOString()
         },
         activity: {
-          todayLogins: Math.floor(Math.random() * 50) + 10,
-          documentsUploaded: Math.floor(Math.random() * 20) + 5,
-          chatInteractions: Math.floor(Math.random() * 100) + 25
+          todayLogins: usersData.active || 0,
+          documentsUploaded: 0,
+          chatInteractions: 0
         }
       });
 
@@ -359,7 +359,7 @@ export default function AdminOverviewPage() {
                     </Link>
                   </Button>
                   <Button asChild variant="outline" className="flex flex-col h-20">
-                    <Link href="/dashboard/admin/health">
+                    <Link href="/dashboard/admin/system-health">
                       <Shield className="h-6 w-6 mb-1" />
                       <span className="text-xs">System Health</span>
                     </Link>

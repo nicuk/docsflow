@@ -83,7 +83,7 @@ import {
   getFileTypeConfig,
   fileTypeConfig
 } from "@/lib/document-utils"
-import { Document, DocumentCategory, sampleDocuments } from "@/constants/document-sample-data"
+import { Document, DocumentCategory } from "@/constants/document-sample-data"
 
 interface UploadingFile {
   id: string

@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { APP_URL } from '@/lib/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -135,12 +134,12 @@ export default function PersonaEditor({ currentPersona, tenantId, onPersonaUpdat
         Make it more specific and effective than the current version.
       `;
       
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || `${APP_URL}/api`;
-      const response = await fetch(`${apiUrl}/tenant/regenerate-persona`, {
+      const response = await fetch('/api/tenant/regenerate-persona', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           tenantId,
           prompt,

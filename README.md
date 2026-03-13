@@ -2,87 +2,111 @@
 
 # DocsFlow
 
-**Multi-Tenant Document Intelligence Platform with Production RAG Pipeline**
+**Your team's private AI workspace for document intelligence**
 
-[Live Demo](https://docsflow.app) &middot; [Architecture Docs](docs/technical/RAG_SYSTEM_ARCHITECTURE.md) &middot; [Contact](mailto:nic.chin@bitto.tech)
+Each team gets their own subdomain — `sales.docsflow.app`, `legal.docsflow.app` — with role-based access, AI-powered search, and every answer traced back to the source document.
+
+[![Live Demo](https://img.shields.io/badge/Live-docsflow.app-blue?style=for-the-badge)](https://docsflow.app)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js_15-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org)
 
 <br />
 
-<img src="docs/images/chat-dashboard.png" alt="DocsFlow Chat Dashboard" width="720" />
-
-*AI-powered document analysis with source-attributed responses*
+<img src="docs/images/chat-dashboard.png" alt="DocsFlow — AI chat with source-attributed answers" width="720" />
 
 </div>
 
 ---
 
-## What is DocsFlow?
+## How It Works
 
-DocsFlow is a production-grade SaaS platform that lets teams upload documents and query them using natural language. Every answer is source-attributed — users click any claim to see the exact document and page it came from.
+1. **Create your workspace** — Pick a subdomain (`your-team.docsflow.app`) and invite your team
+2. **Upload documents** — PDFs, Word, Excel, PowerPoint, images, and text files
+3. **Ask questions in plain English** — The AI searches across all your documents and returns answers with exact source citations
+4. **Control who sees what** — 5-tier access levels (Public → Executive) plus Admin/User/Viewer roles per workspace
 
-**Core capabilities:**
-- Upload PDFs, Word, Excel, and PowerPoint files into tenant-isolated workspaces
-- Ask questions in plain English and get answers grounded in your documents
-- Click any response to see the original source with highlighted passages
-- Separate workspaces per team with row-level security — zero data leakage between tenants
+Every answer includes a confidence score and clickable source links. No hallucinated claims — if the AI can't find it in your documents, it says so.
 
-<details>
-<summary><strong>More Screenshots</strong></summary>
 <br />
 
-| Onboarding | Workspace Discovery |
-|:---:|:---:|
-| <img src="docs/images/onboarding.png" alt="Tenant Onboarding" width="360" /> | <img src="docs/images/workspace.png" alt="Workspace Discovery" width="360" /> |
+<div align="center">
 
-</details>
+| Choose Your Subdomain | AI Chat with Sources |
+|:---:|:---:|
+| <img src="docs/images/domain-selection.png" alt="Choose your team's subdomain" width="360" /> | <img src="docs/images/chat-dashboard.png" alt="AI answers with confidence scoring and source attribution" width="360" /> |
+| *Pick `sales.docsflow.app` or any custom subdomain* | *95% confidence — answers traced to source documents* |
+
+| AI Persona Setup | Workspace Onboarding |
+|:---:|:---:|
+| <img src="docs/images/ai-persona-setup.png" alt="Customize AI persona for your industry" width="360" /> | <img src="docs/images/onboarding.png" alt="Create your AI document intelligence platform" width="360" /> |
+| *Guided 6-step setup tailors the AI to your business* | *Industry-specific configuration with custom AI assistant* |
+
+</div>
+
+---
+
+## What Makes This Different
+
+| Feature | What it does |
+|---------|-------------|
+| **Isolated team workspaces** | Each subdomain is a fully separate environment — database-level row security ensures zero data leakage between teams |
+| **Hybrid AI search** | Combines meaning-based search (vector similarity) with keyword matching for higher accuracy than either alone |
+| **Multi-model AI failover** | If one AI provider goes down, queries automatically route to the next (Llama 3.3 → GPT-4o-mini → Mixtral → Gemini) |
+| **Confidence scoring** | Every response includes a grounded confidence score — low-confidence answers are flagged rather than presented as fact |
+| **Custom AI persona** | Each workspace can customize the AI's role, tone, and focus areas for their industry |
+| **Source attribution** | Every claim in every answer maps back to a specific document section — click to verify |
 
 ---
 
 ## Architecture
 
 ```
-                    ┌─────────────────────────────────────────────┐
-                    │              Next.js 15 (App Router)        │
-                    │         Clerk Auth + Middleware              │
-                    └──────────────┬──────────────────────────────┘
-                                   │
-                    ┌──────────────▼──────────────────────────────┐
-                    │            API Layer                         │
-                    │  /api/chat  /api/documents  /api/queue      │
-                    └──┬───────────┬──────────────┬───────────────┘
-                       │           │              │
-              ┌────────▼──┐  ┌────▼─────┐  ┌─────▼──────┐
-              │  RAG       │  │ Supabase │  │  Queue     │
-              │  Pipeline  │  │ Postgres │  │  Worker    │
-              │            │  │  + RLS   │  │            │
-              └──┬────┬────┘  └──────────┘  └────────────┘
-                 │    │
-        ┌────────▼┐  ┌▼──────────┐
-        │ Pinecone│  │ LLM Layer │
-        │ Vectors │  │ Gemini →  │
-        │         │  │ Llama →   │
-        │         │  │ Mixtral   │
-        └─────────┘  └───────────┘
+User (sales.docsflow.app)
+    │
+    ├── Clerk Auth + Edge Middleware (tenant resolution)
+    │
+    ▼
+Next.js 15 API Layer
+    │
+    ├── /api/chat ──────────── RAG Pipeline
+    │                              │
+    │                    ┌─────────┴──────────┐
+    │                    │                    │
+    │              Pinecone              LLM Failover
+    │            (hybrid search)      (4-model cascade)
+    │           namespace per tenant
+    │
+    ├── /api/documents ─── Upload → Parse → Chunk → Embed → Index
+    │                      (Vercel Blob)  (LangChain)  (OpenAI)  (Pinecone)
+    │
+    ├── /api/queue ─────── Background processing (Supabase job queue)
+    │
+    └── /api/stripe ────── Subscription billing + usage tracking
+            │
+            ▼
+    Supabase PostgreSQL (Row-Level Security on all tables)
 ```
 
 ### RAG Pipeline
 
 The retrieval pipeline processes queries through multiple stages:
 
-1. **Query Classification** — Intent detection and complexity routing
-2. **Hybrid Search** — Vector similarity + keyword matching with Reciprocal Rank Fusion
-3. **Hierarchical Retrieval** — Parent-child chunk relationships for context preservation
-4. **Source Deduplication** — Eliminates redundant passages across document versions
-5. **Confidence Scoring** — Each response includes a grounded confidence metric
-6. **Source Attribution** — Every claim maps back to a specific document section
+1. **Query Classification** — Detects intent, complexity, and routes to the appropriate model tier
+2. **Conversation Memory** — Loads recent messages and reformulates vague follow-ups into standalone queries
+3. **Hybrid Search** — Vector similarity + BM25 keyword matching with Reciprocal Rank Fusion
+4. **Hierarchical Retrieval** — For large collections: ranks documents first, then searches within top matches
+5. **Confidence Scoring** — Threshold-based abstention — the AI won't guess if context is insufficient
+6. **Source Attribution** — Every claim maps to a specific document section with page numbers
 
-### Multi-Tenant Isolation
+### Multi-Tenant Isolation (4 Layers)
 
-Each tenant operates in complete isolation:
-- **Database**: Row-Level Security policies on all tables — queries physically cannot return another tenant's data
-- **Vectors**: Pinecone namespace separation per tenant
-- **Auth**: Clerk session tokens carry tenant context through the middleware layer
-- **Subdomains**: `{tenant}.docsflow.app` routing with tenant resolution in middleware
+| Layer | Mechanism |
+|-------|-----------|
+| **Database** | Supabase Row-Level Security — queries physically cannot return another tenant's data |
+| **Vectors** | Pinecone namespace separation per tenant — cross-tenant search is impossible |
+| **Auth** | Clerk session tokens carry tenant context, validated on every request |
+| **Routing** | `{tenant}.docsflow.app` resolved in edge middleware before any API call |
 
 ---
 
@@ -92,17 +116,16 @@ Each tenant operates in complete isolation:
 |-------|-----------|
 | **Framework** | Next.js 15 (App Router, Turbopack) |
 | **Language** | TypeScript |
-| **Auth** | Clerk |
-| **Database** | Supabase (PostgreSQL + pgvector + RLS) |
-| **Vector Store** | Pinecone |
-| **LLM** | Gemini 2.0 Flash (primary), Llama 3, Mixtral (failover) |
-| **Embeddings** | OpenAI text-embedding-3-small |
-| **Payments** | Stripe (subscription tiers + usage tracking) |
+| **Auth** | Clerk (SSO, SAML, webhook sync) |
+| **Database** | Supabase (PostgreSQL + RLS) |
+| **Vector Store** | Pinecone (namespace-per-tenant) |
+| **LLM** | Llama 3.3 70B → GPT-4o-mini → Mixtral → Gemini 2.0 Flash (4-tier failover) |
+| **Embeddings** | OpenAI text-embedding-3-small (1536d) |
+| **Payments** | Stripe (subscription tiers + usage metering) |
 | **File Storage** | Vercel Blob |
 | **Queue** | Supabase-backed job queue with cron worker |
-| **UI** | Tailwind CSS, Radix UI, Framer Motion |
-| **Testing** | Playwright (E2E), Jest (unit) |
-| **Deployment** | Vercel |
+| **UI** | Tailwind CSS, Radix UI (shadcn/ui), Framer Motion |
+| **Deployment** | Vercel (serverless + edge middleware) |
 
 ---
 
@@ -114,50 +137,20 @@ docsflow/
 │   ├── api/                # API routes (chat, documents, queue, auth, admin, stripe)
 │   ├── dashboard/          # Protected dashboard pages
 │   └── ...                 # Auth pages, onboarding, landing
-├── components/             # React components
-│   ├── ui/                 # Reusable UI primitives (shadcn/ui)
-│   ├── admin/              # Admin dashboard components
-│   ├── documents/          # Upload zone, document viewers
-│   ├── queue/              # Job queue dashboard
-│   └── ...                 # Chat, persona, analytics components
+├── components/             # React components (chat, admin, documents, UI primitives)
 ├── lib/                    # Core business logic
 │   ├── rag/                # RAG pipeline
-│   │   ├── core/           # Embeddings, retrieval, generation, summarization
-│   │   ├── storage/        # Pinecone adapter
+│   │   ├── core/           # Embeddings, retrieval, generation, sparse vectors
+│   │   ├── storage/        # Pinecone adapter (implements VectorStorage interface)
 │   │   └── workflows/      # Query, ingest, delete workflows
 │   ├── auth/               # Auth provider factory (Clerk/Supabase)
-│   ├── subscription/       # Tier enforcement and billing logic
-│   └── queue/              # Job queue types and utilities
-├── hooks/                  # React hooks (auth, toast, performance)
-├── types/                  # TypeScript type definitions
+│   ├── subscription/       # Tier enforcement and billing
+│   └── constants.ts        # Centralized domain and URL configuration
+├── types/                  # TypeScript types (database relations, global)
 ├── tests/                  # E2E and integration tests
-├── scripts/                # Database migrations and evaluation tools
-├── migrations/             # SQL migration files
-└── docs/                   # Technical architecture documentation
+├── scripts/                # Database migrations and tooling
+└── docs/                   # Architecture documentation
 ```
-
----
-
-## Getting Started
-
-```bash
-# Clone and install
-git clone https://github.com/nicuk/docsflow.git
-cd docsflow
-npm install
-
-# Set up environment
-cp .env.example .env.local
-# Fill in your API keys (see .env.example for all required vars)
-
-# Run database migrations
-node scripts/run-migrations.js
-
-# Start development server
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
@@ -165,11 +158,28 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Decision | Rationale |
 |----------|-----------|
-| **Pinecone over pgvector for search** | Tenant namespace isolation + managed scaling; pgvector used for metadata queries |
-| **Multi-provider LLM with failover** | Gemini for speed/cost, automatic fallback to Llama/Mixtral on provider outage |
-| **Supabase job queue over Redis** | Single data layer, RLS applies to jobs, no additional infra for early-stage SaaS |
-| **Clerk over custom auth** | Enterprise SSO support, session management, webhook-driven user sync |
-| **Hierarchical chunking** | Parent-child chunk relationships preserve document context during retrieval |
+| **Pinecone over pgvector** | Namespace isolation maps naturally to multi-tenancy; managed scaling without ops burden |
+| **4-model LLM failover** | No single provider dependency — automatic cascade on rate limit or outage |
+| **Supabase job queue over Redis** | RLS applies to jobs, single data layer, right-sized for early-stage SaaS |
+| **Hybrid search (dense + sparse)** | Keyword matching catches exact terms that embedding similarity misses |
+| **skipGeneration in query workflow** | Chat route handles its own LLM call with persona context, so the RAG pipeline skips redundant generation |
+
+---
+
+## Getting Started
+
+```bash
+git clone https://github.com/nicuk/docsflow.git
+cd docsflow
+npm install
+
+cp .env.example .env.local
+# Fill in API keys (Clerk, Supabase, Pinecone, OpenRouter, Stripe)
+
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
@@ -181,6 +191,6 @@ MIT — see [LICENSE](LICENSE) for details.
 
 <div align="center">
 
-Built by [Nic Chin](https://nicchin.com) &middot; [LinkedIn](https://linkedin.com/in/nicchin) &middot; [nic.chin@bitto.tech](mailto:nic.chin@bitto.tech)
+Built by [Nic Chin](mailto:nic.chin@bitto.tech)
 
 </div>

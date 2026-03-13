@@ -506,8 +506,8 @@ export default function ChatInterface() {
       // Clear timeout since we got a response
       clearTimeout(timeoutId)
 
-      // Remove loading message
-      setMessages((prev) => prev.filter((msg) => msg.type !== "loading"))
+      // Remove loading message and any timeout message from the race window
+      setMessages((prev) => prev.filter((msg) => msg.type !== "loading" && !msg.id?.startsWith('timeout-')))
 
       // Add AI response with real data
       
@@ -543,7 +543,7 @@ export default function ChatInterface() {
         } else {
           const existing = groupedSources.get(key)!;
           existing.chunkCount++;
-          existing.maxConfidence = Math.max(existing.maxConfidence, source.confidence);
+          existing.maxConfidence = Math.max(existing.maxConfidence ?? 0, source.confidence ?? 0);
           if (!existing.pages.includes(source.page)) {
             existing.pages.push(source.page);
           }
@@ -587,8 +587,8 @@ export default function ChatInterface() {
       // Clear timeout
       clearTimeout(timeoutId)
       
-      // Remove loading message
-      setMessages((prev) => prev.filter((msg) => msg.type !== "loading"))
+      // Remove loading and any timeout messages
+      setMessages((prev) => prev.filter((msg) => msg.type !== "loading" && !msg.id?.startsWith('timeout-')))
       
       // Add enhanced error message with better guidance
       const errorMessage: Message = {
@@ -852,9 +852,9 @@ Please try again in a moment. If the issue persists, you can still use the inter
                                           <p className="text-xs text-gray-600 dark:text-gray-400 break-words line-clamp-2">
                                             {source.snippet}
                                           </p>
-                                          {source.confidence && (
+                                          {typeof source.confidence === 'number' && !isNaN(source.confidence) && (
                                             <Badge variant="outline" className="mt-1 text-xs">
-                                              {Math.round(source.confidence * 100)}% confidence
+                                              {Math.min(100, Math.max(0, Math.round(source.confidence * 100)))}% confidence
                                             </Badge>
                                           )}
                                         </div>
