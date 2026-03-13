@@ -271,14 +271,14 @@ export default function SettingsPage() {
   // Check if user is admin
   const isAdmin = user?.role === 'admin'
 
-  // Profile form
+  // Profile form — populated from session
   const profileForm = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      name: "John Doe",
-      email: "john.doe@example.com",
-      phone: "+1 (555) 123-4567",
-      timezone: "America/New_York",
+      name: user?.email?.split('@')[0] || "",
+      email: user?.email || "",
+      phone: "",
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     },
   })
 

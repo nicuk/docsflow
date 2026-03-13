@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { Bot, Database, Shield, Users, Zap } from "lucide-react"
+import { Bot, Database, Shield, Users } from "lucide-react"
 import ContactForm from "@/components/contact-form"
 import Testimonials from "@/components/testimonials"
 import UseCases from "@/components/use-cases"
@@ -13,6 +13,7 @@ import CssGridBackground from "@/components/css-grid-background"
 import FeaturesSection from "@/components/features-section"
 import StructuredData from "@/components/structured-data"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import ROICalculator from "@/components/roi-calculator"
 
 export default function Home() {
   return (
@@ -92,10 +93,10 @@ export default function Home() {
               <div className="text-center mt-12 max-w-2xl mx-auto">
                 <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/20 dark:to-blue-950/20 border border-green-200 dark:border-green-800 rounded-xl p-6 mb-6">
                   <p className="text-sm text-primary font-semibold mb-2">
-                    🔥 <span className="text-orange-600 font-bold">August 2025:</span> Join 800+ teams who transformed their document workflows
+                    🔥 <span className="text-orange-600 font-bold">Now Available:</span> Join 800+ teams who transformed their document workflows
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    New enterprise slots opening September 2025 • Priority booking for Q4 implementations
+                    Enterprise slots available • Priority booking for new implementations
                   </p>
                 </div>
                 
@@ -381,131 +382,16 @@ export default function Home() {
                 </div>
               </div>
               <div className="lg:ml-10">
-                                 {/* ROI Calculator */}
-                 <div id="roi-calculator" className="bg-card border border-border rounded-2xl p-6 mb-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/20 group">
+                <div id="roi-calculator" className="bg-card border border-border rounded-2xl p-6 mb-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-primary/20 group">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="bg-primary/10 p-2 rounded-lg transition-transform duration-300 group-hover:scale-110">
                       <span className="text-xl">📊</span>
                     </div>
-                                         <h3 className="text-xl font-bold text-foreground transition-colors duration-300 group-hover:text-primary">See How Much You're Losing</h3>
+                    <h3 className="text-xl font-bold text-foreground transition-colors duration-300 group-hover:text-primary">See How Much You&#39;re Losing</h3>
                   </div>
-                  
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-medium text-muted-foreground mb-3">Hours spent searching documents weekly:</label>
-                                             <input 
-                         type="range" 
-                         id="hoursSlider" 
-                         min="1" 
-                         max="20" 
-                         defaultValue="10"
-                         className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider transition-all duration-300 hover:h-3 hover:bg-muted/80"
-                       />
-                      <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                        <span>1hr</span>
-                        <span id="hoursValue" className="font-semibold text-foreground">10 hours</span>
-                        <span>20hrs</span>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-3">
-                        Your hourly business value:
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs bg-muted border border-border rounded-full cursor-help hover:bg-muted/80 transition-colors">
-                                <svg className="w-3 h-3 text-muted-foreground" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
-                                </svg>
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-xs">
-                              <p>Your expertise has significant value. Every hour spent manually searching through documents is time that could be invested in strategic decision-making, client relationships, or business growth initiatives. Consider what your specialized knowledge and experience is worth per hour in terms of revenue generation and business impact.</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </label>
-                                             <input 
-                         type="range" 
-                         id="rateSlider" 
-                         min="25" 
-                         max="200" 
-                         defaultValue="75"
-                         className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider transition-all duration-300 hover:h-3 hover:bg-muted/80"
-                       />
-                      <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                        <span>$25</span>
-                        <span id="rateValue" className="font-semibold text-foreground">$75/hr</span>
-                        <span>$200</span>
-                      </div>
-                    </div>
-                    
-                                         <div className="bg-card border border-border p-4 rounded-xl shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/30 group-hover:bg-primary/5">
-                       <div className="text-center space-y-2">
-                         <div className="text-3xl font-bold text-foreground transition-colors duration-300 group-hover:text-primary" id="monthlySavings">$3,000</div>
-                         <div className="text-sm text-muted-foreground">Monthly time savings value</div>
-                         <div className="text-xs text-muted-foreground">DocsFlow Professional: Starting at $99/month (2 users)</div>
-                         <div className="text-lg font-bold text-primary transition-all duration-300 group-hover:scale-110" id="roiMultiple">30x ROI</div>
-                       </div>
-                     </div>
-                  </div>
+                  <ROICalculator />
                 </div>
 
-                                 <style dangerouslySetInnerHTML={{
-                   __html: `
-                     .slider::-webkit-slider-thumb {
-                       appearance: none;
-                       height: 20px;
-                       width: 20px;
-                       border-radius: 50%;
-                       background: hsl(var(--primary));
-                       cursor: pointer;
-                       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                       transition: all 0.3s ease;
-                     }
-                     .slider:hover::-webkit-slider-thumb {
-                       transform: scale(1.2);
-                       box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-                     }
-                     .slider::-moz-range-thumb {
-                       height: 20px;
-                       width: 20px;
-                       border-radius: 50%;
-                       background: hsl(var(--primary));
-                       cursor: pointer;
-                       border: none;
-                       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                       transition: all 0.3s ease;
-                     }
-                     .slider:hover::-moz-range-thumb {
-                       transform: scale(1.2);
-                       box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-                     }
-                   `
-                 }} />
-                
-                                                                   <script dangerouslySetInnerHTML={{
-                    __html: `
-                      function updateCalculator() {
-                        const hours = document.getElementById('hoursSlider').value;
-                        const rate = document.getElementById('rateSlider').value;
-                        const monthly = hours * rate * 4;
-                        const roi = Math.round(monthly / 99);
-                        
-                        document.getElementById('hoursValue').textContent = hours + ' hours';
-                        document.getElementById('rateValue').textContent = '$' + rate + '/hr';
-                        document.getElementById('monthlySavings').textContent = '$' + monthly.toLocaleString();
-                        document.getElementById('roiMultiple').textContent = roi + 'x ROI';
-                      }
-                      
-                      document.addEventListener('DOMContentLoaded', function() {
-                        document.getElementById('hoursSlider').addEventListener('input', updateCalculator);
-                        document.getElementById('rateSlider').addEventListener('input', updateCalculator);
-                      });
-                    `
-                  }} />
-                
                 <ContactForm />
               </div>
             </div>

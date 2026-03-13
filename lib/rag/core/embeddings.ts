@@ -101,8 +101,16 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
     throw new EmbeddingError('Cannot generate embeddings for empty array');
   }
   
-  // Filter out empty texts
-  const validTexts = texts.filter(t => t && t.trim().length > 0);
+  // Separate valid texts while preserving original indices so the
+  // returned array is always 1:1 with the input array.
+  const validIndices: number[] = [];
+  const validTexts: string[] = [];
+  for (let i = 0; i < texts.length; i++) {
+    if (texts[i] && texts[i].trim().length > 0) {
+      validIndices.push(i);
+      validTexts.push(texts[i]);
+    }
+  }
   
   if (validTexts.length === 0) {
     throw new EmbeddingError('All texts are empty');
@@ -121,7 +129,7 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
       },
       body: JSON.stringify({
         model: config.model,
-        input: validTexts, // OpenAI API accepts array of strings for batch
+        input: validTexts,
       }),
     });
     
@@ -139,7 +147,15 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
       );
     }
     
-    return embeddings;
+    // Reconstruct full-length array aligned to original input indices.
+    // Empty inputs get a zero vector (will rank last in similarity).
+    const zeroVector = new Array(RAG_CONFIG.embeddings.dimensions).fill(0);
+    const aligned: number[][] = texts.map(() => zeroVector);
+    for (let i = 0; i < validIndices.length; i++) {
+      aligned[validIndices[i]] = embeddings[i];
+    }
+    
+    return aligned;
   } catch (error: any) {
     throw new EmbeddingError(`Failed to generate batch embeddings: ${error.message}`, {
       textCount: texts.length,

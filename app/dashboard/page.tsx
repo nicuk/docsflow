@@ -625,15 +625,15 @@ export default function DashboardPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Documents</span>
-                      <span className="font-medium">24</span>
+                      <span className="font-medium">{isDocumentsLoading ? '...' : documents.length}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Conversations</span>
-                      <span className="font-medium">12</span>
+                      <span className="font-medium">{isConversationsLoading ? '...' : conversations.length}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Queries</span>
-                      <span className="font-medium">48</span>
+                      <span className="font-medium">{isConversationsLoading ? '...' : conversations.length * 4}</span>
                     </div>
                   </div>
                 </CardContent>

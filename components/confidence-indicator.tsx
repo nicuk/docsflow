@@ -88,7 +88,7 @@ export function ConfidenceIndicator({
         level === 'medium' && "text-yellow-700",
         level === 'low' && "text-red-700"
       )}>
-        {Math.round(score * 100)}%
+        {Math.min(100, Math.max(0, Math.round(score * 100)))}%
       </span>
 
       {/* Optional Label */}

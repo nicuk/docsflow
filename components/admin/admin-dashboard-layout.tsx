@@ -67,7 +67,7 @@ const adminNavigationItems = [
   // System Management
   { 
     name: 'System Health', 
-    href: '/dashboard/admin/health', 
+    href: '/dashboard/admin/system-health', 
     icon: Shield, 
     badge: null,
     description: 'Monitor system performance' 

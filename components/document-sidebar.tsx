@@ -94,68 +94,7 @@ export default function DocumentSidebar({
   // Toast notifications
   const { toast } = useToast()
 
-  // Sample documents data
-  const [documents, setDocuments] = useState<Document[]>([
-    {
-      id: "1",
-      name: "Financial Report Q3 2023.pdf",
-      type: "pdf",
-      size: 2400000, // 2.4 MB
-      uploadDate: new Date(2023, 9, 15), // Oct 15, 2023
-      status: "processed",
-    },
-    {
-      id: "2",
-      name: "Marketing Strategy.docx",
-      type: "document",
-      size: 1800000, // 1.8 MB
-      uploadDate: new Date(2023, 10, 2), // Nov 2, 2023
-      status: "processed",
-    },
-    {
-      id: "3",
-      name: "Sales Data Q4.xlsx",
-      type: "spreadsheet",
-      size: 3500000, // 3.5 MB
-      uploadDate: new Date(2023, 11, 10), // Dec 10, 2023
-      status: "processed",
-    },
-    {
-      id: "4",
-      name: "Product Roadmap 2024.pdf",
-      type: "pdf",
-      size: 4200000, // 4.2 MB
-      uploadDate: new Date(2023, 11, 28), // Dec 28, 2023
-      status: "processing",
-    },
-    {
-      id: "5",
-      name: "Team Photo.jpg",
-      type: "image",
-      size: 5600000, // 5.6 MB
-      uploadDate: new Date(2024, 0, 5), // Jan 5, 2024
-      status: "processed",
-      folder: "Company",
-    },
-    {
-      id: "6",
-      name: "Contract Draft.pdf",
-      type: "pdf",
-      size: 1200000, // 1.2 MB
-      uploadDate: new Date(2024, 0, 15), // Jan 15, 2024
-      status: "failed",
-      folder: "Legal",
-    },
-    {
-      id: "7",
-      name: "Budget 2024.xlsx",
-      type: "spreadsheet",
-      size: 2100000, // 2.1 MB
-      uploadDate: new Date(2024, 0, 20), // Jan 20, 2024
-      status: "processed",
-      folder: "Finance",
-    },
-  ])
+  const [documents, setDocuments] = useState<Document[]>([])
 
   // Check if on mobile
   useEffect(() => {
