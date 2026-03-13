@@ -25,108 +25,137 @@ export interface HierarchicalRetrievalInput {
   minScore?: number;
 }
 
+const HIERARCHICAL_THRESHOLD = 20;
+
 /**
  * Two-stage hierarchical retrieval
  * 
- * @param input - Retrieval parameters
- * @returns Retrieved chunks from top relevant documents
+ * For small collections (< 20 docs): direct Pinecone query (fast path)
+ * For large collections (20+ docs): two-stage document→chunk retrieval
  */
 export async function hierarchicalRetrieve(
   input: HierarchicalRetrievalInput
 ): Promise<RetrievedChunk[]> {
   const { query, tenantId, topK = 5, topDocs = 10, filter, minScore = 0.25 } = input;
   
-  // ==================== STAGE 1: Document-Level Search ====================
-  
-  // Use service role client to bypass RLS for document summaries
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
   
-  // Get all documents with summaries for this tenant
+  // Count tenant documents to decide strategy
+  const { count: docCount } = await supabase
+    .from('documents')
+    .select('*', { count: 'exact', head: true })
+    .eq('tenant_id', tenantId)
+    .eq('processing_status', 'completed');
+  
+  // Fast path: small collections go straight to Pinecone (no per-doc embedding calls)
+  if (!docCount || docCount < HIERARCHICAL_THRESHOLD) {
+    return directPineconeRetrieval(input);
+  }
+  
+  // ==================== STAGE 1: Document-Level Search (20+ docs) ====================
+  
   const { data: documents, error } = await supabase
     .from('documents')
-    .select('id, filename, summary, mime_type, file_size')
+    .select('id, filename, summary')
     .eq('tenant_id', tenantId)
     .not('summary', 'is', null)
-    .order('created_at', { ascending: false }) // Prefer recent docs
-    .limit(100); // Max 100 docs to search
+    .order('created_at', { ascending: false })
+    .limit(100);
   
-  if (error) {
-    // Fallback to standard retrieval on database error
-    return fallbackToStandardRetrieval(input);
+  if (error || !documents || documents.length === 0) {
+    return directPineconeRetrieval(input);
   }
   
-  if (!documents || documents.length === 0) {
-    return fallbackToStandardRetrieval(input);
-  }
-  
-  // Generate embedding for user query once
   const queryEmbedding = await generateEmbedding(query);
   
-  // Compute similarity between query and each document summary
-  const docScores = await Promise.all(
-    documents.map(async (doc) => {
-      if (!doc.summary) return { documentId: doc.id, filename: doc.filename, similarity: 0 };
-      
-      try {
-        const summaryEmbedding = await generateEmbedding(doc.summary);
-        const similarity = cosineSimilarity(queryEmbedding, summaryEmbedding);
-        
-        return {
-          documentId: doc.id,
-          filename: doc.filename,
-          similarity,
-        };
-      } catch (error) {
-        return { documentId: doc.id, filename: doc.filename, similarity: 0 };
-      }
-    })
-  );
+  // Batch all summaries in a single embedding call instead of N separate calls
+  const { generateEmbeddings } = await import('./embeddings');
+  const summaryTexts = documents.map(d => d.summary || d.filename);
   
-  // Sort by similarity and take top N documents
+  let summaryEmbeddings: number[][];
+  try {
+    summaryEmbeddings = await generateEmbeddings(summaryTexts);
+  } catch {
+    return directPineconeRetrieval(input);
+  }
+  
+  const docScores = documents.map((doc, i) => ({
+    documentId: doc.id,
+    filename: doc.filename,
+    similarity: cosineSimilarity(queryEmbedding, summaryEmbeddings[i]),
+  }));
+  
   const topDocuments = docScores
-    .filter(d => d.similarity > 0.1) // Minimum document-level relevance
+    .filter(d => d.similarity > 0.1)
     .sort((a, b) => b.similarity - a.similarity)
     .slice(0, topDocs);
   
   if (topDocuments.length === 0) {
-    // Fallback: Just use top N docs regardless of score
-    const fallbackDocs = docScores
-      .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, topDocs);
-    topDocuments.push(...fallbackDocs);
+    topDocuments.push(
+      ...docScores.sort((a, b) => b.similarity - a.similarity).slice(0, topDocs)
+    );
   }
   
   // ==================== STAGE 2: Chunk-Level Search ====================
   
   const documentIds = topDocuments.map(d => d.documentId);
   
-  // Generate sparse vector for keyword matching (HYBRID SEARCH)
   const { generateSparseVector } = await import('./sparse-vectors');
   const querySparseVector = generateSparseVector(query);
   
-    // Query Pinecone with document filter + HYBRID SEARCH
-    // Note: langchain-processor stores metadata with camelCase keys (documentId, not document_id)
-    const results = await queryVectors({
-      vector: queryEmbedding,
-      sparseVector: querySparseVector, // hybrid: keyword + semantic
-      namespace: tenantId,
-      topK: topK * 3, // Get more results to filter by score
-      filter: {
-        ...filter,
-        documentId: { $in: documentIds },
-      },
-    });
+  const results = await queryVectors({
+    vector: queryEmbedding,
+    sparseVector: querySparseVector,
+    namespace: tenantId,
+    topK: topK * 3,
+    filter: {
+      ...filter,
+      documentId: { $in: documentIds },
+    },
+  });
   
-  if (!results || results.length === 0) {
-    return [];
-  }
+  return mapAndFilterResults(results, minScore, topK);
+}
+
+/**
+ * Direct Pinecone retrieval -- single embedding + single Pinecone query.
+ * Used for small collections where hierarchical overhead isn't worth it.
+ */
+async function directPineconeRetrieval(
+  input: HierarchicalRetrievalInput
+): Promise<RetrievedChunk[]> {
+  const { query, tenantId, topK = 5, filter, minScore = 0.25 } = input;
   
-  // Map QueryResult[] to RetrievedChunk format
-  // Note: langchain-processor stores metadata with camelCase keys
-  const chunks: RetrievedChunk[] = results
+  const queryEmbedding = await generateEmbedding(query);
+  
+  const { generateSparseVector } = await import('./sparse-vectors');
+  const querySparseVector = generateSparseVector(query);
+  
+  const results = await queryVectors({
+    vector: queryEmbedding,
+    sparseVector: querySparseVector,
+    namespace: tenantId,
+    topK: topK * 3,
+    filter: filter && Object.keys(filter).length > 0 ? filter : undefined,
+  });
+  
+  return mapAndFilterResults(results, minScore, topK);
+}
+
+/**
+ * Shared result mapping for both retrieval paths
+ */
+function mapAndFilterResults(
+  results: any[],
+  minScore: number,
+  topK: number,
+): RetrievedChunk[] {
+  if (!results || results.length === 0) return [];
+  
+  return results
     .map(result => ({
       id: result.id,
       content: result.metadata?.text as string || '',
@@ -139,12 +168,8 @@ export async function hierarchicalRetrieve(
         tenantId: (result.metadata?.tenantId || result.metadata?.tenant_id) as string,
       },
     }))
-    .filter(chunk => chunk.content && chunk.score >= minScore); // Filter by score
-  
-  // Take top K chunks
-  const finalChunks = chunks.slice(0, topK);
-  
-  return finalChunks;
+    .filter(chunk => chunk.content && chunk.score >= minScore)
+    .slice(0, topK);
 }
 
 /**
@@ -172,20 +197,3 @@ function cosineSimilarity(a: number[], b: number[]): number {
   return dotProduct / denominator;
 }
 
-/**
- * Fallback to standard retrieval if hierarchical fails
- */
-async function fallbackToStandardRetrieval(
-  input: HierarchicalRetrievalInput
-): Promise<RetrievedChunk[]> {
-  const { retrieveChunks } = await import('./retrieval');
-  const embedding = await generateEmbedding(input.query);
-  
-  return retrieveChunks({
-    embedding,
-    tenantId: input.tenantId,
-    topK: input.topK,
-    filter: input.filter,
-    minScore: input.minScore,
-  });
-}

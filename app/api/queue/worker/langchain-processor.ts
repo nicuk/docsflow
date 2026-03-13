@@ -248,48 +248,41 @@ Return raw content only.`;
       }
     }
 
-    // Generate document summary for hierarchical retrieval
-    try {
-      const { generateDocumentSummary } = await import('@/lib/rag/core/summarization');
-      
-      // Combine all chunk content to get full document text
-      const fullText = enhancedChunks.map(c => c.pageContent).join('\n\n');
-      const wordCount = fullText.split(/\s+/).length;
-      
-      const summary = await generateDocumentSummary({
-        text: fullText,
-        filename: job.filename,
-        wordCount,
-        mimeType: job.file_type,
-      });
-      
-      // Save summary to database
-      const { error: updateError } = await supabase
-        .from('documents')
-        .update({
-          summary,
-          summary_generated_at: new Date().toISOString(),
-        })
-        .eq('id', job.document_id);
-      
-      if (updateError) {
-        console.error('Non-critical: summary save failed', updateError);
-      }
-    } catch (summaryError) {
-      console.error(summaryError);
-    }
-    
-    // Use our custom embeddings (OpenRouter-compatible)
+    // Run summary generation and embedding generation in parallel (independent API calls)
     const { generateEmbeddings } = await import('@/lib/rag/core/embeddings');
     const { generateWeightedSparseVector } = await import('@/lib/rag/core/sparse-vectors');
+    const { generateDocumentSummary } = await import('@/lib/rag/core/summarization');
     
+    const fullText = enhancedChunks.map(c => c.pageContent).join('\n\n');
     const texts = enhancedChunks.map(chunk => chunk.pageContent);
-    const embeddingVectors = await generateEmbeddings(texts);
     
-    // Generate sparse vectors for HYBRID SEARCH
+    const summaryPromise = generateDocumentSummary({
+      text: fullText,
+      filename: job.filename,
+      wordCount: fullText.split(/\s+/).length,
+      mimeType: job.file_type,
+    }).catch((err: any) => {
+      console.error('Non-critical: summary generation failed:', err.message);
+      return null;
+    });
     
+    const embeddingPromise = generateEmbeddings(texts);
+    
+    const [summary, embeddingVectors] = await Promise.all([summaryPromise, embeddingPromise]);
+    
+    // Save summary if generated
+    if (summary) {
+      const { error: updateError } = await supabase
+        .from('documents')
+        .update({ summary, summary_generated_at: new Date().toISOString() })
+        .eq('id', job.document_id);
+      if (updateError) {
+        console.error('Non-critical: summary save failed:', updateError.message);
+      }
+    }
+    
+    // Generate sparse vectors for hybrid search (local computation, instant)
     const sparseVectors = enhancedChunks.map((chunk) => {
-      // Weight filename 3x more than content for better filename matching
       return generateWeightedSparseVector([
         { text: chunk.metadata.filename || '', weight: 3.0 },
         { text: chunk.pageContent, weight: 1.0 },
