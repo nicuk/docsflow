@@ -352,7 +352,7 @@ export default function DashboardPage() {
             title: "Analyze Performance",
             description: "Generate insights and reports from your data",
             icon: BarChart3,
-            action: "/dashboard/analytics"
+            action: "/dashboard/chat"
           },
           {
             title: "Generate Reports",
