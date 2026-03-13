@@ -395,7 +395,26 @@ export default function ChatInterface() {
     scrollContainer.scrollTop = scrollContainer.scrollHeight
   }
 
-  const handleSendMessage = async (content: string) => {
+  const generateFollowUpSuggestions = (sources: any[], query: string): string[] => {
+    const suggestions: string[] = []
+    const docNames = sources.map((s: any) => s.document?.replace(/ \(\d+ sections\)/, '')).filter(Boolean)
+    
+    if (docNames.length > 0) {
+      suggestions.push(`Summarize ${docNames[0]}`)
+      if (docNames.length > 1) {
+        suggestions.push(`Compare ${docNames[0]} and ${docNames[1]}`)
+      }
+    }
+    suggestions.push("What are the key takeaways?")
+    suggestions.push("Are there any risks or concerns?")
+    return suggestions.slice(0, 4)
+  }
+
+  const handleSendMessageWithDisplay = async (displayText: string, apiText: string) => {
+    return handleSendMessage(apiText, displayText)
+  }
+
+  const handleSendMessage = async (content: string, displayOverride?: string) => {
     if (!content.trim() || isLoading) return
 
     // Scroll to bottom when user sends message (they want to see their message and response)
@@ -429,7 +448,7 @@ export default function ChatInterface() {
     const userMessage: Message = {
       id: Date.now().toString(),
       type: "user",
-      content: content.trim(),
+      content: (displayOverride || content).trim(),
       timestamp: new Date(),
     }
 
@@ -554,12 +573,7 @@ export default function ChatInterface() {
         timestamp: new Date(),
         sources: deduplicatedSources,
         confidence: response.confidence ?? 0.7,
-        suggestions: [
-          "Tell me more about this",
-          "Can you elaborate?",
-          "Show me related information",
-          "What else can you find?",
-        ],
+        suggestions: generateFollowUpSuggestions(deduplicatedSources, content),
       }
 
       setMessages((prev) => [...prev, aiResponse])
@@ -605,7 +619,14 @@ Please try again in a moment. If the issue persists, you can still use the inter
   }
 
   const handleSuggestionClick = (suggestion: string) => {
-    handleSendMessage(suggestion)
+    const lastAiMessage = [...messages].reverse().find(m => m.type === "ai")
+    if (lastAiMessage) {
+      const topic = lastAiMessage.content.substring(0, 200)
+      const enriched = `${suggestion}\n\nContext from previous answer: ${topic}`
+      handleSendMessageWithDisplay(suggestion, enriched)
+    } else {
+      handleSendMessage(suggestion)
+    }
   }
 
   const clearCurrentConversation = () => {
