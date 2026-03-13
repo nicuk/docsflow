@@ -10,9 +10,7 @@ export function createClient() {
     {
       cookies: {
         getAll() {
-          // 🛡️ CRITICAL FIX: Server-side safety check
           if (typeof document === 'undefined') {
-            console.warn('🔍 [SUPABASE-BROWSER] Server-side context - returning empty cookies');
             return [];
           }
           
@@ -22,14 +20,11 @@ export function createClient() {
             .map(([name, value]) => ({ name, value: decodeURIComponent(value || '') }))
         },
         setAll(cookiesToSet) {
-          // 🛡️ CRITICAL FIX: Server-side safety check
           if (typeof document === 'undefined') {
-            console.warn('🔍 [SUPABASE-BROWSER] Server-side context - cannot set cookies');
             return;
           }
           
           cookiesToSet.forEach(({ name, value, options }) => {
-            // CRITICAL FIX: Set domain to .docsflow.app for cross-subdomain cookies
             const cookieOptions = {
               ...options,
               domain: '.docsflow.app', // Shared cookie domain across tenant subdomains

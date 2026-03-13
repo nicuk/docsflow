@@ -46,9 +46,8 @@ export function OptimizedCompletion({ responses, createdPersona, tenantData, onC
     }
 
     try {
-      // 🔥 NEW: Use already-created persona data instead of making duplicate API call
+      // Use already-created persona data instead of making duplicate API call
       if (createdPersona && tenantData) {
-        console.log('✅ Using already-created persona data:', createdPersona);
         
         // Check if we got real LLM-generated content
         const isLLMGenerated = createdPersona?.created_from === 'onboarding_answers';
@@ -65,20 +64,13 @@ export function OptimizedCompletion({ responses, createdPersona, tenantData, onC
         
         setInsights(personalizedInsights);
         
-        if (isLLMGenerated) {
-          console.log('✅ Displaying real Gemini AI-generated persona');
-        } else {
-          console.log('🔄 Displaying fallback persona template');
-        }
       } else {
         // Fallback to smart template if no persona data provided
-        console.log('⚠️ No persona data provided, using smart fallback');
         setInsights(generateSmartFallback(responses));
       }
       
     } catch (error) {
-      console.error('Error processing persona data:', error);
-      // 🔄 ULTIMATE FALLBACK: Simple frontend template system
+      // Ultimate fallback: Simple frontend template system
       setInsights(generateSmartFallback(responses));
     }
     

@@ -34,8 +34,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`[Documents Upload] Queuing file for background processing: ${file.name}`);
-
     // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
@@ -53,10 +51,7 @@ export async function POST(request: NextRequest) {
       contentType: file.type,
     });
     
-    console.log(`[Documents Upload] File uploaded to Vercel Blob: ${blob.url}`);
-    
     // Verify file is accessible (with retry for CDN propagation)
-    console.log(`[Documents Upload] Verifying file accessibility...`);
     let fileAccessible = false;
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
@@ -66,24 +61,19 @@ export async function POST(request: NextRequest) {
         });
         if (verifyResponse.ok) {
           fileAccessible = true;
-          console.log(`[Documents Upload] ✅ File verified accessible (attempt ${attempt})`);
           break;
         }
-        console.log(`[Documents Upload] ⚠️ File not yet accessible: ${verifyResponse.status} (attempt ${attempt}/3)`);
-      } catch (verifyError: any) {
-        console.log(`[Documents Upload] ⚠️ Verification failed: ${verifyError.message} (attempt ${attempt}/3)`);
+      } catch {
+        // Verification failed, will retry
       }
       
       if (attempt < 3) {
         const waitTime = attempt * 2000; // 2s, 4s
-        console.log(`[Documents Upload] Waiting ${waitTime}ms before retry...`);
         await new Promise(resolve => setTimeout(resolve, waitTime));
       }
     }
     
     if (!fileAccessible) {
-      // File uploaded but not accessible - this is a critical issue
-      console.error(`[Documents Upload] ❌ File uploaded but not accessible after 3 attempts: ${blob.url}`);
       throw new Error('File uploaded but failed accessibility verification. This may be a CDN or network issue.');
     }
     
@@ -115,13 +105,10 @@ export async function POST(request: NextRequest) {
     const documentId = (document as any).id;
     
     if (!documentId) {
-      console.error('[Documents Upload] Document record missing ID:', document);
       // Clean up blob on failure
       await fetch(blob.url, { method: 'DELETE' }).catch(() => {});
       throw new Error('Document record created but ID is missing');
     }
-    
-    console.log(`[Documents Upload] Document record created: ${documentId}`);
     
     // 3. Create ingestion job for background processing
     // Store file data directly in job to avoid CDN propagation issues
@@ -157,7 +144,6 @@ export async function POST(request: NextRequest) {
     }
     
     const duration = Date.now() - startTime;
-    console.log(`[Documents Upload] Job created: ${job.id} in ${duration}ms`);
     
     // Return success response immediately (frontend-compatible format)
     return NextResponse.json({
@@ -177,9 +163,6 @@ export async function POST(request: NextRequest) {
     });
     
   } catch (error) {
-    const duration = Date.now() - startTime;
-    console.error(`[Documents Upload] Error after ${duration}ms:`, error);
-    
     return NextResponse.json(
       { 
         error: 'Failed to upload document',

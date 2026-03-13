@@ -24,7 +24,6 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tenantValidation.isValid) {
-      console.error('Tenant validation failed:', tenantValidation.error);
       return NextResponse.json(
         { 
           error: tenantValidation.error,
@@ -36,8 +35,6 @@ export async function GET(request: NextRequest) {
 
     const tenantId = tenantValidation.tenantId!; // This is the UUID
     const tenantSubdomain = tenantValidation.tenantData?.subdomain || 'unknown';
-    
-    console.log('Fetching conversations for validated tenant:', tenantSubdomain, 'UUID:', tenantId);
     
     // Use service role key (RLS disabled, app-level security via Clerk)
     const supabase = createDirectClient(
@@ -60,7 +57,6 @@ export async function GET(request: NextRequest) {
       .limit(50);
 
     if (error) {
-      console.error('Conversations fetch error:', error);
       return NextResponse.json(
         { error: 'Failed to fetch conversations' }, 
         { status: 500, headers: corsHeaders }
@@ -73,7 +69,6 @@ export async function GET(request: NextRequest) {
     );
     
   } catch (error) {
-    console.error('Conversations API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' }, 
       { status: 500, headers: corsHeaders }
@@ -119,8 +114,7 @@ export async function POST(request: NextRequest) {
         }, { status: 402, headers: corsHeaders }); // Payment Required
       }
     } catch (limitError) {
-      console.error('Error checking conversation limits:', limitError);
-      // Continue with creation on error to avoid blocking users
+      console.error(limitError);
     }
     
     // Use service role key (RLS disabled, app-level security via Clerk)
@@ -159,7 +153,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Create conversation error:', error);
       return NextResponse.json(
         { error: 'Failed to create conversation' },
         { status: 500, headers: corsHeaders }
@@ -171,8 +164,7 @@ export async function POST(request: NextRequest) {
       const { trackUsage } = await import('@/lib/plan-enforcement');
       await trackUsage(tenantId, 'conversation', 1);
     } catch (trackingError) {
-      console.error('Error tracking conversation usage:', trackingError);
-      // Continue - don't fail the creation due to tracking issues
+      console.error(trackingError);
     }
 
     return NextResponse.json({
@@ -184,7 +176,6 @@ export async function POST(request: NextRequest) {
     }, { headers: corsHeaders });
 
   } catch (error: any) {
-    console.error('Create conversation error:', error);
     return NextResponse.json(
       { error: 'Failed to create conversation' },
       { status: 500, headers: corsHeaders }

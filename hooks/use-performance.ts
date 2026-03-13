@@ -59,12 +59,7 @@ export function usePerformanceMonitoring() {
     // Monitor long tasks
     const observer = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
-        if (entry.duration > 50) { // Tasks longer than 50ms
-          console.warn('⚠️ Long task detected:', {
-            duration: entry.duration,
-            name: entry.name,
-            startTime: entry.startTime
-          })
+        if (entry.duration > 50) {
           metricsRef.current.longTasks++
         }
       }
@@ -91,12 +86,7 @@ export function usePerformanceMonitoring() {
   const getMetrics = () => metricsRef.current
 
   const logMetrics = () => {
-    const metrics = getMetrics()
-    console.log('📊 Performance Metrics:', {
-      forcedReflows: metrics.forcedReflows,
-      longTasks: metrics.longTasks,
-      memoryUsage: `${metrics.memoryUsage.toFixed(2)} MB`
-    })
+    // No-op: metrics available via getMetrics()
   }
 
   return { getMetrics, logMetrics }

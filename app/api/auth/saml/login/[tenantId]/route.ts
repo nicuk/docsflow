@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { samlService } from '@/lib/saml/saml-service';
-import { validateTenantContext } from '@/lib/api-tenant-validation';
 
 export async function GET(
   request: NextRequest,
@@ -9,13 +8,7 @@ export async function GET(
   try {
     const { tenantId } = await params;
     
-    // Validate tenant context
-    const tenantValidation = await validateTenantContext(request, {
-      requireAuth: false,
-      extractTenantId: () => tenantId
-    });
-
-    if (!tenantValidation.isValid || !tenantValidation.tenant) {
+    if (!tenantId) {
       return NextResponse.json(
         { error: 'Invalid tenant' },
         { status: 400 }
@@ -39,7 +32,6 @@ export async function GET(
     return NextResponse.redirect(loginUrl);
     
   } catch (error) {
-    console.error('SAML login error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

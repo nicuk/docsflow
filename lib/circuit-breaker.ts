@@ -74,7 +74,6 @@ export class CircuitBreaker {
     // Fail fast if circuit is open
     if (this.metrics.state === CircuitState.OPEN) {
       const error = new Error(`Circuit breaker OPEN for service: ${this.serviceName}`);
-      console.warn(`🚨 [CIRCUIT-BREAKER] ${this.serviceName} circuit OPEN - failing fast`);
       
       if (fallback) {
         return await fallback();
@@ -103,7 +102,6 @@ export class CircuitBreaker {
       
       // Use fallback if available, otherwise re-throw
       if (fallback) {
-        console.warn(`🔄 [CIRCUIT-BREAKER] ${this.serviceName} failed, using fallback`);
         return await fallback();
       }
       throw error;
@@ -115,8 +113,6 @@ export class CircuitBreaker {
     this.metrics.lastSuccessTime = Date.now();
 
     if (this.metrics.state === CircuitState.HALF_OPEN) {
-      // Successful calls in half-open state indicate recovery
-      console.log(`✅ [CIRCUIT-BREAKER] ${this.serviceName} recovering - ${this.halfOpenCalls} successful calls`);
       if (this.halfOpenCalls >= this.config.halfOpenMaxCalls) {
         this.reset();
       }
@@ -136,14 +132,12 @@ export class CircuitBreaker {
 
     // Immediate circuit break for critical errors
     if (serviceError.isRateLimit || serviceError.isServiceDown) {
-      console.error(`🚨 [CIRCUIT-BREAKER] ${this.serviceName} critical failure - opening circuit immediately`);
       this.openCircuit();
       return;
     }
 
     // Check if we should open the circuit based on failure threshold
     if (this.recentFailures.length >= this.config.failureThreshold) {
-      console.error(`🚨 [CIRCUIT-BREAKER] ${this.serviceName} failure threshold exceeded (${this.recentFailures.length}/${this.config.failureThreshold}) - opening circuit`);
       this.openCircuit();
     }
   }
@@ -163,7 +157,6 @@ export class CircuitBreaker {
   private openCircuit(): void {
     this.metrics.state = CircuitState.OPEN;
     this.halfOpenCalls = 0;
-    console.warn(`🔴 [CIRCUIT-BREAKER] ${this.serviceName} circuit OPENED`);
   }
 
   private shouldAttemptReset(): boolean {
@@ -179,7 +172,6 @@ export class CircuitBreaker {
     this.metrics.state = CircuitState.HALF_OPEN;
     this.halfOpenCalls = 0;
     this.recentFailures = [];
-    console.log(`🟡 [CIRCUIT-BREAKER] ${this.serviceName} circuit entering HALF-OPEN state`);
   }
 
   private cleanupOldFailures(now: number): void {
@@ -208,7 +200,6 @@ export class CircuitBreaker {
     this.metrics.state = CircuitState.CLOSED;
     this.halfOpenCalls = 0;
     this.recentFailures = [];
-    console.log(`🟢 [CIRCUIT-BREAKER] ${this.serviceName} circuit manually CLOSED`);
   }
 }
 

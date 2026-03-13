@@ -85,7 +85,7 @@ export default function AdminOverviewPage() {
         }
       }
     } catch (error) {
-      console.error('Failed to load user data:', error);
+      console.error(error);
     }
   };
 
@@ -128,7 +128,6 @@ export default function AdminOverviewPage() {
       });
 
     } catch (error) {
-      console.error('Failed to load admin metrics:', error);
       // Set default metrics for demo
       setMetrics({
         users: { total: 0, active: 0, pending: 0, adminCount: 1 },

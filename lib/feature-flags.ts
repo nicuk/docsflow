@@ -51,7 +51,6 @@ export async function checkEnterpriseAccess(
     return { enabled: true };
   }
 
-  // TODO: Add subscription check when freemium is implemented
   // const subscription = await getSubscription(tenantId);
   // if (!subscription.allowsEnterprise) {
   //   return {

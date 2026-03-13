@@ -141,7 +141,7 @@ const storage = {
           localStorage.setItem(STORAGE_KEYS.conversations, JSON.stringify(validConversations))
         }
       } catch (error) {
-        console.error('Error cleaning up conversations:', error)
+        console.error(error);
       }
     }
   },
@@ -292,8 +292,7 @@ export default function ChatInterface() {
       }
       // If backend returns empty but we have localStorage conversations, keep those
       
-    } catch (error) {
-      console.error('Failed to load conversations:', error)
+    } catch {
       // Keep using localStorage conversations on error
     } finally {
       setIsLoadingConversations(false)
@@ -312,8 +311,7 @@ export default function ChatInterface() {
       }
       // If backend returns empty, keep localStorage messages
       
-    } catch (error) {
-      console.error('Failed to load conversation history:', error)
+    } catch {
       // Keep using localStorage messages on error
       
       // If no localStorage messages either, show error
@@ -375,13 +373,11 @@ export default function ChatInterface() {
           )
           setCurrentConversationId(response.conversation.id)
         }
-      } catch (backendError) {
+      } catch {
         // Backend unavailable, continuing with local conversation
-        // Continue with local conversation
       }
       
-    } catch (error) {
-      console.error('Failed to create conversation:', error)
+    } catch {
     } finally {
       setIsCreatingConversation(false)
     }
@@ -426,8 +422,7 @@ export default function ChatInterface() {
           createdAt: response.conversation.createdAt
         }
         setConversations(prev => [newConversation, ...prev])
-      } catch (error) {
-        console.error('Failed to create conversation:', error)
+      } catch {
         return
       } finally {
         setIsCreatingConversation(false)
@@ -577,9 +572,7 @@ export default function ChatInterface() {
       // Refresh conversations list to update message count and last activity
       await loadConversations()
 
-    } catch (error) {
-      console.error('Chat API Error:', error);
-      
+    } catch {
       // Mark response as received (error counts as response)
       responseReceived = true;
       
@@ -980,8 +973,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
                                   const { apiClient } = await import('@/lib/api-client');
                                   await apiClient.uploadDocument(file);
                                   successCount++;
-                                } catch (fileError) {
-                                  console.error('File upload failed:', file.name, fileError);
+                                } catch {
                                   failedFiles.push(file.name);
                                 }
                               }
@@ -1009,8 +1001,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
                                   variant: "destructive",
                                 });
                               }
-                            } catch (error) {
-                              console.error('Upload process failed:', error);
+                            } catch {
                               toast({
                                 title: "Upload failed ❌",
                                 description: "An unexpected error occurred during upload. Please try again.",
@@ -1062,7 +1053,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
         </div>
       </div>
       
-      {/* 🚀 NEW: Source Viewer Modal */}
+      {/* Source Viewer Modal */}
       {selectedSource && (
         <SourceViewerModal
           source={selectedSource}

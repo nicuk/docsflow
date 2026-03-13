@@ -63,7 +63,6 @@ async function verifyAdminAccess(): Promise<{ isAdmin: boolean; userId: string |
     const isAdmin = userProfile?.role === 'admin' || userProfile?.access_level === 1
     return { isAdmin, userId }
   } catch (error) {
-    console.error('Failed to verify admin access:', error)
     return { isAdmin: false, userId }
   }
 }
@@ -88,7 +87,6 @@ export async function getCircuitBreakerHealth(): Promise<HealthData> {
       }
     }
   } catch (error) {
-    console.error('Failed to get circuit breaker health:', error)
     throw new Error('Failed to fetch health data')
   }
 }
@@ -147,16 +145,12 @@ export async function controlCircuitBreaker(
         }
     }
 
-    // Log the action for audit trail
-    console.log(`🔧 [CIRCUIT BREAKER] User ${userId} ${action}ed ${service} circuit breaker`)
-
     return {
       success: true,
       newState: breaker.getState()
     }
 
   } catch (error) {
-    console.error('Circuit breaker control failed:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

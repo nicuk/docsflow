@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { samlService } from '@/lib/saml/saml-service';
-import { validateTenantContext } from '@/lib/api-tenant-validation';
+
 
 export async function POST(
   request: NextRequest,
@@ -11,13 +11,7 @@ export async function POST(
   try {
     const { tenantId } = await params;
     
-    // Validate tenant context
-    const tenantValidation = await validateTenantContext(request, {
-      requireAuth: false,
-      extractTenantId: () => tenantId
-    });
-
-    if (!tenantValidation.isValid || !tenantValidation.tenant) {
+    if (!tenantId) {
       return NextResponse.json(
         { error: 'Invalid tenant' },
         { status: 400 }
@@ -100,7 +94,6 @@ export async function POST(
     });
 
     if (authError && authError.message !== 'User already registered') {
-      console.error('Error creating Supabase user:', authError);
       return NextResponse.json(
         { error: 'Failed to create user session' },
         { status: 500 }
@@ -114,7 +107,6 @@ export async function POST(
     });
 
     if (sessionError) {
-      console.error('Error generating session:', sessionError);
       return NextResponse.json(
         { error: 'Failed to generate session' },
         { status: 500 }
@@ -157,8 +149,6 @@ export async function POST(
     return response;
 
   } catch (error) {
-    console.error('SAML callback error:', error);
-    
     // Redirect to login with error
     const errorUrl = new URL('/login', process.env.NEXT_PUBLIC_APP_URL!);
     errorUrl.searchParams.set('error', 'saml_authentication_failed');

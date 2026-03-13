@@ -311,7 +311,6 @@ export class RAGEvaluator {
         difficultyScores[goldQuery.difficulty].push(metrics.overallScore);
         
       } catch (error) {
-        console.error(`Evaluation failed for query ${goldQuery.id}:`, error);
         results.push({
           queryId: goldQuery.id,
           category: goldQuery.category,

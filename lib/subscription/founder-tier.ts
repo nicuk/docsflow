@@ -381,5 +381,5 @@ export function calculateFounderSustainability(
 
 // Example: 100 Founders over 5 years
 // const result = calculateFounderSustainability(100, 5);
-// Result: $299,900 + $329,700 - $310,800 = $318,800 profit ✅
+// Result: $299,900 + $329,700 - $310,800 = $318,800 profit
 

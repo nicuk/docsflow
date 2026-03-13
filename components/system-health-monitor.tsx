@@ -49,7 +49,6 @@ export function SystemHealthMonitor() {
         });
       }
     } catch (err) {
-      console.error('Circuit breaker control failed:', err);
       toast({
         title: 'Error',
         description: 'Failed to control circuit breaker',

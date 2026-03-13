@@ -83,7 +83,6 @@ export async function handleMetadataQuery(
       .eq('status', 'ready');
     
     if (error) {
-      console.error('❌ Error counting documents:', error);
       return {
         answer: "I encountered an error while counting your documents.",
         sources: [],
@@ -116,7 +115,6 @@ export async function handleMetadataQuery(
       .limit(50); // Limit to 50 to avoid overwhelming response
     
     if (error) {
-      console.error('❌ Error listing documents:', error);
       return {
         answer: "I encountered an error while listing your documents.",
         sources: [],

@@ -41,14 +41,12 @@ export default function ReferralDashboard({ userId, userEmail, referralCode }: R
 
   const loadStats = async () => {
     try {
-      // TODO: Call API to get stats
       const response = await fetch(`/api/referrals/stats?userId=${userId}`);
       if (response.ok) {
         const data = await response.json();
         setStats(data);
       }
     } catch (error) {
-      console.error('Error loading referral stats:', error);
     } finally {
       setLoading(false);
     }
@@ -60,7 +58,7 @@ export default function ReferralDashboard({ userId, userEmail, referralCode }: R
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error('Failed to copy:', error);
+      // Failed to copy
     }
   };
 

@@ -155,8 +155,7 @@ class AuditLogger {
    * Send to external logging service
    */
   private sendToLoggingService(entry: AuditLogEntry) {
-    // In production, integrate with your logging service
-    console.log('📋 AUDIT LOG:', JSON.stringify(entry, null, 2));
+    // In production, integrate with logging service (Datadog, CloudWatch, etc.)
   }
 
   /**
@@ -164,7 +163,6 @@ class AuditLogger {
    */
   private sendAlert(entry: AuditLogEntry) {
     // In production, send to alerting service (PagerDuty, Slack, etc.)
-    console.log('🚨 CRITICAL AUDIT ALERT:', JSON.stringify(entry, null, 2));
   }
 }
 

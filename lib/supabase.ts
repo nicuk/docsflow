@@ -31,7 +31,6 @@ export const createSupabaseClient = () => {
               cookieString += `; Expires=${options.expires.toUTCString()}`
             }
             
-            // 🔥 CRITICAL FIX: Force cross-subdomain domain for ALL Supabase auth cookies
             const domain = options?.domain || (process.env.NODE_ENV === 'production' ? '.docsflow.app' : undefined);
             if (domain) {
               cookieString += `; Domain=${domain}`
@@ -40,7 +39,6 @@ export const createSupabaseClient = () => {
             const path = options?.path || '/';
             cookieString += `; Path=${path}`
             
-            // 🔥 CRITICAL FIX: Force secure settings for production cross-subdomain cookies
             if (process.env.NODE_ENV === 'production' || options?.secure) {
               cookieString += '; Secure'
             }
@@ -52,7 +50,6 @@ export const createSupabaseClient = () => {
             const sameSite = options?.sameSite || 'lax';
             cookieString += `; SameSite=${sameSite}`
             
-            console.log(`🔍 [SUPABASE COOKIES] Setting cross-subdomain auth cookie: ${name}`);
             document.cookie = cookieString
           })
         },

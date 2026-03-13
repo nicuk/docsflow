@@ -65,8 +65,7 @@ export class ModelCostMonitor {
     // Check for alerts
     this.checkAlerts();
 
-    // Log usage
-    console.log(`💰 [COST MONITOR] ${model}: +${tokens} tokens ($${callCost.toFixed(4)}), total: $${existing.estimatedCost.toFixed(4)}`);
+
   }
 
   /**
@@ -129,10 +128,6 @@ export class ModelCostMonitor {
 
     if (!similarExists) {
       this.alerts.push(alert);
-      
-      // Log alert
-      const emoji = alert.severity === 'critical' ? '🚨' : alert.severity === 'warning' ? '⚠️' : 'ℹ️';
-      console.warn(`${emoji} [COST ALERT] ${alert.message}`);
     }
   }
 
@@ -185,42 +180,7 @@ export class ModelCostMonitor {
    * Log current statistics
    */
   logStatistics(): void {
-    const stats = this.getStatistics();
-
-    console.log('\n📊 ═══════════════════════════════════════════════');
-    console.log('   MODEL USAGE & COST STATISTICS');
-    console.log('   ═══════════════════════════════════════════════');
-    console.log(`   Total Calls:  ${stats.totalCalls}`);
-    console.log(`   Total Tokens: ${stats.totalTokens.toLocaleString()}`);
-    console.log(`   Total Cost:   $${stats.totalCost.toFixed(4)}`);
-    console.log('   ───────────────────────────────────────────────');
-    console.log('   Complexity Distribution:');
-    console.log(`   Simple:  ${stats.complexity.simple} (${((stats.complexity.simple/stats.totalCalls)*100).toFixed(1)}%)`);
-    console.log(`   Medium:  ${stats.complexity.medium} (${((stats.complexity.medium/stats.totalCalls)*100).toFixed(1)}%)`);
-    console.log(`   Complex: ${stats.complexity.complex} (${stats.complexity.complexPercentage.toFixed(1)}%)`);
-    
-    if (stats.complexity.complexPercentage > 10) {
-      console.log(`   ⚠️  Complex queries above 10% target!`);
-    } else {
-      console.log(`   ✅ Complex queries within budget`);
-    }
-    
-    console.log('   ───────────────────────────────────────────────');
-    console.log('   Top Models by Cost:');
-    stats.byModel.slice(0, 5).forEach(m => {
-      console.log(`   ${m.model}: $${m.estimatedCost.toFixed(4)} (${m.calls} calls)`);
-    });
-
-    if (stats.recentAlerts.length > 0) {
-      console.log('   ───────────────────────────────────────────────');
-      console.log('   Recent Alerts:');
-      stats.recentAlerts.forEach(alert => {
-        const emoji = alert.severity === 'critical' ? '🚨' : '⚠️';
-        console.log(`   ${emoji} ${alert.message}`);
-      });
-    }
-    
-    console.log('   ═══════════════════════════════════════════════\n');
+    // No-op: statistics available via getStatistics()
   }
 
   /**
@@ -229,7 +189,6 @@ export class ModelCostMonitor {
   reset(): void {
     this.usage.clear();
     this.alerts = [];
-    console.log('🔄 [COST MONITOR] Statistics reset');
   }
 }
 

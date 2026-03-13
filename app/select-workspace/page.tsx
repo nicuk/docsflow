@@ -35,8 +35,6 @@ export default function SelectWorkspacePage() {
         }
         
       } catch (error) {
-        console.error('[SELECT-WORKSPACE] Error:', error)
-        // Fallback to onboarding on any error
         window.location.replace('/onboarding')
       }
     }

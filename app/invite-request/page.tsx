@@ -47,7 +47,7 @@ function InviteRequestContent() {
           subdomain: data.suggestedSubdomain || subdomain || ''
         }));
       } catch (error) {
-        console.error('Error parsing invitation request data:', error);
+        // Invalid stored data
       }
     }
   }, [subdomain]);
@@ -69,7 +69,7 @@ function InviteRequestContent() {
         }
       }
     } catch (error) {
-      console.error('Error fetching tenant info:', error);
+      // Tenant lookup failed
     }
   };
 
@@ -109,7 +109,7 @@ function InviteRequestContent() {
       }
     } catch (error) {
       setError('Network error. Please try again.');
-      console.error('Invitation request error:', error);
+      // Network error handled above
     } finally {
       setIsLoading(false);
     }
@@ -154,7 +154,7 @@ function InviteRequestContent() {
         {/* Header */}
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <DocsFlowBrand size="sm" variant="horizontal" iconVariant="primary" />
+            <DocsFlowBrand size="sm" variant="horizontal" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Request Access

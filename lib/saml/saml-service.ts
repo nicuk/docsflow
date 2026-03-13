@@ -78,13 +78,11 @@ export class SAMLService {
         .single();
 
       if (error) {
-        console.error('Error fetching SAML config:', error);
         return null;
       }
 
       return data;
-    } catch (error) {
-      console.error('Error in getTenantSAMLConfig:', error);
+    } catch {
       return null;
     }
   }
@@ -105,13 +103,11 @@ export class SAMLService {
         .single();
 
       if (error) {
-        console.error('Error fetching SAML config by subdomain:', error);
         return null;
       }
 
       return data;
-    } catch (error) {
-      console.error('Error in getTenantSAMLConfigBySubdomain:', error);
+    } catch {
       return null;
     }
   }
@@ -132,7 +128,7 @@ export class SAMLService {
       allowUnencryptedAssertions: tenantConfig.allow_unencrypted_assertions,
     };
 
-    return new SAML(samlConfig);
+    return new SAML(samlConfig as any);
   }
 
   /**
@@ -148,17 +144,9 @@ export class SAMLService {
       const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/saml/callback/${tenantId}`;
       const saml = this.createSAMLInstance(tenantConfig, callbackUrl);
 
-      return new Promise((resolve, reject) => {
-        saml.getAuthorizeUrl(relayState || '', {}, (err, loginUrl) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(loginUrl || null);
-          }
-        });
-      });
-    } catch (error) {
-      console.error('Error generating SAML login URL:', error);
+      const loginUrl = await (saml as any).getAuthorizeUrlAsync(relayState || '', {});
+      return loginUrl || null;
+    } catch {
       return null;
     }
   }
@@ -179,17 +167,9 @@ export class SAMLService {
       const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/saml/callback/${tenantId}`;
       const saml = this.createSAMLInstance(tenantConfig, callbackUrl);
 
-      return new Promise((resolve, reject) => {
-        saml.validatePostResponse({ SAMLResponse: samlResponse }, (err, profile) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(profile as SAMLUserProfile);
-          }
-        });
-      });
-    } catch (error) {
-      console.error('Error validating SAML response:', error);
+      const result = await (saml as any).validatePostResponseAsync({ SAMLResponse: samlResponse });
+      return result?.profile as SAMLUserProfile || null;
+    } catch {
       return null;
     }
   }
@@ -310,7 +290,6 @@ export class SAMLService {
         return newUser;
       }
     } catch (error) {
-      console.error('Error provisioning user from SAML:', error);
       throw error;
     }
   }
@@ -328,9 +307,8 @@ export class SAMLService {
       const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/saml/callback/${tenantId}`;
       const saml = this.createSAMLInstance(tenantConfig, callbackUrl);
 
-      return saml.generateServiceProviderMetadata();
-    } catch (error) {
-      console.error('Error generating SP metadata:', error);
+      return (saml as any).generateServiceProviderMetadata(null, null);
+    } catch {
       return null;
     }
   }

@@ -42,7 +42,6 @@ export async function GET(request: NextRequest) {
     const { data: notifications, error } = await query;
 
     if (error) {
-      console.error('Error fetching notifications:', error);
       return NextResponse.json({
         success: false,
         error: 'Failed to fetch notifications'
@@ -67,7 +66,6 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error in notifications API:', error);
     return NextResponse.json({
       success: false,
       error: 'Internal server error'
@@ -108,7 +106,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Error creating notification:', error);
       return NextResponse.json({
         success: false,
         error: 'Failed to create notification'
@@ -121,7 +118,6 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error in create notification API:', error);
     return NextResponse.json({
       success: false,
       error: 'Internal server error'
@@ -169,7 +165,6 @@ export async function PATCH(request: NextRequest) {
     const { data, error } = await query.select('*');
 
     if (error) {
-      console.error('Error updating notifications:', error);
       return NextResponse.json({
         success: false,
         error: 'Failed to update notifications'
@@ -185,7 +180,6 @@ export async function PATCH(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error in update notifications API:', error);
     return NextResponse.json({
       success: false,
       error: 'Internal server error'

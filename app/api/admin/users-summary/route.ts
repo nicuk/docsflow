@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       .gte('last_login_at', thirtyDaysAgo.toISOString());
 
     if (activeError) {
-      console.warn('Active users query failed:', activeError);
+      // Non-critical: active users query failed
     }
 
     // Get admin count
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
       .eq('access_level', 1);
 
     if (adminError) {
-      console.warn('Admin count query failed:', adminError);
+      // Non-critical: admin count query failed
     }
 
     // Get pending invitations count
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
       .eq('status', 'pending');
 
     if (pendingError) {
-      console.warn('Pending invitations query failed:', pendingError);
+      // Non-critical: pending invitations query failed
     }
 
     const summary = {
@@ -91,7 +91,6 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Users summary error:', error);
     return NextResponse.json({ 
       error: 'Failed to fetch users summary',
       details: error instanceof Error ? error.message : 'Unknown error'

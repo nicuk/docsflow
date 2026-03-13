@@ -29,7 +29,6 @@ export async function DELETE(
       .single();
 
     if (tenantError || !tenant) {
-      console.error('Tenant lookup error:', tenantError);
       return NextResponse.json(
         { error: 'Tenant not found' },
         { status: 404 }
@@ -43,7 +42,6 @@ export async function DELETE(
       .eq('id', tenant.id);
 
     if (supabaseError) {
-      console.error('Supabase deletion error:', supabaseError);
       return NextResponse.json(
         { error: 'Failed to delete tenant from database' },
         { status: 500 }
@@ -64,15 +62,12 @@ export async function DELETE(
       undefined
     );
 
-    console.log(`✅ Deleted tenant: ${tenantId}`);
-
     return NextResponse.json({ 
       success: true, 
       message: 'Tenant deleted successfully' 
     });
 
   } catch (error) {
-    console.error('Delete API Error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

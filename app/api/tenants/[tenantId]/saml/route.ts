@@ -88,7 +88,6 @@ export async function GET(
       .single();
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-      console.error('Error fetching SAML config:', error);
       return NextResponse.json(
         { error: 'Failed to fetch SAML configuration' },
         { status: 500 }
@@ -100,7 +99,6 @@ export async function GET(
     });
 
   } catch (error) {
-    console.error('SAML config GET error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -234,7 +232,6 @@ export async function PUT(
         .single();
 
       if (error) {
-        console.error('Error updating SAML config:', error);
         return NextResponse.json(
           { error: 'Failed to update SAML configuration' },
           { status: 500 }
@@ -254,7 +251,6 @@ export async function PUT(
         .single();
 
       if (error) {
-        console.error('Error creating SAML config:', error);
         return NextResponse.json(
           { error: 'Failed to create SAML configuration' },
           { status: 500 }
@@ -269,7 +265,6 @@ export async function PUT(
     });
 
   } catch (error) {
-    console.error('SAML config PUT error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -339,7 +334,6 @@ export async function DELETE(
       .eq('tenant_id', tenantId);
 
     if (error) {
-      console.error('Error deleting SAML config:', error);
       return NextResponse.json(
         { error: 'Failed to delete SAML configuration' },
         { status: 500 }
@@ -351,7 +345,6 @@ export async function DELETE(
     });
 
   } catch (error) {
-    console.error('SAML config DELETE error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

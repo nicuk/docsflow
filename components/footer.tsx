@@ -9,7 +9,7 @@ export default function Footer() {
       <div className="container px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
-            <DocsFlowBrand size="sm" variant="horizontal" iconVariant="primary" />
+            <DocsFlowBrand size="sm" variant="horizontal" />
             <p className="text-sm text-muted-foreground">
               Enterprise-grade AI solutions for organizations that demand security, customization, and control.
             </p>

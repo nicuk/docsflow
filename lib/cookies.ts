@@ -35,7 +35,6 @@ export function setAuthCookies(accessToken: string, refreshToken: string, email:
   setCookie("user-email", email, 7);
   setCookie("onboarding-complete", "false", 7);
   
-  console.log("✅ Client-side auth cookies set");
 }
 
 export function clearAuthCookies() {
@@ -46,7 +45,6 @@ export function clearAuthCookies() {
   deleteCookie("user-email");
   deleteCookie("onboarding-complete");
   
-  console.log("🗑️ Auth cookies cleared");
 }
 
 export function getAuthState() {

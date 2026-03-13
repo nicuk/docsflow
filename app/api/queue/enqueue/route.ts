@@ -46,7 +46,6 @@ export async function POST(request: NextRequest) {
     
     // 3. Verify file path belongs to this tenant (security check)
     if (!file_path.startsWith(`${tenantId}/`)) {
-      console.error(`Security violation: User ${userId} attempted to enqueue job for path ${file_path}`);
       return NextResponse.json(
         { error: 'Invalid file path' },
         { status: 403 }
@@ -73,7 +72,6 @@ export async function POST(request: NextRequest) {
       });
     
     if (storageError || !fileExists || fileExists.length === 0) {
-      console.error('File not found in storage:', file_path);
       return NextResponse.json(
         { error: 'File not found in storage. Upload may have failed.' },
         { status: 400 }
@@ -97,7 +95,6 @@ export async function POST(request: NextRequest) {
       .single();
     
     if (docError) {
-      console.error('Error creating document record:', docError);
       // Continue anyway - worker can handle document creation
     }
     
@@ -123,7 +120,6 @@ export async function POST(request: NextRequest) {
       .single();
     
     if (jobError) {
-      console.error('Error creating job:', jobError);
       return NextResponse.json(
         { error: 'Failed to create processing job', details: jobError.message },
         { status: 500 }
@@ -136,13 +132,9 @@ export async function POST(request: NextRequest) {
       status: job.status
     };
     
-    console.log(`✅ Job ${job.id} enqueued for ${filename} (tenant: ${tenantId})`);
-    
     return NextResponse.json(response, { status: 201 });
     
   } catch (error) {
-    console.error('Error in enqueue route:', error);
-    
     return NextResponse.json(
       { 
         error: 'Internal server error',
@@ -203,7 +195,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(job, { status: 200 });
     
   } catch (error) {
-    console.error('Error fetching job:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

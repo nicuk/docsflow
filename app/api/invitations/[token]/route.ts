@@ -85,7 +85,6 @@ export async function GET(
       .maybeSingle();
 
     if (userError) {
-      console.error('Error checking existing user:', userError);
       return NextResponse.json({
         success: false,
         error: 'Failed to validate invitation'
@@ -117,7 +116,6 @@ export async function GET(
       .rpc('check_user_limit', { tenant_uuid: invitation.tenant_id });
 
     if (limitError) {
-      console.error('Error checking user limit:', limitError);
       return NextResponse.json({
         success: false,
         error: 'Failed to validate invitation'
@@ -181,7 +179,6 @@ export async function GET(
     });
 
   } catch (error) {
-    console.error('Error in get invitation API:', error);
     return NextResponse.json({
       success: false,
       error: 'Internal server error'

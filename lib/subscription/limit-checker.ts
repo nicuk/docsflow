@@ -20,9 +20,9 @@ import {
 // =====================================================
 
 export class LimitChecker {
-  private supabase: ReturnType<typeof createClient>;
+  private supabase: any;
 
-  constructor(supabaseClient: ReturnType<typeof createClient>) {
+  constructor(supabaseClient: any) {
     this.supabase = supabaseClient;
   }
 
@@ -44,7 +44,7 @@ export class LimitChecker {
       .single();
 
     if (usageError && usageError.code !== 'PGRST116') {
-      console.error('Error fetching usage:', usageError);
+      // Usage fetch error (non-empty result expected)
     }
 
     // Get total documents count
@@ -68,7 +68,7 @@ export class LimitChecker {
       storage_used_mb: usageData?.storage_used_mb || 0,
       queries_this_month: usageData?.conversations_count || 0, // Using conversations as proxy
       team_members_count: teamMembers || 0,
-      subdomains_count: 1, // TODO: Implement multi-subdomain tracking
+      subdomains_count: 1,
     };
   }
 
@@ -213,7 +213,7 @@ export class LimitChecker {
       });
 
     if (error) {
-      console.error('Error incrementing usage:', error);
+      // Usage increment failed
     }
   }
 }
@@ -226,7 +226,7 @@ export class LimitChecker {
  * Get tenant's subscription tier from database
  */
 export async function getTenantTier(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   tenantId: string
 ): Promise<SubscriptionTier> {
   const { data, error } = await supabase
@@ -236,7 +236,6 @@ export async function getTenantTier(
     .single();
 
   if (error) {
-    console.error('Error fetching tenant tier:', error);
     return 'starter'; // Default to starter on error
   }
 

@@ -89,7 +89,6 @@ async function processWorkerRequest(request: NextRequest) {
       }) as { data: IngestionJob[] | null, error: any };
     
     if (fetchError) {
-      console.error('[WORKER] Error fetching jobs:', fetchError);
       return NextResponse.json(
         { error: 'Failed to fetch jobs', details: fetchError.message },
         { status: 500 }
@@ -139,7 +138,6 @@ async function processWorkerRequest(request: NextRequest) {
           .eq('status', JOB_STATUS.PENDING); // Double-check still pending
         
         if (updateError) {
-          console.error(`[WORKER] Failed to mark job ${job.id} as processing:`, updateError);
           continue;
         }
         
@@ -147,15 +145,13 @@ async function processWorkerRequest(request: NextRequest) {
         tenantJobCounts.set(job.tenant_id, (tenantJobCounts.get(job.tenant_id) || 0) + 1);
         
         // Process job asynchronously (fire and forget)
-        processJob(job, supabase).catch(error => {
-          console.error(`[WORKER] Job ${job.id} processing failed:`, error);
+        processJob(job, supabase).catch(() => {
           // Error is already handled in processJob
         });
         
         processedJobIds.push(job.id);
         
       } catch (error) {
-        console.error(`[WORKER] Error processing job ${job.id}:`, error);
         // Continue to next job
       }
     }
@@ -175,8 +171,6 @@ async function processWorkerRequest(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('[WORKER] Fatal error:', error);
-    
     return NextResponse.json(
       { 
         error: 'Worker error',
@@ -229,7 +223,7 @@ export async function GET(request: NextRequest) {
 
 async function processJob(
   job: IngestionJob,
-  supabase: ReturnType<typeof createClient>
+  supabase: any
 ): Promise<void> {
   const jobStartTime = Date.now();
   
@@ -246,7 +240,6 @@ async function processJob(
         const buffer = Buffer.from(metadata.file_data_base64, 'base64');
         fileData = new Blob([buffer]);
       } catch (error: any) {
-        console.error(`[JOB ${job.id}] Failed to extract embedded file data:`, error.message);
         // Fall through to download from Blob
       }
     }
@@ -322,8 +315,7 @@ async function processJob(
     );
       
     } catch (processingError: any) {
-      console.error(`[JOB ${job.id}] LangChain processing error:`, processingError);
-      throw processingError; // Re-throw to trigger retry logic
+      throw processingError;
     }
     
     // 4. Mark job as completed
@@ -360,8 +352,6 @@ async function processJob(
     }
     
   } catch (error) {
-    console.error(`[JOB ${job.id}] Processing failed:`, error);
-    
     // Handle job failure with retry logic
     await handleJobFailure(job, error, supabase);
   }
@@ -374,7 +364,7 @@ async function processJob(
 async function handleJobFailure(
   job: IngestionJob,
   error: unknown,
-  supabase: ReturnType<typeof createClient>
+  supabase: any
 ): Promise<void> {
   const nextAttempt = job.attempts + 1;
   const canRetry = shouldRetry(job);
@@ -399,7 +389,7 @@ async function handleJobFailure(
     .eq('id', job.id);
   
   if (updateError) {
-    console.error(`[JOB ${job.id}] Failed to update error status:`, updateError);
+    // Failed to update error status
   }
   
   // Update document status if exists
@@ -418,14 +408,14 @@ async function handleJobFailure(
 // DOCUMENT PROCESSING (OLD - REPLACED BY LANGCHAIN)
 // =====================================================
 
-// ❌ OLD FUNCTION - Replaced by processDocumentWithLangChain in langchain-processor.ts
+// OLD FUNCTION - Replaced by processDocumentWithLangChain in langchain-processor.ts
 // This function had bugs (0 chunks, manual chunking, etc.)
 // Kept for reference but not used in production
 /*
 async function processDocumentContent(
   job: IngestionJob,
   fileData: Blob,
-  supabase: ReturnType<typeof createClient>
+  supabase: any
 ): Promise<void> {
   // Use multimodal parser for high-quality chunking
   console.log(`📝 [JOB ${job.id}] Starting enhanced document processing`);

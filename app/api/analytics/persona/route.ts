@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     
     if (type === 'comparison') {
       // Compare custom vs default persona performance
-      const comparison = await comparePersonaPerformance(tenantValidation.tenantId, days);
+      const comparison = await comparePersonaPerformance(tenantValidation.tenantId!, days);
       
       if (!comparison) {
         return NextResponse.json(
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Get overview analytics
-    const analytics = await getPersonaAnalytics(tenantValidation.tenantId, days);
+    const analytics = await getPersonaAnalytics(tenantValidation.tenantId!, days);
     
     if (!analytics) {
       return NextResponse.json(
@@ -73,7 +73,6 @@ export async function GET(request: NextRequest) {
     }, { headers: corsHeaders });
     
   } catch (error) {
-    console.error('Persona analytics error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch analytics' },
       { status: 500, headers: corsHeaders }

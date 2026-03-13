@@ -43,7 +43,7 @@ export const processDocumentWithLangChain = traceable(
   async function processDocumentWithLangChain(
     job: IngestionJob,
     fileData: Blob,
-    supabase: ReturnType<typeof createClient>
+    supabase: any
   ): Promise<void> {
   let tempFilePath: string | null = null;
   const totalStartTime = Date.now();
@@ -94,7 +94,6 @@ export const processDocumentWithLangChain = traceable(
           })];
           
         } catch (docxError: any) {
-          console.error(`[JOB ${job.id}] DOCX parsing failed:`, docxError.message);
           throw new Error(`DOCX parsing failed: ${docxError.message}. File may be corrupted or password-protected.`);
         }
       } else if (mimeType.includes('image/')) {
@@ -149,7 +148,6 @@ Return raw content only.`;
           
           if (!visionResponse.ok) {
             const errorText = await visionResponse.text();
-            console.error(`[JOB ${job.id}] Vision API error: ${errorText}`);
             throw new Error(`Gemini Vision API failed (${visionResponse.status}): ${errorText}`);
           }
           
@@ -198,8 +196,6 @@ Return raw content only.`;
       }
       
     } catch (loadError) {
-      console.error(`[JOB ${job.id}] Loading failed:`, loadError);
-      
       // Do not create fallback garbage!
       // Binary files (DOCX, PDF, images) will create garbage if read as UTF-8
       // Better to fail the job and let user know the file is corrupted
@@ -258,11 +254,10 @@ Return raw content only.`;
         .eq('id', job.document_id);
       
       if (updateError) {
-        console.error(`[JOB ${job.id}] Failed to save summary:`, updateError);
+        // Non-critical: summary save failed
       }
     } catch (summaryError) {
-      // Non-critical error - don't fail the job
-      console.error(`[JOB ${job.id}] Summary generation failed (non-critical):`, summaryError);
+      console.error(summaryError);
     }
     
     // Use our custom embeddings (OpenRouter-compatible)
@@ -295,7 +290,7 @@ Return raw content only.`;
       // Filter out complex objects from LangChain metadata
       const cleanMetadata: Record<string, string | number | boolean | string[]> = {};
       
-      for (const [key, value] of Object.entries(chunk.metadata)) {
+      for (const [key, value] of Object.entries(chunk.metadata as Record<string, any>)) {
         // Only include simple values (string, number, boolean, string[])
         if (
           typeof value === 'string' ||
@@ -358,8 +353,7 @@ Return raw content only.`;
     // Document status update is handled by route.ts after this function returns
     
   } catch (error) {
-    console.error(`[JOB ${job.id}] LangChain ingestion failed:`, error);
-    throw error; // Will trigger retry logic in route.ts
+    throw error;
   } finally {
     // Cleanup temp file
     if (tempFilePath) {

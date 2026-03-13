@@ -30,13 +30,10 @@ class JWTSessionBridge {
 
     // Listen for auth state changes
     this.supabase.auth.onAuthStateChange((event: string, session: any) => {
-      console.log(`🔍 [JWT-BRIDGE] Auth state change: ${event}`);
-      
       if (session?.access_token) {
         // Immediately cache token when session is available
         localStorage.setItem('jwt_access_token', session.access_token);
         localStorage.setItem('jwt_expires_at', session.expires_at?.toString() || '');
-        console.log('🔍 [JWT-BRIDGE] Token immediately cached on auth change');
         
         // Also cache tenant context if available in user metadata
         if (session.user?.user_metadata) {
@@ -48,7 +45,6 @@ class JWTSessionBridge {
               timestamp: Date.now()
             };
             localStorage.setItem('tenant_context', JSON.stringify(tenantContext));
-            console.log('🔍 [JWT-BRIDGE] Tenant context cached from user metadata');
           }
         }
       } else if (event === 'SIGNED_OUT') {
@@ -56,12 +52,10 @@ class JWTSessionBridge {
         localStorage.removeItem('jwt_access_token');
         localStorage.removeItem('jwt_expires_at');
         localStorage.removeItem('tenant_context');
-        console.log('🔍 [JWT-BRIDGE] Tokens cleared on logout');
       }
     });
 
     this.initialized = true;
-    console.log('🔍 [JWT-BRIDGE] Session watcher initialized');
   }
 
   // Force refresh token cache
@@ -74,11 +68,10 @@ class JWTSessionBridge {
       if (!error && session?.access_token) {
         localStorage.setItem('jwt_access_token', session.access_token);
         localStorage.setItem('jwt_expires_at', session.expires_at?.toString() || '');
-        console.log('🔍 [JWT-BRIDGE] Token cache refreshed manually');
         return true;
       }
     } catch (error) {
-      console.error('🔍 [JWT-BRIDGE] Failed to refresh token cache:', error);
+      console.error(error);
     }
     
     return false;
@@ -99,7 +92,6 @@ class JWTSessionBridge {
         // Clean expired tokens
         localStorage.removeItem('jwt_access_token');
         localStorage.removeItem('jwt_expires_at');
-        console.log('🔍 [JWT-BRIDGE] Expired token removed from cache');
       }
     }
 

@@ -50,8 +50,7 @@ export class SupabaseAuthProvider implements AuthProvider {
         tenantId: profile.tenant_id,
         metadata: user.user_metadata
       }
-    } catch (error) {
-      console.error('[SupabaseAuthProvider] getCurrentUser error:', error)
+    } catch {
       return null
     }
   }
@@ -122,8 +121,7 @@ export class SupabaseAuthProvider implements AuthProvider {
         accessToken: session.access_token,
         expiresAt: session.expires_at
       }
-    } catch (error) {
-      console.error('[SupabaseAuthProvider] getSession error:', error)
+    } catch {
       return null
     }
   }
@@ -146,8 +144,7 @@ export class SupabaseAuthProvider implements AuthProvider {
         accessToken: session.access_token,
         expiresAt: session.expires_at
       }
-    } catch (error) {
-      console.error('[SupabaseAuthProvider] refreshSession error:', error)
+    } catch {
       return null
     }
   }

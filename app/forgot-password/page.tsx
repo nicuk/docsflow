@@ -41,7 +41,6 @@ export default function ForgotPasswordPage() {
 
       setSuccess(true);
     } catch (error) {
-      console.error('Forgot password error:', error);
       setError(error instanceof Error ? error.message : 'Failed to send reset email');
     } finally {
       setIsLoading(false);

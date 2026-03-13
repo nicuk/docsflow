@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
 
   try {
-    // ❌ SKIP tenant validation since this is cross-domain call
+    // Skip tenant validation since this is cross-domain call
     // The frontend sends tenantId in body instead
     const { tenantId, prompt, currentPersona } = await request.json();
 
@@ -35,8 +35,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`🧠 Regenerating persona for tenant: ${tenantId}`);
-
     // Generate new persona using AI provider
     const personaResponse = await aiProvider.generatePersona(prompt);
     
@@ -49,7 +47,6 @@ export async function POST(request: NextRequest) {
     try {
       generatedPersona = JSON.parse(personaResponse);
     } catch (parseError) {
-      console.error('Failed to parse persona response:', parseError);
       throw new Error('Invalid persona format generated');
     }
 
@@ -58,18 +55,14 @@ export async function POST(request: NextRequest) {
     const industry = currentPersona?.industry || generatedPersona.industry || 'general';
     
     const score = scorePersona(generatedPersona, businessOverview, industry);
-    console.log(`📊 Generated persona quality score: ${score.overall}/10`);
-    console.log(`💡 Suggestions:`, score.suggestions);
     
     // If score is below 7, improve it
     let finalPersona = generatedPersona;
     if (score.overall < 7) {
-      console.log('🔧 Optimizing persona (score below 7)...');
       finalPersona = improvePersona(generatedPersona, score, businessOverview, industry);
       
       // Re-score after improvement
       const improvedScore = scorePersona(finalPersona, businessOverview, industry);
-      console.log(`✅ Optimized persona score: ${improvedScore.overall}/10`);
     }
     
     // Generate system prompts: create optimized RAG prompts from persona
@@ -105,7 +98,6 @@ export async function POST(request: NextRequest) {
     }, { headers: corsHeaders });
 
   } catch (error) {
-    console.error('❌ Persona regeneration error:', error);
     return NextResponse.json(
       { 
         error: 'Failed to regenerate persona',

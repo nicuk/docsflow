@@ -42,9 +42,7 @@ export async function GET(request: NextRequest) {
     }
 
     const tenantId = tenantValidation.tenantId!;
-    const tenantSubdomain = tenantValidation.tenantData?.subdomain || 'unknown';
-    console.log('Fetching documents for validated tenant:', tenantSubdomain, 'UUID:', tenantId);
-    
+
     // Authentication is handled by validateTenantContext
     // No need to set Supabase session - we query by tenant_id directly
     
@@ -66,7 +64,6 @@ export async function GET(request: NextRequest) {
       .limit(100);
 
     if (error) {
-      console.error('Documents fetch error:', error);
       return NextResponse.json(
         { error: 'Failed to fetch documents' }, 
         { status: 500, headers: corsHeaders }
@@ -79,7 +76,6 @@ export async function GET(request: NextRequest) {
     );
     
   } catch (error) {
-    console.error('Documents API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' }, 
       { status: 500, headers: corsHeaders }
@@ -148,7 +144,6 @@ export async function DELETE(request: NextRequest) {
       try {
         // Verify we have the Blob token
         if (!process.env.BLOB_READ_WRITE_TOKEN) {
-          console.error('❌ [DELETE] BLOB_READ_WRITE_TOKEN not found in environment variables');
           throw new Error('Blob storage not configured - missing token');
         }
         
@@ -156,11 +151,6 @@ export async function DELETE(request: NextRequest) {
         // Pass URL as string or array of URLs
         await del(storageUrl);
       } catch (storageError: any) {
-        console.error('❌ [DELETE] Error deleting file from Vercel Blob:', {
-          error: storageError.message,
-          stack: storageError.stack,
-          url: storageUrl,
-        });
         // Don't throw - continue with deletion of other resources
       }
     } else if (legacyStoragePath) {
@@ -170,7 +160,6 @@ export async function DELETE(request: NextRequest) {
         .remove([legacyStoragePath]);
       
       if (storageError) {
-        console.error('❌ [DELETE] Error deleting file from Supabase storage:', storageError);
         // Continue anyway - file might already be deleted
       }
     }
@@ -180,7 +169,6 @@ export async function DELETE(request: NextRequest) {
       const { deleteWorkflow } = await import('@/lib/rag');
       await deleteWorkflow({ documentId, tenantId });
     } catch (pineconeError) {
-      console.error('Error deleting from Pinecone:', pineconeError);
       // Continue anyway - vectors might not exist
     }
 
@@ -191,7 +179,6 @@ export async function DELETE(request: NextRequest) {
       .eq('document_id', documentId);
 
     if (jobsDeleteError) {
-      console.error('Error deleting ingestion jobs:', jobsDeleteError);
       // Continue anyway - jobs might not exist
     }
 
@@ -202,7 +189,6 @@ export async function DELETE(request: NextRequest) {
       .eq('document_id', documentId);
 
     if (chunksDeleteError) {
-      console.error('Error deleting document chunks:', chunksDeleteError);
       // Continue anyway - chunks might not exist
     }
 
@@ -214,7 +200,6 @@ export async function DELETE(request: NextRequest) {
       .eq('tenant_id', tenantId); // 🔒 CRITICAL: Ensure tenant isolation
 
     if (error) {
-      console.error('Delete error:', error);
       return NextResponse.json(
         { error: 'Failed to delete document' },
         { status: 500, headers: corsHeaders }
@@ -227,7 +212,6 @@ export async function DELETE(request: NextRequest) {
     }, { headers: corsHeaders });
 
   } catch (error) {
-    console.error('Delete API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: corsHeaders }

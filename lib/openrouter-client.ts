@@ -52,7 +52,6 @@ export class OpenRouterClient {
       const controller = new AbortController();
       const timeoutMs = options.timeout ?? 15000; // 15 second default timeout
       const timeoutId = setTimeout(() => {
-        console.warn(`⏰ [OPENROUTER] ${model} timeout after ${timeoutMs}ms`);
         controller.abort();
       }, timeoutMs);
 
@@ -89,10 +88,8 @@ export class OpenRouterClient {
     } catch (error) {
       // Handle timeout errors specifically
       if (error.name === 'AbortError') {
-        console.error(`⏰ [OPENROUTER] ${model} request timeout`);
         throw new Error(`OpenRouter timeout: ${model} took longer than ${options.timeout ?? 15000}ms`);
       }
-      console.error(`OpenRouter API call failed for model ${model}:`, error);
       throw error;
     }
   }
@@ -108,7 +105,6 @@ export class OpenRouterClient {
       const model = models[i];
       
       try {
-        console.log(`🤖 Attempting ${model} (attempt ${i + 1}/${models.length})`);
         const response = await this.generate(model, messages, options);
         
         return {
@@ -118,7 +114,6 @@ export class OpenRouterClient {
         };
       } catch (error) {
         lastError = error as Error;
-        console.warn(`❌ Model ${model} failed:`, error);
         
         // If this is the last model, throw the error
         if (i === models.length - 1) {

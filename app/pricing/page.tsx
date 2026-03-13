@@ -29,11 +29,9 @@ export default function PricingPage() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        console.error('Failed to create checkout session:', data.error);
         alert('Failed to start checkout. Please try again.');
       }
     } catch (error) {
-      console.error('Error starting checkout:', error);
       alert('Something went wrong. Please try again.');
     } finally {
       setIsLoading(null);

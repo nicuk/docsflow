@@ -41,7 +41,6 @@ export async function GET(request: NextRequest) {
       
     // If error and it's not "not found", return error
     if (error && error.code !== 'PGRST116') {
-      console.error('Database error fetching persona:', error);
       return NextResponse.json(
         { error: 'Failed to fetch persona' },
         { status: 500, headers: corsHeaders }
@@ -55,7 +54,6 @@ export async function GET(request: NextRequest) {
     }, { headers: corsHeaders });
     
   } catch (error) {
-    console.error('Persona GET error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: corsHeaders }
@@ -140,21 +138,17 @@ export async function POST(request: NextRequest) {
         confidence_threshold: confidence_threshold || 0.3,
         updated_at: new Date().toISOString()
       }, {
-        onConflict: 'tenant_id',
-        returning: 'representation'
+        onConflict: 'tenant_id'
       })
       .select()
       .single();
       
     if (error) {
-      console.error('Database error saving persona:', error);
       return NextResponse.json(
         { error: 'Failed to save persona' },
         { status: 500, headers: corsHeaders }
       );
     }
-    
-    console.log(`✅ Persona updated for tenant ${tenantValidation.tenantId}`);
     
     return NextResponse.json({ 
       success: true, 
@@ -163,7 +157,6 @@ export async function POST(request: NextRequest) {
     }, { headers: corsHeaders });
     
   } catch (error) {
-    console.error('Persona POST error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: corsHeaders }

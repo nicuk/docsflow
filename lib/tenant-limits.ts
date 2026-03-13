@@ -133,7 +133,6 @@ export async function checkTenantUserLimits(tenantId: string): Promise<{
       .rpc('check_user_limit', { tenant_uuid: tenantId });
 
     if (countError) {
-      console.error('Error checking user limit:', countError);
       return {
         success: false,
         current: 0,
@@ -157,8 +156,7 @@ export async function checkTenantUserLimits(tenantId: string): Promise<{
       plan
     };
 
-  } catch (error) {
-    console.error('Error in checkTenantUserLimits:', error);
+  } catch {
     return {
       success: false,
       current: 0,
@@ -201,7 +199,6 @@ export async function updateTenantPlan(
       .eq('id', tenantId);
 
     if (error) {
-      console.error('Error updating tenant plan:', error);
       return {
         success: false,
         error: 'Failed to update plan'
@@ -226,8 +223,7 @@ export async function updateTenantPlan(
       plan
     };
 
-  } catch (error) {
-    console.error('Error in updateTenantPlan:', error);
+  } catch {
     return {
       success: false,
       error: 'Internal error updating plan'
@@ -285,8 +281,7 @@ export async function validatePlanDowngrade(
         : `Cannot downgrade: You have ${limits.current} users but the ${newPlan.name} plan only allows ${newPlan.userLimit} users. Please remove ${limits.current - newPlan.userLimit} users first.`
     };
 
-  } catch (error) {
-    console.error('Error validating plan downgrade:', error);
+  } catch {
     return {
       canDowngrade: false,
       currentUsers: 0,

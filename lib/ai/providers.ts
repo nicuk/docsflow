@@ -14,7 +14,6 @@ const isTestEnvironment = Boolean(
 // Mock provider for development when no API key
 const mockProvider = {
   generatePersona: async (prompt: string) => {
-    console.log('🔄 Using mock AI provider (no GOOGLE_GENERATIVE_AI_API_KEY)');
     return JSON.stringify({
       role: "Business Intelligence Assistant",
       tone: "Professional and helpful",
@@ -62,8 +61,7 @@ const enhancedProvider = {
           }
         );
 
-        const result = await Promise.race([openRouterPromise, timeoutPromise]);
-        console.log(`🧠 Persona generated using ${result.modelUsed} (${result.fallbackCount} fallbacks)`);
+        const result = await Promise.race([openRouterPromise, timeoutPromise]) as any;
         
         // Parse and enhance the response
         const parsed = JSON.parse(result.response);
@@ -76,13 +74,12 @@ const enhancedProvider = {
         return JSON.stringify(enhancedResponse);
         
       } catch (openRouterError) {
-        console.warn('OpenRouter failed for persona generation, using Gemini fallback:', openRouterError);
         
         // Fallback to Gemini
         const generatePromise = generateText({
           model: google('gemini-2.0-pro'),
           prompt: messages.map(m => m.content).join('\n\n'),
-          maxTokens: 800,
+          maxOutputTokens: 800,
           temperature: 0.8,
         });
 
@@ -103,7 +100,6 @@ const enhancedProvider = {
       }
       
     } catch (error) {
-      console.error('Persona Generation Error:', error);
       throw error;
     }
   },
@@ -120,12 +116,9 @@ export const aiProvider = (() => {
   
   // If no API keys, use mock
   if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY && !process.env.OPENROUTER_API_KEY) {
-    console.warn('⚠️ No AI API keys found - using mock AI provider');
     return mockProvider;
   }
   
-  // Use enhanced provider with OpenRouter + Gemini
-  console.log('✅ Using enhanced AI provider (OpenRouter + Gemini fallback)');
   return enhancedProvider;
 })();
 

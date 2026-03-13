@@ -2,10 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
 import { getCORSHeaders } from '@/lib/utils';
-import { getSupabaseClient } from '@/lib/supabase';
 
 // SECURITY FIX: Use secure database service instead of direct service role
 import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
+
+function getSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin');
@@ -38,6 +44,12 @@ export async function GET(
 
     const tenantId = tenantValidation.tenantId!; // This is the UUID
     const supabase = getSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Configuration error' },
+        { status: 500, headers: corsHeaders }
+      );
+    }
     const conversationId = params.id;
 
     // Validate conversation ID format
@@ -124,7 +136,6 @@ export async function GET(
       .order('created_at', { ascending: true });
 
     if (msgError) {
-      console.error('Database error:', msgError);
       return NextResponse.json(
         { error: 'Failed to fetch messages' },
         { status: 500, headers: corsHeaders }
@@ -151,7 +162,6 @@ export async function GET(
     }, { headers: corsHeaders });
 
   } catch (error: any) {
-    console.error('Get conversation messages error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch conversation' },
       { status: 500, headers: corsHeaders }

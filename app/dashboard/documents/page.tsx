@@ -147,7 +147,7 @@ export default function DocumentsPage() {
         setDocuments(mappedDocuments)
       }
     } catch (error) {
-      console.error('Failed to fetch documents:', error)
+      console.error(error);
     } finally {
       setIsLoading(false)
     }
@@ -287,8 +287,6 @@ export default function DocumentsPage() {
       }
       
     } catch (error) {
-      console.error('Upload failed:', error)
-      
       // Show error phase with clear messaging
       setUploadingFiles((prev) => 
         prev.map((f) => 
@@ -358,15 +356,9 @@ export default function DocumentsPage() {
           // Continue polling if still processing
           if (newStatus === 'processing') {
             setTimeout(poll, 10000) // Poll every 10 seconds
-          } else {
-            console.log(`✅ Document ${documentId} finished with status: ${newStatus}`);
           }
-        } else {
-          // Document not found - stop polling
-          console.error(`❌ Document ${documentId} not found in backend`);
         }
       } catch (error) {
-        console.error('Status polling failed:', error)
         setDocuments((prev) => 
           prev.map((doc) => 
             doc.id === documentId 
@@ -392,12 +384,10 @@ export default function DocumentsPage() {
       const response = await apiClient.cleanupStuckDocuments();
       
       if (response) {
-        console.log(`✅ Cleaned up ${response.cleaned || 0} stuck documents`);
-        // Refresh the documents list
         fetchDocuments();
       }
     } catch (error) {
-      console.error('Cleanup request failed:', error);
+      console.error(error);
     }
   }
 
@@ -427,13 +417,10 @@ export default function DocumentsPage() {
       for (const docId of selectedDocuments) {
         await apiClient.deleteDocument(docId);
         deletedCount++;
-        console.log(`✅ Deleted ${deletedCount}/${totalDocuments} documents`);
         
         // Update UI incrementally for better UX
         setDocuments((prev) => prev.filter((doc) => doc.id !== docId));
       }
-      
-      console.log(`✅ Successfully deleted ${totalDocuments} documents`);
       
       setSelectedDocuments([]);
       setIsDeleteDialogOpen(false);
@@ -441,7 +428,6 @@ export default function DocumentsPage() {
       // Refresh the documents list to ensure sync
       fetchDocuments();
     } catch (error) {
-      console.error('Failed to delete documents:', error);
       alert('Some documents could not be deleted. Please try again.');
     } finally {
       setIsDeleting(false);

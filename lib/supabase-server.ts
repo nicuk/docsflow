@@ -14,11 +14,6 @@ export async function createClient() {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   
   if (!supabaseUrl || !supabaseKey) {
-    console.error('🚨 [SUPABASE-SERVER] Missing environment variables:', {
-      hasUrl: !!supabaseUrl,
-      hasKey: !!supabaseKey,
-      nodeEnv: process.env.NODE_ENV
-    });
     throw new Error(`Missing Supabase config: URL=${!!supabaseUrl}, KEY=${!!supabaseKey}`);
   }
 
@@ -35,10 +30,9 @@ export async function createClient() {
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
-              // CRITICAL FIX: Set domain to .docsflow.app for cross-subdomain cookies
               const cookieOptions = {
                 ...options,
-                domain: '.docsflow.app', // This allows cookies to work on bitto.docsflow.app AND api.docsflow.app
+                domain: '.docsflow.app',
                 secure: true,
                 sameSite: 'lax' as const
               }
@@ -69,10 +63,9 @@ export function createMiddlewareClient(request: NextRequest, response: NextRespo
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            // CRITICAL FIX: Set domain to .docsflow.app for cross-subdomain cookies
             const cookieOptions = {
               ...options,
-              domain: '.docsflow.app', // This allows cookies to work on bitto.docsflow.app AND api.docsflow.app
+              domain: '.docsflow.app',
               secure: true,
               sameSite: 'lax' as const
             }

@@ -28,8 +28,6 @@ export async function generateDocumentSummary(
 ): Promise<string> {
   const { text, filename, wordCount, mimeType } = input;
   
-  console.log(`📝 [Summarization] Generating summary for: ${filename} (${wordCount} words)`);
-  
   // Edge case: Empty or very short documents
   if (!text || text.trim().length < 50) {
     return `Empty or minimal content document: ${filename}`;
@@ -39,7 +37,6 @@ export async function generateDocumentSummary(
   if (wordCount < 100) {
     const truncated = text.slice(0, 200);
     const suffix = text.length > 200 ? '...' : '';
-    console.log(`✅ [Summarization] Short doc - using truncated content`);
     return truncated + suffix;
   }
   
@@ -76,21 +73,16 @@ Summary (1-2 sentences):`;
     const response = await llm.invoke(prompt);
     const summary = response.content.toString().trim();
     
-    console.log(`✅ [Summarization] Generated summary: "${summary.slice(0, 80)}..."`);
     return summary;
     
   } catch (error) {
-    console.error('❌ [Summarization] LLM failed:', error);
-    
     // Fallback: Use first sentence or first 200 chars
     const firstSentence = text.match(/[^.!?]+[.!?]+/)?.[0]?.trim();
     if (firstSentence && firstSentence.length < 300) {
-      console.log(`⚠️ [Summarization] Fallback - using first sentence`);
       return firstSentence;
     }
     
     const fallback = text.slice(0, 200) + '...';
-    console.log(`⚠️ [Summarization] Fallback - using truncated content`);
     return fallback;
   }
 }
@@ -143,8 +135,6 @@ export async function batchGenerateSummaries(
   const { concurrency = 3, onProgress } = options;
   const summaries = new Map<string, string>();
   
-  console.log(`📦 [Batch Summarization] Processing ${documents.length} documents (concurrency: ${concurrency})`);
-  
   // Process in batches
   for (let i = 0; i < documents.length; i += concurrency) {
     const batch = documents.slice(i, i + concurrency);
@@ -160,7 +150,6 @@ export async function batchGenerateSummaries(
           });
           return { id: doc.id, summary };
         } catch (error) {
-          console.error(`❌ Failed to summarize ${doc.filename}:`, error);
           return { id: doc.id, summary: `Document: ${doc.filename}` };
         }
       })
@@ -177,7 +166,6 @@ export async function batchGenerateSummaries(
       onProgress(completed, documents.length);
     }
     
-    console.log(`✅ [Batch Summarization] Completed ${completed}/${documents.length}`);
   }
   
   return summaries;

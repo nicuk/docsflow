@@ -89,7 +89,6 @@ export default function SAMLConfiguration({ tenantId, tenantSubdomain }: SAMLCon
         }
       }
     } catch (error) {
-      console.error('Error loading SAML config:', error)
       toast({
         title: "Error",
         description: "Failed to load SAML configuration",
@@ -161,7 +160,6 @@ export default function SAMLConfiguration({ tenantId, tenantSubdomain }: SAMLCon
         throw new Error(data.error || 'Failed to save configuration')
       }
     } catch (error) {
-      console.error('Error saving SAML config:', error)
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to save SAML configuration",
@@ -203,7 +201,6 @@ export default function SAMLConfiguration({ tenantId, tenantSubdomain }: SAMLCon
         throw new Error('Failed to download metadata')
       }
     } catch (error) {
-      console.error('Error downloading metadata:', error)
       toast({
         title: "Error",
         description: "Failed to download metadata",

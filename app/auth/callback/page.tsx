@@ -43,7 +43,6 @@ function AuthCallbackHandler() {
         const { data, error: oauthError } = await supabase.auth.exchangeCodeForSession(code);
 
         if (oauthError) {
-          console.error('Supabase OAuth error:', oauthError);
           setStatus('error');
           setMessage(oauthError.message || 'Failed to authenticate with Google');
           return;
@@ -114,14 +113,9 @@ function AuthCallbackHandler() {
         setMessage('Welcome back! Redirecting to your dashboard...');
         
         if (tenantSubdomain) {
-          console.log(`🔐 OAuth callback: Redirecting existing user to tenant subdomain: ${tenantSubdomain}`);
-          
-          // Set cookies with verification
           const setCookieAndVerify = (name: string, value: string) => {
             document.cookie = `${name}=${value}; path=/; domain=.docsflow.app; secure; samesite=strict`;
-            // Verify cookie was set
             const cookieSet = document.cookie.includes(`${name}=${value}`);
-            console.log(`🍪 Cookie ${name}: ${cookieSet ? 'SET' : 'FAILED'}`);
             return cookieSet;
           };
           
@@ -130,25 +124,19 @@ function AuthCallbackHandler() {
           const emailCookieSet = setCookieAndVerify('user-email', existingUser.email);
           
           if (tenantCookieSet && emailCookieSet) {
-            console.log(`✅ All cookies verified, redirecting to: https://${tenantSubdomain}.docsflow.app/dashboard`);
-            // Immediate redirect since cookies are verified
             window.location.href = `https://${tenantSubdomain}.docsflow.app/dashboard`;
           } else {
-            console.error('❌ Cookie setting failed, extending timeout');
             setTimeout(() => {
               window.location.href = `https://${tenantSubdomain}.docsflow.app/dashboard`;
             }, 3000); // Extended timeout if cookies failed
           }
         } else {
-          // No tenant subdomain found - this shouldn't happen for existing users
-          console.error('🚨 Existing user has no tenant subdomain:', existingUser);
           setTimeout(() => {
             router.push('/onboarding'); // Force re-onboarding if no tenant
           }, 1500);
         }
 
       } catch (error) {
-        console.error('OAuth callback error:', error);
         setStatus('error');
         setMessage('Authentication processing failed');
       }

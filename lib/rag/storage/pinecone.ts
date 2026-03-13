@@ -46,9 +46,6 @@ class PineconeStorage implements VectorStorage {
    */
   async query(input: QueryInput): Promise<QueryResult[]> {
     try {
-      const searchType = input.sparseVector ? 'HYBRID' : 'DENSE';
-      console.log(`[Pinecone] ${searchType} querying namespace: ${input.namespace}, topK: ${input.topK}`);
-      
       // Build query params
       const queryParams: any = {
         vector: input.vector,
@@ -60,8 +57,6 @@ class PineconeStorage implements VectorStorage {
       // Add sparse vector for hybrid search
       if (input.sparseVector && input.sparseVector.indices.length > 0) {
         queryParams.sparseVector = input.sparseVector;
-        
-        console.log(`[Pinecone] Hybrid search enabled (sparse terms: ${input.sparseVector.indices.length})`);
       }
       
       const response = await this.index.namespace(input.namespace).query(queryParams);
@@ -72,11 +67,8 @@ class PineconeStorage implements VectorStorage {
         metadata: match.metadata as any,
       }));
       
-      console.log(`[Pinecone] Found ${results.length} results`);
-      
       return results;
     } catch (error: any) {
-      console.error('[Pinecone] Query error:', error);
       throw new StorageError(`Pinecone query failed: ${error.message}`, {
         namespace: input.namespace,
         topK: input.topK,
@@ -89,20 +81,12 @@ class PineconeStorage implements VectorStorage {
    */
   async upsert(input: UpsertInput): Promise<UpsertResult> {
     try {
-      const hasHybrid = input.vectors.some(v => v.sparseValues);
-      const vectorType = hasHybrid ? 'HYBRID (dense + sparse)' : 'DENSE only';
-      
-      console.log(`[Pinecone] Upserting ${input.vectors.length} ${vectorType} vectors to namespace: ${input.namespace}`);
-      
       await this.index.namespace(input.namespace).upsert(input.vectors);
-      
-      console.log(`[Pinecone] Successfully upserted ${input.vectors.length} vectors`);
       
       return {
         upsertedCount: input.vectors.length,
       };
     } catch (error: any) {
-      console.error('[Pinecone] Upsert error:', error);
       throw new StorageError(`Pinecone upsert failed: ${error.message}`, {
         namespace: input.namespace,
         vectorCount: input.vectors.length,
@@ -115,21 +99,16 @@ class PineconeStorage implements VectorStorage {
    */
   async delete(input: DeleteInput): Promise<DeleteResult> {
     try {
-      console.log(`[Pinecone] Deleting from namespace: ${input.namespace}`);
-      
       if (input.ids && input.ids.length > 0) {
         await this.index.namespace(input.namespace).deleteMany(input.ids);
-        console.log(`[Pinecone] Deleted ${input.ids.length} vectors by ID`);
         return { deletedCount: input.ids.length };
       } else if (input.filter) {
         await this.index.namespace(input.namespace).deleteMany(input.filter);
-        console.log(`[Pinecone] Deleted vectors by filter`);
         return {};
       } else {
         throw new StorageError('Delete requires either ids or filter');
       }
     } catch (error: any) {
-      console.error('[Pinecone] Delete error:', error);
       throw new StorageError(`Pinecone delete failed: ${error.message}`, {
         namespace: input.namespace,
       });
@@ -144,7 +123,6 @@ class PineconeStorage implements VectorStorage {
       await this.index.describeIndexStats();
       return true;
     } catch (error) {
-      console.error('[Pinecone] Health check failed:', error);
       return false;
     }
   }

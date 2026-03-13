@@ -45,8 +45,7 @@ export async function getUserAccessLevel(request: NextRequest, tenantId: string)
     }
 
     return userData.access_level || 1;
-  } catch (error) {
-    console.error('Error getting user access level:', error);
+  } catch {
     return 1; // Default to lowest access level on error
   }
 }
@@ -62,13 +61,11 @@ export async function getTenantFromSubdomain(subdomain: string) {
       .single();
 
     if (error) {
-      console.error('Error fetching tenant:', error);
       return null;
     }
 
     return tenant;
-  } catch (error) {
-    console.error('Error in getTenantFromSubdomain:', error);
+  } catch {
     return null;
   }
 }

@@ -38,9 +38,6 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Queue the file for background processing
-    console.log(`[Documents Upload] Queuing file for background processing: ${file.name}`);
-    
     // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
@@ -64,8 +61,6 @@ export async function POST(request: NextRequest) {
       throw new Error(`Failed to upload file to storage: ${uploadError.message}`);
     }
     
-    console.log(`[Documents Upload] File uploaded to storage: ${filePath}`);
-    
     // 2. Create document record with "queued" status
     const { SecureDocumentService } = await import('@/lib/secure-database');
     
@@ -84,7 +79,7 @@ export async function POST(request: NextRequest) {
         storage_path: filePath,
         queued_at: new Date().toISOString()
       }
-      // ❌ REMOVED: parse_method, has_tables, has_images (don't exist)
+      // Removed: parse_method, has_tables, has_images (don't exist in schema)
     });
     
     if (!document) {
@@ -107,7 +102,7 @@ export async function POST(request: NextRequest) {
         attempts: 0,
         max_attempts: 3,
         processing_metadata: {
-          use_multimodal: isFeatureEnabled('MULTIMODAL_PARSING', tenantId),
+          use_multimodal: false,
           created_at: new Date().toISOString()
         }
       })
@@ -121,11 +116,7 @@ export async function POST(request: NextRequest) {
       throw new Error(`Failed to create ingestion job: ${jobError.message}`);
     }
     
-    console.log(`[Documents Upload] Job created: ${job.id}`);
-    
-    // Track metrics
     const duration = Date.now() - startTime;
-    console.log(`[Documents Upload] Upload completed in ${duration}ms`);
     
     // Return success response immediately (frontend-compatible format)
     return NextResponse.json({
@@ -145,14 +136,6 @@ export async function POST(request: NextRequest) {
     });
     
   } catch (error) {
-    const duration = Date.now() - startTime;
-    
-    // Track error
-    const tenantId = request.headers.get('x-tenant-id') || 'unknown';
-    // REMOVED: Old RAG monitoring (archived)
-    // trackParseOperation(tenantId, duration, false, 'basic', 'unknown');
-    console.error(`[Documents Upload] Error after ${duration}ms:`, error);
-    
     return NextResponse.json(
       { 
         error: 'Failed to upload document',

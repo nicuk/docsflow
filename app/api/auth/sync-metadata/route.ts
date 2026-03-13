@@ -33,12 +33,6 @@ export async function POST(request: NextRequest) {
 
     const userEmail = user.emailAddresses[0]?.emailAddress || '';
 
-    console.log('🔄 [METADATA SYNC] Starting sync for:', {
-      userId,
-      email: userEmail,
-      subdomain,
-    });
-
     // Initialize Supabase with service role
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -59,7 +53,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (tenantError || !tenant) {
-      console.error('❌ [METADATA SYNC] Tenant not found:', tenantError);
       return NextResponse.json(
         { error: 'Tenant not found for subdomain' },
         { status: 404 }
@@ -75,19 +68,11 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (userError || !dbUser) {
-      console.error('❌ [METADATA SYNC] User not found in tenant:', userError);
       return NextResponse.json(
         { error: 'User not found in this tenant' },
         { status: 404 }
       );
     }
-
-    console.log('✅ [METADATA SYNC] Found user and tenant:', {
-      tenantId: tenant.id,
-      tenantName: tenant.name,
-      userRole: dbUser.role,
-      accessLevel: dbUser.access_level,
-    });
 
     // Update user metadata with correct tenant info
     const clerk = await clerkClient();
@@ -104,8 +89,6 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    console.log('✅ [METADATA SYNC] Clerk metadata updated successfully');
-
     return NextResponse.json({
       success: true,
       tenant: {
@@ -120,7 +103,6 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ [METADATA SYNC] Error:', error);
     return NextResponse.json(
       { 
         error: error instanceof Error ? error.message : 'Metadata sync failed',

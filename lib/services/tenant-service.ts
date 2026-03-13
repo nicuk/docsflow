@@ -43,7 +43,6 @@ export class TenantService {
         .single();
 
       if (error || !tenant) {
-        console.warn(`🏢 [TENANT-SERVICE] Tenant not found: ${subdomain}`);
         return {
           isValid: false,
           error: 'Tenant not found',
@@ -53,7 +52,6 @@ export class TenantService {
 
       // Validate tenant status
       if (tenant.status !== 'active') {
-        console.warn(`🏢 [TENANT-SERVICE] Tenant inactive: ${subdomain}`);
         return {
           isValid: false,
           error: 'Tenant not active',
@@ -64,14 +62,12 @@ export class TenantService {
       // Cache successful result
       this.setCachedTenant(subdomain, tenant);
 
-      console.log(`✅ [TENANT-SERVICE] Tenant validated: ${subdomain}`);
       return {
         isValid: true,
         tenant: tenant
       };
 
-    } catch (error) {
-      console.error(`❌ [TENANT-SERVICE] Validation error for ${subdomain}:`, error);
+    } catch {
       return {
         isValid: false,
         error: 'Tenant validation failed',
@@ -121,8 +117,7 @@ export class TenantService {
       }
 
       return tenant;
-    } catch (error) {
-      console.error(`❌ [TENANT-SERVICE] Get by ID error:`, error);
+    } catch {
       return null;
     }
   }

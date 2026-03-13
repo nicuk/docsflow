@@ -94,7 +94,6 @@ export class ROICalculator {
     const rateSlider = document.getElementById('rateSlider') as HTMLInputElement;
 
     if (!hoursSlider || !rateSlider) {
-      console.warn('ROI Calculator: Required slider elements not found');
       return;
     }
 

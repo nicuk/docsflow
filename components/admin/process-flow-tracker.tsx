@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -84,6 +85,7 @@ interface ProcessMetrics {
 }
 
 export default function ProcessFlowTracker() {
+  const { user, tenant } = useAuth();
   const [metrics, setMetrics] = useState<ProcessMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -91,11 +93,12 @@ export default function ProcessFlowTracker() {
   const [jobCount, setJobCount] = useState(0);
 
   useEffect(() => {
-    loadMetrics();
+    if (user && tenant) {
+      loadMetrics();
+    }
     
     // Listen for upload events to trigger refresh
     const handleUploadComplete = () => {
-      console.log('[Process Tracker] Upload detected, refreshing metrics...');
       loadMetrics();
     };
     
@@ -106,12 +109,18 @@ export default function ProcessFlowTracker() {
       window.removeEventListener('documentUploaded', handleUploadComplete);
       window.removeEventListener('documentProcessed', handleUploadComplete);
     };
-  }, []);
+  }, [user, tenant]);
 
   const loadMetrics = async () => {
+    if (!user?.id || !tenant?.id) return;
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/process-metrics');
+      const response = await fetch('/api/admin/process-metrics', {
+        headers: {
+          'x-tenant-id': tenant.id,
+          'x-user-id': user.id,
+        },
+      });
       
       if (response.ok) {
         const data = await response.json();
@@ -121,7 +130,6 @@ export default function ProcessFlowTracker() {
         setLastUpdated(new Date());
       } else {
         // Mock data for development
-        console.warn('[Process Tracker] API failed, using mock data');
         setMetrics({
           upload: { avg: 1500, max: 3000, successRate: 98, recentJobs: 45 },
           vision_ocr: { avg: 8500, max: 58000, successRate: 92, slowJobs: 12 },
@@ -137,7 +145,6 @@ export default function ProcessFlowTracker() {
         setLastUpdated(new Date());
       }
     } catch (error) {
-      console.error('Failed to load process metrics:', error);
       setHasRealData(false);
     } finally {
       setLoading(false);

@@ -308,7 +308,6 @@ export default function SettingsPage() {
       title: "Profile updated",
       description: "Your profile information has been updated successfully.",
     })
-    console.log(data)
   }
 
   // Handle password form submission
@@ -317,7 +316,6 @@ export default function SettingsPage() {
       title: "Password changed",
       description: "Your password has been changed successfully.",
     })
-    console.log(data)
     passwordForm.reset()
   }
 
@@ -327,7 +325,6 @@ export default function SettingsPage() {
       title: "Webhook created",
       description: "Your webhook has been created successfully.",
     })
-    console.log(data)
     webhookForm.reset()
   }
 

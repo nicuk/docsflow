@@ -40,7 +40,6 @@ export function useConversations(tenantId?: string) {
     retry: (failureCount, error) => {
       // Retry auth errors up to 3 times with backoff
       if (error && (error as any).name === 'AuthError' && failureCount < 3) {
-        console.log(`[CONVERSATIONS] Retrying due to auth error (attempt ${failureCount + 1}/3)`);
         return true;
       }
       return false;

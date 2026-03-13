@@ -122,7 +122,6 @@ class AuthClient {
   // Get access token from unified Supabase session
   async getAccessToken(): Promise<string | null> {
     try {
-      // CRITICAL FIX: Get token from active Supabase session using SSR client
       const { createClient } = await import('@/lib/supabase-browser');
       const supabase = createClient();
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -143,8 +142,7 @@ class AuthClient {
     try {
       const userStr = typeof localStorage !== 'undefined' ? localStorage.getItem('user') : null;
       return userStr ? JSON.parse(userStr) : null;
-    } catch (error) {
-      console.error('Error parsing stored user data:', error);
+    } catch {
       return null;
     }
   }
@@ -176,8 +174,7 @@ class AuthClient {
       // For now, just validate current token is still valid
       const user = this.getCurrentUser();
       return !!user;
-    } catch (error) {
-      console.error('Token refresh failed:', error);
+    } catch {
       return false;
     }
   }
@@ -326,8 +323,7 @@ class AuthClient {
       // Generate state for CSRF protection
       const state = Math.random().toString(36).substring(2, 15);
       return { authUrl: data.url || '', state };
-    } catch (error) {
-      console.error('Supabase Google OAuth initiation failed:', error);
+    } catch {
       throw new Error('Failed to initiate Google sign-in');
     }
   }
@@ -365,7 +361,6 @@ class AuthClient {
   // Redirect to Google OAuth using Supabase
   async signInWithGoogle(): Promise<void> {
     try {
-      // CRITICAL FIX: Store current subdomain before OAuth redirect
       const hostname = window.location.hostname;
       const parts = hostname.split('.');
       const isSubdomain = parts.length > 2 || (parts.length === 2 && !parts[0].includes('localhost'));
@@ -398,12 +393,10 @@ class AuthClient {
       });
       
       if (error) {
-        console.error('Google OAuth error:', error);
         throw new Error('Failed to initiate Google sign-in');
       }
       
-    } catch (error) {
-      console.error('Google OAuth error:', error);
+    } catch {
       throw new Error('Failed to initiate Google sign-in');
     }
   }
@@ -419,7 +412,7 @@ class AuthClient {
     const response = await fetch(`${this.baseUrl}/api/chat`, {
       method: 'POST',
       headers: {
-        ...(await this.getAuthHeaders()), // CRITICAL FIX: Await the async function
+        ...(await this.getAuthHeaders()),
         'X-Tenant-Subdomain': tenantSubdomain
       },
       body: JSON.stringify({

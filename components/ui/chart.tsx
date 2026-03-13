@@ -5,6 +5,7 @@ import * as React from "react"
 // import { AreaChart, BarChart, LineChart } from "recharts"
 
 import { cn } from "@/lib/utils"
+import { Card, CardContent } from "@/components/ui/card"
 
 // Enterprise-grade chart configuration
 export type ChartConfig = {

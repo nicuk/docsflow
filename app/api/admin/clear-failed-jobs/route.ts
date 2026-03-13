@@ -33,16 +33,10 @@ export async function GET(request: NextRequest) {
       .in('status', ['failed', 'error']);
     
     if (findError) {
-      console.error('[Clear Failed Jobs] Error finding jobs:', findError);
       return NextResponse.json({ error: findError.message }, { status: 500 });
     }
     
     const count = failedJobs?.length || 0;
-    
-    console.log(`[Clear Failed Jobs] Found ${count} failed jobs`);
-    failedJobs?.forEach(job => {
-      console.log(`   - ${job.id}: ${job.filename} (${job.status})`);
-    });
     
     if (count === 0) {
       return NextResponse.json({ 
@@ -58,11 +52,8 @@ export async function GET(request: NextRequest) {
       .in('status', ['failed', 'error']);
     
     if (deleteError) {
-      console.error('[Clear Failed Jobs] Error deleting:', deleteError);
       return NextResponse.json({ error: deleteError.message }, { status: 500 });
     }
-    
-    console.log(`[Clear Failed Jobs] ✅ Deleted ${count} failed jobs`);
     
     return NextResponse.json({
       message: `Deleted ${count} failed jobs`,
@@ -71,7 +62,6 @@ export async function GET(request: NextRequest) {
     });
     
   } catch (error: any) {
-    console.error('[Clear Failed Jobs] Error:', error);
     return NextResponse.json({ 
       error: error.message 
     }, { status: 500 });

@@ -58,8 +58,8 @@ const PLAN_LIMITS: Record<string, UsageLimits> = {
   },
 };
 
-function getSupabaseClient() {
-  const cookieStore = cookies();
+async function getSupabaseClient() {
+  const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -85,7 +85,7 @@ export async function enforceSubscriptionLimits(
   action: 'document_upload' | 'conversation' | 'user_invite' | 'subdomain_create'
 ): Promise<UsageCheck> {
   try {
-    const supabase = getSupabaseClient();
+    const supabase = await getSupabaseClient();
 
     // Get tenant plan
     const { data: tenant, error: tenantError } = await supabase
@@ -135,7 +135,6 @@ export async function enforceSubscriptionLimits(
         };
     }
   } catch (error) {
-    console.error('Error enforcing subscription limits:', error);
     return {
       allowed: false,
       current: 0,
@@ -161,7 +160,6 @@ async function checkDocumentLimit(
     .neq('processing_status', 'error');
 
   if (error) {
-    console.error('Error checking document limit:', error);
     return {
       allowed: false,
       current: 0,
@@ -205,7 +203,6 @@ async function checkConversationLimit(
     .gte('created_at', startOfMonth.toISOString());
 
   if (error) {
-    console.error('Error checking conversation limit:', error);
     return {
       allowed: false,
       current: 0,
@@ -250,7 +247,6 @@ async function checkUserLimit(
     .eq('tenant_id', tenantId);
 
   if (error) {
-    console.error('Error checking user limit:', error);
     return {
       allowed: false,
       current: 0,
@@ -314,7 +310,7 @@ export async function trackUsage(
   amount: number = 1
 ): Promise<void> {
   try {
-    const supabase = getSupabaseClient();
+    const supabase = await getSupabaseClient();
 
     // Get current month period
     const now = new Date();
@@ -343,10 +339,8 @@ export async function trackUsage(
       // PGRST116 = no rows returned, which is fine
       // PGRST204 = column not found (table might not exist)
       if (fetchError.code === 'PGRST204') {
-        console.warn('⚠️ usage_tracking table missing or outdated schema. Run database/create-usage-tracking-table.sql');
         return;
       }
-      console.error('Error fetching usage:', fetchError);
       return;
     }
 
@@ -361,13 +355,7 @@ export async function trackUsage(
         .eq('id', existing.id);
 
       if (updateError) {
-        if (updateError.code === 'PGRST204') {
-          console.warn('⚠️ usage_tracking table schema outdated. Run database/create-usage-tracking-table.sql');
-        } else {
-          console.error('Error updating usage:', updateError);
-        }
-      } else {
-        console.log(`✅ Updated usage for ${tenantId}: ${column} += ${amount}`);
+        // Error updating usage
       }
     } else {
       // Create new record
@@ -381,17 +369,11 @@ export async function trackUsage(
         });
 
       if (insertError) {
-        if (insertError.code === 'PGRST204') {
-          console.warn('⚠️ usage_tracking table missing. Run database/create-usage-tracking-table.sql');
-        } else {
-          console.error('Error inserting usage:', insertError);
-        }
-      } else {
-        console.log(`✅ Created usage record for ${tenantId}: ${column} = ${amount}`);
+        // Error inserting usage
       }
     }
   } catch (error) {
-    console.error('Error in trackUsage:', error);
+    // Error in trackUsage
   }
 }
 
@@ -403,7 +385,7 @@ export async function getCurrentUsage(tenantId: string): Promise<{
   users: number;
 }> {
   try {
-    const supabase = getSupabaseClient();
+    const supabase = await getSupabaseClient();
 
     // Get document count
     const { data: documents } = await supabase
@@ -445,7 +427,6 @@ export async function getCurrentUsage(tenantId: string): Promise<{
       users: users?.length || 0,
     };
   } catch (error) {
-    console.error('Error getting current usage:', error);
     return {
       documents: 0,
       conversations: 0,

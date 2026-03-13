@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
 
   try {
-    // ❌ SKIP tenant validation since this is cross-domain call
+    // Skip tenant validation since this is cross-domain call
     // The frontend sends tenantId in body instead
     const { tenantId, customPersona } = await request.json();
 
@@ -31,8 +31,6 @@ export async function POST(request: NextRequest) {
         { status: 400, headers: corsHeaders }
       );
     }
-
-    console.log(`📝 Updating persona for tenant: ${tenantId}`);
 
     // Initialize Supabase client
     const supabase = createClient(
@@ -52,11 +50,8 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('❌ Database error updating persona:', error);
       throw new Error('Failed to update persona in database');
     }
-
-    console.log('✅ Persona updated successfully for tenant:', tenantId);
 
     return NextResponse.json({
       success: true,
@@ -64,7 +59,6 @@ export async function POST(request: NextRequest) {
     }, { headers: corsHeaders });
 
   } catch (error) {
-    console.error('❌ Update persona error:', error);
     return NextResponse.json(
       { 
         error: 'Failed to update persona',

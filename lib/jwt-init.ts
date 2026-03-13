@@ -6,20 +6,11 @@
 
 // Initialize JWT Bridge immediately when this module loads
 if (typeof window !== 'undefined') {
-  console.log('🔍 [JWT-INIT] Initializing JWT Session Bridge...');
-  
   // Dynamic import to avoid SSR issues
   import('@/lib/jwt-session-bridge').then(({ jwtBridge }) => {
-    // Force a refresh of the token cache on app start
-    jwtBridge.refreshTokenCache().then((success) => {
-      if (success) {
-        console.log('🔍 [JWT-INIT] Initial token cache populated successfully');
-      } else {
-        console.log('🔍 [JWT-INIT] No active session found during initialization');
-      }
-    });
-  }).catch((error) => {
-    console.error('🔍 [JWT-INIT] Failed to initialize JWT bridge:', error);
+    jwtBridge.refreshTokenCache();
+  }).catch(() => {
+    // JWT bridge initialization failed
   });
 }
 
@@ -30,8 +21,7 @@ export const initializeJWTBridge = async (): Promise<boolean> => {
   try {
     const { jwtBridge } = await import('@/lib/jwt-session-bridge');
     return await jwtBridge.refreshTokenCache();
-  } catch (error) {
-    console.error('🔍 [JWT-INIT] Manual initialization failed:', error);
+  } catch {
     return false;
   }
 };

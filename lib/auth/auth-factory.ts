@@ -24,13 +24,9 @@ export function getAuthProvider(): AuthProvider {
   const useClerk = process.env.NEXT_PUBLIC_USE_CLERK === 'true'
   
   if (useClerk) {
-    // Clerk implementation ready for testing
     authProviderInstance = new ClerkAuthProvider()
-    console.log(`[AuthFactory] Using Clerk auth provider`)
   } else {
-    // Default to Supabase (existing working implementation)
     authProviderInstance = new SupabaseAuthProvider()
-    console.log(`[AuthFactory] Using Supabase auth provider`)
   }
   
   return authProviderInstance

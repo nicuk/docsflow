@@ -61,7 +61,6 @@ export class UnifiedAuth {
       const { data: { session }, error } = await this.supabase.auth.getSession();
       
       if (error) {
-        console.warn('🔐 [UNIFIED-AUTH] Session error:', error.message);
         this.updateState({ user: null, session: null, isLoading: false, isAuthenticated: false });
         return this.currentState;
       }
@@ -80,8 +79,6 @@ export class UnifiedAuth {
 
       // Set up auth state listener (Supabase handles all session management)
       this.supabase.auth.onAuthStateChange(async (event, session) => {
-        console.log(`🔐 [UNIFIED-AUTH] Auth state change: ${event}`);
-        
         if (session) {
           const user = await this.fetchUserProfile(session.user);
           this.updateState({
@@ -97,7 +94,6 @@ export class UnifiedAuth {
 
       return this.currentState;
     } catch (error) {
-      console.error('❌ [UNIFIED-AUTH] Initialization failed:', error);
       this.updateState({ user: null, session: null, isLoading: false, isAuthenticated: false });
       return this.currentState;
     }
@@ -133,7 +129,6 @@ export class UnifiedAuth {
       });
 
       if (error) {
-        console.error('🔐 [UNIFIED-AUTH] Login error:', error.message);
         return { success: false, error: error.message };
       }
 
@@ -150,7 +145,6 @@ export class UnifiedAuth {
 
       return { success: false, error: 'No session returned' };
     } catch (error: any) {
-      console.error('❌ [UNIFIED-AUTH] Login failed:', error);
       return { success: false, error: error.message || 'Login failed' };
     }
   }
@@ -167,9 +161,8 @@ export class UnifiedAuth {
         document.cookie = 'remember-me=; path=/; domain=.docsflow.app; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       }
       
-      console.log('✅ [UNIFIED-AUTH] Logout successful');
     } catch (error) {
-      console.error('❌ [UNIFIED-AUTH] Logout failed:', error);
+      console.error(error);
     }
   }
 
@@ -210,7 +203,6 @@ export class UnifiedAuth {
         .single();
 
       if (error || !userProfile) {
-        console.error('❌ [UNIFIED-AUTH] User profile fetch failed:', error);
         return null;
       }
 
@@ -229,7 +221,6 @@ export class UnifiedAuth {
         } : undefined
       };
     } catch (error) {
-      console.error('❌ [UNIFIED-AUTH] Profile fetch error:', error);
       return null;
     }
   }
@@ -245,7 +236,7 @@ export class UnifiedAuth {
       try {
         listener(this.currentState);
       } catch (error) {
-        console.error('❌ [UNIFIED-AUTH] Listener error:', error);
+        console.error(error);
       }
     });
   }
@@ -272,7 +263,7 @@ export class UnifiedAuth {
 
 // Auto-initialize when imported (client-side only)
 if (typeof window !== 'undefined') {
-  UnifiedAuth.initialize().catch(console.error);
+      UnifiedAuth.initialize().catch(() => {});
 }
 
 

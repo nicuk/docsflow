@@ -57,11 +57,7 @@ export async function queryWorkflow(input: QueryInput): Promise<QueryResult> {
   const startTime = Date.now();
   
   try {
-    console.log(`[Query Workflow] Starting query: "${input.query}"`);
-    console.log(`[Query Workflow] Tenant: ${input.tenantId}`);
-    
     // STEP 1: Generate dense + sparse vectors (HYBRID SEARCH)
-    console.log('[Query Workflow] Step 1: Generating hybrid vectors');
     const embedding = await generateEmbedding(input.query);
     
     // Generate sparse vector for keyword matching
@@ -89,7 +85,6 @@ export async function queryWorkflow(input: QueryInput): Promise<QueryResult> {
     }
     
     // STEP 2: Retrieve relevant chunks with HIERARCHICAL + HYBRID SEARCH (Phase 1B)
-    console.log('[Query Workflow] Step 2: Retrieving chunks with hierarchical + hybrid search');
     
     // Use hierarchical retrieval (2-stage: document-level → chunk-level)
     const { hierarchicalRetrieve } = await import('../core/hierarchical-retrieval');
@@ -103,18 +98,13 @@ export async function queryWorkflow(input: QueryInput): Promise<QueryResult> {
     });
     
     // STEP 3: Calculate confidence
-    console.log('[Query Workflow] Step 3: Calculating confidence');
     const confidence = calculateConfidence(
       chunks.map(c => ({ score: c.score, content: c.content, metadata: c.metadata }))
     );
     
-    console.log(`[Query Workflow] Confidence: ${confidence}% (${chunks.length} chunks)`);
-    
     // STEP 4: Check if confident enough
-    // With hybrid search, we should get better results, so use standard threshold
     if (!isSufficientConfidence(confidence) || chunks.length === 0) {
       const duration = Date.now() - startTime;
-      console.log(`[Query Workflow] Abstaining due to low confidence (${confidence}%)`);
       
       return {
         success: false,
@@ -132,7 +122,6 @@ export async function queryWorkflow(input: QueryInput): Promise<QueryResult> {
     }
     
     // STEP 5: Generate answer
-    console.log('[Query Workflow] Step 4: Generating answer');
     const generation = await generateAnswer({
       query: input.query,
       context: chunks,
@@ -160,7 +149,6 @@ export async function queryWorkflow(input: QueryInput): Promise<QueryResult> {
     };
   } catch (error: any) {
     const duration = Date.now() - startTime;
-    console.error('[Query Workflow] Error:', error);
     
     throw new QueryWorkflowError(
       `Query workflow failed: ${error.message}`,

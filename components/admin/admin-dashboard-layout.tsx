@@ -160,7 +160,6 @@ export default function AdminDashboardLayout({ children, user }: AdminDashboardL
       setIsVerified(true);
       
     } catch (error) {
-      console.error('Admin access verification failed:', error);
       toast.error('Admin access verification failed');
       router.push('/dashboard');
     }
@@ -182,10 +181,9 @@ export default function AdminDashboardLayout({ children, user }: AdminDashboardL
       }
 
       // Load alerts count (placeholder)
-      setAlertsCount(0); // TODO: Implement alerts system
+      setAlertsCount(0);
 
     } catch (error) {
-      console.error('Failed to load admin metrics:', error);
     }
   };
 

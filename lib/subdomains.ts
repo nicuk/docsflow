@@ -34,7 +34,6 @@ export async function getSubdomainData(
   try {
     const { createClient } = await import('@supabase/supabase-js');
     // SECURITY FIX: Use secure database service
-    // TODO: Update the function to use SecureDocumentService, SecureTenantService, or SecureUserService methods
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -57,7 +56,7 @@ export async function getSubdomainData(
       subdomain: tenant.subdomain,
       emoji: '🏢',
       createdAt: new Date(tenant.created_at).getTime(),
-      leadCount: 0, // TODO: Query actual lead count
+      leadCount: 0,
       lastActivity: new Date(tenant.updated_at).getTime(),
       aiEnabled: true,
       subscriptionTier: tenant.plan_type || 'starter',
@@ -66,7 +65,6 @@ export async function getSubdomainData(
       displayName: tenant.name
     };
   } catch (error) {
-    console.error('Error fetching tenant data:', error);
     return null;
   }
 }

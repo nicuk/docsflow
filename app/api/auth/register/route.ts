@@ -42,8 +42,6 @@ export async function POST(request: NextRequest) {
                 sameSite: 'lax' as const
               };
               cookieStore.set(name, value, enhancedOptions);
-              
-              console.log(`🔧 [SUPABASE-COOKIE] Set ${name}: domain=${enhancedOptions.domain}, path=${enhancedOptions.path}`);
             })
           },
         },
@@ -65,8 +63,6 @@ export async function POST(request: NextRequest) {
     });
 
     if (authError) {
-      console.error('Auth error:', authError);
-      
       // Handle specific auth errors
       if (authError.status === 422 && authError.message.includes('User already registered')) {
         return NextResponse.json(
@@ -102,7 +98,6 @@ export async function POST(request: NextRequest) {
       .insert(userInsertData);
 
     if (profileError) {
-      console.error('Profile creation error:', profileError);
       // Don't fail the request if profile creation fails
     }
 
@@ -123,7 +118,6 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (fetchProfileError) {
-      console.error('Profile fetch error:', fetchProfileError);
       // Continue without profile data
     }
 
@@ -145,11 +139,7 @@ export async function POST(request: NextRequest) {
       }, { headers: corsHeaders });
     }
 
-    // CRITICAL FIX: Set session cookies when session exists (email verification disabled)
     if (authData.session) {
-      console.log('🍪 Setting authentication cookies...');
-      
-      // CRITICAL FIX: Use cookie utility for proper domain handling
       const { createResponseWithSessionCookies } = await import('@/lib/cookie-utils');
       
       const response = createResponseWithSessionCookies({
@@ -215,7 +205,6 @@ export async function POST(request: NextRequest) {
         maxAge: 60 * 60 * 24 * 7
       });
 
-      console.log('✅ Authentication cookies set successfully');
       return response;
     }
 
@@ -236,7 +225,6 @@ export async function POST(request: NextRequest) {
     }, { headers: corsHeaders });
 
   } catch (error: any) {
-    console.error('Registration error:', error);
     return NextResponse.json(
       { error: 'Internal server error', details: error.message },
       { status: 500, headers: corsHeaders }

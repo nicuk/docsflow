@@ -5,8 +5,6 @@
  * "Hidden" = not advertised, but available for power users.
  */
 
-import { createClient } from '@supabase/supabase-js';
-
 // =====================================================
 // REFERRAL TYPES
 // =====================================================
@@ -115,7 +113,7 @@ export function getReferralLink(code: string, baseUrl: string = 'https://docsflo
  * Track new referral (when someone uses a referral code)
  */
 export async function trackReferral(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   referralCode: string,
   refereeEmail: string
 ): Promise<{ success: boolean; error?: string }> {
@@ -143,13 +141,11 @@ export async function trackReferral(
       });
 
     if (insertError) {
-      console.error('Error creating referral:', insertError);
       return { success: false, error: 'Failed to track referral' };
     }
 
     return { success: true };
   } catch (error) {
-    console.error('Error in trackReferral:', error);
     return { success: false, error: 'Internal error' };
   }
 }
@@ -158,7 +154,7 @@ export async function trackReferral(
  * Update referral status and distribute rewards
  */
 export async function processReferralReward(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   refereeEmail: string,
   rewardTier: keyof typeof REFERRAL_REWARDS
 ): Promise<{ success: boolean; error?: string }> {
@@ -213,7 +209,6 @@ export async function processReferralReward(
 
     return { success: true };
   } catch (error) {
-    console.error('Error processing referral reward:', error);
     return { success: false, error: 'Failed to process reward' };
   }
 }
@@ -226,7 +221,7 @@ export async function processReferralReward(
  * Apply account credit to tenant
  */
 async function applyAccountCredit(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   tenantId: string,
   amount: number,
   description: string
@@ -271,7 +266,7 @@ async function applyAccountCredit(
  * Extend subscription by X months
  */
 async function extendSubscription(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   tenantId: string,
   months: number,
   description: string
@@ -301,12 +296,11 @@ async function extendSubscription(
  * Send reward notification email
  */
 async function sendReferralRewardEmail(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   email: string,
   rewardDescription: string
 ): Promise<void> {
-  // TODO: Integrate with your email service (SendGrid, Resend, etc.)
-  console.log(`Send email to ${email}: You earned ${rewardDescription}`);
+  // TODO: Implement email notification
 }
 
 // =====================================================
@@ -317,7 +311,7 @@ async function sendReferralRewardEmail(
  * Get referral stats for user
  */
 export async function getReferralStats(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   userId: string
 ): Promise<{
   totalReferrals: number;
@@ -352,7 +346,7 @@ export async function getReferralStats(
  * Get top referrers (for admin/leaderboard)
  */
 export async function getTopReferrers(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   limit: number = 10
 ): Promise<Array<{
   userId: string;

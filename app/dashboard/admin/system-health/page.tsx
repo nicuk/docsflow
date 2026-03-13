@@ -11,22 +11,20 @@ import { Shield, Server, Activity } from "lucide-react"
 
 export default function SystemHealthPage() {
   const router = useRouter()
-  const { user, isLoading } = useAuth()
+  const { user, loading } = useAuth()
   
-  // 🔐 ADMIN ONLY: Redirect non-admins
   useEffect(() => {
-    if (!isLoading && user) {
+    if (!loading && user) {
       // Check if user is admin (access_level === 1)
-      const isAdmin = user.accessLevel === 1 || user.role === 'admin'
+      const isAdmin = user.role === 'admin'
       if (!isAdmin) {
-        console.warn('⛔ [SYSTEM HEALTH] Access denied: User is not an admin')
         router.push('/dashboard')
       }
     }
-  }, [user, isLoading, router])
+  }, [user, loading, router])
 
   // Show loading while checking auth
-  if (isLoading || !user) {
+  if (loading || !user) {
     return (
       <div className="container mx-auto p-4 md:p-6 max-w-7xl">
         <div className="animate-pulse">
@@ -37,7 +35,7 @@ export default function SystemHealthPage() {
     )
   }
 
-  const isAdmin = user.accessLevel === 1 || user.role === 'admin'
+  const isAdmin = user.role === 'admin'
   
   // Redirect non-admins (final check)
   if (!isAdmin) {

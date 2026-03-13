@@ -73,14 +73,11 @@ export async function POST(request: NextRequest) {
       .eq('id', job_id);
     
     if (updateError) {
-      console.error('Error updating job:', updateError);
       return NextResponse.json(
         { error: 'Failed to retry job' },
         { status: 500 }
       );
     }
-    
-    console.log(`✅ Job ${job_id} reset for retry`);
     
     return NextResponse.json({ 
       success: true,
@@ -88,7 +85,6 @@ export async function POST(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('Error in retry route:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -97,7 +97,6 @@ function ResetPasswordContent() {
         router.push('/login');
       }, 3000);
     } catch (error) {
-      console.error('Reset password error:', error);
       setError(error instanceof Error ? error.message : 'Failed to reset password');
     } finally {
       setIsLoading(false);

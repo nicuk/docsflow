@@ -14,41 +14,27 @@ export default function AuthRedirectPage() {
   useEffect(() => {
     const handleAuthRedirect = async () => {
       try {
-        console.log('🚀 [AUTH-REDIRECT-DEBUG] Starting auth redirect process');
         setMessage('Checking multi-tenant access...');
         setProgress(10);
         
-        console.log('🔄 [AUTH-REDIRECT-DEBUG] Importing MultiTenantCookieManager...');
         // ENTERPRISE: Migrate legacy cookies and check multi-tenant state
         const { MultiTenantCookieManager } = await import('@/lib/multi-tenant-cookie-manager');
-        console.log('✅ [AUTH-REDIRECT-DEBUG] MultiTenantCookieManager imported');
         
-        console.log('🔄 [AUTH-REDIRECT-DEBUG] Migrating legacy cookies...');
         MultiTenantCookieManager.migrateLegacyCookies();
         MultiTenantCookieManager.debugMultiTenantState();
-        console.log('✅ [AUTH-REDIRECT-DEBUG] Legacy cookies migrated');
         
         setMessage('Verifying authentication...');
         setProgress(25);
         
-        console.log('🔄 [AUTH-REDIRECT-DEBUG] Fetching session from /api/auth/session...');
         // Check session state
         const session = await fetch('/api/auth/session').then(r => r.json());
-        console.log('🔍 [AUTH-REDIRECT-DEBUG] Session response:', {
-          authenticated: session.authenticated,
-          hasTenantId: !!session.tenantId,
-          hasUser: !!session.user,
-          tenantSubdomain: session.tenant?.subdomain
-        });
         setProgress(50);
         
         if (session.authenticated && session.tenantId) {
-          console.log('✅ [AUTH-REDIRECT-DEBUG] User authenticated with tenant - processing redirect');
           setTenantInfo(session.tenant);
           setMessage(`Welcome back to ${session.tenant?.name || 'your workspace'}!`);
           setProgress(75);
           
-          console.log('🔄 [AUTH-REDIRECT-DEBUG] Adding tenant context...');
           // ENTERPRISE: Add this tenant to user's multi-tenant context
           MultiTenantCookieManager.addTenantContext(
             {
@@ -61,29 +47,19 @@ export default function AuthRedirectPage() {
               refreshToken: undefined
             }
           );
-          console.log('✅ [AUTH-REDIRECT-DEBUG] Tenant context added');
-          
           setProgress(100);
           
-          console.log('⏰ [AUTH-REDIRECT-DEBUG] Setting 1.5s timeout for final redirect...');
           // Smooth redirect with delay for UX
           setTimeout(() => {
             const targetUrl = session.tenant?.subdomain 
               ? `https://${session.tenant.subdomain}.docsflow.app/dashboard`
               : '/dashboard';
-            console.log('🚀 [AUTH-REDIRECT-DEBUG] Final redirect timeout fired, going to:', targetUrl);
             window.location.href = targetUrl;
           }, 1500);
         } else if (session.authenticated && !session.tenantId) {
-          console.log('⚠️ [AUTH-REDIRECT-DEBUG] User authenticated but no tenantId - double checking...');
           // Check if user is actually onboarded via direct API call
           const sessionCheck = await fetch('/api/auth/session');
           const sessionData = await sessionCheck.json();
-          console.log('🔍 [AUTH-REDIRECT-DEBUG] Double-check session response:', {
-            authenticated: sessionData.authenticated,
-            onboardingComplete: sessionData.onboardingComplete,
-            hasTenant: !!sessionData.tenant
-          });
           
           if (sessionData.authenticated && sessionData.onboardingComplete && sessionData.tenant?.subdomain) {
             setMessage(`Redirecting to ${sessionData.tenant.name || 'your workspace'}...`);
@@ -99,20 +75,14 @@ export default function AuthRedirectPage() {
             }, 1000);
           }
         } else {
-          console.log('❌ [AUTH-REDIRECT-DEBUG] User not authenticated - redirecting to login');
           setMessage('Please sign in to continue...');
           setTimeout(() => {
-            console.log('🚀 [AUTH-REDIRECT-DEBUG] Redirecting to login due to no authentication');
             window.location.href = '/login';
           }, 1000);
         }
       } catch (error) {
-        console.error('🚨 [AUTH-REDIRECT-DEBUG] Catch block triggered:', error);
-        console.error('🚨 [AUTH-REDIRECT-DEBUG] Error type:', typeof error);
-        console.error('🚨 [AUTH-REDIRECT-DEBUG] Error details:', error);
         setError('Something went wrong. Redirecting to login...');
         setTimeout(() => {
-          console.log('🚀 [AUTH-REDIRECT-DEBUG] Redirecting to login due to error');
           window.location.href = '/login';
         }, 2000);
       }

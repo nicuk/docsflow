@@ -56,8 +56,6 @@ export class APIRateLimiter {
           ? rateLimitInfo.retryAfter * 1000 
           : delay;
 
-        console.warn(`[Rate Limiter] Attempt ${attempt + 1}/${finalConfig.maxRetries + 1} failed. Waiting ${waitTime}ms before retry...`);
-        
         await this.sleep(waitTime);
       }
     }

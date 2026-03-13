@@ -33,16 +33,10 @@ export async function GET(request: NextRequest) {
       .is('document_id', null);
     
     if (findError) {
-      console.error('[Clear Broken Jobs] Error finding jobs:', findError);
       return NextResponse.json({ error: findError.message }, { status: 500 });
     }
     
     const count = brokenJobs?.length || 0;
-    
-    console.log(`[Clear Broken Jobs] Found ${count} broken jobs`);
-    brokenJobs?.forEach(job => {
-      console.log(`   - ${job.id}: ${job.filename} (${job.status})`);
-    });
     
     if (count === 0) {
       return NextResponse.json({ 
@@ -58,11 +52,8 @@ export async function GET(request: NextRequest) {
       .is('document_id', null);
     
     if (deleteError) {
-      console.error('[Clear Broken Jobs] Error deleting:', deleteError);
       return NextResponse.json({ error: deleteError.message }, { status: 500 });
     }
-    
-    console.log(`[Clear Broken Jobs] ✅ Deleted ${count} broken jobs`);
     
     return NextResponse.json({
       message: `Deleted ${count} broken jobs`,
@@ -71,7 +62,6 @@ export async function GET(request: NextRequest) {
     });
     
   } catch (error: any) {
-    console.error('[Clear Broken Jobs] Error:', error);
     return NextResponse.json({ 
       error: error.message 
     }, { status: 500 });

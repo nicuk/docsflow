@@ -83,7 +83,6 @@ class MinerUParser {
         }
       };
     } catch (error) {
-      console.error(`MinerU parsing failed for tenant ${this.tenantId}:`, error);
       return {
         success: false,
         content: [],
@@ -99,9 +98,7 @@ class MinerUParser {
   }
   
   private async processMinerU(fileBuffer: Buffer, filename: string) {
-    // TODO: Integrate with actual MinerU Python service via API
-    // This is a placeholder implementation that follows the pattern
-    // Mock advanced processing
+    // Placeholder implementation - MinerU service integration pending
     return {
       content: [`Advanced MinerU processing for ${filename}`],
       images: this.config.enableImageProcessing ? ['mock_image_data'] : [],
@@ -157,7 +154,6 @@ export class MultimodalDocumentParser {
       return await this.parseWithGemini(file, mimeType, fileName);
       
     } catch (error) {
-      console.error('All parsing methods failed, using basic fallback:', error);
       return await this.parseBasic(file, mimeType);
     }
   }
@@ -207,7 +203,6 @@ export class MultimodalDocumentParser {
       // Fallback to basic text extraction
       return await this.parseBasic(file, mimeType);
     } catch (error) {
-      console.error('Gemini parsing failed, using basic fallback:', error);
       return await this.parseBasic(file, mimeType);
     }
   }
@@ -231,14 +226,13 @@ export class MultimodalDocumentParser {
           mime_type: 'application/pdf',
           pages: data.numpages,
           tables: tables,
-          images: [], // TODO: Implement image extraction
-          equations: [], // TODO: Implement equation extraction
+          images: [],
+          equations: [],
           parse_method: 'advanced'
         },
         chunks
       };
     } catch (error) {
-      console.warn('Advanced PDF parsing failed:', error);
       return this.parseBasic(buffer, 'application/pdf');
     }
   }
@@ -281,7 +275,6 @@ export class MultimodalDocumentParser {
         chunks
       };
     } catch (error) {
-      console.error('Image parsing failed:', error);
       return this.parseBasic(buffer, mimeType);
     }
   }
@@ -485,7 +478,7 @@ export class MultimodalDocumentParser {
         chunk.embedding = result.embedding.values;
       }
     } catch (error) {
-      console.error('Failed to generate embeddings:', error);
+      console.error(error);
     }
     
     return chunks;
@@ -534,8 +527,8 @@ Format: [TEXT]: (all visible text) [BUSINESS_DATA]: (structured data and key inf
 
         return industryPrompts[tenant.industry as keyof typeof industryPrompts] || industryPrompts.general;
       }
-    } catch (error) {
-      console.warn('Failed to get business context for vision parsing:', error);
+    } catch {
+      // Business context unavailable, use generic prompt
     }
 
     // Fallback to enhanced generic prompt

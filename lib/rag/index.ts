@@ -51,6 +51,7 @@ export {
 
 // Export configuration
 export { RAG_CONFIG, validateConfig } from './config';
+import { validateConfig as _validateConfig } from './config';
 
 // Export errors (for error handling)
 export {
@@ -79,15 +80,8 @@ export { checkHealth } from './storage/pinecone';
  */
 export function initializeRAG() {
   try {
-    validateConfig();
-    console.log('[RAG] ✅ Module initialized successfully');
-    console.log('[RAG] Configuration:', {
-      embeddingModel: RAG_CONFIG.embeddings.model,
-      llmModel: RAG_CONFIG.llm.model,
-      pineconeIndex: RAG_CONFIG.pinecone.index,
-    });
+    _validateConfig();
   } catch (error: any) {
-    console.error('[RAG] ❌ Initialization failed:', error.message);
     throw error;
   }
 }

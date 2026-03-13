@@ -33,7 +33,6 @@ export class EnterpriseSessionManager {
       );
       
       if (validTenants.length === 0) {
-        console.error(`🚨 [ENTERPRISE SESSION] All tenants have invalid subdomains, not setting session:`, session.activeTenants);
         return;
       }
       
@@ -46,8 +45,8 @@ export class EnterpriseSessionManager {
       
       // Set session cookie with proper domain for cross-subdomain access
       document.cookie = `${this.SESSION_COOKIE}=${encodeURIComponent(sessionData)}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
-    } catch (error) {
-      console.error(`🚨 [ENTERPRISE SESSION] Failed to set session:`, error);
+    } catch {
+      // Session cookie write failed
     }
   }
   
@@ -64,8 +63,8 @@ export class EnterpriseSessionManager {
       
       // Set tenant context cookie
       document.cookie = `${this.TENANT_CONTEXT_COOKIE}=${encodeURIComponent(tenantData)}; path=/; domain=.docsflow.app; secure; samesite=lax; max-age=86400`;
-    } catch (error) {
-      console.error(`🚨 [ENTERPRISE SESSION] Failed to set tenant context:`, error);
+    } catch {
+      // Tenant context cookie write failed
     }
   }
   
@@ -92,8 +91,7 @@ export class EnterpriseSessionManager {
         userEmail: sessionData.userEmail,
         activeTenants: sessionData.activeTenants
       };
-    } catch (error) {
-      console.error(`🚨 [ENTERPRISE SESSION] Failed to get session:`, error);
+    } catch {
       return null;
     }
   }
@@ -121,8 +119,7 @@ export class EnterpriseSessionManager {
         userEmail: '', // Will be filled from user session
         lastAccessed: tenantData.timestamp || Date.now()
       };
-    } catch (error) {
-      console.error(`🚨 [ENTERPRISE SESSION] Failed to get tenant context:`, error);
+    } catch {
       return null;
     }
   }

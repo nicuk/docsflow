@@ -55,18 +55,14 @@ export async function GET(
     );
 
     if (cachedTenant) {
-      console.log(`✅ Cache HIT for tenant: ${tenantId}`);
       return NextResponse.json(cachedTenant);
     }
-
-    console.log(`❌ Cache MISS for tenant: ${tenantId} - fetching from database`);
 
     // Fetch from Supabase database - support both UUID and subdomain lookup
     let tenant, error;
     
     // First try by UUID (if tenantId looks like a UUID)
     if (tenantId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-      console.log(`🔍 Looking up tenant by UUID: ${tenantId}`);
       const result = await supabase
         .from('tenants')
         .select('id, name, subdomain, created_at, updated_at')
@@ -75,7 +71,6 @@ export async function GET(
       tenant = result.data;
       error = result.error;
     } else {
-      console.log(`🔍 Looking up tenant by subdomain: ${tenantId}`);
       const result = await supabase
         .from('tenants')
         .select('id, name, subdomain, created_at, updated_at')
@@ -86,8 +81,6 @@ export async function GET(
     }
 
     if (error || !tenant) {
-      console.error(`❌ Tenant lookup failed for ${tenantId}:`, error);
-      console.error(`🔍 Query type: ${tenantId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i) ? 'UUID' : 'subdomain'}`);
       return NextResponse.json(
         { error: 'Tenant not found', tenantId, queryType: tenantId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i) ? 'UUID' : 'subdomain' },
         { status: 404 }
@@ -118,12 +111,9 @@ export async function GET(
       undefined
     );
 
-    console.log(`💾 Cached tenant data for: ${tenantId}`);
-
     return NextResponse.json(tenantData);
 
   } catch (error) {
-    console.error('API Error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -162,12 +152,9 @@ export async function PUT(
       undefined
     );
 
-    console.log(`🗑️ Invalidated cache for tenant: ${tenantId}`);
-
     return NextResponse.json(tenant);
 
   } catch (error) {
-    console.error('Update API Error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -198,7 +185,6 @@ export async function DELETE(
       .single();
 
     if (tenantError || !tenant) {
-      console.error('Tenant lookup error:', tenantError);
       return NextResponse.json(
         { error: 'Tenant not found' },
         { status: 404 }
@@ -212,7 +198,6 @@ export async function DELETE(
       .eq('id', tenant.id);
 
     if (supabaseError) {
-      console.error('Supabase deletion error:', supabaseError);
       return NextResponse.json(
         { error: 'Failed to delete tenant from database' },
         { status: 500 }
@@ -233,15 +218,12 @@ export async function DELETE(
       undefined
     );
 
-    console.log(`✅ Deleted tenant: ${tenant.subdomain}`);
-
     return NextResponse.json({ 
       success: true, 
       message: 'Tenant deleted successfully' 
     });
 
   } catch (error) {
-    console.error('Delete API Error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

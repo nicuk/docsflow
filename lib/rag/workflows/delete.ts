@@ -35,9 +35,6 @@ export async function deleteWorkflow(input: DeleteInput): Promise<DeleteResult> 
   const startTime = Date.now();
   
   try {
-    console.log(`[Delete Workflow] Deleting document: ${input.documentId}`);
-    console.log(`[Delete Workflow] Tenant: ${input.tenantId}`);
-    
     // Delete all chunks for this document using metadata filter
     await deleteVectors({
       filter: {
@@ -48,8 +45,6 @@ export async function deleteWorkflow(input: DeleteInput): Promise<DeleteResult> 
     
     const duration = Date.now() - startTime;
     
-    console.log(`[Delete Workflow] ✅ Success in ${duration}ms`);
-    
     return {
       success: true,
       documentId: input.documentId,
@@ -59,7 +54,6 @@ export async function deleteWorkflow(input: DeleteInput): Promise<DeleteResult> 
     };
   } catch (error: any) {
     const duration = Date.now() - startTime;
-    console.error('[Delete Workflow] Error:', error);
     
     throw new DeleteWorkflowError(
       `Delete workflow failed: ${error.message}`,

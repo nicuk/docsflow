@@ -25,8 +25,7 @@ export class ClerkAuthProvider implements AuthProvider {
         tenantId: user.publicMetadata?.tenantId as string | undefined,
         metadata: user.publicMetadata
       }
-    } catch (error) {
-      console.error('[ClerkAuthProvider] getCurrentUser error:', error)
+    } catch {
       return null
     }
   }
@@ -68,8 +67,7 @@ export class ClerkAuthProvider implements AuthProvider {
         accessToken: token || '',
         expiresAt: undefined // Clerk handles expiration internally
       }
-    } catch (error) {
-      console.error('[ClerkAuthProvider] getSession error:', error)
+    } catch {
       return null
     }
   }

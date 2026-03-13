@@ -17,8 +17,7 @@ import { smartIndustryDetection, generateSubdomain } from '@/lib/industry-detect
 // Questions data moved to /lib/onboarding-questions.ts
 
 export default function OnboardingFlow() {
-  // CRITICAL FIX: ALL HOOKS MUST BE AT TOP LEVEL - BEFORE ANY EARLY RETURNS
-  // COMPREHENSIVE HYDRATION FIX: Prevent server/client mismatch
+  // Prevent server/client mismatch
   const [isClient, setIsClient] = useState(false);
   const [mounted, setMounted] = useState(false);
   
@@ -123,7 +122,6 @@ export default function OnboardingFlow() {
             // User needs onboarding - continue with flow
             
       } catch (error) {
-        console.error('❌ Auth check failed:', error);
         if (isMounted) {
           setIsAuthenticated(false);
         }
@@ -182,8 +180,6 @@ export default function OnboardingFlow() {
     localStorage.setItem('selected-domain', domain);
     localStorage.setItem('joining-existing', joinExisting.toString());
     
-    // CRITICAL FIX: Redirect to the selected subdomain immediately
-    // This ensures all onboarding actions happen on the correct tenant subdomain
     const currentHostname = window.location.hostname;
     const currentParts = currentHostname.split('.');
     // Don't redirect to subdomain during onboarding
@@ -240,7 +236,6 @@ export default function OnboardingFlow() {
       window.location.href = `/invite-request?subdomain=${domain}`;
       
     } catch (error) {
-      console.error('Failed to request invitation:', error);
       alert('Unable to request invitation. Please try again or contact support.');
     }
   };
@@ -258,7 +253,7 @@ export default function OnboardingFlow() {
       const finalDomain = selectedDomain || (typeof window !== 'undefined' ? localStorage.getItem('selected-domain') : null) || 
         generateSubdomain(allResponses.business_overview || 'business');
       
-              // 🔥 CRITICAL: Complete onboarding with smart industry detection
+              // Complete onboarding with smart industry detection
       const industryAnalysis = smartIndustryDetection(allResponses);
       
 const tenantAssignment = {
@@ -370,9 +365,9 @@ const tenantAssignment = {
         throw new Error('Failed to complete onboarding');
       }
     } catch (error) {
-      console.error('Backend unavailable, using fallback mode:', error);
+      // Backend unavailable, using fallback mode
       
-      // 🔥 FALLBACK: Complete onboarding locally for frontend development
+      // Fallback: Complete onboarding locally for frontend development
       const tenantAssignment = {
         businessType: onboardingData?.displayName || allResponses.business_overview?.substring(0, 100) + "...",
         industry: onboardingData?.industry || determineIndustry(allResponses.business_overview || ''),
@@ -548,9 +543,6 @@ const tenantAssignment = {
         createdPersona={customPersonality?.tenant?.custom_persona}
         tenantData={customPersonality?.tenant}
         onComplete={() => {
-          console.log('Launch button clicked!');
-          console.log('customPersonality:', customPersonality);
-          
           // Store the tenant context for dashboard use
           if (customPersonality?.tenantDomain) {
             const tenantContext = {
@@ -562,18 +554,12 @@ const tenantAssignment = {
               responses: responses // Store actual responses for dashboard use
             };
             
-            console.log('Storing tenant context:', tenantContext);
             localStorage.setItem(`tenant-${customPersonality.tenantDomain}`, JSON.stringify(tenantContext));
-          } else {
-            console.error('No tenantDomain found in customPersonality');
           }
-          
-          console.log('Redirecting to tenant subdomain:', customPersonality.tenantDomain);
           // Pass flag as URL parameter (sessionStorage doesn't work across subdomains)
           if (customPersonality.tenantDomain) {
             window.location.href = `https://${customPersonality.tenantDomain}.docsflow.app/dashboard?onboarding=complete`;
           } else {
-            console.error('No tenant domain found, falling back to /dashboard');
             window.location.href = '/dashboard?onboarding=complete';
           }
         }}
@@ -782,9 +768,6 @@ const tenantAssignment = {
           <div className="text-center">
             <Button 
               onClick={() => {
-                console.log('Launch button clicked!');
-                console.log('customPersonality:', customPersonality);
-                
                 // Store the tenant context for dashboard use
                 if (customPersonality?.tenantDomain) {
                   const tenantContext = {
@@ -796,13 +779,8 @@ const tenantAssignment = {
                     responses: responses // Store actual responses for dashboard use
                   };
                   
-                  console.log('Storing tenant context:', tenantContext);
                   localStorage.setItem(`tenant-${customPersonality.tenantDomain}`, JSON.stringify(tenantContext));
-                } else {
-                  console.error('No tenantDomain found in customPersonality');
                 }
-                
-                console.log('Redirecting to /dashboard');
                 // Pass flag as URL parameter (sessionStorage doesn't work across subdomains)
                 window.location.href = '/dashboard?onboarding=complete';
               }} 
@@ -935,7 +913,7 @@ const tenantAssignment = {
             }, 3000);
           }
         } catch (error) {
-          console.error('Onboarding error:', error);
+          // Onboarding error
         } finally {
           setIsGenerating(false);
         }

@@ -49,7 +49,6 @@ export async function POST(request: NextRequest) {
       .lt('created_at', twoMinutesAgo.toISOString());
 
     if (fetchError) {
-      console.error('Error fetching stuck documents:', fetchError);
       return NextResponse.json(
         { error: 'Failed to fetch stuck documents' },
         { status: 500, headers: corsHeaders }
@@ -75,7 +74,6 @@ export async function POST(request: NextRequest) {
         .in('document_id', documentIds);
 
       if (chunksDeleteError) {
-        console.error('Error deleting stuck document chunks:', chunksDeleteError);
         // Continue anyway - chunks might not exist
       }
 
@@ -86,7 +84,6 @@ export async function POST(request: NextRequest) {
         .in('id', documentIds);
 
       if (documentsDeleteError) {
-        console.error('Error deleting stuck documents:', documentsDeleteError);
         return NextResponse.json(
           { error: 'Failed to delete stuck documents' },
           { status: 500, headers: corsHeaders }
@@ -105,7 +102,6 @@ export async function POST(request: NextRequest) {
     }, { headers: corsHeaders });
 
   } catch (error) {
-    console.error('Cleanup stuck documents error:', error);
     return NextResponse.json(
       { error: 'Internal server error during cleanup' },
       { status: 500, headers: corsHeaders }

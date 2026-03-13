@@ -229,7 +229,7 @@ export class UniversalBusinessAssistant {
     });
 
     // Extract custom terms that appear multiple times
-    const words = allText.match(/\b\w{4,}\b/g) || [];
+    const words: string[] = allText.match(/\b\w{4,}\b/g) || [];
     const wordCount: Record<string, number> = {};
     words.forEach(word => {
       if (!universalTerms.includes(word) && word.length > 3) {

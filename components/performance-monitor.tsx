@@ -26,11 +26,7 @@ export function PerformanceMonitor() {
       const interval = setInterval(() => {
         const metrics = getMetrics()
         if (metrics.forcedReflows > 2 || metrics.longTasks > 1) {
-          console.error('🚨 Critical performance issues detected:', {
-            forcedReflows: metrics.forcedReflows,
-            longTasks: metrics.longTasks,
-            memoryUsage: `${metrics.memoryUsage.toFixed(2)} MB`
-          })
+          // Critical performance issues detected - metrics available via getMetrics()
         }
       }, 120000) // Check every 2 minutes in production (reduced frequency)
 

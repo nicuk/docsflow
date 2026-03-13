@@ -33,7 +33,7 @@ const realProvider = {
       const result = await generateText({
         model: google('gemini-2.0-flash'),
         prompt,
-        maxTokens: 1000,
+        maxOutputTokens: 1000,
         temperature: 0.7,
       });
       

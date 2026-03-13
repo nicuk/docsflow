@@ -49,7 +49,6 @@ export async function GET(
       .single();
 
     if (docError || !document) {
-      console.error(`❌ [Document Content] Document not found: ${documentId}`, docError);
       return NextResponse.json(
         { error: 'Document not found or access denied' },
         { status: 404, headers: corsHeaders }
@@ -69,7 +68,6 @@ export async function GET(
       .order('chunk_index', { ascending: true });
 
     if (chunksError) {
-      console.error('Error fetching document chunks:', chunksError);
       return NextResponse.json(
         { error: 'Failed to retrieve document content' },
         { status: 500, headers: corsHeaders }
@@ -110,7 +108,6 @@ export async function GET(
     }, { headers: corsHeaders });
 
   } catch (error: any) {
-    console.error('Document content API error:', error);
     return NextResponse.json(
       { 
         error: 'Internal server error',

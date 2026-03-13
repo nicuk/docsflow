@@ -132,10 +132,7 @@ export function logApiError(endpoint: string, error: any, context?: any) {
     timestamp: new Date().toISOString(),
   };
   
-  console.error('API Error:', errorLog);
-  
-  // In production, you'd send this to your error tracking service
-  // e.g., Sentry, LogRocket, etc.
+  // In production, send to error tracking service (Sentry, LogRocket, etc.)
 }
 
 // Response wrapper for Next.js API routes

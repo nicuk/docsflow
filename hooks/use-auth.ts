@@ -34,7 +34,7 @@ export const useAuth = () => {
     // Restore session on app load
     const restoreSession = async () => {
       try {
-        const user = authClient.restoreSession();
+        const user = await authClient.restoreSession();
         
         if (user) {
           // Validate token is still valid
@@ -63,7 +63,6 @@ export const useAuth = () => {
           });
         }
       } catch (error) {
-        console.error('Session restoration failed:', error);
         setAuthState({
           user: null,
           isAuthenticated: false,
@@ -89,7 +88,6 @@ export const useAuth = () => {
       
       return response;
     } catch (error) {
-      console.error('Login failed:', error);
       throw error;
     }
   };
@@ -108,7 +106,6 @@ export const useAuth = () => {
       
       return response;
     } catch (error) {
-      console.error('Registration failed:', error);
       throw error;
     }
   };

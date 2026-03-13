@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false });
 
     if (invitationsError) {
-      console.warn('Invitations query failed:', invitationsError);
+      // Non-critical: invitations query failed
     }
 
     return NextResponse.json({
@@ -79,7 +79,6 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Admin users API error:', error);
     return NextResponse.json({ 
       error: 'Failed to fetch users',
       details: error instanceof Error ? error.message : 'Unknown error'

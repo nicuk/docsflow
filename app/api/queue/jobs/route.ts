@@ -48,7 +48,6 @@ export async function GET(request: NextRequest) {
     const { data: jobs, error: jobsError } = await query;
     
     if (jobsError) {
-      console.error('Error fetching jobs:', jobsError);
       return NextResponse.json(
         { error: 'Failed to fetch jobs' },
         { status: 500 }
@@ -74,7 +73,6 @@ export async function GET(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('Error in jobs route:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

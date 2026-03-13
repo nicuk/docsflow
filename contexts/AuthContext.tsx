@@ -87,7 +87,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setOnboardingComplete(false);
       router.push('/login');
     } catch (error) {
-      console.error('Clerk logout error:', error);
+      // Clerk logout error
     }
   }, [signOut, router]);
 

@@ -63,7 +63,6 @@ export async function POST(request: NextRequest) {
       });
 
     if (submitError) {
-      console.error('Error submitting access request:', submitError);
       return NextResponse.json(
         { error: 'Failed to submit access request' },
         { status: 500, headers: corsHeaders }
@@ -93,9 +92,6 @@ export async function POST(request: NextRequest) {
       }, { headers: corsHeaders });
     }
 
-    // Notify admins of new access request (in production, send email/notification)
-    console.log(`🔔 New access request for ${tenant.name} from ${userEmail}`);
-
     return NextResponse.json({
       success: true,
       status: 'submitted',
@@ -108,7 +104,6 @@ export async function POST(request: NextRequest) {
     }, { headers: corsHeaders });
 
   } catch (error: any) {
-    console.error('Access request API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: corsHeaders }

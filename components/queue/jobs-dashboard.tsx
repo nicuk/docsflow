@@ -80,7 +80,6 @@ export function JobsDashboard() {
       setIsLoading(false);
       setIsRefreshing(false);
     } catch (error) {
-      console.error('Error fetching jobs:', error);
       setIsLoading(false);
       setIsRefreshing(false);
     }
@@ -115,7 +114,6 @@ export function JobsDashboard() {
       
       await fetchJobs();
     } catch (error) {
-      console.error('Error retrying job:', error);
       alert('Failed to retry job');
     }
   };

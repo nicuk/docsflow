@@ -161,15 +161,6 @@ export function createInvitationEmailTemplate(data: InvitationEmailData): EmailT
 export async function sendInvitationEmail(data: InvitationEmailData): Promise<{ success: boolean; id?: string; error?: string }> {
   try {
     if (!resend) {
-      // Development fallback - log the email content
-      console.log('📧 INVITATION EMAIL (Development Mode)');
-      console.log('To:', data.inviteeEmail);
-      console.log('From:', data.inviterName);
-      console.log('Tenant:', data.tenantName);
-      console.log('URL:', data.invitationUrl);
-      console.log('Role:', data.role);
-      console.log('Access Level:', data.accessLevel);
-      
       return { 
         success: true, 
         id: `dev-email-${Date.now()}`,
@@ -187,21 +178,18 @@ export async function sendInvitationEmail(data: InvitationEmailData): Promise<{ 
     });
 
     if (response.error) {
-      console.error('❌ Failed to send invitation email:', response.error);
       return { 
         success: false, 
         error: response.error.message || 'Failed to send email'
       };
     }
 
-    console.log('✅ Invitation email sent successfully:', response.data?.id);
     return { 
       success: true, 
       id: response.data?.id 
     };
 
   } catch (error) {
-    console.error('❌ Error sending invitation email:', error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -218,12 +206,6 @@ export async function sendWelcomeEmail(data: {
 }): Promise<{ success: boolean; id?: string; error?: string }> {
   try {
     if (!resend) {
-      console.log('📧 WELCOME EMAIL (Development Mode)');
-      console.log('To:', data.email);
-      console.log('Name:', data.name);
-      console.log('Tenant:', data.tenantName);
-      console.log('Dashboard:', data.dashboardUrl);
-      
       return { 
         success: true, 
         id: `dev-welcome-${Date.now()}`
@@ -287,21 +269,18 @@ export async function sendWelcomeEmail(data: {
     });
 
     if (response.error) {
-      console.error('❌ Failed to send welcome email:', response.error);
       return { 
         success: false, 
         error: response.error.message || 'Failed to send email'
       };
     }
 
-    console.log('✅ Welcome email sent successfully:', response.data?.id);
     return { 
       success: true, 
       id: response.data?.id 
     };
 
   } catch (error) {
-    console.error('❌ Error sending welcome email:', error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error'

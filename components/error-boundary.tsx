@@ -26,7 +26,6 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
     
     // Call custom error handler if provided
     if (this.props.onError) {
@@ -134,7 +133,6 @@ export function OnboardingErrorBoundary({ children }: { children: ReactNode }) {
         </div>
       }
       onError={(error, errorInfo) => {
-        console.error('Onboarding error:', error, errorInfo);
         // Could send to error tracking service here
       }}
     >
@@ -176,7 +174,6 @@ export function DashboardErrorBoundary({ children }: { children: ReactNode }) {
         </div>
       }
       onError={(error, errorInfo) => {
-        console.error('Dashboard error:', error, errorInfo);
         // Could send to error tracking service here
       }}
     >

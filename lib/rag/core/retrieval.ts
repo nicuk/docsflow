@@ -55,9 +55,6 @@ export async function retrieveChunks(input: {
   }
   
   try {
-    const searchType = sparseVector ? 'HYBRID' : 'DENSE';
-    console.log(`[Retrieval] ${searchType} searching tenant: ${tenantId}, topK: ${topK}`);
-    
     const results = await queryVectors({
       vector: embedding,
       sparseVector, // HYBRID SEARCH: Add sparse vector if provided
@@ -84,22 +81,12 @@ export async function retrieveChunks(input: {
       },
     }));
     
-    // Log actual scores for debugging
-    console.log(`[Retrieval] Top 5 scores:`, chunks.slice(0, 5).map(c => ({ 
-      score: c.score.toFixed(4), 
-      filename: c.metadata.filename,
-      text: (c.content || c.metadata.text || '').substring(0, 50)
-    })));
-    
     // Filter by minimum score (use custom threshold if provided)
     const effectiveMinScore = minScore ?? RAG_CONFIG.retrieval.minScore;
     const filtered = chunks.filter(chunk => chunk.score >= effectiveMinScore);
     
-    console.log(`[Retrieval] Found ${chunks.length} results, ${filtered.length} above threshold (minScore: ${effectiveMinScore})`);
-    
     return filtered;
   } catch (error: any) {
-    console.error('[Retrieval] Error:', error);
     throw new RetrievalError(`Failed to retrieve chunks: ${error.message}`, {
       tenantId,
       topK,

@@ -49,7 +49,6 @@ export async function POST(request: NextRequest) {
       .rpc('check_user_limit', { tenant_uuid: tenantId });
 
     if (limitError) {
-      console.error('Error checking user limit:', limitError);
       return NextResponse.json({
         success: false,
         error: 'Failed to check user limits'
@@ -74,7 +73,6 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (userCheckError) {
-      console.error('Error checking existing user:', userCheckError);
       return NextResponse.json({
         success: false,
         error: 'Failed to check existing users'
@@ -98,7 +96,6 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (invitationCheckError) {
-      console.error('Error checking existing invitation:', invitationCheckError);
       return NextResponse.json({
         success: false,
         error: 'Failed to check existing invitations'
@@ -126,7 +123,6 @@ export async function POST(request: NextRequest) {
       .rpc('generate_invitation_token');
 
     if (tokenError || !tokenData) {
-      console.error('Error generating token:', tokenError);
       return NextResponse.json({
         success: false,
         error: 'Failed to generate invitation token'
@@ -161,7 +157,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (invitationError || !invitation) {
-      console.error('Error creating invitation:', invitationError);
       return NextResponse.json({
         success: false,
         error: 'Failed to create invitation'
@@ -184,7 +179,7 @@ export async function POST(request: NextRequest) {
 
     if (!emailResult.success) {
       // Log email error but don't fail the invitation creation
-      console.error('Failed to send invitation email:', emailResult.error);
+      // Non-critical: invitation email failed
     }
 
     return NextResponse.json({
@@ -205,7 +200,6 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error in invite API:', error);
     return NextResponse.json({
       success: false,
       error: 'Internal server error'
@@ -244,7 +238,6 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching invitations:', error);
       return NextResponse.json({
         success: false,
         error: 'Failed to fetch invitations'
@@ -260,7 +253,6 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error in get invitations API:', error);
     return NextResponse.json({
       success: false,
       error: 'Internal server error'

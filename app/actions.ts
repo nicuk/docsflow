@@ -6,9 +6,14 @@ import { redirect } from 'next/navigation';
 import { rootDomain, protocol } from '@/lib/utils';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client
-// SECURITY FIX: Use secure database service instead of direct service role
 import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
+
+function getSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
 
 interface CreateSubdomainState {
   subdomain?: string;
@@ -112,7 +117,7 @@ export async function createSubdomainAction(
           .single();
 
         if (tenantError) {
-          console.error('Supabase tenant creation failed:', tenantError);
+          // Tenant creation failed, skip demo setup
         } else {
           // Create default demo user for this tenant
           await supabase
@@ -128,17 +133,16 @@ export async function createSubdomainAction(
           // Add sample documents for instant demo value
           await createSampleDocuments(supabase, tenant.id, displayName, industry);
           
-          console.log(`✅ Created enterprise tenant: ${displayName} (${tenant.id})`);
+          // Tenant created successfully
         }
       } catch (supabaseError) {
-        console.error('Supabase operations failed:', supabaseError);
+        // Supabase operations failed
       }
     }
 
     // Redirect to the new subdomain on success
     redirect(`${protocol}://${sanitizedSubdomain}.${rootDomain}`);
   } catch (error) {
-    console.error('Error creating tenant:', error);
     return { error: 'Failed to create organization. Please try again.' };
   }
 }
@@ -176,7 +180,6 @@ export async function deleteSubdomainAction(
       return { error: result.error || 'Failed to delete tenant' };
     }
   } catch (error) {
-    console.error('Error deleting tenant:', error);
     return { error: 'Failed to delete tenant. Please try again.' };
   }
 }
@@ -235,7 +238,7 @@ async function createSampleDocuments(supabase: any, tenantId: string, displayNam
           });
       }
     } catch (error) {
-      console.error(`Failed to create sample document ${doc.filename}:`, error);
+      // Sample document creation failed
     }
   }
 }

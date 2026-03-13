@@ -13,18 +13,12 @@ export default function SSOCallbackPage() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        console.log('🔄 [CLERK SSO] Processing OAuth callback...')
-        
-        // Clerk automatically handles the OAuth callback
-        // Just show loading state and redirect
-        await handleRedirectCallback()
-        
-        console.log('✅ [CLERK SSO] OAuth successful, redirecting...')
-        
-        // Redirect to onboarding or dashboard
+        await handleRedirectCallback({
+          afterSignInUrl: '/onboarding',
+          afterSignUpUrl: '/onboarding'
+        })
         router.push('/onboarding')
       } catch (error) {
-        console.error('❌ [CLERK SSO] OAuth callback error:', error)
         router.push('/login?error=oauth_failed')
       }
     }

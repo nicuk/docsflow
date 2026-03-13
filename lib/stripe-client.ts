@@ -4,7 +4,7 @@ import Stripe from 'stripe';
 const stripeKey = process.env.STRIPE_SECRET_KEY;
 
 export const stripe = stripeKey ? new Stripe(stripeKey, {
-  apiVersion: '2024-06-20',
+  apiVersion: '2025-08-27.basil',
   appInfo: {
     name: 'DocsFlow',
     version: '1.0.0',
@@ -58,7 +58,6 @@ export async function createCheckoutSession({
 
     return { session, error: null };
   } catch (error) {
-    console.error('Error creating checkout session:', error);
     return { session: null, error: error as Error };
   }
 }
@@ -79,7 +78,6 @@ export async function createPortalSession({
 
     return { session, error: null };
   } catch (error) {
-    console.error('Error creating portal session:', error);
     return { session: null, error: error as Error };
   }
 }
@@ -90,7 +88,6 @@ export async function getSubscription(subscriptionId: string) {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     return { subscription, error: null };
   } catch (error) {
-    console.error('Error retrieving subscription:', error);
     return { subscription: null, error: error as Error };
   }
 }
@@ -101,7 +98,6 @@ export async function cancelSubscription(subscriptionId: string) {
     const subscription = await stripe.subscriptions.cancel(subscriptionId);
     return { subscription, error: null };
   } catch (error) {
-    console.error('Error canceling subscription:', error);
     return { subscription: null, error: error as Error };
   }
 }
@@ -129,7 +125,6 @@ export async function updateSubscription({
 
     return { subscription: updatedSubscription, error: null };
   } catch (error) {
-    console.error('Error updating subscription:', error);
     return { subscription: null, error: error as Error };
   }
 }

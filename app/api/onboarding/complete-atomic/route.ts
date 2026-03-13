@@ -45,13 +45,6 @@ export async function POST(request: NextRequest) {
 
     const userEmail = user.emailAddresses[0]?.emailAddress || '';
 
-    console.log('🔄 [ONBOARDING] Starting atomic onboarding for:', {
-      userId,
-      email: userEmail,
-      subdomain: cleanSubdomain,
-      businessName: businessName || displayName,
-    });
-
     // Initialize Supabase with service role for database operations
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -77,7 +70,6 @@ export async function POST(request: NextRequest) {
     if (existingTenant) {
       // Tenant exists - user is joining
       tenantId = existingTenant.id;
-      console.log('✅ [ONBOARDING] User joining existing tenant:', tenantId);
     } else {
       // Create new tenant
       tenantId = crypto.randomUUID();
@@ -99,11 +91,8 @@ export async function POST(request: NextRequest) {
             { status: 409, headers: corsHeaders }
           );
         }
-        console.error('❌ [ONBOARDING] Tenant creation error:', tenantError);
         throw tenantError;
       }
-
-      console.log('✅ [ONBOARDING] Created new tenant:', tenantId);
     }
 
     // Determine access level: first user (new tenant) = admin (level 1), others = member (level 2)
@@ -137,7 +126,6 @@ export async function POST(request: NextRequest) {
         .eq('id', supabaseUserId);
       
       if (updateError) {
-        console.error('❌ [ONBOARDING] User update error:', updateError);
         throw updateError;
       }
     } else {
@@ -156,18 +144,9 @@ export async function POST(request: NextRequest) {
         });
       
       if (insertError) {
-        console.error('❌ [ONBOARDING] User insert error:', insertError);
         throw insertError;
       }
     }
-
-    console.log('✅ [ONBOARDING] User created/updated:', {
-      clerkUserId: userId,
-      supabaseUserId,
-      role,
-      accessLevel,
-      isFirstUser: isNewTenant,
-    });
 
     // Filter out gibberish responses before storing
     let cleanedResponses = responses;
@@ -176,18 +155,12 @@ export async function POST(request: NextRequest) {
     if (responses && Object.keys(responses).length > 0) {
       cleanedResponses = Object.entries(responses).reduce((acc: any, [key, value]) => {
         if (typeof value === 'string' && detectGibberish(value)) {
-          console.warn(`⚠️ [ONBOARDING] Gibberish detected in ${key}: "${value.substring(0, 50)}..." - filtering out`);
           gibberishCount++;
           return acc; // Skip this answer
         }
         acc[key] = value;
         return acc;
       }, {});
-      
-      // Log if significant gibberish detected
-      if (gibberishCount > 0) {
-        console.warn(`⚠️ [ONBOARDING] Filtered ${gibberishCount}/${Object.keys(responses).length} gibberish responses. Using defaults for missing data.`);
-      }
       
       // Store cleaned responses
       const { error: responsesError } = await supabaseAdmin
@@ -207,7 +180,6 @@ export async function POST(request: NextRequest) {
         });
 
       if (responsesError) {
-        console.warn('⚠️ [ONBOARDING] Failed to store responses:', responsesError.message);
         // Don't fail onboarding for this
       }
     }
@@ -225,8 +197,6 @@ export async function POST(request: NextRequest) {
         supabaseUserId: supabaseUserId, // Store mapping for future lookups
       }
     });
-
-    console.log('✅ [ONBOARDING] Updated Clerk metadata with tenant info');
 
     return NextResponse.json(
       {
@@ -251,7 +221,6 @@ export async function POST(request: NextRequest) {
     );
 
   } catch (error) {
-    console.error('❌ [ONBOARDING] Error:', error);
     return NextResponse.json(
       { 
         error: error instanceof Error ? error.message : 'Onboarding failed',

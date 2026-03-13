@@ -21,19 +21,15 @@ export class TenantContextManager {
     try {
       // Validate input - should be subdomain, not UUID
       if (this.isUUID(subdomain)) {
-        console.error(`❌ Invalid input: UUID passed as subdomain: ${subdomain}`);
         return null;
       }
 
       // 1. Check memory cache first (0ms - no I/O)
       const cached = this.cache.get(subdomain);
       if (cached && cached.expires > Date.now()) {
-        // CRITICAL FIX: Validate memory cache data structure
         if (!cached.data?.uuid || !cached.data?.subdomain) {
-          console.warn(`⚠️ Corrupted memory cache for ${subdomain}, clearing`);
           this.cache.delete(subdomain);
         } else {
-          console.log(`✅ Memory cache hit for tenant: ${subdomain}`);
           return cached.data;
         }
       }
@@ -43,8 +39,6 @@ export class TenantContextManager {
         const redisKey = `tenant:subdomain:${subdomain}`;
         const redisData = await redis?.get(redisKey);
         if (redisData) {
-          console.log(`✅ Redis tenant cache HIT for: ${subdomain}`);
-          
           // Handle Upstash Redis auto-parsing
           let parsed;
           if (typeof redisData === 'string') {
@@ -53,14 +47,12 @@ export class TenantContextManager {
             // Upstash Redis already parsed the JSON
             parsed = redisData;
           } else {
-            console.warn(`⚠️ Invalid Redis data type for ${subdomain}, clearing cache`);
             await redis?.del(redisKey);
             throw new Error('Invalid cache data type');
           }
           
           // Validate parsed data structure
           if (!parsed.id || !parsed.subdomain) {
-            console.warn(`⚠️ Invalid Redis data structure for ${subdomain}, clearing cache`);
             await redis?.del(redisKey);
             throw new Error('Invalid cache structure');
           }
@@ -80,11 +72,10 @@ export class TenantContextManager {
           return tenantData;
         }
       } catch (redisError) {
-        console.warn('⚠️ Redis unavailable, falling back to DB:', redisError);
+        // Redis unavailable, falling back to DB
       }
       
       // 3. Database fallback with proper caching (50-100ms - only when needed)
-      console.log(`🔍 Database lookup for tenant: ${subdomain}`);
       
       // Use service role for tenant lookups to bypass RLS
       const { createClient } = await import('@supabase/supabase-js');
@@ -100,12 +91,10 @@ export class TenantContextManager {
         .maybeSingle();
         
       if (error) {
-        console.error('❌ Database error during tenant lookup:', error);
         return null;
       }
       
       if (!data) {
-        console.warn(`❌ Tenant not found in database: ${subdomain}`);
         return null;
       }
       
@@ -129,14 +118,12 @@ export class TenantContextManager {
           name: data.name
         }), { ex: 3600 }); // 1 hour Redis cache
       } catch (redisError) {
-        console.warn('⚠️ Failed to cache in Redis:', redisError);
+        // Failed to cache in Redis
       }
       
-      console.log(`✅ Database lookup successful for tenant: ${subdomain} -> ${data.id}`);
       return tenantData;
       
     } catch (error) {
-      console.error('❌ TenantContextManager.resolveTenant failed:', error);
       return null;
     }
   }
@@ -148,7 +135,6 @@ export class TenantContextManager {
   static async resolveTenantByUUID(uuid: string): Promise<TenantData | null> {
     try {
       if (!this.isUUID(uuid)) {
-        console.error(`❌ Invalid UUID format: ${uuid}`);
         return null;
       }
 
@@ -165,7 +151,7 @@ export class TenantContextManager {
           };
         }
       } catch (redisError) {
-        console.warn('⚠️ Redis unavailable for UUID lookup:', redisError);
+        // Redis unavailable for UUID lookup
       }
 
       // Database lookup with service role
@@ -182,7 +168,6 @@ export class TenantContextManager {
         .maybeSingle();
 
       if (error || !data) {
-        console.error(`❌ Tenant UUID not found: ${uuid}`, error);
         return null;
       }
 
@@ -200,13 +185,12 @@ export class TenantContextManager {
           name: data.name
         }), { ex: 3600 });
       } catch (redisError) {
-        console.warn('⚠️ Failed to cache UUID lookup:', redisError);
+        // Failed to cache UUID lookup
       }
 
       return tenantData;
 
     } catch (error) {
-      console.error('❌ TenantContextManager.resolveTenantByUUID failed:', error);
       return null;
     }
   }
@@ -225,7 +209,7 @@ export class TenantContextManager {
         await redis?.del(`tenant:uuid:${uuid}`);
       }
     } catch (error) {
-      console.warn('⚠️ Failed to clear tenant cache:', error);
+      // Failed to clear tenant cache
     }
   }
 
@@ -259,7 +243,6 @@ export class TenantContextManager {
       
       return null;
     } catch (error) {
-      console.error('❌ Failed to extract subdomain from hostname:', hostname, error);
       return null;
     }
   }

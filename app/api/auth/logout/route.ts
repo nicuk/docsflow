@@ -109,8 +109,6 @@ export async function POST(request: NextRequest) {
     return response;
     
   } catch (error) {
-    console.error('Logout error:', error);
-    
     // Even if logout fails, still clear cookies
     const response = NextResponse.json(
       { success: false, error: 'Logout failed but cookies cleared' },

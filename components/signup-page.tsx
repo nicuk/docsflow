@@ -158,7 +158,6 @@ export default function SignupPage() {
         strategy: "email_code",
       })
 
-      console.log('✅ Clerk signup successful, email verification sent')
       
       // Generate subdomain suggestion from company name
       const suggestedSubdomain = generateSubdomainFromCompany(formData.companyName);
@@ -182,7 +181,6 @@ export default function SignupPage() {
       }, 2000)
       
     } catch (error: any) {
-      console.error('Clerk signup error:', error)
       
       // Parse Clerk error messages
       let errorMessage = "An error occurred during signup"
@@ -211,7 +209,6 @@ export default function SignupPage() {
         redirectUrlComplete: "/onboarding"
       })
     } catch (error: any) {
-      console.error('Google OAuth error:', error)
       setErrors({
         general: 'Failed to sign up with Google. Please try again.'
       })
@@ -241,7 +238,6 @@ export default function SignupPage() {
       }
       return false;
     } catch (error) {
-      console.error('Error checking subdomain:', error);
       return false; // Assume doesn't exist if check fails
     }
   }
@@ -303,7 +299,7 @@ export default function SignupPage() {
         {/* Header */}
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <DocsFlowBrand size="sm" variant="horizontal" iconVariant="primary" />
+            <DocsFlowBrand size="sm" variant="horizontal" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Start your free trial</h1>
           <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">

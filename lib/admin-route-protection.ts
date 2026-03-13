@@ -161,12 +161,10 @@ export async function verifyAdminAccess(request: NextRequest): Promise<AdminVeri
       return await fallbackAdminCheck(userEmail, tenantId);
       
     } catch (apiError) {
-      console.warn('Admin verification API failed, using fallback:', apiError);
       return await fallbackAdminCheck(userEmail, tenantId);
     }
     
   } catch (error) {
-    console.error('Admin verification error:', error);
     return {
       isAdmin: false,
       shouldRedirect: true,
@@ -225,7 +223,6 @@ async function fallbackAdminCheck(userEmail: string, tenantId: string): Promise<
     };
     
   } catch (error) {
-    console.error('Fallback admin check error:', error);
     return {
       isAdmin: false,
       shouldRedirect: true,
@@ -248,12 +245,10 @@ export function createAdminProtectionResponse(
       ? verification.redirectUrl 
       : new URL(verification.redirectUrl, request.url).toString();
       
-    console.log(`🔐 [ADMIN-PROTECTION] Redirecting non-admin user: ${redirectUrl}`);
     return NextResponse.redirect(new URL(redirectUrl));
   }
   
   if (!verification.isAdmin) {
-    console.log(`❌ [ADMIN-PROTECTION] Access denied: ${verification.error}`);
     return new NextResponse('Access Denied: Admin privileges required', { 
       status: 403,
       headers: {
@@ -265,7 +260,6 @@ export function createAdminProtectionResponse(
   // Admin access granted - continue with request
   const response = NextResponse.next();
   response.headers.set('x-admin-verified', 'true');
-  console.log(`✅ [ADMIN-PROTECTION] Admin access granted`);
   return response;
 }
 

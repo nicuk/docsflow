@@ -127,7 +127,6 @@ export default function AdminUsersPage() {
       loadUserData();
       
     } catch (error) {
-      console.error('Admin access check failed:', error);
       toast.error('Access verification failed');
       router.push('/dashboard');
     }
@@ -160,7 +159,6 @@ export default function AdminUsersPage() {
       }
 
     } catch (error) {
-      console.error('Error loading user data:', error);
       toast.error('Failed to load user data');
     } finally {
       setLoading(false);
@@ -198,7 +196,6 @@ export default function AdminUsersPage() {
       }
 
     } catch (error) {
-      console.error('Error inviting user:', error);
       toast.error('Failed to send invitation');
     } finally {
       setInviteDialog(prev => ({ ...prev, loading: false }));
@@ -219,7 +216,6 @@ export default function AdminUsersPage() {
         toast.error(result.error || 'Failed to approve invitation');
       }
     } catch (error) {
-      console.error('Error approving invitation:', error);
       toast.error('Failed to approve invitation');
     }
   };
@@ -238,7 +234,6 @@ export default function AdminUsersPage() {
         toast.error(result.error || 'Failed to reject invitation');
       }
     } catch (error) {
-      console.error('Error rejecting invitation:', error);
       toast.error('Failed to reject invitation');
     }
   };
@@ -259,7 +254,6 @@ export default function AdminUsersPage() {
         toast.error(result.error || 'Failed to update user role');
       }
     } catch (error) {
-      console.error('Error updating user role:', error);
       toast.error('Failed to update user role');
     }
   };

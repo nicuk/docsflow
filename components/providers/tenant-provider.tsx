@@ -55,7 +55,6 @@ export function TenantProvider({ children, tenantId, tenantSubdomain }: TenantPr
         
         if (!response.ok) {
           if (response.status === 404) {
-            console.warn(`Tenant not found: ${tenantId}`);
             setTenant(null);
             return;
           }
@@ -65,9 +64,7 @@ export function TenantProvider({ children, tenantId, tenantSubdomain }: TenantPr
         const tenantData: Tenant = await response.json();
         setTenant(tenantData);
         
-        console.log(`✅ Loaded tenant data for: ${apiIdentifier}`, tenantData);
       } catch (error) {
-        console.error('Failed to fetch tenant data:', error);
         setTenant(null);
       } finally {
         setIsLoading(false);

@@ -33,7 +33,7 @@ const isSuperAdminRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth()
   
-  // 🔐 SUPER ADMIN ROUTES: HTTP Basic Auth (for system-health and testpersona)
+  // Super admin routes: HTTP Basic Auth (for system-health and testpersona)
   if (isSuperAdminRoute(req)) {
     const basicAuth = req.headers.get('authorization')
     
@@ -98,7 +98,7 @@ export default clerkMiddleware(async (auth, req) => {
         tenantId = tenantInfo.uuid
       }
     } catch (error) {
-      console.error(`[Middleware] Failed to resolve tenant ${tenant}:`, error)
+      // Failed to resolve tenant
     }
   }
 

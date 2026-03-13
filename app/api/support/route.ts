@@ -46,7 +46,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(supportInfo, { headers: corsHeaders });
     
   } catch (error) {
-    console.error('Support API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: corsHeaders }
@@ -68,9 +67,6 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // TODO: Implement actual support ticket creation
-    console.log('Support ticket created:', { subject, email, priority });
-    
     const ticketId = `TICKET-${Date.now()}`;
     
     return NextResponse.json(
@@ -84,7 +80,6 @@ export async function POST(request: NextRequest) {
     );
     
   } catch (error) {
-    console.error('Support ticket error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: corsHeaders }

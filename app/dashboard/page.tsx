@@ -100,7 +100,6 @@ export default function DashboardPage() {
         // Clerk middleware handles all subdomain routing
         // Clerk middleware handles all subdomain routing
         
-        // CRITICAL FIX: Check if on main domain and redirect before API calls
         const hostname = window.location.hostname;
         
         if (hostname === 'www.docsflow.app' || hostname === 'docsflow.app') {
@@ -133,7 +132,6 @@ export default function DashboardPage() {
             }
           }
           
-          // CRITICAL FIX: Check if user just logged in (give login page time to execute session bridge)
           const justLoggedIn = sessionStorage.getItem('just-logged-in');
           if (justLoggedIn) {
             sessionStorage.removeItem('just-logged-in');
@@ -185,11 +183,9 @@ export default function DashboardPage() {
                 // Reload page to get fresh metadata
                 window.location.reload();
                 return;
-              } else {
-                console.error('❌ [DASHBOARD] Metadata sync failed');
               }
-            } catch (error) {
-              console.error('❌ [DASHBOARD] Error syncing metadata:', error);
+            } catch {
+              // Metadata sync failed
             }
           }
           
@@ -242,8 +238,6 @@ export default function DashboardPage() {
         // No manual API calls needed - React Query handles it
         
       } catch (error) {
-        console.error('Failed to load tenant context:', error);
-        // On error, redirect to login to re-authenticate
         window.location.href = '/login';
       }
     }
@@ -431,7 +425,7 @@ export default function DashboardPage() {
           });
         }
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error(error);
       }
     };
     
@@ -497,7 +491,7 @@ export default function DashboardPage() {
 
       {/* Main content grid - Optimized for viewport */}
       <div className="flex-1 flex flex-col gap-4 min-h-0">
-        {/* 🚀 PROGRESSIVE LOADING: Stats load in stages for better UX */}
+        {/* Stats load in stages for better UX */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-fit">
           <div className="lg:col-span-3">
             <ProgressiveStats tenantId={tenantContext?.tenantId} />
@@ -531,7 +525,6 @@ export default function DashboardPage() {
               <PersonaEditor 
                 tenantId={tenantContext?.tenantId || ''}
                 onPersonaUpdated={(persona) => {
-                  console.log('Persona updated by admin:', persona);
                   // Optionally refresh tenant context
                 }}
               />

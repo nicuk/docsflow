@@ -53,8 +53,6 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   const config = getEmbeddingsConfig();
   
   try {
-    console.log(`[Embeddings] Generating single embedding (${text.length} chars) via ${config.baseURL}`);
-    
     const response = await fetch(`${config.baseURL}/embeddings`, {
       method: 'POST',
       headers: {
@@ -83,7 +81,6 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     
     return embedding;
   } catch (error: any) {
-    console.error('[Embeddings] Error:', error);
     throw new EmbeddingError(`Failed to generate embedding: ${error.message}`, {
       textLength: text.length,
     });
@@ -114,7 +111,6 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
   const config = getEmbeddingsConfig();
   
   try {
-    console.log(`[Embeddings] Generating batch embeddings for ${validTexts.length} texts via ${config.baseURL}`);
     const startTime = Date.now();
     
     const response = await fetch(`${config.baseURL}/embeddings`, {
@@ -137,9 +133,6 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
     const data = await response.json();
     const embeddings = data.data.map((item: any) => item.embedding);
     
-    const duration = Date.now() - startTime;
-    console.log(`[Embeddings] Batch complete: ${embeddings.length} embeddings in ${duration}ms (avg: ${Math.round(duration / embeddings.length)}ms per embedding)`);
-    
     if (!embeddings || embeddings.length !== validTexts.length) {
       throw new EmbeddingError(
         `Invalid embedding count: expected ${validTexts.length}, got ${embeddings?.length || 0}`
@@ -148,7 +141,6 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
     
     return embeddings;
   } catch (error: any) {
-    console.error('[Embeddings] Batch error:', error);
     throw new EmbeddingError(`Failed to generate batch embeddings: ${error.message}`, {
       textCount: texts.length,
     });

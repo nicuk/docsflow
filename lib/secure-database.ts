@@ -11,7 +11,7 @@ if (typeof window !== 'undefined') {
   throw new Error('🚨 SECURITY ERROR: secure-database.ts should only be used on server side!');
 }
 
-let serviceClient: ReturnType<typeof createClient> | null = null;
+let serviceClient: any | null = null;
 
 /**
  * Get secure service client - BACKEND ONLY
@@ -53,7 +53,6 @@ export const SecureTenantService = {
       .maybeSingle();
     
     if (error) {
-      console.error('SecureTenantService.getTenantBySubdomain error:', error);
       return null;
     }
     
@@ -72,7 +71,6 @@ export const SecureTenantService = {
       .maybeSingle();
     
     if (error) {
-      console.error('SecureTenantService.getTenantByUUID error:', error);
       return null;
     }
     
@@ -109,7 +107,6 @@ export const SecureDocumentService = {
     const { data, error } = await query;
     
     if (error) {
-      console.error('SecureDocumentService.getDocumentsForTenant error:', error);
       return [];
     }
     
@@ -133,7 +130,6 @@ export const SecureDocumentService = {
     const { data, error } = await query;
     
     if (error) {
-      console.error('SecureDocumentService.getDocumentChunks error:', error);
       return [];
     }
     
@@ -155,7 +151,6 @@ export const SecureDocumentService = {
       .single();
     
     if (error) {
-      console.error('SecureDocumentService.insertDocumentChunk error:', error);
       return null;
     }
     
@@ -174,7 +169,6 @@ export const SecureDocumentService = {
       .single();
     
     if (error) {
-      console.error('SecureDocumentService.insertDocument error:', error);
       return null;
     }
     
@@ -211,7 +205,6 @@ export const SecureUserService = {
       .single();
     
     if (error) {
-      console.error('SecureUserService.getUserWithTenant error:', error);
       return null;
     }
     
@@ -231,7 +224,6 @@ export const SecureUserService = {
       .single();
     
     if (error) {
-      console.error('SecureUserService.updateUserTenant error:', error);
       return null;
     }
     
@@ -254,7 +246,6 @@ export const SecureAdminService = {
       .order('created_at', { ascending: false });
     
     if (error) {
-      console.error('SecureAdminService.getAllTenants error:', error);
       return [];
     }
     
@@ -279,7 +270,6 @@ export const SecureAdminService = {
       .order('created_at', { ascending: false });
     
     if (error) {
-      console.error('SecureAdminService.getAllUsers error:', error);
       return [];
     }
     
@@ -299,14 +289,11 @@ export async function testSecureService() {
       .single();
     
     if (error) {
-      console.error('testSecureService error:', error);
       return false;
     }
     
-    console.log('✅ Secure service working - tenant count:', data);
     return true;
   } catch (error) {
-    console.error('testSecureService failed:', error);
     return false;
   }
 }

@@ -64,7 +64,7 @@ export default function PersonaEditor({ currentPersona, tenantId, onPersonaUpdat
         }
       }
     } catch (error) {
-      console.error('Failed to fetch current persona:', error);
+      // Failed to fetch current persona
     }
   };
 
@@ -98,11 +98,9 @@ export default function PersonaEditor({ currentPersona, tenantId, onPersonaUpdat
         setTimeout(() => setSaveStatus('idle'), 3000);
       } else {
         const error = await response.json();
-        console.error('Failed to update persona:', error);
         throw new Error(error.error || 'Failed to update persona');
       }
     } catch (error) {
-      console.error('Persona update error:', error);
       setSaveStatus('error');
       
       // Auto-hide error message after 5 seconds
@@ -159,7 +157,6 @@ export default function PersonaEditor({ currentPersona, tenantId, onPersonaUpdat
         throw new Error('Failed to regenerate persona');
       }
     } catch (error) {
-      console.error('Persona regeneration error:', error);
       setSaveStatus('error');
     } finally {
       setIsGenerating(false);

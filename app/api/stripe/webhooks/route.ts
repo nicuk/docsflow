@@ -9,11 +9,10 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
-    const headersList = headers();
+    const headersList = await headers();
     const signature = headersList.get('stripe-signature');
 
     if (!signature) {
-      console.error('Missing stripe-signature header');
       return NextResponse.json(
         { error: 'Missing signature' },
         { status: 400 }
@@ -25,7 +24,6 @@ export async function POST(request: NextRequest) {
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (err) {
-      console.error('Webhook signature verification failed:', err);
       return NextResponse.json(
         { error: 'Invalid signature' },
         { status: 400 }
@@ -78,13 +76,12 @@ export async function POST(request: NextRequest) {
       }
       
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        break;
     }
 
     return NextResponse.json({ received: true });
 
   } catch (error) {
-    console.error('Webhook handler error:', error);
     return NextResponse.json(
       { error: 'Webhook handler failed' },
       { status: 500 }
@@ -96,13 +93,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
   const tenantId = session.metadata?.tenantId;
   
   if (!tenantId) {
-    console.error('Missing tenant ID in checkout session metadata');
     return;
   }
 
   try {
     // Get subscription details
-    const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+    const subscription = await stripe.subscriptions.retrieve(session.subscription as string) as any;
     
     // Determine plan type from price ID
     const priceId = subscription.items.data[0].price.id;
@@ -124,7 +120,6 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
       .eq('id', tenantId);
 
     if (tenantError) {
-      console.error('Error updating tenant:', tenantError);
       return;
     }
 
@@ -146,17 +141,15 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, supabas
       });
 
     if (subscriptionError) {
-      console.error('Error creating subscription record:', subscriptionError);
+      // Failed to create subscription record
     }
 
-    console.log(`Successfully activated subscription for tenant ${tenantId}`);
-
   } catch (error) {
-    console.error('Error handling checkout completion:', error);
+    // Error handling checkout completion
   }
 }
 
-async function handlePaymentSucceeded(invoice: Stripe.Invoice, supabase: any) {
+async function handlePaymentSucceeded(invoice: any, supabase: any) {
   if (!invoice.subscription) return;
 
   try {
@@ -171,14 +164,14 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice, supabase: any) {
       .eq('stripe_subscription_id', invoice.subscription);
 
     if (error) {
-      console.error('Error updating subscription after payment:', error);
+      // Error updating subscription after payment
     }
   } catch (error) {
-    console.error('Error handling payment succeeded:', error);
+    // Error handling payment succeeded
   }
 }
 
-async function handlePaymentFailed(invoice: Stripe.Invoice, supabase: any) {
+async function handlePaymentFailed(invoice: any, supabase: any) {
   if (!invoice.subscription) return;
 
   try {
@@ -191,14 +184,14 @@ async function handlePaymentFailed(invoice: Stripe.Invoice, supabase: any) {
       .eq('stripe_subscription_id', invoice.subscription);
 
     if (error) {
-      console.error('Error updating subscription after failed payment:', error);
+      // Error updating subscription after failed payment
     }
   } catch (error) {
-    console.error('Error handling payment failed:', error);
+    // Error handling payment failed
   }
 }
 
-async function handleSubscriptionUpdated(subscription: Stripe.Subscription, supabase: any) {
+async function handleSubscriptionUpdated(subscription: any, supabase: any) {
   try {
     const { error } = await supabase
       .from('subscriptions')
@@ -211,14 +204,14 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription, supa
       .eq('stripe_subscription_id', subscription.id);
 
     if (error) {
-      console.error('Error updating subscription:', error);
+      // Error updating subscription
     }
   } catch (error) {
-    console.error('Error handling subscription updated:', error);
+    // Error handling subscription updated
   }
 }
 
-async function handleSubscriptionCanceled(subscription: Stripe.Subscription, supabase: any) {
+async function handleSubscriptionCanceled(subscription: any, supabase: any) {
   try {
     const { error } = await supabase
       .from('subscriptions')
@@ -229,10 +222,10 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription, sup
       .eq('stripe_subscription_id', subscription.id);
 
     if (error) {
-      console.error('Error updating canceled subscription:', error);
+      // Error updating canceled subscription
     }
   } catch (error) {
-    console.error('Error handling subscription canceled:', error);
+    // Error handling subscription canceled
   }
 }
 

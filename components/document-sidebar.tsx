@@ -314,7 +314,6 @@ export default function DocumentSidebar({
     setIsSelectMode(false)
   }
 
-  // TODO:LIVE - Connect to real backend API
   const handleUpload = () => {
     // Create file input element
     const input = document.createElement('input')
@@ -350,7 +349,6 @@ export default function DocumentSidebar({
         setDocuments(prev => [tempDoc, ...prev])
         
         try {
-          // TODO:LIVE - Replace with real API call
           const { apiClient } = await import('@/lib/api-client')
           const response = await apiClient.uploadDocument(file)
           
@@ -368,7 +366,6 @@ export default function DocumentSidebar({
           successCount++;
           
         } catch (error) {
-          console.error('Upload failed:', error)
           failedFiles.push(file.name);
           
           // Mark as failed

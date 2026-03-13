@@ -137,8 +137,7 @@ export function validatePersonaSettings(settings: Partial<PersonaSettings>): {
   }
   
   if (settings.industry && !['general', 'healthcare', 'legal', 'manufacturing', 'real_estate', 'technology', 'finance'].includes(settings.industry)) {
-    // Allow any industry but warn if not in common list
-    console.warn(`Custom industry: ${settings.industry}`);
+    // Custom industry allowed but not in common list
   }
   
   return {

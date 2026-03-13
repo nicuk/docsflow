@@ -51,8 +51,6 @@ export const apiClient = {
       // Use BOTH headers - custom header survives Vercel proxy
       headers['Authorization'] = `Bearer ${finalToken}`;
       headers['X-Auth-Token'] = finalToken; // Custom header that Vercel won't strip
-    } else {
-      console.error('❌ [CLERK-AUTH] No auth token available - user may need to re-authenticate');
     }
     
     // RLS CONTEXT: Add tenant context for database session
@@ -122,7 +120,6 @@ export const apiClient = {
       }
     }
     
-    console.error('❌ [CLERK-TOKEN] No Clerk token available');
     return null;
   },
 
@@ -150,7 +147,6 @@ export const apiClient = {
       lastHealthCheck = now;
       return isBackendHealthy;
     } catch (error) {
-      console.warn('Backend health check failed:', error);
       isBackendHealthy = false;
       lastHealthCheck = now;
       return false;
@@ -179,9 +175,7 @@ export const apiClient = {
       
       return await response.json();
     } catch (error) {
-      console.error('Chat API Error:', error);
-      // TODO:LIVE - Real API connection established, no fallback needed
-      throw error; // Let the component handle the error properly
+      throw error;
     }
   },
 
@@ -208,12 +202,11 @@ export const apiClient = {
       const response = await fetch(`${API_BASE_URL}/conversations`, {
         method: 'GET',
         headers,
-        credentials: 'include', // CRITICAL FIX: Include cookies for cross-domain auth
+        credentials: 'include',
       });
       
       return await this.handleApiResponse(response, 'CONVERSATIONS');
     } catch (error) {
-      console.warn('Conversations endpoint not available, using local storage mode:', error);
       return { conversations: [] };
     }
   },
@@ -233,8 +226,6 @@ export const apiClient = {
       
       return await response.json();
     } catch (error) {
-      console.error('Create conversation failed:', error);
-      // TODO:LIVE - For now, create local fallback but in production this should be handled properly
       const mockConversation = {
         id: 'local-' + Date.now(),
         title: title || 'Chat Session',
@@ -258,7 +249,6 @@ export const apiClient = {
       
       return await response.json();
     } catch (error) {
-      console.warn('Conversation history endpoint not available, using local storage:', error);
       return { messages: [] };
     }
   },
@@ -316,7 +306,6 @@ export const apiClient = {
         xhr.send(formData);
       });
     } catch (error) {
-      console.error('Upload Error:', error);
       throw error;
     }
   },
@@ -332,7 +321,6 @@ export const apiClient = {
       
       return await this.handleApiResponse(response, 'DOCUMENTS');
     } catch (error) {
-      console.error('Documents API Error:', error);
       throw error;
     }
   },
@@ -349,7 +337,6 @@ export const apiClient = {
       
       return await this.handleApiResponse(response, 'DELETE_DOCUMENT');
     } catch (error) {
-      console.error('Delete Document API Error:', error);
       throw error;
     }
   },
@@ -365,7 +352,6 @@ export const apiClient = {
       
       return await this.handleApiResponse(response, 'CLEANUP_STUCK');
     } catch (error) {
-      console.error('Cleanup Stuck Documents API Error:', error);
       throw error;
     }
   },
@@ -381,7 +367,6 @@ export const apiClient = {
       
       return await response.json();
     } catch (error) {
-      console.error('Health Check Error:', error);
       throw error;
     }
   }

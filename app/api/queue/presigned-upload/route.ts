@@ -138,7 +138,6 @@ export async function POST(request: NextRequest) {
       });
     
     if (error) {
-      console.error('Error creating presigned URL:', error);
       return NextResponse.json(
         { error: 'Failed to generate upload URL', details: error.message },
         { status: 500 }
@@ -152,13 +151,9 @@ export async function POST(request: NextRequest) {
       token: data.token
     };
     
-    console.log(`✅ Generated presigned URL for ${filename} (tenant: ${tenantId})`);
-    
     return NextResponse.json(response, { status: 200 });
     
   } catch (error) {
-    console.error('Error in presigned-upload route:', error);
-    
     return NextResponse.json(
       { 
         error: 'Internal server error',

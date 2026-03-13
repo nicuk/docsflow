@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { tenantId } = tenantValidation;
-    const userId = 'system'; // TODO: Extract from auth when available
+    const userId = 'system';
 
     // Check if user is admin (access level 1)
     const accessLevel = await getUserAccessLevel(request, tenantId);
@@ -77,7 +77,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(response);
 
   } catch (error) {
-    console.error('RAG metrics API error:', error);
     return NextResponse.json(
       { error: 'Failed to retrieve metrics' },
       { status: 500 }
@@ -98,7 +97,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { tenantId } = tenantValidation;
-    const userId = 'system'; // TODO: Extract from auth when available
+    const userId = 'system';
 
     // Check if user is admin
     const accessLevel = await getUserAccessLevel(request, tenantId);
@@ -118,7 +117,6 @@ export async function DELETE(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Clear metrics error:', error);
     return NextResponse.json(
       { error: 'Failed to clear metrics' },
       { status: 500 }

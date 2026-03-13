@@ -85,7 +85,7 @@ const getUserFromCookies = () => {
       };
     }
   } catch (error) {
-    console.error('Error getting user from session:', error);
+    // Fallback to default user
   }
   
   // Final fallback
@@ -131,13 +131,6 @@ function useUserSession() {
       
       // Check role from metadata or organization
       const role = (clerkUser.publicMetadata?.role as string) || 'member'
-      
-      console.log('✅ [CLERK] User authenticated:', {
-        name: firstName,
-        email,
-        role,
-        clerkId: clerkUser.id
-      })
       
       setUser({
         name: firstName,
@@ -190,7 +183,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       await signOut()
       router.push('/login')
     } catch (error) {
-      console.error('Clerk logout error:', error)
       // Force redirect even if logout fails
       window.location.href = '/login'
     }

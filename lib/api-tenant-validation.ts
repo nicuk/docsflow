@@ -65,7 +65,6 @@ export async function validateTenantContext(
         tenantSubdomain = tenantId;  // Move to correct field
         tenantId = null;             // Clear invalid UUID field
       } else {
-        console.error(`🚨 SECURITY: Invalid UUID format in tenant-id: ${tenantId}`);
         return {
           isValid: false,
           tenantId: null,
@@ -82,7 +81,6 @@ export async function validateTenantContext(
         tenantId = tenantSubdomain;  // Move to correct field
         tenantSubdomain = null;      // Clear invalid subdomain field
       } else {
-        console.error(`🚨 SECURITY: UUID detected in subdomain field: ${tenantSubdomain}`);
         return {
           isValid: false,
           tenantId: null,
@@ -93,7 +91,6 @@ export async function validateTenantContext(
       }
     }
     
-    // CRITICAL FIX: No fallback hostname extraction to prevent "www" being treated as tenant
     if (!tenantSubdomain) {
       return {
         isValid: false,
@@ -106,7 +103,6 @@ export async function validateTenantContext(
 
     // Final validation: subdomain should not be UUID format
     if (uuidPattern.test(tenantSubdomain)) {
-      console.error(`🚨 SECURITY: UUID still in subdomain after auto-correction: ${tenantSubdomain}`);
       return {
         isValid: false,
         tenantId: null,
@@ -117,7 +113,6 @@ export async function validateTenantContext(
     }
 
     if (!tenantSubdomain || tenantSubdomain === 'localhost' || tenantSubdomain === 'docsflow') {
-      console.error('❌ Invalid tenant subdomain:', tenantSubdomain);
       return {
         isValid: false,
         tenantId: null,
@@ -131,7 +126,6 @@ export async function validateTenantContext(
     const tenantInfo = await TenantContextManager.resolveTenant(tenantSubdomain);
   
     if (!tenantInfo) {
-      console.error('❌ Tenant lookup failed for subdomain:', tenantSubdomain);
       return {
         isValid: false,
         tenantId: null,
@@ -153,7 +147,6 @@ export async function validateTenantContext(
     const tenantUUID = tenantData?.id;
     
     if (!tenantUUID) {
-      console.error('Tenant data missing UUID:', tenantData);
       return {
         isValid: false,
         tenantId: null,
@@ -171,10 +164,8 @@ export async function validateTenantContext(
       const customAuthToken = request.headers.get('x-auth-token');
       if (customAuthToken && !authHeader) {
         authHeader = `Bearer ${customAuthToken}`;
-        console.log('[AUTH] Using X-Auth-Token custom header for authentication');
       }
       
-      // CRITICAL FIX: Extract Authorization from Vercel proxy headers
       if (!authHeader) {
         const vercelSCHeaders = request.headers.get('x-vercel-sc-headers');
         if (vercelSCHeaders) {
@@ -240,7 +231,7 @@ export async function validateTenantContext(
           } as any;
           
         } catch (clerkError) {
-          console.error('🚨 [CLERK-AUTH] Failed to get Clerk user:', clerkError);
+          console.error(clerkError);
         }
       }
       
@@ -304,7 +295,7 @@ export async function validateTenantContext(
             }
           }
         } catch (cookieError) {
-          console.warn('Multi-tenant cookie authentication failed:', cookieError);
+          // Multi-tenant cookie authentication failed
         }
       }
       
@@ -345,7 +336,6 @@ export async function validateTenantContext(
     };
 
   } catch (error) {
-    console.error('Tenant validation error:', error);
     return {
       isValid: false,
       tenantId: null,

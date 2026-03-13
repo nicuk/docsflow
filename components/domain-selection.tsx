@@ -88,7 +88,6 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
             suggestion.available = !data.exists;
           }
         } catch (error) {
-          console.error(`Failed to check ${suggestion.domain}:`, error);
           // Assume available on error to not block user
           suggestion.available = true;
         }
@@ -169,7 +168,6 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
       }
 
     } catch (error) {
-      console.error('Error checking domain availability:', error);
     } finally {
       setIsChecking(false);
     }
@@ -242,7 +240,6 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
         throw new Error(responseData.error || 'Failed to send request');
       }
     } catch (error) {
-      console.error('Access request error:', error);
       alert(`Failed to send access request: ${error.message}. Please try again or contact support.`);
     } finally {
       setRequestingAccess(false);

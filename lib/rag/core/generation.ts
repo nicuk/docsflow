@@ -117,12 +117,8 @@ Question: ${query}
 
 Answer:`;
   
-  console.log(`[Generation] Generating answer for query: "${query}"`);
-  console.log(`[Generation] Context chunks: ${context.length}`);
-  
   // Try primary model first
   const primary = RAG_CONFIG.llm.primary;
-  console.log(`[Generation] 🎯 Trying PRIMARY: ${primary.model}`);
   
   try {
     const result = await tryGenerateWithModel(
@@ -131,15 +127,12 @@ Answer:`;
       primary.temperature,
       primary.maxTokens
     );
-    console.log(`[Generation] ✅ PRIMARY succeeded: ${primary.model} (${result.answer.length} chars)`);
     return { ...result, fallbackUsed: false };
   } catch (primaryError: any) {
-    console.warn(`[Generation] ⚠️ PRIMARY failed: ${primary.model} - ${primaryError.message}`);
     
     // Try fallback models in order
     for (let i = 0; i < RAG_CONFIG.llm.fallbacks.length; i++) {
       const fallback = RAG_CONFIG.llm.fallbacks[i];
-      console.log(`[Generation] 🔄 Trying BACKUP ${i + 1}: ${fallback.model} (${fallback.reason})`);
       
       try {
         const result = await tryGenerateWithModel(
@@ -148,16 +141,13 @@ Answer:`;
           fallback.temperature,
           fallback.maxTokens
         );
-        console.log(`[Generation] ✅ BACKUP ${i + 1} succeeded: ${fallback.model} (${result.answer.length} chars)`);
         return { ...result, fallbackUsed: true };
       } catch (fallbackError: any) {
-        console.warn(`[Generation] ⚠️ BACKUP ${i + 1} failed: ${fallback.model} - ${fallbackError.message}`);
         // Continue to next fallback
       }
     }
     
     // All models failed
-    console.error('[Generation] ❌ ALL MODELS FAILED');
     throw new GenerationError(`All models failed. Primary: ${primaryError.message}`, {
       query: input.query,
       contextChunks: input.context.length,

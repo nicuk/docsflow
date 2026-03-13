@@ -63,7 +63,6 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false });
 
     if (invitationsError) {
-      console.error('Error fetching invitations:', invitationsError);
       return NextResponse.json({ error: 'Failed to fetch invitations' }, { status: 500 });
     }
 
@@ -76,7 +75,6 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false });
 
     if (requestsError) {
-      console.error('Error fetching access requests:', requestsError);
       // Don't fail if access_requests table doesn't exist yet
     }
 
@@ -96,7 +94,6 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error in pending-users GET:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -134,7 +131,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
 
   } catch (error) {
-    console.error('Error in pending-users POST:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -249,7 +245,7 @@ async function handleAccessRequestAction(action: string, requestId: string, reas
       .eq('id', requestId);
 
     if (updateError) {
-      console.error('Failed to update access request:', updateError);
+      // Non-critical: access request status update failed
     }
 
     return NextResponse.json({ 

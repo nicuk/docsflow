@@ -76,10 +76,8 @@ export async function logPersonaMetrics(metrics: PersonaMetrics): Promise<void> 
         created_at: new Date().toISOString()
       });
 
-    console.log(`✅ [PERSONA METRICS] Logged for tenant ${metrics.tenant_id}: Quality ${qualityScore.overall.toFixed(2)}`);
-  } catch (error) {
-    console.error('❌ [PERSONA METRICS] Failed to log:', error);
-    // Don't throw - metrics failure shouldn't break the main flow
+  } catch {
+    // Metrics failure shouldn't break the main flow
   }
 }
 
@@ -158,7 +156,6 @@ export async function getPersonaAnalytics(tenantId: string, days: number = 30) {
     .order('created_at', { ascending: false });
 
   if (error || !events) {
-    console.error('Failed to fetch persona analytics:', error);
     return null;
   }
 

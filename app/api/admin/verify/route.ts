@@ -50,7 +50,6 @@ export async function GET(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('Admin verification error:', error);
     return NextResponse.json({
       success: false,
       isAdmin: false,

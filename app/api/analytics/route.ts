@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { getCORSHeaders } from '@/lib/utils'
 import { validateTenantContext } from '@/lib/api-tenant-validation'
-import { getSupabaseClient } from '@/lib/supabase'
+
+function getSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
 
 export async function GET(request: NextRequest) {
   const origin = request.headers.get('origin')
@@ -27,6 +34,12 @@ export async function GET(request: NextRequest) {
     
     // Query tenant-specific analytics from Supabase
     const supabase = getSupabaseClient()
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Configuration error' },
+        { status: 500, headers: corsHeaders }
+      )
+    }
     
     // Query tenant-specific documents count
     const { data: documentsData, error: docsError } = await supabase
@@ -48,7 +61,7 @@ export async function GET(request: NextRequest) {
       .eq('message_type', 'user')
     
     if (docsError || convsError || msgsError) {
-      console.error('Analytics query errors:', { docsError, convsError, msgsError })
+      // Non-critical analytics query errors
     }
     
     const analyticsData = {
@@ -69,13 +82,9 @@ export async function GET(request: NextRequest) {
       })) || []
     }
 
-    console.log(`📊 [ANALYTICS] ✅ SUCCESS - Serving analytics for tenant: ${tenantId}`)
-    console.log(`📊 [ANALYTICS] Request headers:`, Object.fromEntries(request.headers.entries()))
-
     return NextResponse.json(analyticsData, { headers: corsHeaders })
 
   } catch (error: any) {
-    console.error('Analytics API error:', error)
     return NextResponse.json(
       { 
         error: 'Analytics service temporarily unavailable',

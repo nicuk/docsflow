@@ -78,7 +78,6 @@ export class RegistrationRedirectHandler {
       }
       
     } catch (error) {
-      console.error('Registration redirect determination error:', error);
       // Fallback to onboarding
       return {
         success: true,
@@ -116,7 +115,6 @@ export class RegistrationRedirectHandler {
     }
     
     // Execute redirect
-    console.log(`🔄 [REGISTRATION] Redirecting to: ${redirectResult.redirectUrl}`);
     window.location.href = redirectResult.redirectUrl;
   }
   
@@ -142,7 +140,6 @@ export class RegistrationRedirectHandler {
       
       return null;
     } catch (error) {
-      console.warn('Failed to get registration context:', error);
       return null;
     }
   }
@@ -184,7 +181,6 @@ export class RegistrationRedirectHandler {
     
     // Redirect after short delay for UX
     setTimeout(() => {
-      console.log(`🔄 [REGISTRATION] Executing redirect to: ${redirectResult.redirectUrl}`);
       window.location.href = redirectResult.redirectUrl;
     }, 1500);
   }

@@ -54,7 +54,6 @@ export default function RegisterPage() {
         throw error;
       }
     } catch (error) {
-      console.error('Google registration error:', error);
       setError(error instanceof Error ? error.message : 'Google registration failed');
       setIsLoading(false);
     }
@@ -119,7 +118,6 @@ export default function RegisterPage() {
         );
       }
     } catch (error) {
-      console.error('Registration error:', error);
       setError(error instanceof Error ? error.message : 'Registration failed');
     } finally {
       setIsLoading(false);

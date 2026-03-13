@@ -58,7 +58,7 @@ function validateChunks(chunks: ChunkInput[]): void {
     }
     
     if (chunk.content.length > 10000) {
-      console.warn(`[Ingest] Chunk ${i} is very long (${chunk.content.length} chars)`);
+      // Chunk is very long, but still valid
     }
   }
 }
@@ -72,23 +72,15 @@ export async function ingestWorkflow(input: IngestInput): Promise<IngestResult> 
   const startTime = Date.now();
   
   try {
-    console.log(`[Ingest Workflow] Starting ingestion`);
-    console.log(`[Ingest Workflow] Document: ${input.documentId}`);
-    console.log(`[Ingest Workflow] Tenant: ${input.tenantId}`);
-    console.log(`[Ingest Workflow] Chunks: ${input.chunks.length}`);
-    
     // STEP 1: Validate chunks
-    console.log('[Ingest Workflow] Step 1: Validating chunks');
     validateChunks(input.chunks);
     
     // STEP 2: Generate embeddings (batch processing)
-    console.log('[Ingest Workflow] Step 2: Generating embeddings');
     const embeddings = await generateEmbeddings(
       input.chunks.map(c => c.content)
     );
     
     // STEP 3: Prepare vectors with metadata
-    console.log('[Ingest Workflow] Step 3: Preparing vectors');
     const vectors: Vector[] = input.chunks.map((chunk, index) => ({
       id: `${input.documentId}_chunk_${index}`,
       values: embeddings[index],
@@ -104,7 +96,6 @@ export async function ingestWorkflow(input: IngestInput): Promise<IngestResult> 
     }));
     
     // STEP 4: Upsert to Pinecone (with tenant namespace)
-    console.log('[Ingest Workflow] Step 4: Upserting to Pinecone');
     const result = await upsertVectors({
       vectors,
       namespace: input.tenantId, // Multi-tenant isolation ✅
@@ -112,9 +103,6 @@ export async function ingestWorkflow(input: IngestInput): Promise<IngestResult> 
     
     const duration = Date.now() - startTime;
     const avgEmbeddingTime = duration / input.chunks.length;
-    
-    console.log(`[Ingest Workflow] ✅ Success in ${duration}ms`);
-    console.log(`[Ingest Workflow] Avg time per chunk: ${avgEmbeddingTime.toFixed(0)}ms`);
     
     return {
       success: true,
@@ -127,7 +115,6 @@ export async function ingestWorkflow(input: IngestInput): Promise<IngestResult> 
     };
   } catch (error: any) {
     const duration = Date.now() - startTime;
-    console.error('[Ingest Workflow] Error:', error);
     
     throw new IngestWorkflowError(
       `Ingest workflow failed: ${error.message}`,

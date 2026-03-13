@@ -87,7 +87,6 @@ export async function POST(
       .maybeSingle();
 
     if (userError) {
-      console.error('Error checking existing user:', userError);
       return NextResponse.json({
         success: false,
         error: 'Failed to process invitation'
@@ -121,7 +120,6 @@ export async function POST(
       .rpc('check_user_limit', { tenant_uuid: invitation.tenant_id });
 
     if (limitError) {
-      console.error('Error checking user limit:', limitError);
       return NextResponse.json({
         success: false,
         error: 'Failed to process invitation'
@@ -152,7 +150,6 @@ export async function POST(
       .single();
 
     if (createUserError || !newUser) {
-      console.error('Error creating user:', createUserError);
       return NextResponse.json({
         success: false,
         error: 'Failed to create user account'
@@ -170,7 +167,7 @@ export async function POST(
       .eq('id', invitation.id);
 
     if (updateInvitationError) {
-      console.error('Error updating invitation:', updateInvitationError);
+      // Non-critical: invitation update failed but user was created
       // Don't fail the request, user was created successfully
     }
 
@@ -184,7 +181,7 @@ export async function POST(
     });
 
     if (!emailResult.success) {
-      console.error('Failed to send welcome email:', emailResult.error);
+      // Non-critical: welcome email failed
       // Don't fail the request, just log the error
     }
 
@@ -231,7 +228,6 @@ export async function POST(
     });
 
   } catch (error) {
-    console.error('Error accepting invitation:', error);
     return NextResponse.json({
       success: false,
       error: 'Internal server error'

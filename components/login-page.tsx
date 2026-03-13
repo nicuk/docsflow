@@ -140,7 +140,6 @@ export default function LoginPage() {
       }
       
     } catch (error: any) {
-      console.error('Clerk login error:', error)
       
       // Parse Clerk error messages
       let errorMessage = "Invalid email or password"
@@ -183,7 +182,6 @@ export default function LoginPage() {
         redirectUrlComplete: "/dashboard"
       })
     } catch (error: any) {
-      console.error('Google OAuth error:', error)
       setErrors({
         general: 'Failed to sign in with Google. Please try again.'
       })

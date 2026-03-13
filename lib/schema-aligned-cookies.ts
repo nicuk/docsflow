@@ -111,21 +111,18 @@ export class SchemaAlignedCookieManager {
     // Validate tenant ID is UUID format (matches tenants.id)
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(context.tenantId)) {
-      console.error(`❌ [SCHEMA] Invalid tenant ID format: ${context.tenantId}`);
       return false;
     }
     
     // Validate email format (matches users.email)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(context.userEmail)) {
-      console.error(`❌ [SCHEMA] Invalid email format: ${context.userEmail}`);
       return false;
     }
     
     // Validate subdomain format (matches tenants.subdomain - no special chars)
     const subdomainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$/;
     if (!subdomainRegex.test(context.subdomain)) {
-      console.error(`❌ [SCHEMA] Invalid subdomain format: ${context.subdomain}`);
       return false;
     }
     
@@ -294,7 +291,6 @@ export class SchemaAlignedCookieManager {
         tenantId: sessionData.tenantId || null
       };
     } catch (error) {
-      console.error('🚨 [SECURITY] Failed to fetch secure access data:', error);
       return {
         isAdmin: false,
         accessLevel: 2,

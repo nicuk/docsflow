@@ -51,8 +51,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(responseData);
 
   } catch (error) {
-    console.error('❌ [SESSION API] Error:', error);
-    
     return NextResponse.json({
       authenticated: false,
       user: null,

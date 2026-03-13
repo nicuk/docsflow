@@ -60,7 +60,6 @@ export async function POST(request: NextRequest) {
     });
 
     if (authError) {
-      console.error('[LOGIN] Authentication failed:', authError.message);
       return NextResponse.json(
         { success: false, error: 'Invalid email or password' },
         { status: 401, headers: corsHeaders }
@@ -82,7 +81,7 @@ export async function POST(request: NextRequest) {
     });
     
     if (sessionError) {
-      console.error('[LOGIN] Failed to establish session context:', sessionError.message);
+      // Session context establishment failed
     }
 
     // Now try to fetch user profile with proper RLS context
@@ -177,7 +176,6 @@ export async function POST(request: NextRequest) {
         .single();
       
       if (createError) {
-        console.error('[LOGIN] Failed to create user profile:', createError);
         return NextResponse.json(
           { success: false, error: 'Failed to create user profile' },
           { status: 500, headers: corsHeaders }
@@ -213,32 +211,28 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 7 // 7 days
     };
     
+    const tenant = (userProfile.tenants as any) as { id: string; subdomain: string; name: string; industry: string } | null;
+
     if (userProfile.tenant_id) {
       cookieStore.set('tenant-id', userProfile.tenant_id, tenantCookieOptions);
     }
     if (userProfile.email) {
       cookieStore.set('user-email', userProfile.email, tenantCookieOptions);
     }
-    if (userProfile.tenants?.subdomain) {
-      cookieStore.set('tenant-subdomain', userProfile.tenants.subdomain, tenantCookieOptions);
+    if (tenant?.subdomain) {
+      cookieStore.set('tenant-subdomain', tenant.subdomain, tenantCookieOptions);
     }
     
-    
-    
-    // Return redirect URL for client-side redirect (avoids CORS)
-    // Server-side redirects across origins are blocked by CORS policy
     let redirectUrl = null;
-    if (isMainDomain && userProfile.tenants?.subdomain) {
+    if (isMainDomain && tenant?.subdomain) {
       redirectUrl = process.env.NODE_ENV === 'production'
-        ? `https://${userProfile.tenants.subdomain}.docsflow.app/dashboard`
-        : `http://localhost:3000/dashboard`; // For local dev, stay on localhost
-      
+        ? `https://${tenant.subdomain}.docsflow.app/dashboard`
+        : `http://localhost:3000/dashboard`;
     }
     
-    // For subdomain logins or local dev, return JSON (frontend handles navigation)
     const response = NextResponse.json({
       success: true,
-      redirectUrl: redirectUrl, // Client will use this for cross-origin redirect
+      redirectUrl,
       user: {
         id: userProfile.id,
         email: userProfile.email,
@@ -246,11 +240,11 @@ export async function POST(request: NextRequest) {
         tenant_id: userProfile.tenant_id,
         role: userProfile.role,
         access_level: userProfile.access_level,
-        tenant: userProfile.tenants ? {
-          id: userProfile.tenants.id,
-          subdomain: userProfile.tenants.subdomain,
-          name: userProfile.tenants.name,
-          industry: userProfile.tenants.industry
+        tenant: tenant ? {
+          id: tenant.id,
+          subdomain: tenant.subdomain,
+          name: tenant.name,
+          industry: tenant.industry
         } : undefined
       },
       session: {
@@ -262,7 +256,6 @@ export async function POST(request: NextRequest) {
     return response;
 
   } catch (error: any) {
-    console.error('[LOGIN] Server error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500, headers: corsHeaders }

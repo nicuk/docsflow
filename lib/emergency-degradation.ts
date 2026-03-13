@@ -89,15 +89,12 @@ export class EmergencyDegradationManager {
       estimatedRecoveryTime: this.estimateRecoveryTime(level)
     };
 
-    console.warn(`🚨 [DEGRADATION] Activated level ${DegradationLevel[level]} from ${DegradationLevel[previousLevel]}`);
-    console.warn(`🔍 [DEGRADATION] Reason: ${this.config.reason}`);
-
     // Notify registered callbacks
     this.notificationCallbacks.forEach(callback => {
       try {
         callback(level, this.config.reason);
-      } catch (err) {
-        console.error('Degradation notification callback failed:', err);
+      } catch {
+        // Notification callback failed
       }
     });
 
@@ -132,7 +129,6 @@ export class EmergencyDegradationManager {
         // Try cache first, then static responses
         const cached = this.getCachedResponse(query, tenantId);
         if (cached) {
-          console.log(`📦 [DEGRADATION] Using cached response for: ${query.substring(0, 50)}...`);
           return cached;
         }
         return this.getStaticResponse(query);
@@ -210,8 +206,6 @@ export class EmergencyDegradationManager {
       return true;
     }
 
-    console.log(`🔄 [DEGRADATION] Attempting recovery from ${DegradationLevel[this.config.currentLevel]}`);
-
     // Test if services are recovered
     const recoveredServices = await this.testServiceRecovery();
     const stillFailedServices = this.config.triggeredServices.filter(
@@ -221,14 +215,12 @@ export class EmergencyDegradationManager {
     if (stillFailedServices.length === 0) {
       // All services recovered
       await this.activateLevel(DegradationLevel.NORMAL, [], null);
-      console.log(`✅ [DEGRADATION] Successfully recovered to normal operation`);
       return true;
     } else {
       // Some services still failing - adjust degradation level
       const newLevel = this.calculateDegradationLevel(stillFailedServices);
       if (newLevel < this.config.currentLevel) {
         await this.activateLevel(newLevel, stillFailedServices);
-        console.log(`🔄 [DEGRADATION] Partial recovery - reduced to ${DegradationLevel[newLevel]}`);
       }
       return false;
     }
@@ -473,7 +465,6 @@ export class EmergencyDegradationManager {
     };
 
     // In production, send to monitoring service
-    console.log('📊 [DEGRADATION-LOG]', JSON.stringify(logData));
   }
 }
 

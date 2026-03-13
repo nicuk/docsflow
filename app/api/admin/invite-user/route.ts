@@ -133,7 +133,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (inviteError) {
-      console.error('Invitation creation error:', inviteError);
       return NextResponse.json({
         success: false,
         error: 'Failed to create invitation'
@@ -153,10 +152,8 @@ export async function POST(request: NextRequest) {
         accessLevel: accessLevel
       });
 
-      console.log(`✅ Invitation email sent to ${email}`);
     } catch (emailError) {
-      console.error('Email sending failed:', emailError);
-      // Don't fail the request if email fails
+      console.error(emailError);
     }
 
     return NextResponse.json({
@@ -173,7 +170,6 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Invite user error:', error);
     return NextResponse.json({
       success: false,
       error: 'Internal server error'

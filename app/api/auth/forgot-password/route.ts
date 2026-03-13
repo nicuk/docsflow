@@ -3,10 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
 
 function getSupabaseClient() {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_KEY!
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
 }
 
 export async function POST(request: NextRequest) {
@@ -19,6 +19,12 @@ export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();
     const supabase = getSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Configuration error' },
+        { status: 500, headers: corsHeaders }
+      );
+    }
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password`,
@@ -39,7 +45,6 @@ export async function POST(request: NextRequest) {
       { headers: corsHeaders }
     );
   } catch (error) {
-    console.error('Forgot password error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: corsHeaders }

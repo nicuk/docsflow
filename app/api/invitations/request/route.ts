@@ -1,24 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
 
-// Initialize Supabase client
 function getSupabaseClient() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('Supabase configuration missing');
-  }
-  
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
-    {
-      cookies: {
-        get() { return undefined },
-        set() {},
-        remove() {},
-      },
-    }
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
 }
 
 export async function OPTIONS(request: NextRequest) {
@@ -43,6 +31,12 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = getSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Configuration error' },
+        { status: 500, headers: corsHeaders }
+      );
+    }
 
     // First, verify the tenant exists
     const { data: tenant, error: tenantError } = await supabase
@@ -68,7 +62,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
-      console.error('Error checking existing requests:', checkError);
       return NextResponse.json(
         { error: 'Database error checking existing requests' },
         { status: 500, headers: corsHeaders }
@@ -103,18 +96,12 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (insertError) {
-      console.error('Error creating invitation request:', insertError);
       return NextResponse.json(
         { error: 'Failed to create invitation request', details: insertError.message },
         { status: 500, headers: corsHeaders }
       );
     }
 
-    // TODO: Send notification email to tenant administrators
-    // This would typically involve:
-    // 1. Get tenant admin emails from users table
-    // 2. Send email notification about the new request
-    // 3. Include link to admin panel to approve/deny
 
     return NextResponse.json({
       success: true,
@@ -130,7 +117,6 @@ export async function POST(request: NextRequest) {
     }, { headers: corsHeaders });
 
   } catch (error: any) {
-    console.error('Invitation request API error:', error);
     return NextResponse.json(
       { error: 'Internal server error', details: error.message },
       { status: 500, headers: corsHeaders }

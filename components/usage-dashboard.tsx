@@ -30,7 +30,6 @@ export function UsageDashboard({ tenantId, planType }: UsageDashboardProps) {
         setUsage(usageData);
       } catch (err) {
         setError('Failed to load usage data');
-        console.error('Error fetching usage:', err);
       } finally {
         setLoading(false);
       }
@@ -141,7 +140,7 @@ export function UsageDashboard({ tenantId, planType }: UsageDashboardProps) {
       {/* Usage Items */}
       <div className="p-6 space-y-6">
         {usageItems.map((item) => {
-          const percentage = getProgressPercentage(item.current, item.limit);
+          const percentage = getProgressPercentage(item.current, item.limit as number | 'unlimited');
           const isNearLimit = percentage >= 75;
           
           return (

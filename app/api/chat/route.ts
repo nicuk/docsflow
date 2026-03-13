@@ -44,12 +44,10 @@ async function getTenantPersona(tenantId: string) {
       .single();
       
     if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching persona:', error);
       return getDefaultPersona();
     }
     
     if (!persona) {
-      console.log(`No custom persona for tenant ${tenantId}, using default`);
       return getDefaultPersona();
     }
     
@@ -62,8 +60,7 @@ async function getTenantPersona(tenantId: string) {
     
     return persona;
     
-  } catch (error) {
-    console.error('Error in getTenantPersona:', error);
+  } catch {
     return getDefaultPersona();
   }
 }
@@ -105,8 +102,7 @@ export async function POST(request: NextRequest) {
           resetDate: limitCheck.resetDate
         }, { status: 402, headers: corsHeaders }); // Payment Required
       }
-    } catch (limitError) {
-      console.error('Error checking conversation limits:', limitError);
+    } catch {
       // Continue with chat on error to avoid blocking users
     }
 
@@ -156,7 +152,7 @@ export async function POST(request: NextRequest) {
         metadata: {
           strategy: 'gibberish_fallback'
         }
-      }).catch(err => console.error('Metrics logging failed:', err));
+      }).catch(() => {});
       
       return NextResponse.json({
         response: fallbackResponse,
@@ -317,8 +313,7 @@ ${tenantPersona.custom_instructions || 'Provide a helpful, accurate answer based
     let selectedModels: string[];
     let shouldShowUpgradePrompt = false;
     
-    // TODO: Default to allowing all tiers (subscription system not implemented yet)
-    const hasPremiumAI = false; // TODO: Implement subscription tiers
+    const hasPremiumAI = false;
     
     switch (complexityAnalysis.complexity) {
       case 'simple':
@@ -366,9 +361,7 @@ ${tenantPersona.custom_instructions || 'Provide a helpful, accurate answer based
       const estimatedTokens = Math.ceil((message.length + answerText.length) / 4); // Rough estimate
       costMonitor.trackUsage(modelUsed, estimatedTokens, complexityAnalysis.complexity);
       
-    } catch (openRouterError) {
-      console.warn('OpenRouter fallback chain failed, using Gemini:', openRouterError);
-      
+    } catch {
       // Fallback to Gemini if all OpenRouter models fail
       if (!googleAI) {
         throw new Error('No AI models available');
@@ -384,7 +377,7 @@ ${tenantPersona.custom_instructions || 'Provide a helpful, accurate answer based
       modelUsed = 'gemini-2.0-flash (emergency fallback)';
     }
 
-    // 💡 Add upgrade prompt for complex queries without premium AI
+    // Add upgrade prompt for complex queries without premium AI
     if (shouldShowUpgradePrompt && complexityAnalysis.complexity === 'complex') {
       answerText += '\n\n---\n\n💡 **Tip:** This query involves complex analysis across multiple documents. For 30-40% more accurate responses on queries like this, consider upgrading to **Premium AI** (+$199/month) or our **Enterprise** tier, which includes Claude 3.5 Sonnet.';
     }
@@ -415,7 +408,7 @@ ${tenantPersona.custom_instructions || 'Provide a helpful, accurate answer based
         query_complexity: complexityAnalysis.complexity,
         confidence_level: confidenceResult.level
       }
-    }).catch(err => console.error('Metrics logging failed:', err));
+    }).catch(() => {});
     
     // Return successful response
     return NextResponse.json({
@@ -439,8 +432,7 @@ ${tenantPersona.custom_instructions || 'Provide a helpful, accurate answer based
       }
     }, { headers: corsHeaders });
 
-  } catch (error: any) {
-    console.error('Chat API error:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: corsHeaders }

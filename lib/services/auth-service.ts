@@ -32,7 +32,6 @@ export class AuthService {
    * Used by: Middleware, API Client, Components
    */
   static async getToken(): Promise<string | null> {
-    // 🛡️ CRITICAL FIX: Server-side safety check with cookie fallback
     if (typeof window === 'undefined') {
       return null;
     }
@@ -53,7 +52,7 @@ export class AuthService {
 
       if (!session?.access_token) {
         
-        // 🔄 AUTO-REFRESH: Try to refresh the session
+        // Try to refresh the session
         try {
           const { data: refreshData, error: refreshError } = await this.supabase.auth.refreshSession();
           
@@ -93,7 +92,6 @@ export class AuthService {
    * Used by: Components, Route Guards
    */
   static async isAuthenticated(): Promise<boolean> {
-    // 🛡️ Server-side safety check
     if (typeof window === 'undefined') {
       return false;
     }
@@ -107,7 +105,6 @@ export class AuthService {
    * Used by: Components, Profile displays
    */
   static async getCurrentUser(): Promise<AuthUser | null> {
-    // 🛡️ Server-side safety check
     if (typeof window === 'undefined') {
       return null;
     }
@@ -125,8 +122,7 @@ export class AuthService {
         name: user.user_metadata?.name || user.email?.split('@')[0] || 'User'
       };
 
-    } catch (error) {
-      console.error('[AUTH-SERVICE] Get user failed:', error);
+    } catch {
       return null;
     }
   }
@@ -143,15 +139,13 @@ export class AuthService {
       });
 
       if (error) {
-        console.error('[AUTH-SERVICE] Set session failed:', error);
         return false;
       }
 
       this.clearTokenCache();
       return true;
 
-    } catch (error) {
-      console.error('[AUTH-SERVICE] Set session error:', error);
+    } catch {
       return false;
     }
   }
@@ -164,8 +158,8 @@ export class AuthService {
     try {
       await this.supabase.auth.signOut();
       this.clearTokenCache();
-    } catch (error) {
-      console.error('[AUTH-SERVICE] Clear auth error:', error);
+    } catch {
+      // Sign-out cleanup failed
     }
   }
 
@@ -204,8 +198,7 @@ export class AuthService {
         token
       };
 
-    } catch (error) {
-      console.error('[AUTH-SERVICE] Token validation error:', error);
+    } catch {
       return {
         isValid: false,
         error: 'Token validation failed',
@@ -377,8 +370,7 @@ export class AuthService {
       this.tokenExpiry = (data.session.expires_at || 0) * 1000 - 60000;
 
       return true;
-    } catch (error) {
-      console.error('[AUTH-SERVICE] Session refresh failed:', error);
+    } catch {
       return false;
     }
   }

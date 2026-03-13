@@ -75,15 +75,6 @@ export class RAGMetricsCollector {
     
     // Update tenant-specific metrics
     await this.updateTenantMetrics(metrics);
-
-    // Log significant events
-    if (metrics.latency_ms > 1000) {
-      console.warn(`Slow query detected: ${metrics.latency_ms}ms for "${metrics.query}"`);
-    }
-    
-    if (metrics.avg_relevance < 0.5) {
-      console.warn(`Low relevance query: ${metrics.avg_relevance} for "${metrics.query}"`);
-    }
   }
 
   /**
@@ -136,18 +127,6 @@ export class RAGMetricsCollector {
       },
       undefined
     );
-
-    // Log metrics periodically
-    if (updatedMetrics.total_queries % 100 === 0) {
-      console.log('RAG System Metrics:', {
-        queries: updatedMetrics.total_queries,
-        avg_latency: `${updatedMetrics.avg_latency_ms.toFixed(1)}ms`,
-        p95_latency: `${updatedMetrics.p95_latency_ms.toFixed(1)}ms`,
-        cache_hit_rate: `${(updatedMetrics.cache_hit_rate * 100).toFixed(1)}%`,
-        avg_relevance: updatedMetrics.avg_relevance_score.toFixed(3),
-        qpm: updatedMetrics.queries_per_minute.toFixed(1)
-      });
-    }
   }
 
   /**
@@ -165,7 +144,6 @@ export class RAGMetricsCollector {
           try {
             current = typeof existing === 'string' ? JSON.parse(existing) : existing;
           } catch (error) {
-            console.warn('Invalid JSON in tenant metrics, resetting:', error);
             current = {
               tenant_id: metrics.tenant_id,
               query_count: 0,
@@ -219,7 +197,6 @@ export class RAGMetricsCollector {
         try {
           return typeof data === 'string' ? JSON.parse(data) : data;
         } catch (error) {
-          console.warn('Invalid JSON in system metrics:', error);
           return null;
         }
       },
@@ -241,7 +218,6 @@ export class RAGMetricsCollector {
         try {
           return typeof data === 'string' ? JSON.parse(data) : data;
         } catch (error) {
-          console.warn('Invalid JSON in tenant metrics:', error);
           return null;
         }
       },
@@ -271,7 +247,7 @@ export class RAGMetricsCollector {
               const parsed = typeof data === 'string' ? JSON.parse(data) : data;
               queries.push(parsed);
             } catch (error) {
-              console.warn(`Invalid JSON in query ${key}, skipping:`, error);
+              // Skip invalid JSON
             }
           }
         }
@@ -311,7 +287,7 @@ export class RAGMetricsCollector {
           const parsed = typeof data === 'string' ? JSON.parse(data) : data;
           tenants.push(parsed);
         } catch (error) {
-          console.warn(`Invalid JSON in tenant key ${key}, skipping:`, error);
+          // Skip invalid JSON
         }
       }
     }
@@ -466,7 +442,6 @@ export class RAGMetricsCollector {
         const keys = await redis?.keys(`${this.metricsPrefix}*`);
         if (keys && keys.length > 0) {
           await redis?.del(...keys);
-          console.log(`Cleared ${keys.length} metric entries`);
         }
       },
       undefined

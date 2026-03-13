@@ -77,7 +77,6 @@ export default function SourceViewerModal({ source, isOpen, onClose, highlightTe
       }
       
     } catch (error) {
-      console.error('Error loading full document:', error)
       setDocumentLoadError(error instanceof Error ? error.message : 'Failed to load document')
       setFullDocumentContent('Error loading document content. Please try again.')
     } finally {
@@ -191,7 +190,6 @@ export default function SourceViewerModal({ source, isOpen, onClose, highlightTe
               <Button 
                 onClick={() => {
                   navigator.clipboard.writeText(source.content)
-                  // TODO: Show toast notification
                 }}
               >
                 Copy Quote

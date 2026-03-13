@@ -123,7 +123,6 @@ export class MultiTenantCookieManager {
     const contexts = this.getCurrentTenantContexts();
     
     if (!contexts[subdomain]) {
-      console.error(`❌ [MULTI-TENANT] Cannot switch to unknown tenant: ${subdomain}`);
       return false;
     }
     

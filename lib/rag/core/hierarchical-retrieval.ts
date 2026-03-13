@@ -54,8 +54,7 @@ export async function hierarchicalRetrieve(
     .limit(100); // Max 100 docs to search
   
   if (error) {
-    console.error(`❌ [Hierarchical Stage 1] Database error:`, error);
-    // Fallback to standard retrieval
+    // Fallback to standard retrieval on database error
     return fallbackToStandardRetrieval(input);
   }
   
@@ -81,7 +80,6 @@ export async function hierarchicalRetrieve(
           similarity,
         };
       } catch (error) {
-        console.error(`⚠️ [Hierarchical Stage 1] Failed to embed summary for ${doc.filename}:`, error);
         return { documentId: doc.id, filename: doc.filename, similarity: 0 };
       }
     })
@@ -153,7 +151,6 @@ export async function hierarchicalRetrieve(
  */
 function cosineSimilarity(a: number[], b: number[]): number {
   if (a.length !== b.length) {
-    console.error(`❌ Vector length mismatch: ${a.length} vs ${b.length}`);
     return 0;
   }
   

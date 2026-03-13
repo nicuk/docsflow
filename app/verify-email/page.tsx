@@ -38,15 +38,11 @@ function VerifyEmailContent() {
         // Set the active session
         await setActive({ session: result.createdSessionId })
         
-        console.log('✅ Email verified, redirecting to onboarding')
-        
-        // Redirect to onboarding
         router.push('/onboarding')
       } else {
         setError("Verification failed. Please check your code and try again.")
       }
     } catch (err: any) {
-      console.error('Verification error:', err)
       setError(err.errors?.[0]?.message || "Invalid verification code")
     } finally {
       setIsLoading(false)
@@ -66,7 +62,6 @@ function VerifyEmailContent() {
       
       alert("Verification code resent! Check your email.")
     } catch (err: any) {
-      console.error('Resend error:', err)
       setError(err.errors?.[0]?.message || "Failed to resend code")
     } finally {
       setIsLoading(false)

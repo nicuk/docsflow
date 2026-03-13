@@ -16,18 +16,17 @@ export class SafeBase64Decoder {
     try {
       const decoded = JSON.parse(atob(encodedString));
       return decoded;
-    } catch (directError) {
-      console.warn('🔧 [SAFE-DECODER] Direct decode failed, trying URL decode...');
+    } catch {
+      // Direct decode failed, trying URL decode
     }
 
     // Strategy 2: URL decode first, then base64
     try {
       const urlDecoded = decodeURIComponent(encodedString);
       const decoded = JSON.parse(atob(urlDecoded));
-      console.log('✅ [SAFE-DECODER] URL decode + base64 successful');
       return decoded;
-    } catch (urlError) {
-      console.warn('🔧 [SAFE-DECODER] URL decode failed, trying manual cleanup...');
+    } catch {
+      // URL decode failed, trying manual cleanup
     }
 
     // Strategy 3: Manual cleanup of common issues
@@ -46,10 +45,9 @@ export class SafeBase64Decoder {
       }
       
       const decoded = JSON.parse(atob(cleaned));
-      console.log('✅ [SAFE-DECODER] Manual cleanup successful');
       return decoded;
-    } catch (cleanupError) {
-      console.warn('🔧 [SAFE-DECODER] Manual cleanup failed, trying character replacement...');
+    } catch {
+      // Manual cleanup failed, trying character replacement
     }
 
     // Strategy 4: Replace problematic characters
@@ -65,14 +63,8 @@ export class SafeBase64Decoder {
       }
       
       const decoded = JSON.parse(atob(cleaned));
-      console.log('✅ [SAFE-DECODER] Character replacement successful');
       return decoded;
     } catch (charError) {
-      console.error('❌ [SAFE-DECODER] All decode strategies failed:', {
-        originalLength: encodedString.length,
-        originalPreview: encodedString.substring(0, 50) + '...',
-        error: charError.message
-      });
       return null;
     }
   }
@@ -104,12 +96,9 @@ export class SafeBase64Decoder {
 
     const accessToken = this.extractAccessToken(sessionData);
     if (accessToken) {
-      console.log('✅ [SAFE-DECODER] Successfully extracted access token');
       return accessToken;
     }
 
-    console.warn('❌ [SAFE-DECODER] Session data found but no access token:', 
-      Object.keys(sessionData));
     return null;
   }
 }
