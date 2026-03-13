@@ -80,7 +80,7 @@ export async function handleMetadataQuery(
       .from('documents')
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)
-      .eq('status', 'ready');
+      .eq('processing_status', 'completed');
     
     if (error) {
       return {
@@ -95,11 +95,11 @@ export async function handleMetadataQuery(
     const plural = docCount === 1 ? 'document' : 'documents';
     
     return {
-      answer: `There ${docCount === 1 ? 'is' : 'are'} ${docCount} ${plural}, as indicated by the sources listed: ${
-        Array.from({ length: Math.min(docCount, 3) }, (_, i) => `[Source ${i + 1}]`).join(', ')
-      }${docCount > 3 ? '...' : ''}.`,
-      sources: [], // No content sources needed for count
-      confidence: 1.0, // 100% confidence - this is exact data
+      answer: docCount === 0
+        ? "You don't have any documents uploaded yet. Upload a document to get started!"
+        : `You have ${docCount} ${plural} uploaded and ready for analysis.`,
+      sources: [],
+      confidence: 1.0,
       metadata: { strategy: 'metadata_count_query' },
     };
   }
@@ -108,11 +108,11 @@ export async function handleMetadataQuery(
     // List documents
     const { data: documents, error } = await supabase
       .from('documents')
-      .select('id, filename, file_type, created_at')
+      .select('id, filename, mime_type, created_at')
       .eq('tenant_id', tenantId)
-      .eq('status', 'ready')
+      .eq('processing_status', 'completed')
       .order('created_at', { ascending: false })
-      .limit(50); // Limit to 50 to avoid overwhelming response
+      .limit(50);
     
     if (error) {
       return {

@@ -553,7 +553,7 @@ export default function ChatInterface() {
         content: response.answer || response.response || "I received your message but couldn't generate a response.",
         timestamp: new Date(),
         sources: deduplicatedSources,
-        confidence: response.confidence || 0.7,
+        confidence: response.confidence ?? 0.7,
         suggestions: [
           "Tell me more about this",
           "Can you elaborate?",
@@ -828,7 +828,7 @@ Please try again in a moment. If the issue persists, you can still use the inter
                                             content: source.snippet || '',
                                             document_id: source.documentId || `temp-${idx}`,  // Fallback to temp ID
                                             page: source.page,
-                                            confidence: source.confidence || 0.7
+                                            confidence: source.confidence ?? 0.7
                                           });
                                           setIsSourceModalOpen(true);
                                         }}
