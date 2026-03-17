@@ -37,9 +37,9 @@ export default function PrivacyPolicy() {
 
             <PrivacyPolicyTemplate
               companyName="DocsFlow"
-              websiteUrl="https://docsflow.com"
-              contactEmail="privacy@docsflow.com"
-              contactAddress={`DocsFlow, Inc.\n[Insert Address]\n[Insert City, State ZIP]\nUnited States`}
+              websiteUrl="https://docsflow.app"
+              contactEmail="privacy@docsflow.app"
+              contactAddress={`DocsFlow, Inc.\nUnited States`}
               lastUpdated={currentDate}
               includeGDPR={true}
               includeCCPA={true}

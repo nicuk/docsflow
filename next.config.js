@@ -3,16 +3,16 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/dashboard',
+        source: '/:path*',
         has: [{ type: 'host', value: 'www.docsflow.app' }],
-        destination: '/select-workspace',
-        permanent: false,
+        destination: 'https://docsflow.app/:path*',
+        permanent: true,
       },
       {
         source: '/dashboard',
         has: [{ type: 'host', value: 'docsflow.app' }],
         destination: '/select-workspace',
-        permanent: false,
+        permanent: true,
       },
     ]
   },
