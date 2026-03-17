@@ -100,7 +100,7 @@ export default function TermsOfService() {
                 9. Governing Law
               </h2>
               <p className="text-gray-700 dark:text-gray-300 mb-4">
-                These Terms are governed by the laws of [Insert Jurisdiction].
+                These Terms are governed by the laws of the State of Delaware, United States.
               </p>
             </section>
 
@@ -113,9 +113,8 @@ export default function TermsOfService() {
               </p>
               <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                 <p className="text-gray-700 dark:text-gray-300">
-                  <strong>Email:</strong> legal@docsflow.com<br/>
-                  <strong>Address:</strong> DocsFlow Legal Department<br/>
-                  [Insert Address]
+                  <strong>Email:</strong> legal@docsflow.app<br/>
+                  <strong>Address:</strong> DocsFlow Legal Department
                 </p>
               </div>
             </section>
