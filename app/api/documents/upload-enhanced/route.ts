@@ -34,6 +34,33 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+    const ALLOWED_MIME_TYPES = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',       // .xlsx
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+      'text/plain',
+      'text/csv',
+      'image/png',
+      'image/jpeg',
+      'image/webp',
+    ];
+
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB.` },
+        { status: 413 }
+      );
+    }
+
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      return NextResponse.json(
+        { error: `File type not supported: ${file.type}` },
+        { status: 415 }
+      );
+    }
     
     // Convert file to buffer
     const bytes = await file.arrayBuffer();
