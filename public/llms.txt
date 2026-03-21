@@ -1,0 +1,59 @@
+# DocsFlow
+
+> DocsFlow is an AI-powered document intelligence platform that enables businesses to search contracts, SOPs, reports, and business files using natural language questions. It returns source-attributed answers with exact page references.
+
+## Overview
+
+DocsFlow is a multi-tenant SaaS platform where teams upload business documents (PDF, DOCX, XLSX, PPTX, images, text) and query them conversationally. Every AI response includes citations linking back to the original source document and page. The platform uses hybrid search combining semantic vector similarity and keyword matching for accurate retrieval.
+
+## Key Facts
+
+- Website: https://docsflow.app
+- Category: AI Document Intelligence / Enterprise Search
+- Founded: 2023
+- Pricing: Starting at $99/month for 2 users
+- File Types: PDF, DOCX, XLSX, PPTX, TXT, CSV, images
+- Security: Multi-tenant isolation with row-level security, AES-256 encryption, GDPR compliant
+
+## How It Works
+
+1. Users upload documents to their secure workspace
+2. Documents are parsed, chunked, and embedded into vector storage
+3. Users ask natural language questions about their documents
+4. DocsFlow retrieves relevant passages using hybrid search (semantic + keyword)
+5. An LLM generates an answer with source citations and page references
+6. Users can verify any claim against the original document
+
+## Core Features
+
+- AI-powered natural language search across all uploaded documents
+- Source attribution with page-level citations on every answer
+- Hybrid search combining semantic vectors and keyword matching
+- Multi-tenant workspace isolation with subdomain routing
+- Role-based access controls (admin, user) per workspace
+- Custom AI persona training on company terminology
+- Support for 6+ document formats including OCR for images
+- Multi-provider LLM failover for high availability
+- Conversation memory with multi-turn follow-up questions
+- Stripe-based subscription billing with usage tracking
+
+## Technology
+
+- Built with Next.js 15, TypeScript, Supabase (PostgreSQL), Pinecone (vectors), Clerk (auth)
+- RAG pipeline with hierarchical retrieval for large document collections
+- 3-tier LLM failover: Llama 3.3 70B, GPT-4o-mini, Mixtral, with Gemini emergency fallback
+- Query complexity classification routes questions to appropriate model tiers
+
+## Use Cases
+
+- Enterprise knowledge management
+- Legal contract analysis and search
+- Healthcare document compliance
+- Financial services document retrieval
+- Government operations and citizen services
+- Education administration
+
+## Contact
+
+- Website: https://docsflow.app
+- Email: support@docsflow.app
