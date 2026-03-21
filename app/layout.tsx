@@ -53,6 +53,9 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+    'max-snippet': -1,
+    'max-image-preview': 'large',
+    'max-video-preview': -1,
   },
   generator: 'DocsFlow',
 }
@@ -77,6 +80,7 @@ export default function RootLayout({
           <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" />
           <link rel="icon" type="image/x-icon" href="/favicon.ico?v=3" />
           <link rel="shortcut icon" href="/favicon.ico?v=3" />
+          <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM-readable site description" />
 
         </head>
         <body className={inter.className}>
