@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Stop Manually Searching Documents - Get Instant Answers | DocsFlow",
   description: "Ask any question about your business files. Get answers in 10 seconds with exact page references. Save 10+ hours every week. Free setup for first 50 businesses.",
   keywords: "document search, business AI, file intelligence, instant answers, document management, business automation",
+  alternates: {
+    canonical: 'https://docsflow.app/magic-landing',
+  },
   openGraph: {
     title: "Stop Manually Searching Documents - Get Instant Answers",
     description: "Save 10+ hours every week. Ask questions about your business files in plain English, get instant answers with exact sources.",

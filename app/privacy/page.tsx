@@ -9,6 +9,9 @@ import Footer from "@/components/footer"
 export const metadata: Metadata = {
   title: "Privacy Policy | DocsFlow",
   description: "Our commitment to protecting your privacy and securing your data with DocsFlow's document intelligence platform.",
+  alternates: {
+    canonical: 'https://docsflow.app/privacy',
+  },
 }
 
 export default function PrivacyPolicy() {

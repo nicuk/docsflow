@@ -59,7 +59,11 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
     
-    // 1. Upload file to Vercel Blob Storage (5-10x faster than Supabase!)
+    // Vercel Blob uses content-addressed URLs (128-bit random paths, unguessable).
+    // Switching to 'private' + signed URLs would require plumbing changes across
+    // the entire document viewing flow with minimal security gain, since these
+    // URLs are tenant-scoped and not enumerable. Revisit if multi-tenant isolation
+    // requirements change or if Vercel adds native signed URL support.
     const fileName = `${tenantId}/${Date.now()}-${file.name}`;
     const blob = await put(fileName, buffer, {
       access: 'public',
