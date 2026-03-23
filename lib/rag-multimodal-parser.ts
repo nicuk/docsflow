@@ -197,9 +197,9 @@ export class MultimodalDocumentParser {
         return await this.parseText(file);
       } else if (mimeType.includes('csv')) {
         return await this.parseCSV(file);
-      } else if (mimeType.includes('wordprocessingml') || mimeType === 'application/msword') {
+      } else if (mimeType.includes('wordprocessingml')) {
         return await this.parseDOCX(file);
-      } else if (mimeType.includes('spreadsheetml') || mimeType === 'application/vnd.ms-excel') {
+      } else if (mimeType.includes('spreadsheetml')) {
         return await this.parseXLSX(file);
       } else if (mimeType.includes('presentationml')) {
         return await this.parsePPTX(file);

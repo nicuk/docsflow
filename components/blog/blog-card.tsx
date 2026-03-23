@@ -39,6 +39,7 @@ export default function BlogCard({ post }: BlogCardProps) {
           <span>{post.author}</span>
           <time dateTime={post.date}>
             {new Date(post.date).toLocaleDateString('en-US', {
+              timeZone: 'UTC',
               month: 'short',
               day: 'numeric',
               year: 'numeric',

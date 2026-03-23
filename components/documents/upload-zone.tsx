@@ -42,14 +42,15 @@ export default function UploadZone({ onFilesUploaded, disabled = false }: Upload
           {isDragActive ? "Drop your files here" : "Drag & drop your business documents here"}
         </h3>
         <p className="text-muted-foreground mb-4 max-w-md">
-          or click to browse your files. We support PDF, DOC, DOCX, XLS, XLSX, CSV, JPG, PNG and more. <strong>Max 5 files at once.</strong>
+          or click to browse your files. We support PDF, DOCX, XLSX, PPTX, CSV, TXT, JPG, PNG and WebP. <strong>Max 5 files at once, {MAX_FILE_SIZE / 1024 / 1024}MB each.</strong>
         </p>
         <div className="flex flex-wrap justify-center gap-2 mb-4">
-          <Badge variant="outline">PDF (1MB)</Badge>
-          <Badge variant="outline">DOC/DOCX (1MB)</Badge>
-          <Badge variant="outline">TXT/RTF (1MB)</Badge>
-          <Badge variant="outline">XLS/XLSX/CSV (1MB)</Badge>
-          <Badge variant="outline">JPG/PNG (1MB)</Badge>
+          <Badge variant="outline">PDF</Badge>
+          <Badge variant="outline">DOCX</Badge>
+          <Badge variant="outline">XLSX / CSV</Badge>
+          <Badge variant="outline">PPTX</Badge>
+          <Badge variant="outline">TXT</Badge>
+          <Badge variant="outline">JPG / PNG / WebP</Badge>
         </div>
         <Button variant="outline" className="gap-2 bg-transparent" disabled={disabled}>
           <Upload className="h-4 w-4" /> Select files

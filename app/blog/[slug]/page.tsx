@@ -6,6 +6,8 @@ import { useMDXComponents } from '@/components/blog/mdx-components';
 import CtaBanner from '@/components/blog/cta-banner';
 import Link from 'next/link';
 
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
   return getAllSlugs().map((slug) => ({ slug }));
 }
@@ -118,16 +120,16 @@ export default async function BlogPostPage({
       <article className="py-12 md:py-16">
         <div className="container px-4 md:px-6 max-w-3xl mx-auto">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
             <Link href="/" className="hover:text-foreground transition-colors">
               Home
             </Link>
-            <span>/</span>
+            <span aria-hidden="true">/</span>
             <Link href="/blog" className="hover:text-foreground transition-colors">
               Blog
             </Link>
-            <span>/</span>
-            <span className="text-foreground truncate">{post.title}</span>
+            <span aria-hidden="true">/</span>
+            <span className="text-foreground truncate" aria-current="page">{post.title}</span>
           </nav>
 
           {/* Header */}
@@ -147,6 +149,7 @@ export default async function BlogPostPage({
               <span>|</span>
               <time dateTime={post.date}>
                 {new Date(post.date).toLocaleDateString('en-US', {
+                  timeZone: 'UTC',
                   month: 'long',
                   day: 'numeric',
                   year: 'numeric',

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu, Zap } from "lucide-react"
@@ -10,6 +11,7 @@ import DocsFlowBrand from "@/components/DocsFlowBrand"
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
+  const pathname = usePathname()
 
   const navItems = [
     { label: "Features", href: "#features" },
@@ -20,11 +22,12 @@ export default function Navbar() {
   ]
 
   const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (pathname !== '/') return; // let browser navigate to /#anchor
     e.preventDefault()
     const targetId = href.replace('#', '')
     const element = document.getElementById(targetId)
     if (element) {
-      const headerOffset = 80 // Account for fixed header
+      const headerOffset = 80
       const elementPosition = element.offsetTop
       const offsetPosition = elementPosition - headerOffset
       
@@ -50,7 +53,7 @@ export default function Navbar() {
             item.href.startsWith('#') ? (
               <a 
                 key={index} 
-                href={item.href} 
+                href={pathname === '/' ? item.href : `/${item.href}`}
                 onClick={(e) => handleSmoothScroll(e, item.href)}
                 className="text-sm font-medium transition-colors hover:text-primary cursor-pointer"
               >
@@ -101,7 +104,7 @@ export default function Navbar() {
                   item.href.startsWith('#') ? (
                     <a
                       key={index}
-                      href={item.href}
+                      href={pathname === '/' ? item.href : `/${item.href}`}
                       onClick={(e) => handleSmoothScroll(e, item.href)}
                       className="text-lg font-medium transition-colors hover:text-primary cursor-pointer"
                     >
