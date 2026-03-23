@@ -4,6 +4,7 @@ import { useDropzone } from "react-dropzone"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Upload } from "lucide-react"
+import { DROPZONE_ACCEPT, MAX_FILE_SIZE } from "@/lib/upload-validation"
 
 interface UploadZoneProps {
   onFilesUploaded: (files: File[]) => void
@@ -15,21 +16,9 @@ export default function UploadZone({ onFilesUploaded, disabled = false }: Upload
     onDrop: (acceptedFiles) => {
       onFilesUploaded(acceptedFiles)
     },
-    accept: {
-      "application/pdf": [".pdf"],
-      "application/msword": [".doc"],
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
-      "text/plain": [".txt"],
-      "application/rtf": [".rtf"],
-      "application/vnd.ms-excel": [".xls"],
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
-      "text/csv": [".csv"],
-      // Images supported via Gemini 2.0 Flash OCR
-      "image/jpeg": [".jpg", ".jpeg"],
-      "image/png": [".png"],
-    },
+    accept: DROPZONE_ACCEPT,
     maxFiles: 5,
-    maxSize: 1 * 1024 * 1024, // 1MB max for any file
+    maxSize: MAX_FILE_SIZE,
     disabled,
   })
 

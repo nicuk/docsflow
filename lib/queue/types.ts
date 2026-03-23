@@ -138,10 +138,14 @@ export const DEFAULT_UPLOAD_CONFIG: UploadConfig = {
   max_file_size: 50 * 1024 * 1024, // 50MB
   allowed_file_types: [
     'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     'text/plain',
     'text/csv',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/msword'
+    'image/png',
+    'image/jpeg',
+    'image/webp',
   ]
 };
 
