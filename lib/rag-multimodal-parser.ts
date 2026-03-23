@@ -189,7 +189,6 @@ export class MultimodalDocumentParser {
   // Renamed existing parseDocument logic to parseWithGemini
   private async parseWithGemini(file: Buffer, mimeType: string, fileName?: string): Promise<ParsedDocument> {
     try {
-      // Route to appropriate parser based on mime type
       if (mimeType.includes('pdf')) {
         return await this.parsePDF(file, fileName);
       } else if (mimeType.includes('image')) {
@@ -198,12 +197,139 @@ export class MultimodalDocumentParser {
         return await this.parseText(file);
       } else if (mimeType.includes('csv')) {
         return await this.parseCSV(file);
+      } else if (mimeType.includes('wordprocessingml')) {
+        return await this.parseDOCX(file);
+      } else if (mimeType.includes('spreadsheetml')) {
+        return await this.parseXLSX(file);
+      } else if (mimeType.includes('presentationml')) {
+        return await this.parsePPTX(file);
       }
       
-      // Fallback to basic text extraction
       return await this.parseBasic(file, mimeType);
     } catch (error) {
       return await this.parseBasic(file, mimeType);
+    }
+  }
+
+  private async parseDOCX(buffer: Buffer): Promise<ParsedDocument> {
+    try {
+      const mammoth = await import('mammoth');
+      const result = await mammoth.extractRawText({ buffer });
+      const text = result.value;
+      const tables = this.extractTables(text);
+      const chunks = await this.createChunks(text, tables);
+
+      return {
+        text,
+        metadata: {
+          tenant_id: this.tenantId,
+          mime_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          tables,
+          images: [],
+          equations: [],
+          parse_method: 'advanced',
+        },
+        chunks,
+      };
+    } catch (error) {
+      return this.parseBasic(buffer, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    }
+  }
+
+  private async parseXLSX(buffer: Buffer): Promise<ParsedDocument> {
+    try {
+      const XLSX = await import('xlsx');
+      const workbook = XLSX.read(buffer, { type: 'buffer' });
+      const textParts: string[] = [];
+      const allTables: any[] = [];
+
+      for (const sheetName of workbook.SheetNames) {
+        const sheet = workbook.Sheets[sheetName];
+        if (!sheet) continue;
+
+        textParts.push(`--- Sheet: ${sheetName} ---`);
+        const csv = XLSX.utils.sheet_to_csv(sheet);
+        textParts.push(csv);
+
+        const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
+        if (jsonData.length > 1) {
+          allTables.push({
+            sheet: sheetName,
+            headers: jsonData[0],
+            rows: jsonData.slice(1, 101),
+            totalRows: jsonData.length - 1,
+          });
+        }
+      }
+
+      const text = textParts.join('\n');
+      const chunks = await this.createChunks(text, allTables);
+
+      return {
+        text,
+        metadata: {
+          tenant_id: this.tenantId,
+          mime_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          tables: allTables,
+          images: [],
+          equations: [],
+          parse_method: 'advanced',
+        },
+        chunks,
+      };
+    } catch (error) {
+      return this.parseBasic(buffer, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
+  }
+
+  private async parsePPTX(buffer: Buffer): Promise<ParsedDocument> {
+    try {
+      const JSZip = (await import('jszip')).default;
+      const zip = await JSZip.loadAsync(buffer);
+      const textParts: string[] = [];
+      let slideNum = 0;
+
+      const slideFiles = Object.keys(zip.files)
+        .filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name))
+        .sort((a, b) => {
+          const numA = parseInt(a.match(/slide(\d+)/)?.[1] || '0');
+          const numB = parseInt(b.match(/slide(\d+)/)?.[1] || '0');
+          return numA - numB;
+        });
+
+      for (const slideFile of slideFiles) {
+        slideNum++;
+        const xml = await zip.files[slideFile].async('text');
+        const textRuns = xml.match(/<a:t>([^<]*)<\/a:t>/g) || [];
+        const slideText = textRuns
+          .map((run) => run.replace(/<a:t>|<\/a:t>/g, ''))
+          .filter((t) => t.trim())
+          .join(' ');
+
+        if (slideText.trim()) {
+          textParts.push(`--- Slide ${slideNum} ---`);
+          textParts.push(slideText);
+        }
+      }
+
+      const text = textParts.join('\n');
+      const chunks = await this.createChunks(text, []);
+
+      return {
+        text,
+        metadata: {
+          tenant_id: this.tenantId,
+          mime_type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+          pages: slideNum,
+          tables: [],
+          images: [],
+          equations: [],
+          parse_method: 'advanced',
+        },
+        chunks,
+      };
+    } catch (error) {
+      return this.parseBasic(buffer, 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
     }
   }
   

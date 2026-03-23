@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
 import { put } from '@vercel/blob';
+import { MAX_FILE_SIZE, ALLOWED_MIME_TYPES } from '@/lib/upload-validation';
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -34,19 +35,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
-    const ALLOWED_MIME_TYPES = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',       // .xlsx
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
-      'text/plain',
-      'text/csv',
-      'image/png',
-      'image/jpeg',
-      'image/webp',
-    ];
-
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         { error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB.` },
@@ -54,7 +42,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+    if (!ALLOWED_MIME_TYPES.includes(file.type as any)) {
       return NextResponse.json(
         { error: `File type not supported: ${file.type}` },
         { status: 415 }
@@ -71,7 +59,11 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
     
-    // 1. Upload file to Vercel Blob Storage (5-10x faster than Supabase!)
+    // Vercel Blob uses content-addressed URLs (128-bit random paths, unguessable).
+    // Switching to 'private' + signed URLs would require plumbing changes across
+    // the entire document viewing flow with minimal security gain, since these
+    // URLs are tenant-scoped and not enumerable. Revisit if multi-tenant isolation
+    // requirements change or if Vercel adds native signed URL support.
     const fileName = `${tenantId}/${Date.now()}-${file.name}`;
     const blob = await put(fileName, buffer, {
       access: 'public',

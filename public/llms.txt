@@ -53,6 +53,14 @@ DocsFlow is a multi-tenant SaaS platform where teams upload business documents (
 - Government operations and citizen services
 - Education administration
 
+## Blog
+
+- What is RAG? A Plain-English Guide for Business Leaders: https://docsflow.app/blog/what-is-rag-plain-english-guide
+- Why You Should NOT Build Your Own AI Document Search: https://docsflow.app/blog/why-not-build-your-own-ai-document-search
+- DocsFlow vs ChatGPT vs Notion AI for Business Documents: https://docsflow.app/blog/docsflow-vs-chatgpt-vs-notion-ai-business-documents
+- The Hidden Cost of Document Chaos: https://docsflow.app/blog/hidden-cost-of-document-chaos
+- How to Set Up an AI Knowledge Base in 5 Minutes: https://docsflow.app/blog/set-up-ai-knowledge-base-5-minutes
+
 ## Contact
 
 - Website: https://docsflow.app

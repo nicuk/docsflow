@@ -29,6 +29,22 @@ const faqs = [
   {
     question: "How much does DocsFlow cost?",
     answer: "DocsFlow starts at $99/month for up to 2 users and includes unlimited document uploads, AI search, and basic access controls. Enterprise plans with advanced features and more users are available. All plans include a 30-day money-back guarantee."
+  },
+  {
+    question: "Do I need a technical team to use DocsFlow?",
+    answer: "No. DocsFlow is designed for non-technical teams. You upload files by dragging and dropping, ask questions in plain English, and get answers instantly. There is no coding, no configuration, and no IT department required. Most teams are fully set up within 30 minutes."
+  },
+  {
+    question: "How is DocsFlow different from just using ChatGPT?",
+    answer: "ChatGPT cannot access your private business files, does not provide source citations, and may hallucinate answers. DocsFlow connects directly to your uploaded documents, returns exact page references for every answer, and never shares your data with external AI models. It is built specifically for business document search, not general conversation."
+  },
+  {
+    question: "Can DocsFlow work with files I already have?",
+    answer: "Yes. DocsFlow works with your existing files exactly as they are — PDFs, Word documents, Excel spreadsheets, PowerPoint presentations, text files, CSVs, and images. No file conversion or reformatting needed. Just upload and start searching."
+  },
+  {
+    question: "What happens to my data — is it used to train AI models?",
+    answer: "Your documents are never used to train public AI models. All data is encrypted in transit and at rest, stored in isolated workspaces with row-level security, and only accessible by authorized members of your team. We are GDPR compliant and support the right to deletion."
   }
 ]
 

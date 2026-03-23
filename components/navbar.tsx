@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu, Zap } from "lucide-react"
@@ -10,21 +11,23 @@ import DocsFlowBrand from "@/components/DocsFlowBrand"
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
+  const pathname = usePathname()
 
   const navItems = [
     { label: "Features", href: "#features" },
     { label: "Use Cases", href: "#use-cases" },
-    { label: "Testimonials", href: "#testimonials" },
+    { label: "Blog", href: "/blog" },
     { label: "ROI Calculator", href: "#roi-calculator" },
     { label: "Contact", href: "#contact" },
   ]
 
   const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (pathname !== '/') return; // let browser navigate to /#anchor
     e.preventDefault()
     const targetId = href.replace('#', '')
     const element = document.getElementById(targetId)
     if (element) {
-      const headerOffset = 80 // Account for fixed header
+      const headerOffset = 80
       const elementPosition = element.offsetTop
       const offsetPosition = elementPosition - headerOffset
       
@@ -46,16 +49,26 @@ export default function Navbar() {
         </div>
 
         <nav className="hidden md:flex gap-6" aria-label="Main Navigation">
-          {navItems.map((item, index) => (
-            <a 
-              key={index} 
-              href={item.href} 
-              onClick={(e) => handleSmoothScroll(e, item.href)}
-              className="text-sm font-medium transition-colors hover:text-primary cursor-pointer"
-            >
-              {item.label}
-            </a>
-          ))}
+          {navItems.map((item, index) =>
+            item.href.startsWith('#') ? (
+              <a 
+                key={index} 
+                href={pathname === '/' ? item.href : `/${item.href}`}
+                onClick={(e) => handleSmoothScroll(e, item.href)}
+                className="text-sm font-medium transition-colors hover:text-primary cursor-pointer"
+              >
+                {item.label}
+              </a>
+            ) : (
+              <Link
+                key={index}
+                href={item.href}
+                className="text-sm font-medium transition-colors hover:text-primary"
+              >
+                {item.label}
+              </Link>
+            )
+          )}
         </nav>
 
         <div className="flex items-center gap-4">
@@ -87,16 +100,27 @@ export default function Navbar() {
             </SheetTrigger>
             <SheetContent side="right">
               <nav className="flex flex-col gap-4 mt-8" aria-label="Mobile Navigation">
-                {navItems.map((item, index) => (
-                  <a
-                    key={index}
-                    href={item.href}
-                    onClick={(e) => handleSmoothScroll(e, item.href)}
-                    className="text-lg font-medium transition-colors hover:text-primary cursor-pointer"
-                  >
-                    {item.label}
-                  </a>
-                ))}
+                {navItems.map((item, index) =>
+                  item.href.startsWith('#') ? (
+                    <a
+                      key={index}
+                      href={pathname === '/' ? item.href : `/${item.href}`}
+                      onClick={(e) => handleSmoothScroll(e, item.href)}
+                      className="text-lg font-medium transition-colors hover:text-primary cursor-pointer"
+                    >
+                      {item.label}
+                    </a>
+                  ) : (
+                    <Link
+                      key={index}
+                      href={item.href}
+                      onClick={() => setIsOpen(false)}
+                      className="text-lg font-medium transition-colors hover:text-primary"
+                    >
+                      {item.label}
+                    </Link>
+                  )
+                )}
                 <div className="flex items-center gap-4 mt-4">
                   <ThemeToggle />
                   <Button

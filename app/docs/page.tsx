@@ -4,6 +4,9 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Documentation - DocsFlow',
   description: 'Learn how to use DocsFlow to search, organize, and get answers from your business documents',
+  alternates: {
+    canonical: 'https://docsflow.app/docs',
+  },
 };
 
 export default function DocsPage() {

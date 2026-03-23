@@ -56,8 +56,7 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: 'Bytespider',
-        allow: ['/', '/llms.txt'],
-        disallow: DISALLOWED_PATHS,
+        disallow: ['/'],
       },
       {
         userAgent: 'cohere-ai',

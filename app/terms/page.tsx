@@ -3,6 +3,9 @@ import { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Terms of Service - DocsFlow',
   description: 'Terms of Service for DocsFlow AI-powered document intelligence platform',
+  alternates: {
+    canonical: 'https://docsflow.app/terms',
+  },
 }
 
 export default function TermsOfService() {

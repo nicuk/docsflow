@@ -1,0 +1,128 @@
+---
+title: "Why You Should NOT Build Your Own AI Document Search"
+description: "Building a custom RAG system costs $50K-200K+ and takes 3-6 months. Here's the brutal cost breakdown — and why buying beats building for 95% of businesses."
+date: "2026-03-12"
+author: "DocsFlow Team"
+category: "Strategy"
+readTime: "10 min read"
+tags: ["build vs buy", "RAG", "cost analysis", "AI strategy"]
+---
+
+Your CTO just walked out of a meeting and said, "We can build this ourselves with ChatGPT and a vector database. Give me two engineers and three months." That statement is about to cost your company somewhere between $50,000 and $200,000 — and the three months will become six, then nine.
+
+This is not a scare tactic. This is the reality that dozens of companies discover every quarter after committing engineering resources to a problem that has already been solved. Here is the full cost breakdown so you can make the decision with your eyes open.
+
+## The Visible Costs: What Your CTO Quoted
+
+Let us start with the line items your technical team probably mentioned.
+
+### Vector Database Hosting
+
+Your documents need to be stored in a specialized database that enables semantic search. The main options — Pinecone, Weaviate, Qdrant, Milvus — range from $200 to $2,000+ per month depending on document volume and query frequency. At enterprise scale with millions of chunks, you are looking at $3,000-5,000/month for the database alone.
+
+### LLM API Costs
+
+Every query your team runs hits a large language model API. GPT-4-class models cost $10-30 per million input tokens and $30-60 per million output tokens. For a team of 50 running 100+ queries per day, monthly API costs land between $500 and $3,000 — and that scales linearly with usage.
+
+### Embedding Costs
+
+Before your documents can be searched, every piece of text needs to be converted into numerical representations (embeddings). Initial processing of 10,000 documents costs $50-200. But re-embedding happens every time you update a document, change your chunking strategy, or upgrade embedding models. Budget $100-500/month ongoing.
+
+### Developer Time
+
+This is where the real money is. A senior engineer capable of building a production-grade RAG system commands $150,000-250,000 in annual salary. You will need at least one full-time for 3-6 months, and realistically two. At a conservative estimate, that is $75,000-250,000 in salary costs alone — before benefits, management overhead, and opportunity cost of pulling them off revenue-generating work.
+
+### The Actual Build List
+
+Your engineers will not just be "hooking up an API." Here is what a production-grade system requires:
+
+- **Document parsing** — PDFs, DOCX, XLSX, scanned images, and HTML each require different parsing libraries. PDFs alone have dozens of edge cases: multi-column layouts, embedded tables, headers and footers, password protection.
+- **Chunking strategy** — How you split documents into searchable pieces dramatically affects answer quality. Too large and retrieval is imprecise. Too small and context is lost. This requires weeks of experimentation and testing.
+- **Embedding pipeline** — Batch processing, error handling, retry logic, progress tracking, and incremental updates when documents change.
+- **Retrieval logic** — Hybrid search combining semantic and keyword matching, re-ranking algorithms, metadata filtering, and relevance scoring.
+- **Prompt engineering** — Crafting system prompts that produce accurate, well-cited answers without hallucination. This is iterative work that is never truly finished.
+- **Access controls** — Who can see which documents? Role-based permissions, team-level access, document-level restrictions. Getting this wrong is a compliance violation.
+- **Security audit** — Encryption at rest and in transit, API key management, data residency compliance, SOC 2 considerations.
+- **Monitoring and observability** — Query logging, accuracy tracking, latency monitoring, cost tracking, error alerting.
+
+Add it up. The "three months with two engineers" estimate is missing about 60% of the actual work.
+
+## The Hidden Costs Nobody Mentions
+
+The build phase is only the beginning. Here is what arrives after launch.
+
+### Ongoing Model Upgrades
+
+AI models improve rapidly. GPT-5 outperforms GPT-4. New embedding models deliver better retrieval. Each upgrade requires testing, prompt re-engineering, and often re-embedding your entire document corpus. Budget 40-80 engineering hours per major model transition, which happens 2-3 times per year.
+
+### Prompt Engineering Iterations
+
+Users will find edge cases your initial prompts do not handle well. Queries that return irrelevant results. Answers that miss key context. Multi-document questions that confuse the retrieval system. Each fix requires investigation, prompt modification, and regression testing to ensure you have not broken previously working queries.
+
+### API Failover and Reliability
+
+OpenAI has outages. Anthropic has rate limits. Your vector database provider will have maintenance windows. A production system needs failover logic, request queuing, graceful degradation, and user-facing error handling. This is infrastructure work that has nothing to do with AI and everything to do with keeping the lights on.
+
+### Scaling Issues
+
+What works for 1,000 documents may crawl at 50,000. What handles 10 concurrent users may buckle at 200. Vector search performance degrades non-linearly with scale. You will need to re-architect at least once, probably twice, as your document corpus grows.
+
+### Knowledge Drain
+
+The engineer who built the system will eventually leave. When they do, they take with them the understanding of every architectural decision, every chunking trade-off, every prompt engineering workaround. The replacement engineer spends their first two months just understanding what was built before they can maintain it.
+
+## Build vs. Buy: The Numbers Side by Side
+
+| Factor | Build It Yourself | Buy (DocsFlow) |
+|---|---|---|
+| **Upfront cost** | $50,000 - $200,000+ | $0 |
+| **Monthly cost** | $5,000 - $15,000 (infra + maintenance) | $99 - $299/month |
+| **Time to launch** | 3 - 6 months | Live in 5 business days |
+| **Engineers required** | 1-2 dedicated | 0 |
+| **Maintenance** | Ongoing internal responsibility | Included |
+| **Model upgrades** | Manual, 40-80 hrs each | Automatic |
+| **Security audits** | Your responsibility | Included and documented |
+| **Multi-format parsing** | Build per format | All major formats supported |
+| **Access controls** | Custom development | Built in |
+| **Uptime SLA** | Whatever you can manage | 99.9% guaranteed |
+
+At $99/month, DocsFlow costs $1,188 per year. The low end of building it yourself — $50,000 upfront plus $5,000/month maintenance — costs $110,000 in year one. That is a 92x cost difference.
+
+Even at the high end of DocsFlow's pricing, the annual cost is $3,588. You would need to run your custom system for less than $300/month all-in to break even — and no production RAG system operates at that cost.
+
+## When Building Does Make Sense
+
+Honesty matters more than a sale. Building your own AI document search is the right call when:
+
+- **You are a technology company with 50+ engineers** and AI/ML is a core competency, not a side project.
+- **Your requirements are genuinely unique** — highly specialized document formats, custom retrieval algorithms tied to domain-specific logic, or regulatory constraints that no SaaS provider can satisfy.
+- **AI document search is your product**, not an internal tool. If you are selling this capability to your customers, you need to own the stack.
+- **You have already validated the use case** with an off-the-shelf tool and have documented, specific shortcomings that justify the investment.
+
+If none of those describe your situation, you are building a commodity from scratch. That is not innovation — it is unnecessary overhead.
+
+## The ROI Math
+
+Consider a team of 25 knowledge workers. Industry research consistently shows that professionals spend 20-30% of their time searching for information. At an average fully loaded cost of $80/hour, that is $400,000-600,000 per year spent on document retrieval.
+
+A RAG-powered tool that reduces search time by even 50% recovers $200,000-300,000 annually. At DocsFlow's pricing, the ROI is measured in multiples, not percentages.
+
+But the math only works if the tool is actually live and being used. A custom build that takes six months to launch means six months of continued inefficiency. A SaaS solution live in five days starts delivering value in week one.
+
+Use our [ROI calculator](/#roi-calculator) to plug in your own team size and see the projected impact.
+
+## The Decision Framework
+
+Ask yourself three questions:
+
+1. **Is AI document search a core differentiator for my business, or is it an operational tool?** If it is operational, buy it.
+2. **Do I have engineering resources that are not currently allocated to revenue-generating work?** If the answer is no, do not pull them off product development to build internal tooling.
+3. **Am I comfortable maintaining this system for the next 3-5 years?** Because that is the commitment. AI infrastructure does not maintain itself.
+
+If you want to understand the underlying technology at a high level, our guide on [what RAG is in plain English](/blog/what-is-rag-plain-english-guide) covers the essentials without the jargon.
+
+## Next Steps
+
+Review our [pricing plans](/pricing) to see which tier fits your team size and document volume. If you want to discuss your specific use case, [reach out directly](/#contact) — we will give you an honest assessment of whether DocsFlow is the right fit, or whether your situation genuinely warrants a custom build.
+
+The goal is not to sell you software. The goal is to make sure your next $100,000 goes where it actually moves your business forward.

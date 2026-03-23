@@ -322,13 +322,14 @@ async function processJob(
     // Retry marking as completed (network issues can cause failures)
     let completeSuccess = false;
     for (let attempt = 1; attempt <= 3 && !completeSuccess; attempt++) {
+      const { file_data_base64: _stripped, ...cleanMetadata } = (job.processing_metadata as any) || {};
       const { error: completeError } = await supabase
         .from('ingestion_jobs')
         .update({
           status: JOB_STATUS.COMPLETED,
           completed_at: new Date().toISOString(),
           processing_metadata: {
-            ...job.processing_metadata,
+            ...cleanMetadata,
             processing_duration_ms: Date.now() - jobStartTime
           }
         })
