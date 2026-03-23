@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import Script from "next/script"
 import "./globals.css"
 import { ClerkProvider } from '@clerk/nextjs'
 import { ThemeProvider } from "@/components/theme-provider"
@@ -76,12 +77,22 @@ export default function RootLayout({
     >
       <html lang="en" suppressHydrationWarning>
         <head>
-          {/* Force favicon refresh with explicit meta tags */}
+          <Script
+            src="https://www.googletagmanager.com/gtag/js?id=G-RENBTH2BQ1"
+            strategy="afterInteractive"
+          />
+          <Script id="gtag-init" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-RENBTH2BQ1');
+            `}
+          </Script>
           <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" />
           <link rel="icon" type="image/x-icon" href="/favicon.ico?v=3" />
           <link rel="shortcut icon" href="/favicon.ico?v=3" />
           <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM-readable site description" />
-
         </head>
         <body className={inter.className}>
           <QueryProvider>
