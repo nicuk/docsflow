@@ -18,11 +18,12 @@ const nextConfig = {
         destination: '/select-workspace',
         permanent: true,
       },
-      // Legacy 404 URLs from GSC - redirect to appropriate pages
-      { source: '/my', destination: '/select-workspace', permanent: true },
+      // Legacy 404 URLs from GSC — all point to public (non-auth) pages
+      // to avoid redirect chains through Clerk middleware
+      { source: '/my', destination: '/', permanent: true },
       { source: '/demo-video', destination: '/#features', permanent: true },
       { source: '/about', destination: '/', permanent: true },
-      { source: '/settings', destination: '/select-workspace', permanent: true },
+      { source: '/settings', destination: '/', permanent: true },
       { source: '/try', destination: '/#contact', permanent: true },
       { source: '/careers', destination: '/', permanent: true },
       { source: '/documentation', destination: '/docs', permanent: true },
