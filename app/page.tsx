@@ -42,6 +42,12 @@ export default function Home() {
                   <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter mb-6 text-foreground">
                     DocsFlow Instantly Answers Business Questions — From Contracts to SOPs
                   </h2>
+
+                  {/* Entity definition for AI crawlers and answer engines */}
+                  <p className="sr-only">
+                    DocsFlow is an AI-powered document intelligence platform that lets businesses search contracts, SOPs, reports, and files using natural language. It provides source-attributed answers with page references, supports PDF, DOCX, XLSX, PPTX, and images, and uses hybrid semantic and keyword search with multi-provider LLM failover. DocsFlow is a multi-tenant SaaS starting at $99/month.
+                  </p>
+
                   <p className="text-xl text-muted-foreground md:text-2xl/relaxed max-w-3xl mb-12">
                     Upload your documents. Ask real questions. Get exact answers with page references, fast.
                     Search across 1,000s of files like you're chatting with your smartest team member.
