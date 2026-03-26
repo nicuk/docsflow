@@ -4,13 +4,7 @@ const nextConfig = {
 
   async redirects() {
     return [
-      // www -> naked domain (all paths)
-      {
-        source: '/:path*',
-        has: [{ type: 'host', value: 'www.docsflow.app' }],
-        destination: 'https://docsflow.app/:path*',
-        permanent: true,
-      },
+      // www -> naked domain handled by Vercel edge (domain config)
       // dashboard -> select-workspace
       {
         source: '/dashboard',
