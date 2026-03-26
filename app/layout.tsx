@@ -10,6 +10,7 @@ import { TenantProvider } from "@/components/providers/tenant-provider"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { QueryProvider } from "@/components/providers/query-provider"
 import { Toaster } from "@/components/ui/toaster"
+import { Analytics } from '@vercel/analytics/next'
 
 // headers() import removed to avoid forcing dynamic rendering
 
@@ -110,6 +111,7 @@ export default function RootLayout({
               </TenantProvider>
             </AuthProvider>
           </QueryProvider>
+          <Analytics />
         </body>
       </html>
     </ClerkProvider>
