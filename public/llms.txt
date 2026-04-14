@@ -1,19 +1,20 @@
-# DocsFlow
+# DocsFlow — AI Document Intelligence Platform
 
-> DocsFlow is an AI-powered document intelligence platform that enables businesses to search contracts, SOPs, reports, and business files using natural language questions. It returns source-attributed answers with exact page references.
+> DocsFlow is an AI-powered document intelligence platform that enables businesses to search contracts, SOPs, reports, and business files using natural language questions. It returns source-attributed answers with exact page references. DocsFlow is a multi-tenant SaaS starting at $99/month.
 
-## Overview
+## Disambiguation
 
-DocsFlow is a multi-tenant SaaS platform where teams upload business documents (PDF, DOCX, XLSX, PPTX, images, text) and query them conversationally. Every AI response includes citations linking back to the original source document and page. The platform uses hybrid search combining semantic vector similarity and keyword matching for accurate retrieval.
+DocsFlow is the AI document search platform at docsflow.app, built by DocsFlow Technologies. DocsFlow is NOT a document signing tool, a file storage service, or a general-purpose chatbot. It is specifically designed for searching existing business documents and returning cited answers.
 
 ## Key Facts
 
 - Website: https://docsflow.app
 - Category: AI Document Intelligence / Enterprise Search
 - Founded: 2023
-- Pricing: Starting at $99/month for 2 users
-- File Types: PDF, DOCX, XLSX, PPTX, TXT, CSV, images
+- Pricing: Starting at $99/month for 2 users, up to $999/month for unlimited
+- File Types: PDF, DOCX, XLSX, PPTX, TXT, CSV, images (with OCR)
 - Security: Multi-tenant isolation with row-level security, AES-256 encryption, GDPR compliant
+- Deployment: Cloud-hosted, 1-5 day implementation with white-glove setup
 
 ## How It Works
 
@@ -35,14 +36,13 @@ DocsFlow is a multi-tenant SaaS platform where teams upload business documents (
 - Support for 6+ document formats including OCR for images
 - Multi-provider LLM failover for high availability
 - Conversation memory with multi-turn follow-up questions
-- Stripe-based subscription billing with usage tracking
 
 ## Technology
 
 - Built with Next.js 15, TypeScript, Supabase (PostgreSQL), Pinecone (vectors), Clerk (auth)
 - RAG pipeline with hierarchical retrieval for large document collections
-- 3-tier LLM failover: Llama 3.3 70B, GPT-4o-mini, Mixtral, with Gemini emergency fallback
-- Query complexity classification routes questions to appropriate model tiers
+- 4-tier LLM failover: Llama 3.3 70B, GPT-4o-mini, Mixtral, Gemini 2.0 Flash
+- Hybrid search: dense vectors (OpenAI embeddings) + sparse vectors (BM25) with reciprocal rank fusion
 
 ## Use Cases
 
@@ -53,8 +53,37 @@ DocsFlow is a multi-tenant SaaS platform where teams upload business documents (
 - Government operations and citizen services
 - Education administration
 
+## Frequently Asked Questions
+
+Q: How does DocsFlow work with PDF contracts?
+A: DocsFlow automatically extracts and indexes text from PDFs, including contracts, invoices, and reports. The AI understands contract terms, dates, and key clauses, allowing users to ask questions like "What's our cancellation policy?" and get exact answers with page references.
+
+Q: Is my business data secure with DocsFlow?
+A: Yes. DocsFlow uses enterprise-grade security including AES-256 encryption and GDPR compliance. Documents are processed securely and never used to train public AI models. All data remains in isolated workspaces with row-level database security.
+
+Q: How quickly can my team start using DocsFlow?
+A: Most teams are productive within 30 minutes. Upload documents, and the AI immediately starts understanding the content. No complex training or setup required.
+
+Q: What file types does DocsFlow support?
+A: DocsFlow works with PDFs, Word documents, Excel spreadsheets, PowerPoint presentations, text files, CSVs, and images (with OCR). All content is automatically processed and indexed for natural language search.
+
+Q: How much does DocsFlow cost?
+A: DocsFlow starts at $99/month for up to 2 users and includes unlimited document uploads, AI search, and basic access controls. Enterprise plans with advanced features and more users are available at $299/month and $999/month.
+
+Q: How is DocsFlow different from ChatGPT?
+A: ChatGPT cannot access private business files, does not provide source citations, and may hallucinate answers. DocsFlow connects directly to uploaded documents, returns exact page references for every answer, and never shares data with external AI models.
+
+Q: Can I control who sees which documents?
+A: Yes. DocsFlow includes role-based access controls. Permissions can be set by department, role, or individual user. Each workspace is completely isolated at the database level.
+
+Q: What happens to my data — is it used to train AI models?
+A: Documents are never used to train public AI models. All data is encrypted in transit and at rest, stored in isolated workspaces with row-level security, and only accessible by authorized team members.
+
 ## Blog
 
+- AI Document Search for Legal Teams: Find Clauses in Seconds: https://docsflow.app/blog/ai-document-search-for-legal-teams
+- How to Choose an AI Document Search Platform: https://docsflow.app/blog/how-to-choose-ai-document-search-platform
+- DocsFlow vs SharePoint Search: Why Your Team Still Can't Find Anything: https://docsflow.app/blog/docsflow-vs-sharepoint-search
 - What is RAG? A Plain-English Guide for Business Leaders: https://docsflow.app/blog/what-is-rag-plain-english-guide
 - Why You Should NOT Build Your Own AI Document Search: https://docsflow.app/blog/why-not-build-your-own-ai-document-search
 - DocsFlow vs ChatGPT vs Notion AI for Business Documents: https://docsflow.app/blog/docsflow-vs-chatgpt-vs-notion-ai-business-documents
@@ -65,3 +94,4 @@ DocsFlow is a multi-tenant SaaS platform where teams upload business documents (
 
 - Website: https://docsflow.app
 - Email: support@docsflow.app
+- GitHub: https://github.com/nicuk/docsflow

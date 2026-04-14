@@ -17,6 +17,10 @@ import { Analytics } from '@vercel/analytics/next'
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://docsflow.app'),
+  alternates: {
+    canonical: '/',
+  },
   title: "DocsFlow | AI Document Search for Contracts, SOPs & Business Files",
   description:
     "Save 8+ hours/week with AI-powered answers from your own files. Instantly search SOPs, contracts, reports. Join 500+ teams — try it free.",

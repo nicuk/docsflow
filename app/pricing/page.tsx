@@ -44,10 +44,10 @@ export default function PricingPage() {
         {/* Header */}
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold text-slate-900 mb-4">
-            Choose Your Plan
+            Simple Pricing for AI Document Intelligence
           </h1>
           <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-            Scale your AI-powered lead routing with plans designed for businesses of all sizes
+            Every plan includes AI-powered search, source citations, and white-glove setup. Start with a free trial — no credit card required.
           </p>
         </div>
 
