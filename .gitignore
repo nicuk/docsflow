@@ -55,6 +55,9 @@ test-*-with-key.js
 # archive directories
 _archive*/
 
+# internal working docs (never commit)
+_internal/
+
 # local diagnostic/debug files
 CRITICAL_*.md
 DIAGNOSTIC_*.md

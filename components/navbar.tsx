@@ -15,9 +15,9 @@ export default function Navbar() {
 
   const navItems = [
     { label: "Features", href: "#features" },
-    { label: "Use Cases", href: "#use-cases" },
+    { label: "Pricing", href: "/pricing" },
+    { label: "Docs", href: "/docs" },
     { label: "Blog", href: "/blog" },
-    { label: "ROI Calculator", href: "#roi-calculator" },
     { label: "Contact", href: "#contact" },
   ]
 
@@ -125,14 +125,11 @@ export default function Navbar() {
                   <ThemeToggle />
                   <Button
                     asChild
-                    className="w-full flex items-center gap-3 px-4 py-2 bg-[#1a1d21] hover:bg-[#2a2d31] text-white rounded-xl border-0 h-auto dark:bg-primary dark:hover:bg-primary/90 dark:shadow-[0_0_10px_rgba(36,101,237,0.4)]"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg shadow-lg border-0 h-auto"
                   >
-                    <Link href="#contact" onClick={() => setIsOpen(false)}>
+                    <Link href="/signup" onClick={() => setIsOpen(false)}>
                       <Zap className="h-4 w-4 text-white" />
-                      <div className="flex flex-col items-start">
-                        <span className="text-sm font-medium">Request Demo</span>
-                        <span className="text-xs text-gray-400 dark:text-gray-300 -mt-0.5">v1.0.0</span>
-                      </div>
+                      <span className="text-sm font-semibold">Start Free Trial</span>
                     </Link>
                   </Button>
                 </div>

@@ -40,6 +40,11 @@ export default function robots(): MetadataRoute.Robots {
         disallow: DISALLOWED_PATHS,
       },
       {
+        userAgent: 'ClaudeBot',
+        allow: ['/', '/llms.txt'],
+        disallow: DISALLOWED_PATHS,
+      },
+      {
         userAgent: 'Claude-Web',
         allow: ['/', '/llms.txt'],
         disallow: DISALLOWED_PATHS,
@@ -47,6 +52,11 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: 'anthropic-ai',
         allow: ['/', '/llms.txt'],
+        disallow: DISALLOWED_PATHS,
+      },
+      {
+        userAgent: 'Google-Extended',
+        allow: '/',
         disallow: DISALLOWED_PATHS,
       },
       {

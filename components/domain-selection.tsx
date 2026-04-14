@@ -414,7 +414,7 @@ export default function DomainSelection({ companyName, onDomainSelected, onInvit
                 <div className="text-center p-4 bg-muted/30 rounded-lg border">
                   <p className="text-sm text-muted-foreground">
                     Need assistance? Contact our enterprise support team at{' '}
-                    <span className="font-medium text-blue-600 dark:text-blue-400">support@bitto.tech</span>
+                    <span className="font-medium text-blue-600 dark:text-blue-400">support@docsflow.app</span>
                   </p>
                 </div>
               </div>

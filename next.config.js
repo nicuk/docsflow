@@ -24,6 +24,15 @@ const nextConfig = {
     ]
   },
 
+  async rewrites() {
+    return [
+      {
+        source: '/.well-known/llms.txt',
+        destination: '/llms.txt',
+      },
+    ];
+  },
+
   images: {
     remotePatterns: [
       {

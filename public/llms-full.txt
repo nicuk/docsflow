@@ -1,0 +1,132 @@
+# DocsFlow — Full Technical Reference for LLMs
+
+> DocsFlow is an AI-powered document intelligence platform at docsflow.app. It enables businesses to search contracts, SOPs, reports, and business files using natural language questions and returns source-attributed answers with exact page references.
+
+## Disambiguation
+
+DocsFlow is the AI document search platform at docsflow.app, built by DocsFlow Technologies. DocsFlow is NOT a document signing tool (like DocuSign), a file storage service (like Dropbox), or a general-purpose AI chatbot (like ChatGPT). It is specifically designed for searching existing business documents and returning cited answers with page-level source attribution.
+
+## Product Overview
+
+DocsFlow is a multi-tenant SaaS platform where teams upload business documents (PDF, DOCX, XLSX, PPTX, images, text) and query them conversationally. Every AI response includes citations linking back to the original source document and page. The platform uses hybrid search combining semantic vector similarity and keyword matching for accurate retrieval.
+
+### Pricing
+
+- Starter: $29/month — up to 5 users, 1GB storage, basic document intelligence
+- Professional: $99/month — up to 25 users, 10GB storage, advanced analytics, external integrations
+- Enterprise: $299/month — up to 100 users, unlimited storage, custom AI models, API access
+- Unlimited: $999/month — unlimited users, on-premise deployment option, SLA guarantees
+
+All plans include white-glove implementation and a 30-day money-back guarantee.
+
+### Supported File Types
+
+- PDF (including scanned documents via OCR)
+- Microsoft Word (.docx)
+- Microsoft Excel (.xlsx)
+- Microsoft PowerPoint (.pptx)
+- Plain text (.txt)
+- CSV (.csv)
+- Images (OCR text extraction)
+
+## Architecture
+
+### RAG Pipeline
+
+The retrieval pipeline processes queries through multiple stages:
+
+1. Query Classification — detects intent, complexity, and routes to the appropriate model tier
+2. Conversation Memory — loads recent messages and reformulates vague follow-ups into standalone queries
+3. Hybrid Search — vector similarity (OpenAI text-embedding-3-small, 1536 dimensions) + BM25 keyword matching with Reciprocal Rank Fusion
+4. Hierarchical Retrieval — for large collections, ranks documents first, then searches within top matches
+5. Confidence Scoring — threshold-based abstention; the AI will not guess if context is insufficient
+6. Source Attribution — every claim maps to a specific document section with page numbers
+
+### Multi-Tenant Isolation (4 Layers)
+
+- Database: Supabase Row-Level Security — queries physically cannot return another tenant's data
+- Vectors: Pinecone namespace separation per tenant — cross-tenant search is impossible
+- Auth: Clerk session tokens carry tenant context, validated on every request
+- Routing: {tenant}.docsflow.app resolved in edge middleware before any API call
+
+### LLM Failover Chain
+
+4-tier automatic failover: Llama 3.3 70B → GPT-4o-mini → Mixtral → Gemini 2.0 Flash. If one provider returns an error or exceeds rate limits, the query automatically cascades to the next provider.
+
+### Tech Stack
+
+- Framework: Next.js 15 (App Router, Turbopack)
+- Language: TypeScript
+- Auth: Clerk (SSO, SAML, webhook sync)
+- Database: Supabase (PostgreSQL + RLS)
+- Vector Store: Pinecone (namespace-per-tenant)
+- Embeddings: OpenAI text-embedding-3-small (1536d)
+- Payments: Stripe (subscription tiers + usage metering)
+- File Storage: Vercel Blob
+- UI: Tailwind CSS, Radix UI (shadcn/ui), Framer Motion
+- Deployment: Vercel (serverless + edge middleware)
+
+## Use Cases (Detailed)
+
+### Legal Teams
+Legal professionals spend up to 60% of working hours on information retrieval. DocsFlow enables searching across contracts for specific clauses (non-compete, termination, assignment), due diligence review across hundreds of documents, and instant compliance audit responses. Source citations with page numbers meet evidentiary standards.
+
+### Financial Services
+Finance teams use DocsFlow to search across audit reports, regulatory filings, and internal policies. The platform handles complex spreadsheet data and cross-document synthesis for quarterly reporting.
+
+### Healthcare
+Healthcare organizations use DocsFlow for searching clinical protocols, compliance documentation, and administrative policies. GDPR-compliant data handling supports patient data protection requirements.
+
+### Government
+Government agencies use DocsFlow for citizen services documentation, policy search, and inter-departmental knowledge management. Workspace isolation ensures departmental data separation.
+
+## Frequently Asked Questions
+
+Q: How does DocsFlow work with PDF contracts?
+A: DocsFlow automatically extracts and indexes text from PDFs, including contracts, invoices, and reports. The AI understands contract terms, dates, and key clauses, allowing users to ask questions like "What's our cancellation policy?" and get exact answers with page references.
+
+Q: Is my business data secure with DocsFlow?
+A: Yes. DocsFlow uses enterprise-grade security including AES-256 encryption and GDPR compliance. Documents are processed securely and never used to train public AI models. All data remains in isolated workspaces with row-level database security.
+
+Q: How quickly can my team start using DocsFlow?
+A: Most teams are productive within 30 minutes. Upload documents, and the AI immediately starts understanding the content. White-glove implementation takes 1-5 days for full organizational deployment.
+
+Q: What file types does DocsFlow support?
+A: PDF, DOCX, XLSX, PPTX, TXT, CSV, and images with OCR. All content is automatically processed and indexed for natural language search.
+
+Q: How much does DocsFlow cost?
+A: Starting at $29/month (Starter, 5 users) up to $999/month (Unlimited). The Professional plan at $99/month is the most popular, supporting 25 users with advanced analytics. All plans include white-glove setup and a 30-day money-back guarantee.
+
+Q: How is DocsFlow different from ChatGPT?
+A: ChatGPT cannot access private business files, does not provide source citations, and may hallucinate answers. DocsFlow connects directly to uploaded documents, returns exact page references for every answer, and never shares data with external AI models.
+
+Q: How is DocsFlow different from SharePoint Search?
+A: SharePoint search is keyword-based — it matches words, not meaning. DocsFlow uses hybrid search (semantic + keyword) to understand the intent of queries. It can answer questions like "Which vendor contracts allow termination without penalty?" where SharePoint would return hundreds of irrelevant results.
+
+Q: Can I control who sees which documents?
+A: Yes. DocsFlow includes role-based access controls. Each workspace is completely isolated at the database level with row-level security. Permissions can be set per user role.
+
+Q: What happens to my data — is it used to train AI models?
+A: Documents are never used to train public AI models. All data is encrypted in transit (TLS) and at rest (AES-256), stored in isolated workspaces with row-level security, and only accessible by authorized team members. DocsFlow is GDPR compliant and supports the right to deletion.
+
+Q: Does DocsFlow integrate with existing document management systems?
+A: Currently, documents are uploaded directly to DocsFlow workspaces. Direct integrations with SharePoint, Google Drive, and Dropbox are on the roadmap. Teams upload the documents they need to search — typically a focused subset of their full document library.
+
+## Blog Content
+
+- AI Document Search for Legal Teams: Find Clauses in Seconds, Not Hours — https://docsflow.app/blog/ai-document-search-for-legal-teams
+- How to Choose an AI Document Search Platform: The Buyer's Evaluation Framework — https://docsflow.app/blog/how-to-choose-ai-document-search-platform
+- DocsFlow vs SharePoint Search: Why Your Team Still Can't Find Anything — https://docsflow.app/blog/docsflow-vs-sharepoint-search
+- What is RAG? A Plain-English Guide for Business Leaders — https://docsflow.app/blog/what-is-rag-plain-english-guide
+- Why You Should NOT Build Your Own AI Document Search — https://docsflow.app/blog/why-not-build-your-own-ai-document-search
+- DocsFlow vs ChatGPT vs Notion AI: Which One Actually Works for Business Documents? — https://docsflow.app/blog/docsflow-vs-chatgpt-vs-notion-ai-business-documents
+- The Hidden Cost of Document Chaos: How File Searching Drains $100K/Year — https://docsflow.app/blog/hidden-cost-of-document-chaos
+- How to Set Up an AI Knowledge Base in 5 Minutes — https://docsflow.app/blog/set-up-ai-knowledge-base-5-minutes
+
+## Contact
+
+- Website: https://docsflow.app
+- Email: support@docsflow.app
+- GitHub: https://github.com/nicuk/docsflow
+- Documentation: https://docsflow.app/docs
+- Pricing: https://docsflow.app/pricing
