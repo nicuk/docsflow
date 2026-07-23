@@ -1,9 +1,17 @@
 # SureCiteAI — Benchmarks
 
-This document is the public, reproducible record of how SureCiteAI is evaluated.
-Every claim about retrieval accuracy, hallucination rate, abstention behaviour,
-or calibration in our marketing copy, case studies, or sales material should be
+This document is the public audit record of how SureCiteAI is evaluated. Every
+claim about retrieval accuracy, hallucination rate, abstention behaviour, or
+calibration in our marketing copy, case studies, or sales material should be
 traceable to a numbered run in this file.
+
+**What this public repo is — and isn't.** It carries the methodology and the
+redacted per-case run artifacts under `benchmarks/runs/`, so anyone can audit the
+results against the public corpora. It does **not** carry the eval runner
+(`scripts/rag-smoke-eval*.ts`, `lib/rag/eval/*`) or the CC-BY-NC goldens — those
+live in the private product repo — so the runs cannot be re-executed from here.
+The `npm run eval:*` commands shown below document how the runs are produced in
+the private repo; they are for reference, not runnable from this repo.
 
 If a number does not appear here or in `benchmarks/runs/`, treat it as
 unverified.
@@ -28,8 +36,9 @@ SureCiteAI is graded on five axes per query:
    metrics. Tracked so we can attribute eval movement to a specific stage.
 
 These are computed by `scripts/rag-smoke-eval.ts` (per-suite) and
-`scripts/rag-smoke-eval-all.ts` (cross-suite scorecard). Both are reproducible
-locally with `npm run eval:rag` or `npm run eval:all`.
+`scripts/rag-smoke-eval-all.ts` (cross-suite scorecard) in the private product
+repo (`npm run eval:rag` / `npm run eval:all`). This public repo carries the
+resulting scorecard and redacted artifacts, not the runner (see the note above).
 
 ---
 
@@ -102,11 +111,12 @@ Calibration metrics (ECE, Brier, AUROC) are implemented in
 
 **Headline takeaways:**
 
-- **Zero hallucinations across 297 cases.** Citation verifier blocks every
+- **Zero hallucinations on this 297-case run.** Citation verifier blocks every
   cited filename that isn't in the retrieved set; if a model attempts one, the
   citation is rewritten or the answer is held back. This is the load-bearing
-  guarantee for a citation-first product, and it has now held across three
-  consecutive published runs at growing case counts (140 → 147 → 297).
+  guarantee for a citation-first product. It is 0/297 on this run and 0/147 on
+  the hybrid-only and Cohere ablation arms; the one exception on record is the
+  Voyage arm (1/147 on legal), documented in §6.
 - **96% retrieval hit-rate on FinanceBench.** Of 150 PatronusAI FinanceBench
   questions across 84 unique 10-K/10-Q filings (32 issuers, GICS-diverse), the
   retriever surfaced the correct source filing in 144 cases. The 95/150 (63%)
@@ -247,11 +257,16 @@ run cannot be re-executed from this repo.
 
 ## 6. Reranker ablation — April 2026
 
-To choose a reranker for each subscription tier honestly, the full 147-case
-suite was run three times back-to-back on the same code at the same time, with
-only the `RERANKER_PROVIDER` environment variable changed. All three artifacts
-are published below and reproducible by anyone with the eval tenants
-provisioned.
+To choose a reranker for each subscription tier, the full 147-case suite was run
+three times back-to-back on the same code, changing only the `RERANKER_PROVIDER`
+environment variable. All three artifacts are published below.
+
+**Coverage caveat — read before the table.** The reranker only fires on cases
+that clear the candidate-count threshold, and that gate behaved very differently
+across arms: Cohere reranked ~103 cases, Voyage only ~26 (hybrid-only: 0 by
+definition). The per-suite deltas below are therefore **confounded by activation
+coverage** — they reflect the tier configuration we shipped, not a clean
+head-to-head of reranker quality at equal application.
 
 | Provider | Tier | Pass rate | Hallucinations | Notable per-suite delta vs. baseline |
 |---|---|---|---|---|
@@ -261,9 +276,11 @@ provisioned.
 
 **What this run actually shows:**
 
-1. **Cohere is the unambiguous quality leader.** +4 cases vs. hybrid-only
-   baseline, distributed across three suites, with zero hallucinations. This
-   is why it is the default for the enterprise/custom tier.
+1. **Cohere is the top-scoring configuration in this run** — +4 cases vs.
+   hybrid-only, across three suites, with zero hallucinations — which is why it
+   is the enterprise/custom default. Per the coverage caveat above (it fired on
+   ~4× more cases than the Voyage arm), read this as a configuration result, not
+   a proven per-call quality ranking between the two providers.
 2. **Voyage Lite is a real trade.** It improves legal recall (its strongest
    suite) but introduces a mild accounting regression and one legal
    hallucination on this run. It remains the paid-tier default because the
@@ -295,10 +312,13 @@ are diffable without any post-processing.
 
 ---
 
-## 7. How to reproduce
+## 7. How the runs are produced (private repo)
+
+These steps run in the private product repo, not this public one (see the intro
+note). They are documented here so the methodology is fully auditable.
 
 ```bash
-# Prerequisites: clone the repo, install deps, populate .env.local with the
+# Prerequisites: clone the private product repo, install deps, populate .env.local with the
 # Supabase, Pinecone, OpenAI/Anthropic/Google keys, plus COHERE_API_KEY and
 # VOYAGE_API_KEY for the rerank ablation arms (.env.example documents every
 # required variable).
