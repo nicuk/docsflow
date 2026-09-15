@@ -146,7 +146,7 @@ mathematically meaningless. They are reported per-suite only.
 ### 5.1 What this is
 
 [FinanceBench](https://huggingface.co/datasets/PatronusAI/financebench)
-(Patronus AI, NeurIPS 2023, [arXiv:2311.11944](https://arxiv.org/abs/2311.11944))
+(Islam et al., Patronus AI, 2023, preprint [arXiv:2311.11944](https://arxiv.org/abs/2311.11944))
 is the standard public benchmark for retrieval-augmented financial question
 answering. The open-source release ships **150 ecologically-valid Q&A pairs**
 covering **32 publicly-traded companies across multiple GICS sectors and 84
