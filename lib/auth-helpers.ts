@@ -12,27 +12,22 @@ function getSupabaseClient() {
   );
 }
 
-export async function getUserAccessLevel(request: NextRequest, tenantId: string): Promise<number> {
+/**
+ * The caller's access level in `tenantId`, or null when it cannot be
+ * established. Level 1 is admin, so an unknown caller must never get 1: this
+ * used to return 1 for a missing token, a bad token or any error.
+ */
+export async function getUserAccessLevel(request: NextRequest, tenantId: string): Promise<number | null> {
   try {
     const supabase = getSupabaseClient();
-    
-    // Get authorization header
+
     const authHeader = request.headers.get('authorization');
-    if (!authHeader) {
-      return 1; // Default to lowest access level for unauthenticated users
-    }
+    if (!authHeader) return null;
 
-    // Extract JWT token
     const token = authHeader.replace('Bearer ', '');
-    
-    // Verify token and get user
     const { data: { user }, error } = await supabase.auth.getUser(token);
-    
-    if (error || !user) {
-      return 1; // Default to lowest access level
-    }
+    if (error || !user) return null;
 
-    // Get user's access level for this tenant
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('access_level')
@@ -40,13 +35,11 @@ export async function getUserAccessLevel(request: NextRequest, tenantId: string)
       .eq('tenant_id', tenantId)
       .single();
 
-    if (userError || !userData) {
-      return 1; // Default to lowest access level
-    }
-
-    return userData.access_level || 1;
-  } catch {
-    return 1; // Default to lowest access level on error
+    if (userError || !userData || typeof userData.access_level !== 'number') return null;
+    return userData.access_level;
+  } catch (err) {
+    console.error('getUserAccessLevel failed:', err);
+    return null;
   }
 }
 
@@ -86,9 +79,16 @@ export async function validateAuth(request: NextRequest): Promise<{ tenantId: st
       return { tenantId: null, userId: null };
     }
 
-    const tenantId = request.headers.get('x-tenant-id') || user.user_metadata?.tenant_id || null;
+    // The tenant is the one on the user's own row. It used to be taken from the
+    // x-tenant-id header (or client-writable user_metadata), so any account
+    // could read and write another tenant's upload queue.
+    const { data: member } = await supabase
+      .from('users')
+      .select('tenant_id')
+      .eq('id', user.id)
+      .maybeSingle();
 
-    return { tenantId, userId: user.id };
+    return { tenantId: member?.tenant_id ?? null, userId: user.id };
   } catch {
     return { tenantId: null, userId: null };
   }

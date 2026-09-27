@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
+import { requireMember } from '@/lib/server-auth';
 
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
@@ -14,16 +15,13 @@ export async function POST(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
 
   try {
-    // Skip tenant validation since this is cross-domain call
-    // The frontend sends tenantId in body instead
-    const { tenantId, customPersona } = await request.json();
-
-    if (!tenantId) {
-      return NextResponse.json(
-        { error: 'Tenant ID is required' },
-        { status: 400, headers: corsHeaders }
-      );
-    }
+    // The persona steers every answer in the tenant, so only its admin may
+    // change it. The tenant is the caller's own; a tenantId in the body is
+    // accepted only when it matches.
+    const { tenantId: requestedTenantId, customPersona } = await request.json();
+    const check = await requireMember({ admin: true, tenantId: requestedTenantId ?? null, headers: corsHeaders });
+    if (check instanceof NextResponse) return check;
+    const tenantId = check.tenantId;
 
     if (!customPersona) {
       return NextResponse.json(
@@ -59,11 +57,9 @@ export async function POST(request: NextRequest) {
     }, { headers: corsHeaders });
 
   } catch (error) {
+    console.error('Persona update failed:', error);
     return NextResponse.json(
-      { 
-        error: 'Failed to update persona',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
+      { error: 'Failed to update persona' },
       { status: 500, headers: corsHeaders }
     );
   }

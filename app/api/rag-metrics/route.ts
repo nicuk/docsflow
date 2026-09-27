@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ragMetrics } from '@/lib/rag-metrics';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
-import { getUserAccessLevel } from '@/lib/auth-helpers';
+import { requireMember } from '@/lib/server-auth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,14 +17,10 @@ export async function GET(request: NextRequest) {
     const { tenantId } = tenantValidation;
     const userId = 'system';
 
-    // Check if user is admin (access level 1)
-    const accessLevel = await getUserAccessLevel(request, tenantId);
-    if (accessLevel > 1) {
-      return NextResponse.json(
-        { error: 'Admin access required to view metrics' },
-        { status: 403 }
-      );
-    }
+    // Admins of this tenant only. getUserAccessLevel returned 1 (admin) for
+    // callers with no Supabase token, which is every Clerk session.
+    const check = await requireMember({ admin: true, tenantId });
+    if (check instanceof NextResponse) return check;
 
     // Get query parameters
     const searchParams = request.nextUrl.searchParams;
@@ -99,14 +95,10 @@ export async function DELETE(request: NextRequest) {
     const { tenantId } = tenantValidation;
     const userId = 'system';
 
-    // Check if user is admin
-    const accessLevel = await getUserAccessLevel(request, tenantId);
-    if (accessLevel > 1) {
-      return NextResponse.json(
-        { error: 'Admin access required to clear metrics' },
-        { status: 403 }
-      );
-    }
+    // Admins of this tenant only. getUserAccessLevel returned 1 (admin) for
+    // callers with no Supabase token, which is every Clerk session.
+    const check = await requireMember({ admin: true, tenantId });
+    if (check instanceof NextResponse) return check;
 
     // Clear all metrics
     await ragMetrics.clearMetrics();

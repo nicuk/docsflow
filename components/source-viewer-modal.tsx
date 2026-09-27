@@ -13,6 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { FileText, X, ExternalLink, Loader2 } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
+import { highlightMatches } from "@/lib/highlight"
 
 interface SourceViewerProps {
   source: {
@@ -82,13 +83,6 @@ export default function SourceViewerModal({ source, isOpen, onClose, highlightTe
     } finally {
       setIsLoadingDocument(false)
     }
-  }
-
-  const highlightContent = (content: string, highlight?: string) => {
-    if (!highlight) return content
-    
-    const regex = new RegExp(`(${highlight})`, 'gi')
-    return content.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800">$1</mark>')
   }
 
   return (
@@ -165,16 +159,15 @@ export default function SourceViewerModal({ source, isOpen, onClose, highlightTe
               </div>
             ) : (
               <div 
-                className="prose dark:prose-invert max-w-none text-sm"
-                dangerouslySetInnerHTML={{
-                  __html: highlightContent(
+                className="prose dark:prose-invert max-w-none text-sm whitespace-pre-wrap"
+              >
+                {highlightMatches(
                     viewMode === 'snippet' 
                       ? source.content 
                       : (fullDocumentContent || source.content),
                     highlightText
-                  )
-                }}
-              />
+                  )}
+              </div>
             )}
           </ScrollArea>
 

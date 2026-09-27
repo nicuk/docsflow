@@ -123,8 +123,9 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
     
-    // Get the authenticated user ID from Clerk (via middleware x-user-id header)
-    const clerkUserId = request.headers.get('x-user-id');
+    // The authenticated user comes from Clerk's verified session, not a header.
+    const { auth } = await import('@clerk/nextjs/server');
+    const { userId: clerkUserId } = await auth();
     if (!clerkUserId) {
       return NextResponse.json(
         { error: 'User not authenticated' },

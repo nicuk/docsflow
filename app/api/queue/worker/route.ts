@@ -49,10 +49,12 @@ async function processWorkerRequest(request: NextRequest) {
   
   try {
     // 1. Verify this is a legitimate cron request
+    // With CRON_SECRET unset, the expected value was the literal
+    // "Bearer undefined", which anyone can send. Refuse instead.
+    const cronSecret = process.env.CRON_SECRET;
     const authHeader = request.headers.get('Authorization');
-    const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
     
-    if (!authHeader || authHeader !== expectedAuth) {
+    if (!cronSecret || !authHeader || authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

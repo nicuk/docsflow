@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireMember } from '@/lib/server-auth';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -8,28 +9,13 @@ import { supabase } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
-    // Get tenant context from headers
-    const tenantId = request.headers.get('x-tenant-id');
-    if (!tenantId) {
-      return NextResponse.json({ error: 'Tenant ID required' }, { status: 400 });
-    }
+    // Signed-in admin of their own tenant. Tenant and user used to come from
+    // x-tenant-id / x-user-id headers, which the browser controls.
+    const check = await requireMember({ admin: true });
+    if (check instanceof NextResponse) return check;
+    const tenantId = check.tenantId;
+    const userId = check.userId;
 
-    // Verify admin access
-    const userId = request.headers.get('x-user-id') || 
-                   request.nextUrl.searchParams.get('user_id');
-                   
-    if (userId) {
-      const { data: userProfile } = await supabase!
-        .from('users')
-        .select('role, access_level')
-        .eq('id', userId)
-        .eq('tenant_id', tenantId)
-        .single();
-
-      if (!userProfile || userProfile.role !== 'admin' || userProfile.access_level !== 1) {
-        return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-      }
-    }
 
     // Get all users for the tenant
     const { data: users, error: usersError } = await supabase!

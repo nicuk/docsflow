@@ -1,6 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { TenantContextManager } from '@/lib/tenant-context-manager'
+import { buildForwardedHeaders } from '@/lib/forwarded-headers'
 
 // Define routes that require authentication
 const isProtectedRoute = createRouteMatcher([
@@ -102,19 +103,13 @@ export default clerkMiddleware(async (auth, req) => {
     }
   }
 
-  // Add tenant context to headers for API routes
-  const response = NextResponse.next()
-  if (tenant) {
-    response.headers.set('x-tenant-subdomain', tenant)
-  }
-  if (tenantId) {
-    response.headers.set('x-tenant-id', tenantId)
-  }
-  if (userId) {
-    response.headers.set('x-user-id', userId)
-  }
+  // Forward trusted context on the REQUEST, which is what route handlers read.
+  // These used to be set on the response, which (a) never reached the route,
+  // so routes read whatever the browser sent, and (b) handed every visitor the
+  // tenant UUID and their user id. See lib/forwarded-headers.ts.
+  const requestHeaders = buildForwardedHeaders(req.headers, { tenant, tenantId })
 
-  return response
+  return NextResponse.next({ request: { headers: requestHeaders } })
 })
 
 export const config = {
