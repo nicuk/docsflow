@@ -15,7 +15,11 @@ export async function POST(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
 
   try {
-    const { email, password, tenantId, accessLevel = 2, companyName } = await request.json();
+    // tenantId / accessLevel in the body are ignored. A new account belongs to
+    // no tenant and has member access; it gets a tenant by creating one in
+    // onboarding or by accepting an invitation, never by naming one here.
+    const { email, password, companyName } = await request.json();
+    const accessLevel = 2;
 
     if (!email || !password) {
       return NextResponse.json(
@@ -55,7 +59,6 @@ export async function POST(request: NextRequest) {
       password,
       options: {
         data: {
-          tenant_id: tenantId,
           access_level: accessLevel,
           role: 'user',
           company_name: companyName
@@ -79,7 +82,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user profile in users table
-    // If no tenant_id provided, leave it null - user will select/create tenant during onboarding
+    // tenant_id stays null: the user creates or joins a tenant afterwards.
     const userInsertData: any = {
       id: authData.user?.id,
       email: authData.user?.email,
@@ -89,11 +92,6 @@ export async function POST(request: NextRequest) {
       created_at: new Date().toISOString()
     };
     
-    // Only add tenant_id if it's a valid UUID
-    if (tenantId && tenantId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)) {
-      userInsertData.tenant_id = tenantId;
-    }
-
     const { error: profileError } = await supabase
       .from('users')
       .insert(userInsertData);
@@ -217,7 +215,7 @@ export async function POST(request: NextRequest) {
         email: authData.user?.email,
         access_token: null,
         refresh_token: null,
-        tenant_id: tenantId,
+        tenant_id: userProfile?.tenant_id ?? null,
         access_level: accessLevel,
         tenant: userProfile?.tenants,
         name: companyName
@@ -226,8 +224,9 @@ export async function POST(request: NextRequest) {
     }, { headers: corsHeaders });
 
   } catch (error: any) {
+    console.error('Registration failed:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { error: 'Internal server error' },
       { status: 500, headers: corsHeaders }
     );
   }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireMember } from '@/lib/server-auth';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
 import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
@@ -77,6 +78,11 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    // The persona replaces the default instructions for every chat in the
+    // tenant, so changing it is an admin action.
+    const check = await requireMember({ admin: true, tenantId: tenantValidation.tenantId, headers: corsHeaders });
+    if (check instanceof NextResponse) return check;
+
     const body = await request.json();
     const { industry, custom_instructions } = body;
     

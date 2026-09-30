@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { sendInvitationEmail } from '@/lib/email';
+import { requireMember } from '@/lib/server-auth';
 
 /**
  * Admin invite user API endpoint.
@@ -36,33 +37,13 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Get tenant context from headers
-    const tenantId = request.headers.get('x-tenant-id');
-    const adminUserId = request.headers.get('x-user-id');
-
-    if (!tenantId) {
-      return NextResponse.json({
-        success: false,
-        error: 'Tenant context required'
-      }, { status: 400 });
-    }
-
-    // Verify admin access
-    if (adminUserId) {
-      const { data: adminUser } = await supabase!
-        .from('users')
-        .select('role, access_level')
-        .eq('id', adminUserId)
-        .eq('tenant_id', tenantId)
-        .single();
-
-      if (!adminUser || adminUser.role !== 'admin' || adminUser.access_level !== 1) {
-        return NextResponse.json({
-          success: false,
-          error: 'Admin privileges required'
-        }, { status: 403 });
-      }
-    }
+    // The inviter must be a signed-in admin, and invites go into the inviter's
+    // own tenant. This used to read the tenant and admin id from headers and
+    // skipped the admin check entirely when `x-user-id` was absent.
+    const check = await requireMember({ admin: true });
+    if (check instanceof NextResponse) return check;
+    const tenantId = check.tenantId;
+    const adminUserId = check.userId;
 
     // Check if tenant exists and get info
     const { data: tenant, error: tenantError } = await supabase!

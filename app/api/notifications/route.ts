@@ -1,21 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { isTenantAdmin, requireMember } from '@/lib/server-auth';
+
+/*
+ * Tenant and user come from the verified session, never from the query or
+ * body. These handlers used to take `tenantId` and `userId` from the request
+ * with no authentication, so anyone could read, create or mark read the
+ * notifications of any tenant. A `tenantId` in the request is still accepted,
+ * but only when it is the caller's own. A member sees and changes their own
+ * notifications; an admin of the tenant may act on everyone's.
+ */
 
 // GET notifications for a user
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
-    const tenantId = url.searchParams.get('tenantId');
-    const userId = url.searchParams.get('userId');
+    const member = await requireMember({ tenantId: url.searchParams.get('tenantId') });
+    if (member instanceof NextResponse) return member;
+
+    const tenantId = member.tenantId;
+    const requestedUserId = url.searchParams.get('userId');
+    const userId = isTenantAdmin(member) ? requestedUserId : member.userId;
     const status = url.searchParams.get('status') || 'all';
     const limit = parseInt(url.searchParams.get('limit') || '20');
-
-    if (!tenantId) {
-      return NextResponse.json({
-        success: false,
-        error: 'Missing tenantId parameter'
-      }, { status: 400 });
-    }
 
     if (!supabase) {
       return NextResponse.json({
@@ -42,6 +49,7 @@ export async function GET(request: NextRequest) {
     const { data: notifications, error } = await query;
 
     if (error) {
+      console.error('Notifications fetch failed:', error);
       return NextResponse.json({
         success: false,
         error: 'Failed to fetch notifications'
@@ -66,6 +74,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
+    console.error('Notifications GET failed:', error);
     return NextResponse.json({
       success: false,
       error: 'Internal server error'
@@ -73,15 +82,20 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Create a new notification
+// POST - Create a new notification. Admins only, into their own tenant: a
+// notification is shown in-app as coming from the product.
 export async function POST(request: NextRequest) {
   try {
-    const { tenantId, userId, title, message, type = 'info' } = await request.json();
+    const { tenantId: requestedTenantId, userId, title, message, type = 'info' } = await request.json();
 
-    if (!tenantId || !title || !message) {
+    const admin = await requireMember({ admin: true, tenantId: requestedTenantId ?? null });
+    if (admin instanceof NextResponse) return admin;
+    const tenantId = admin.tenantId;
+
+    if (!title || !message) {
       return NextResponse.json({
         success: false,
-        error: 'Missing required fields: tenantId, title, message'
+        error: 'Missing required fields: title, message'
       }, { status: 400 });
     }
 
@@ -106,6 +120,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
+      console.error('Notification insert failed:', error);
       return NextResponse.json({
         success: false,
         error: 'Failed to create notification'
@@ -118,6 +133,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
+    console.error('Notifications POST failed:', error);
     return NextResponse.json({
       success: false,
       error: 'Internal server error'
@@ -128,14 +144,14 @@ export async function POST(request: NextRequest) {
 // PATCH - Mark notifications as read
 export async function PATCH(request: NextRequest) {
   try {
-    const { notificationIds, tenantId, markAllAsRead, userId } = await request.json();
+    const { notificationIds, tenantId: requestedTenantId, markAllAsRead, userId: requestedUserId } =
+      await request.json();
 
-    if (!tenantId) {
-      return NextResponse.json({
-        success: false,
-        error: 'Missing tenantId'
-      }, { status: 400 });
-    }
+    const member = await requireMember({ tenantId: requestedTenantId ?? null });
+    if (member instanceof NextResponse) return member;
+    const tenantId = member.tenantId;
+    const isAdmin = isTenantAdmin(member);
+    const userId = isAdmin ? requestedUserId : member.userId;
 
     if (!supabase) {
       return NextResponse.json({
@@ -153,18 +169,20 @@ export async function PATCH(request: NextRequest) {
       // Mark all notifications as read for specific user
       query = query.eq('user_id', userId);
     } else if (notificationIds && Array.isArray(notificationIds)) {
-      // Mark specific notifications as read
+      // Mark specific notifications as read; a member only their own.
       query = query.in('id', notificationIds);
+      if (!isAdmin) query = query.eq('user_id', member.userId);
     } else {
       return NextResponse.json({
         success: false,
-        error: 'Must provide either notificationIds or markAllAsRead with userId'
+        error: 'Must provide either notificationIds or markAllAsRead'
       }, { status: 400 });
     }
 
     const { data, error } = await query.select('*');
 
     if (error) {
+      console.error('Notifications update failed:', error);
       return NextResponse.json({
         success: false,
         error: 'Failed to update notifications'
@@ -180,9 +198,10 @@ export async function PATCH(request: NextRequest) {
     });
 
   } catch (error) {
+    console.error('Notifications PATCH failed:', error);
     return NextResponse.json({
       success: false,
       error: 'Internal server error'
     }, { status: 500 });
   }
-} 
+}

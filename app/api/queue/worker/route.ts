@@ -18,6 +18,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { timingSafeEqual } from 'node:crypto';
 import type { IngestionJob, WorkerProcessResult } from '@/lib/queue';
 import { 
   DEFAULT_WORKER_CONFIG,
@@ -43,16 +44,25 @@ const WORKER_CONFIG = {
 // POST /api/queue/worker
 // =====================================================
 
+/** Constant-time comparison, so response timing says nothing about the secret. */
+function sameSecret(given: string, expected: string): boolean {
+  const a = Buffer.from(given);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 // Main worker function (shared by POST and GET)
 async function processWorkerRequest(request: NextRequest) {
   const startTime = Date.now();
   
   try {
     // 1. Verify this is a legitimate cron request
+    // With CRON_SECRET unset, the expected value was the literal
+    // "Bearer undefined", which anyone can send. Refuse instead.
+    const cronSecret = process.env.CRON_SECRET;
     const authHeader = request.headers.get('Authorization');
-    const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
     
-    if (!authHeader || authHeader !== expectedAuth) {
+    if (!cronSecret || !authHeader || !sameSecret(authHeader, `Bearer ${cronSecret}`)) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

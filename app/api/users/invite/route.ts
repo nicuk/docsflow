@@ -1,16 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { sendInvitationEmail } from '@/lib/email';
+import { requireMember } from '@/lib/server-auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, role, accessLevel, inviterName, tenantId } = await request.json();
+    const { email, role, accessLevel, inviterName, tenantId: requestedTenantId } = await request.json();
+
+    // Only a signed-in admin may invite, and only into their own tenant. This
+    // route used to take the tenant from the body with no auth at all, and it
+    // returns the invitation link, so anyone could invite themselves as admin.
+    const check = await requireMember({ admin: true, tenantId: requestedTenantId ?? null });
+    if (check instanceof NextResponse) return check;
+    const tenantId = check.tenantId;
 
     // Validate required fields
-    if (!email || !role || !accessLevel || !inviterName || !tenantId) {
+    if (!email || !role || !accessLevel || !inviterName) {
       return NextResponse.json({
         success: false,
-        error: 'Missing required fields: email, role, accessLevel, inviterName, tenantId'
+        error: 'Missing required fields: email, role, accessLevel, inviterName'
       }, { status: 400 });
     }
 
@@ -210,15 +218,11 @@ export async function POST(request: NextRequest) {
 // GET endpoint to list pending invitations for a tenant
 export async function GET(request: NextRequest) {
   try {
+    // Pending invitations list emails and roles: admins of the tenant only.
     const url = new URL(request.url);
-    const tenantId = url.searchParams.get('tenantId');
-
-    if (!tenantId) {
-      return NextResponse.json({
-        success: false,
-        error: 'Missing tenantId parameter'
-      }, { status: 400 });
-    }
+    const check = await requireMember({ admin: true, tenantId: url.searchParams.get('tenantId') });
+    if (check instanceof NextResponse) return check;
+    const tenantId = check.tenantId;
 
     // Get all pending invitations for the tenant
     const { data: invitations, error } = await supabase!

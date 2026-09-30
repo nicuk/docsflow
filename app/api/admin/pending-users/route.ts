@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireMember } from '@/lib/server-auth';
 import { supabase } from '@/lib/supabase';
 import { sendWelcomeEmail } from '@/lib/email';
 import { tenantUrl } from '@/lib/constants';
@@ -32,29 +33,13 @@ interface PendingUsersData {
 
 export async function GET(request: NextRequest) {
   try {
-    // Get tenant context from headers
-    const tenantId = request.headers.get('x-tenant-id');
-    if (!tenantId) {
-      return NextResponse.json({ error: 'Tenant ID required' }, { status: 400 });
-    }
+    // Signed-in admin of their own tenant. Tenant and user used to come from
+    // x-tenant-id / x-user-id headers, which the browser controls.
+    const check = await requireMember({ admin: true });
+    if (check instanceof NextResponse) return check;
+    const tenantId = check.tenantId;
+    const userId = check.userId;
 
-    // Verify admin access
-    const userId = request.headers.get('x-user-id');
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID required' }, { status: 401 });
-    }
-
-    // Check if user is admin
-    const { data: userProfile } = await supabase!
-      .from('users')
-      .select('role, access_level')
-      .eq('id', userId)
-      .eq('tenant_id', tenantId)
-      .single();
-
-    if (!userProfile || userProfile.role !== 'admin' || userProfile.access_level !== 1) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
 
     // Get pending invitations
     const { data: invitations, error: invitationsError } = await supabase!
@@ -105,24 +90,13 @@ export async function POST(request: NextRequest) {
     const { action, type, id, reason } = await request.json();
 
     // Get tenant context
-    const tenantId = request.headers.get('x-tenant-id');
-    const userId = request.headers.get('x-user-id');
+    // Signed-in admin of their own tenant. Tenant and user used to come from
+    // x-tenant-id / x-user-id headers, which the browser controls.
+    const check = await requireMember({ admin: true });
+    if (check instanceof NextResponse) return check;
+    const tenantId = check.tenantId;
+    const userId = check.userId;
 
-    if (!tenantId || !userId) {
-      return NextResponse.json({ error: 'Missing tenant or user context' }, { status: 400 });
-    }
-
-    // Verify admin access
-    const { data: userProfile } = await supabase!
-      .from('users')
-      .select('role, access_level')
-      .eq('id', userId)
-      .eq('tenant_id', tenantId)
-      .single();
-
-    if (!userProfile || userProfile.role !== 'admin' || userProfile.access_level !== 1) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
 
     if (type === 'invitation') {
       return await handleInvitationAction(action, id, reason, tenantId, userId);

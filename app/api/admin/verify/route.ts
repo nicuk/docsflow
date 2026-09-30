@@ -1,55 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getVerifiedMember, isTenantAdmin } from '@/lib/server-auth';
 
 /**
  * Admin verification API endpoint.
  * Used by admin components to verify admin privileges.
  */
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    // Get tenant context from headers
-    const tenantId = request.headers.get('x-tenant-id');
-    const userEmail = request.headers.get('x-user-email');
-    
-    if (!tenantId || !userEmail) {
+    // Answers "is the signed-in caller an admin?" It used to answer that for
+    // any email and tenant named in headers, which let anyone look up who the
+    // admins of a tenant are.
+    const member = await getVerifiedMember();
+    if (!member) {
       return NextResponse.json({
         success: false,
         isAdmin: false,
-        error: 'Missing tenant or user context'
-      }, { status: 400 });
+        error: 'Authentication required'
+      }, { status: 401 });
     }
-    
-    // Verify user exists and has admin privileges
-    const { data: user, error } = await supabase!
-      .from('users')
-      .select('id, role, access_level, email')
-      .eq('email', userEmail)
-      .eq('tenant_id', tenantId)
-      .single();
-    
-    if (error || !user) {
-      return NextResponse.json({
-        success: false,
-        isAdmin: false,
-        error: 'User not found'
-      }, { status: 404 });
-    }
-    
-    const isAdmin = user.role === 'admin' && user.access_level === 1;
-    
+
     return NextResponse.json({
       success: true,
-      isAdmin,
+      isAdmin: isTenantAdmin(member),
       user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        accessLevel: user.access_level
+        id: member.userId,
+        email: member.email,
+        role: member.role,
+        accessLevel: member.accessLevel
       }
     });
     
   } catch (error) {
+    console.error('Admin verification failed:', error);
     return NextResponse.json({
       success: false,
       isAdmin: false,

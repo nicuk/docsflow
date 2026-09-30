@@ -36,7 +36,11 @@ export async function validateTenantContext(
   options: TenantValidationOptions = {}
 ): Promise<TenantValidationResult> {
   const {
-    requireAuth = false,
+    // Secure by default: a route that forgets this option is protected, and a
+    // route that really is public has to say so. Both upload routes and the
+    // metrics route called this with no options and so accepted anonymous
+    // callers into any tenant named in a header.
+    requireAuth = true,
     fallbackTenant = null,
     skipValidation = false
   } = options;
@@ -208,15 +212,14 @@ export async function validateTenantContext(
         }
       }
       
-      // Use Clerk's auth() instead of Supabase JWT validation
-      // Bearer tokens are now Clerk JWTs (RS256), not Supabase JWTs (HS256)
-      // Clerk validation happens via x-user-id header set by middleware
-      const clerkUserId = request.headers.get('x-user-id');
-      const clerkAuthStatus = request.headers.get('x-clerk-auth-status');
+      // Identity comes from Clerk's verified session. It used to come from an
+      // `x-user-id` request header, which the middleware never actually set on
+      // the request, so any signed-in caller could name another user.
+      const { auth, clerkClient } = await import('@clerk/nextjs/server');
+      const { userId: clerkUserId } = await auth();
       
-      if (clerkUserId && clerkAuthStatus === 'signed-in') {
+      if (clerkUserId) {
         // Get Clerk user metadata for tenant/auth info
-        const { clerkClient } = await import('@clerk/nextjs/server');
         const clerk = await clerkClient();
         
         try {

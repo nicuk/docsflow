@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { redis, safeRedisOperation } from '@/lib/redis';
 import { createClient } from '@supabase/supabase-js';
+import { requireMember } from '@/lib/server-auth';
 
 // SECURITY FIX: Use secure database service
 import { SecureDocumentService, SecureTenantService, SecureUserService } from '@/lib/secure-database';
@@ -25,6 +26,9 @@ interface TenantData {
 
 const TENANT_CACHE_TTL = 60 * 60; // 1 hour in seconds
 const TENANT_CACHE_PREFIX = 'tenant:';
+
+/** Columns a tenant admin may change through PUT. */
+const UPDATABLE_TENANT_FIELDS = new Set(['name', 'industry', 'logo_url', 'theme', 'settings']);
 
 // Create Supabase client with service role for public tenant metadata
 // This bypasses RLS policies that block anon access to tenant branding data
@@ -128,7 +132,28 @@ export async function PUT(
 ) {
   try {
     const { tenantId } = await params;
-    const updates = await request.json();
+
+    // Only an admin of this tenant may change it.
+    const { data: target } = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('subdomain', tenantId)
+      .maybeSingle();
+    if (!target) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+    const check = await requireMember({ admin: true, tenantId: target.id });
+    if (check instanceof NextResponse) return check;
+
+    // Only presentation fields are writable here. Plan, billing status,
+    // subdomain and id change through Stripe and support flows, never a PUT.
+    const body = await request.json();
+    const updates = Object.fromEntries(
+      Object.entries(body ?? {}).filter(([key]) => UPDATABLE_TENANT_FIELDS.has(key)),
+    );
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: 'No updatable fields supplied' }, { status: 400 });
+    }
 
     // Update in database - query by subdomain since tenantId is actually subdomain
     const { data: tenant, error } = await supabase
@@ -190,6 +215,10 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    // Only an admin of this tenant may delete it.
+    const check = await requireMember({ admin: true, tenantId: tenant.id });
+    if (check instanceof NextResponse) return check;
 
     // Delete tenant from Supabase database
     const { error: supabaseError } = await supabase

@@ -3,6 +3,7 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { clerkClient } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
+import { verifiedPrimaryEmail } from '@/lib/server-auth';
 import { detectGibberish, generatePersonaPrompts, INDUSTRY_PRESETS } from '@/lib/persona-prompt-generator';
 
 /**
@@ -19,7 +20,10 @@ export async function POST(request: NextRequest) {
   const corsHeaders = getCORSHeaders(origin);
 
   try {
-    const { subdomain, industry, businessName, responses, displayName, userRole } = await request.json();
+    // `userRole` may still arrive from older clients; it is deliberately ignored.
+    // A role is never chosen by the caller: the creator of a new tenant is its
+    // admin, and anyone else joins through an invitation, which carries the role.
+    const { subdomain, industry, businessName, responses, displayName } = await request.json();
     
     // Validate required fields
     if (!subdomain) {
@@ -43,7 +47,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userEmail = user.emailAddresses[0]?.emailAddress || '';
+    // Membership below is matched by email, so it must be an address the caller
+    // has proven they own: the verified primary one, not emailAddresses[0].
+    const userEmail = verifiedPrimaryEmail(user);
+    if (!userEmail) {
+      return NextResponse.json(
+        { error: 'Verify your email address before setting up a workspace' },
+        { status: 403, headers: corsHeaders }
+      );
+    }
 
     // Initialize Supabase with service role for database operations
     const supabaseAdmin = createClient(
@@ -67,9 +79,27 @@ export async function POST(request: NextRequest) {
     let tenantId;
     let isNewTenant = false;
 
+    // Existing membership of this tenant, if any. Looked up before anything is
+    // written so an existing tenant can only be re-entered by its own members.
+    let existingMember: { id: string; role: string | null; access_level: number | null } | null = null;
+
     if (existingTenant) {
-      // Tenant exists - user is joining
       tenantId = existingTenant.id;
+      const { data: member } = await supabaseAdmin
+        .from('users')
+        .select('id, role, access_level')
+        .eq('email', userEmail)
+        .eq('tenant_id', tenantId)
+        .maybeSingle();
+
+      if (!member) {
+        // Joining someone else's tenant goes through /api/invitations, never here.
+        return NextResponse.json(
+          { error: 'Subdomain already taken. Ask an admin of this workspace to invite you.' },
+          { status: 409, headers: corsHeaders }
+        );
+      }
+      existingMember = member;
     } else {
       // Create new tenant
       tenantId = crypto.randomUUID();
@@ -95,20 +125,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Determine access level: first user (new tenant) = admin (level 1), others = member (level 2)
-    const accessLevel = isNewTenant ? 1 : (userRole === 'admin' ? 1 : 2);
-    const role = accessLevel === 1 ? 'admin' : 'member';
+    // The creator of a new tenant is its admin. A returning member keeps the
+    // role they already have; re-running onboarding never changes it.
+    const accessLevel = isNewTenant ? 1 : (existingMember?.access_level ?? 2);
+    const role = isNewTenant ? 'admin' : (existingMember?.role ?? 'member');
 
     // Map Clerk string ID to Supabase UUID
     // Check if user already exists in Supabase (by email, since Clerk IDs aren't UUIDs)
     let supabaseUserId: string;
     
-    const { data: existingUser } = await supabaseAdmin
-      .from('users')
-      .select('id')
-      .eq('email', userEmail)
-      .eq('tenant_id', tenantId)
-      .single();
+    const existingUser = existingMember;
 
     if (existingUser) {
       // User already exists in this tenant
@@ -242,11 +268,10 @@ export async function POST(request: NextRequest) {
     );
 
   } catch (error) {
+    console.error('Onboarding failed:', error);
     return NextResponse.json(
-      { 
-        error: error instanceof Error ? error.message : 'Onboarding failed',
-        details: error instanceof Error ? error.stack : undefined
-      },
+      // Internal error details stay in the server log, not in the response.
+      { error: 'Onboarding failed' },
       { status: 500, headers: corsHeaders }
     );
   }

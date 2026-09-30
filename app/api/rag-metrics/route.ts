@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ragMetrics } from '@/lib/rag-metrics';
 import { validateTenantContext } from '@/lib/api-tenant-validation';
-import { getUserAccessLevel } from '@/lib/auth-helpers';
+import { requireMember } from '@/lib/server-auth';
+
+/*
+ * Tenant admins see their own tenant's metrics and nothing else.
+ *
+ * The other views are platform-wide: `summary` and `report` aggregate every
+ * tenant (the report names the busiest ones), `recent` returns the latest
+ * queries of ALL tenants with their text, and clearing deletes every tenant's
+ * metrics. Anyone can become a tenant admin by creating a workspace, so
+ * "admin of this tenant" is not a gate for any of them; they are refused here
+ * until there is a platform-operator role to gate them on.
+ */
+const PLATFORM_WIDE = 'This view covers every tenant and is not available to tenant admins';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,68 +27,32 @@ export async function GET(request: NextRequest) {
     }
 
     const { tenantId } = tenantValidation;
-    const userId = 'system';
 
-    // Check if user is admin (access level 1)
-    const accessLevel = await getUserAccessLevel(request, tenantId);
-    if (accessLevel > 1) {
-      return NextResponse.json(
-        { error: 'Admin access required to view metrics' },
-        { status: 403 }
-      );
-    }
+    const check = await requireMember({ admin: true, tenantId });
+    if (check instanceof NextResponse) return check;
 
-    // Get query parameters
-    const searchParams = request.nextUrl.searchParams;
-    const view = searchParams.get('view') || 'summary';
-
-    let response: any = {};
+    const view = request.nextUrl.searchParams.get('view') || 'tenant';
 
     switch (view) {
-      case 'summary':
-        // Get system-wide metrics
-        const systemMetrics = await ragMetrics.getSystemMetrics();
-        response = {
-          system: systemMetrics,
-          status: systemMetrics ? 'healthy' : 'initializing'
-        };
-        break;
-
-      case 'tenant':
-        // Get tenant-specific metrics
+      case 'tenant': {
         const tenantMetrics = await ragMetrics.getTenantMetrics(tenantId);
-        response = {
-          tenant: tenantMetrics,
-          tenant_id: tenantId
-        };
-        break;
+        return NextResponse.json({ tenant: tenantMetrics, tenant_id: tenantId });
+      }
 
+      case 'summary':
       case 'recent':
-        // Get recent queries
-        const limit = parseInt(searchParams.get('limit') || '10');
-        const recentQueries = await ragMetrics.getRecentQueries(limit);
-        response = {
-          queries: recentQueries,
-          count: recentQueries.length
-        };
-        break;
-
       case 'report':
-        // Generate comprehensive performance report
-        const report = await ragMetrics.generatePerformanceReport();
-        response = report;
-        break;
+        return NextResponse.json({ error: PLATFORM_WIDE }, { status: 403 });
 
       default:
         return NextResponse.json(
-          { error: 'Invalid view parameter. Use: summary, tenant, recent, or report' },
+          { error: 'Invalid view parameter. Use: tenant' },
           { status: 400 }
         );
     }
 
-    return NextResponse.json(response);
-
   } catch (error) {
+    console.error('RAG metrics GET failed:', error);
     return NextResponse.json(
       { error: 'Failed to retrieve metrics' },
       { status: 500 }
@@ -84,42 +60,8 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Clear metrics (admin only, use with caution)
-export async function DELETE(request: NextRequest) {
-  try {
-    // Validate tenant context
-    const tenantValidation = await validateTenantContext(request);
-    if (!tenantValidation.isValid) {
-      return NextResponse.json(
-        { error: tenantValidation.error },
-        { status: tenantValidation.statusCode || 400 }
-      );
-    }
-
-    const { tenantId } = tenantValidation;
-    const userId = 'system';
-
-    // Check if user is admin
-    const accessLevel = await getUserAccessLevel(request, tenantId);
-    if (accessLevel > 1) {
-      return NextResponse.json(
-        { error: 'Admin access required to clear metrics' },
-        { status: 403 }
-      );
-    }
-
-    // Clear all metrics
-    await ragMetrics.clearMetrics();
-
-    return NextResponse.json({
-      success: true,
-      message: 'All metrics cleared successfully'
-    });
-
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to clear metrics' },
-      { status: 500 }
-    );
-  }
+// Clearing deletes every tenant's metrics (ragMetrics.clearMetrics has no
+// tenant scope), so no tenant admin may do it.
+export async function DELETE() {
+  return NextResponse.json({ error: PLATFORM_WIDE }, { status: 403 });
 }

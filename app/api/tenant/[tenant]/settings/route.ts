@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { updateTenantMetadata, getSubdomainData } from '@/lib/subdomains';
 import { auditLogger, AUDIT_ACTIONS } from '@/lib/audit-logger';
 import { TenantSettings } from '@/lib/types/shared';
+import { requireMember } from '@/lib/server-auth';
 
 // Using frontend-compatible types
 type TenantSettingsRequest = TenantSettings;
@@ -12,7 +13,6 @@ export async function POST(
 ) {
   try {
     const { tenant } = await params;
-    const settings: TenantSettingsRequest = await request.json();
 
     // Verify tenant exists
     const existingData = await getSubdomainData(tenant);
@@ -22,6 +22,13 @@ export async function POST(
         { status: 404 }
       );
     }
+
+    // Only an admin of this tenant may change its settings. This route used to
+    // accept anyone, signed in or not, and it rewrites the contact email.
+    const check = await requireMember({ admin: true, tenantId: existingData.id });
+    if (check instanceof NextResponse) return check;
+
+    const settings: TenantSettingsRequest = await request.json();
 
     // Update tenant metadata
     const updatedData = await updateTenantMetadata(tenant, {
@@ -81,6 +88,10 @@ export async function GET(
         { status: 404 }
       );
     }
+
+    // Settings include the contact email: members of the tenant only.
+    const check = await requireMember({ tenantId: tenantData.id });
+    if (check instanceof NextResponse) return check;
 
     return NextResponse.json({
       success: true,
