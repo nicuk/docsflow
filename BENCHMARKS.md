@@ -16,6 +16,12 @@ the private repo; they are for reference, not runnable from this repo.
 If a number does not appear here or in `benchmarks/runs/`, treat it as
 unverified.
 
+**These numbers measure the production SureCiteAI system, not this repo's
+code.** DocsFlow shares its architecture (tenant isolation, hybrid retrieval,
+failover) but not the production citation verifier or eval gates, so running
+this code will not reproduce them. They are published here as the audit record
+for the architecture this repo describes.
+
 ---
 
 ## 1. What we evaluate
@@ -218,7 +224,7 @@ write the eval rubric for.
 **Why we publish this even though the pass rate is below the legal/healthcare
 suites:** because public-benchmark numbers are the only ones a third party
 can independently verify. A 100% score on a corpus we authored proves
-nothing; 63% on a published, peer-reviewed external benchmark — at 96%
+nothing; 63% on a published external benchmark — at 96%
 retrieval and zero hallucinations — is a defensible foundation. The roadmap
 above turns the over-abstention behaviour into a pass-rate gain without
 trading off the hallucination guarantee.

@@ -2,20 +2,31 @@
 
 # DocsFlow
 
-**Your team's private AI workspace for document intelligence**
+**A multi-tenant RAG reference architecture: one isolated workspace per team, hybrid search, LLM failover, and answers that cite their source.**
 
-Each team gets their own subdomain — `sales.docsflow.app`, `legal.docsflow.app` — with role-based access, AI-powered search, and every answer traced back to the source document.
-
-[![Live Demo](https://img.shields.io/badge/Live-docsflow.app-blue?style=for-the-badge)](https://docsflow.app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js_15-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org)
 
-<br />
-
-<img src="docs/images/chat-dashboard.png" alt="DocsFlow — AI chat with source-attributed answers" width="720" />
+<img src="docs/images/chat-dashboard.png" alt="DocsFlow answering a question with cited sources and a confidence score" width="720" />
 
 </div>
+
+---
+
+## What this is
+
+DocsFlow is the reference architecture I designed for a client's document AI product, which runs in production today as [SureCiteAI](https://sureciteai.com). This repo is the open version of that architecture. It's here so you can read how a real multi-tenant RAG system is put together, not a toy one.
+
+**What you get here:**
+
+- **Tenant isolation at four layers.** Subdomain routing in edge middleware, Clerk sessions carrying tenant context, a Pinecone namespace per tenant (`lib/rag/storage/pinecone.ts`), and Postgres row-level security underneath.
+- **Hybrid retrieval.** Dense vectors plus sparse keyword vectors (`lib/rag/core/sparse-vectors.ts`), so "clause 4.2" and "termination terms" both find the right passage.
+- **Multi-model failover.** If one provider fails, the query moves to the next (`lib/ai/providers.ts`).
+- **Grounded confidence and citations.** Every answer carries a confidence score and links back to the document section it came from (`lib/confidence-scoring.ts`, `lib/citation-enhancer.ts`).
+- **An evaluation harness** for faithfulness, context precision and recall (`lib/rag-evaluation.ts`, `scripts/evaluate-rag.ts`).
+
+**How it relates to production:** DocsFlow has its own version line and is maintained for security and dependencies. The production product has moved on since (eval gates, a hallucinated-citation blocker, calibrated abstention), and that work stays with the client. If you want the product, use [sureciteai.com](https://sureciteai.com). If you want to see how it's built, you're in the right place.
 
 ---
 
@@ -24,9 +35,9 @@ Each team gets their own subdomain — `sales.docsflow.app`, `legal.docsflow.app
 1. **Create your workspace** — Pick a subdomain (`your-team.docsflow.app`) and invite your team
 2. **Upload documents** — PDFs, Word, Excel, PowerPoint, images, and text files
 3. **Ask questions in plain English** — The AI searches across all your documents and returns answers with exact source citations
-4. **Control who sees what** — 5-tier access levels (Public → Executive) plus Admin/User/Viewer roles per workspace
+4. **Control who sees what** — Admin, User and Viewer roles per workspace
 
-Every answer includes a confidence score and clickable source links. No hallucinated claims — if the AI can't find it in your documents, it says so.
+Every answer includes a confidence score and clickable source links, and low-confidence answers are flagged rather than presented as fact.
 
 <br />
 
