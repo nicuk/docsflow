@@ -3,6 +3,7 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { clerkClient } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import { getCORSHeaders } from '@/lib/utils';
+import { verifiedPrimaryEmail } from '@/lib/server-auth';
 import { detectGibberish, generatePersonaPrompts, INDUSTRY_PRESETS } from '@/lib/persona-prompt-generator';
 
 /**
@@ -46,7 +47,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userEmail = user.emailAddresses[0]?.emailAddress || '';
+    // Membership below is matched by email, so it must be an address the caller
+    // has proven they own: the verified primary one, not emailAddresses[0].
+    const userEmail = verifiedPrimaryEmail(user);
+    if (!userEmail) {
+      return NextResponse.json(
+        { error: 'Verify your email address before setting up a workspace' },
+        { status: 403, headers: corsHeaders }
+      );
+    }
 
     // Initialize Supabase with service role for database operations
     const supabaseAdmin = createClient(

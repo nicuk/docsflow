@@ -1,0 +1,27 @@
+# Runs the security regression tests (tests/security) on every pull request
+# and every push to main. Without a runner they are documentation: each one
+# pins a request that used to succeed for someone it shouldn't have, and a
+# test nobody runs cannot catch that request coming back.
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Security regression tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm test

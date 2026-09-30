@@ -82,11 +82,15 @@ export async function validateAuth(request: NextRequest): Promise<{ tenantId: st
     // The tenant is the one on the user's own row. It used to be taken from the
     // x-tenant-id header (or client-writable user_metadata), so any account
     // could read and write another tenant's upload queue.
-    const { data: member } = await supabase
+    const { data: member, error: memberError } = await supabase
       .from('users')
       .select('tenant_id')
       .eq('id', user.id)
       .maybeSingle();
+    if (memberError) {
+      // Fails closed either way; logged so a DB failure is not read as "no tenant".
+      console.error('validateAuth: users lookup failed', { userId: user.id, error: memberError });
+    }
 
     return { tenantId: member?.tenant_id ?? null, userId: user.id };
   } catch {

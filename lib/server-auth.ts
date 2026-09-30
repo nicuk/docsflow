@@ -27,9 +27,28 @@ function adminClient() {
   });
 }
 
-/** Admin is role 'admin' or access level 1, the convention used across the app. */
+/**
+ * Admin is role 'admin' AND access level 1, as every admin check this replaced
+ * required. Either one alone is not enough: an invitation sets role and access
+ * level separately, and a demoted admin can keep one of the two.
+ */
 export function isTenantAdmin(member: Pick<VerifiedMember, 'role' | 'accessLevel'>): boolean {
-  return member.role === 'admin' || member.accessLevel === 1;
+  return member.role === 'admin' && member.accessLevel === 1;
+}
+
+/**
+ * The Clerk user's primary email, only if it is verified. `emailAddresses[0]`
+ * is neither necessarily primary nor verified, so it must not decide which
+ * `users` row a caller is.
+ */
+export function verifiedPrimaryEmail(user: {
+  primaryEmailAddressId?: string | null;
+  emailAddresses: { id: string; emailAddress: string; verification?: { status?: string | null } | null }[];
+}): string | null {
+  const primary = user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId);
+  // Returned as stored: users.email is matched exactly, so changing case here
+  // would turn a returning member away.
+  return primary && primary.verification?.status === 'verified' ? primary.emailAddress : null;
 }
 
 /**
@@ -43,14 +62,19 @@ export async function getVerifiedMember(): Promise<VerifiedMember | null> {
   const clerk = await clerkClient();
   const clerkUser = await clerk.users.getUser(clerkUserId);
   const supabaseUserId = clerkUser.publicMetadata?.supabaseUserId as string | undefined;
-  const email = clerkUser.emailAddresses[0]?.emailAddress ?? null;
+  const email = verifiedPrimaryEmail(clerkUser);
   if (!supabaseUserId) return null;
 
-  const { data } = await adminClient()
+  const { data, error } = await adminClient()
     .from('users')
     .select('id, tenant_id, role, access_level')
     .eq('id', supabaseUserId)
     .maybeSingle();
+  if (error) {
+    // Still fails closed, but a database failure must not read as "signed out".
+    console.error('getVerifiedMember: users lookup failed', { supabaseUserId, error });
+    return null;
+  }
   if (!data?.tenant_id) return null;
 
   return {
