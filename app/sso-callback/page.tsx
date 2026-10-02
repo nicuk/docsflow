@@ -14,8 +14,8 @@ export default function SSOCallbackPage() {
     const handleCallback = async () => {
       try {
         await handleRedirectCallback({
-          afterSignInUrl: '/onboarding',
-          afterSignUpUrl: '/onboarding'
+          signInFallbackRedirectUrl: '/onboarding',
+          signUpFallbackRedirectUrl: '/onboarding'
         })
         router.push('/onboarding')
       } catch (error) {
